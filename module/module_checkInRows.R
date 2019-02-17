@@ -175,7 +175,7 @@ module_checkInRows <- function(input, output, session,
      
     ALL$DATA[[dataset_name]] <- tdata 
     print("checkInRows sucessful")
-    
+    print(tdata %>% select(SEX, SEX_ORG, SEXN) %>% distinct(SEX_ORG, .keep_all=TRUE))
   })
   
   return(ALL)

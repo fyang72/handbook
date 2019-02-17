@@ -14,15 +14,23 @@ module_save_data_UI <- function(id, label="") {
   actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332; vertical-align: bottom;"                                                               
   
   fluidRow(                                                                                                                                                                            
+    fluidRow( 
+    
+      column(width=4, uiOutput(ns("data_name_container"))),                                                                                                                             
+      
+      column(width=2, actionButton(ns("saveit"),label="Save it", style=actionButton.style)),                                                                                            
+      
+      column(width=2,                                                                                                                                                                   
+           downloadButton(ns("downloadcsv"),label="csv", icon=icon("download"), style=actionButton.style)                                                                        
+            ) 
+      ), 
+    
     fluidRow(                                                                                                                                                                           
       column(width=12, uiOutput(ns("datatable_container")))                                                                                                                                              
     ),                                                                                                                                                                                
     
     fluidRow(                                                                                                                                                                           
       
-      #column(width=2, textInput(ns("data_name"), value=data_name, width="100%", label="data name")),                                                                                   
-      column(width=2, uiOutput(ns("data_name_container"))),                                                                                                                             
-      column(width=2, actionButton(ns("saveit"),label="Save it", style=actionButton.style)),                                                                                            
       
       #column(width=1, h5("column:"),align="right"),                                                                                                                                    
       column(width=4,                                                                                                                                                                   
@@ -35,11 +43,9 @@ module_save_data_UI <- function(id, label="") {
                          width="100%",                                                                                                                                                  
                          choices = seq(1, 100, by=1),                                                                                                                                   
                          selected = 3)                                                                                                                                                  
-      ),                                                                                                                                                                         
+      )                                                                                                                                                                       
       
-      column(width=2,                                                                                                                                                                   
-             downloadButton(ns("downloadcsv"),label="csv", icon=icon("download"), style=actionButton.style)                                                                        
-      )                                                                                                                                                                     
+                                                                                                                                                                    
     ), 
     
     style='margin-bottom:30px;  border:1px solid; padding: 10px;'                                                                                                                                                                                       
@@ -113,6 +119,7 @@ module_save_data <- function(input, output, session, ALL, data, data_name) {
     validate(need(data, message="no data found"),                                                                                                                                      
              need(input$column_name_lst, message="no column selected")                                                                                                                  
     )                                                                                                                                                                          
+    input$refesh  # if refresh it click
     
     data %>% select(one_of(input$column_name_lst))                                                                                                                                     
   })                                                                                                                                                                                    

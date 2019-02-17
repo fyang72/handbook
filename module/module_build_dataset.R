@@ -43,7 +43,10 @@ module_build_dataset_UI <- function(id, label = "") {
        # data_container
        tabPanel(width=12, title="output", value = "output", collapsible = TRUE, 
                 collapsed = TRUE, solidHeader = TRUE,
+                
+               
                 fluidRow(column(width=12, uiOutput(ns("data_container"))))
+                
        )
   ) 
   )
@@ -160,21 +163,116 @@ module_build_dataset <- function(input, output, session,
   # data_container
   ################################
   output$data_container <- renderUI({  
-    #validate(need(is.list(values$data), message="No data found, or values$data needs to be a list"))
-   
+ 
     print("in data_container")
     
-        ALL = callModule(module_save_data, paste0("module_save_data_", 1), 
-                         ALL,
-                         data = ALL$DATA[[dataset_name]],  #values$data[[i]],   
-                         data_name =  dataset_name    #names(values$data[i])
-        )
+       #   ALL = callModule(module_save_data, paste0("module_save_data_", 1), 
+       #                    ALL,
+       #                    data = ALL$DATA[[dataset_name]] ,   
+       #                    data_name =  dataset_name    #names(values$data[i])
+       #   )
+       # module_save_data_UI(ns(paste0("module_save_data_", 1)), label = NULL) 
+       #   
+      
        
-      module_save_data_UI(ns(paste0("module_save_data_", 1)), label = NULL) 
-   # })
-    
-    #)
+          tdata =  inputData() #ALL$DATA[[dataset_name]]  #values$final_data
+         validate(need(tdata, message="no data found"))                                                                                                                                      
+         
+         fluidRow( 
+           
+           fluidRow( 
+             
+             column(width=3, uiOutput(ns("data_name_container"))),                                                                                                                             
+             
+             column(width=2, actionButton(ns("saveit"),label="Save it", style=actionButton.style)),                                                                                            
+             
+             column(width=2,                                                                                                                                                                   
+                    downloadButton(ns("downloadcsv"),label="csv", icon=icon("download"), style=actionButton.style)                                                                        
+                    ), 
+             
+             column(width=3, h6("Select page length:"), align="right"),  #offset = 2,),    
+                    
+             column(width=2, align="left",  #offset = 2,                                                                                                                                       
+                    selectInput(ns("pageLength"), label = NULL,# "Select page length",                                                                                                        
+                                width="100%",                                                                                                                                                  
+                                choices = seq(1, 100, by=1),                                                                                                                                   
+                                selected = 3)                                                                                                                                                  
+             )
+             ), 
+             
+           fluidRow(column(width=12, DT::dataTableOutput(ns("mydatatable")))),
+       
+           fluidRow(                                                                                                                                                                           
+               #column(width=1, h5("column:"),align="right"),                                                                                                                                    
+               column(width=12,                                                                                                                                                                   
+                      uiOutput(ns("column_selector"))                                                                                                                                            
+               )     
+             )
+           )
   })
+   
+  inputData <- reactive({
+    ALL$DATA[[dataset_name]]
+  })
+  
+  output$data_name_container <- renderUI({                                                                                                                                             
+    validate(need(globalVars$login$status, message=FALSE))                                                                                                                             
+    
+    textInput(ns("data_name"), value=NULL, placeholder="data name", width="100%", label=NULL)                                                                                                       
+  })
+  
+  output$mydatatable <- DT::renderDataTable(                                                                                                                                          
+    DT::datatable(data = inputData(),                                                                                                                                                       
+                  options = list(pageLength = input$pageLength, 
+                                 lengthChange = FALSE, width="100%", scrollX = TRUE)                                                                   
+    ))
+  
+  # selected_data                                                                                                                                                                       
+  output$column_selector <- renderUI({  
+    data = inputData()
+    validate(need(data, message=FALSE))                                                                                                                                                
+    
+    col.lst = c("", colnames(data))                                                                                                                                                    
+    selectizeInput(ns("column_name_lst"),                                                                                                                                               
+                   width="100%",                                                                                                                                                        
+                   label    = "select columns" , # "select column" ,                                                                                                                                 
+                   choices  = colnames(data),  #unique(inputData()%>%pull(TEST)),                                                                                                      
+                   multiple = TRUE,                                                                                                                                                     
+                   selected = colnames(data))  #unique(inputData()%>%pull(TEST))[1])                                                                                                   
+  })                                                                                                                                                                                    
+  
+  
+  filtered_data <- reactive({  
+    data = inputData()
+    validate(need(data, message="no data found"),                                                                                                                                      
+             need(input$column_name_lst, message="no column selected")                                                                                                                  
+    )      
+    data %>% select(one_of(input$column_name_lst))                                                                                                                                     
+  })
+                                                                                                                        
+  # save data                                                                                                                                                                            
+  observeEvent(input$saveit, {                                                                                                                                                          
+    
+    validate(need(input$saveit, message=FALSE), 
+             need(input$data_name, message="please specify data name")
+    )  
+    ALL$DATA[[input$data_name]] <- filtered_data()                                                                                                                                                  
+    
+  })
+  
+  #downloadcsv
+  output$downloadcsv <- downloadHandler(                                                                                                                                                
+    filename = function() {                                                                                                                                                             
+      # data_name = attr(data, "name")                                                                                                                                                 
+      ifelse(is.null(input$data_name),                                                                                                                                           
+              paste0("download.csv", sep = ""),                                                                                                                                        
+              paste0(input$data_name, ".csv", sep = ""))                                                                                                                                     
+                                                                                                                                                                     
+    },                                                                                                                                                                                  
+    content = function(file) {                                                                                                                                                          
+      write_csv(filtered_data(), path=file )                                                                                                                                            
+    }                                                                                                                                                                                   
+  )                                                                                                                                                                 
   
   
   
@@ -213,6 +311,13 @@ module_build_dataset <- function(input, output, session,
                          table_name = names(values$table[i])
                          )
          
+         isolate({
+           print("after checkinRow: ")
+           tdata = ALL$DATA[[dataset_name]]
+           if ("SEX_ORG" %in% colnames(tdata)) {
+           print(tdata %>% select(SEX, SEX_ORG, SEXN) %>% distinct(SEX_ORG, .keep_all=TRUE))
+           }
+         })
        #  if (!is.null(tmp)) { values2$data =tmp}
       #})  
          
