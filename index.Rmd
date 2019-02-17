@@ -1,0 +1,384 @@
+---
+title: "An Interactive Handbook for Pharmacometrics Analysis"
+author: "Feng Yang"
+date: "12/18/2018"
+runtime: shiny
+output:  
+ html_document:
+   toc: true
+   fig_caption: true
+   toc_float:
+       collapsed: true
+       smooth_scroll: true
+   toc_depth: 3
+   css: styles.css
+   code_folding: show
+   number_sections: true
+   keep_md: no
+pdf_document:
+    fig_caption: yes
+    keep_tex: yes
+    toc: yes
+    toc_depth: 3    
+---
+
+
+
+
+```{r global_options, include=FALSE, cache=FALSE}
+
+# legal issue
+# https://news.ycombinator.com/item?id=1112808
+
+#rm(list=ls())
+#    
+#https://shinydata.wordpress.com/2015/02/02/a-few-things-i-learned-about-shiny-and-reactive-programming/
+   
+# https://stackoverflow.com/questions/38513912/shiny-using-uioutput-inside-a-module-or-a-nested-module
+ 
+# multiline text
+# https://stackoverflow.com/questions/26368192/how-to-insert-new-line-in-r-shiny-string
+
+# https://stackoverflow.com/questions/24049159/change-the-color-and-font-of-text-in-shiny-app
+
+# http://www.unm.edu/~tbeach/IT145/color.html
+#("black", "white", "gray", "silver", "maroon", "red", "purple", "fushsia", "green", "lime", "olive", "yellow", "navy", "blue", "teal", and "aqua")
+
+
+# Cloud Computing for Pharmacometrics: Using AWS, NONMEM, PsN, Grid Engine, and Sonic
+# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4592533/
+  
+# http://www.pirana-software.com/#blog
+
+
+# https://www.tutorialspoint.com/r/r_boxplots.htm
+
+
+#  dataset=read_csv("./data/nmdatPKPD.csv")
+
+# TIIMEPT 0HR in DRUG and target (adpc) but EOI in response
+
+# 
+# Identifiers
+# 
+# Analysis Population Indicators 
+# Nearly all statistical analyses will require at least one population indicator and it is
+# required to include all indicators for all populations for which a given analysis is performed. 
+# 
+# Analysis Date Variables 
+# 
+# Indicator Variables  
+# --DTF for date
+# imputation flags
+# -----FN for numeric
+# indicator flag variables
+# and ------FL for
+# character indicator flag
+# variables. 
+# 
+# ANLDY
+# Analysis Study Day Variables     
+# ANLDY (in days) =  DT – Reference Date +1. 
+# 
+# VISIT, VISITNUM, VISITDY, AVISITDY
+# Visit
+# Timing
+# Variables 
+# 
+# AESEVN SEXN RACEN
+# Numeric Code Variables 
+# 
+# TRTP  TRTPN  TRTA   TRTAN
+# ARM   ARMN   ARMA   ARMAN 
+# 
+# Analysis Treatment Variables 
+# 
+# ADSL  One  record per subject
+# Demographic and
+# subject baseline
+# characteristics
+# analysis dataset,
+# includes
+# population flags
+ 
+
+# TESTCAT
+# PK
+# TARGET
+# EFF1, EFF2
+# BIOMKR1, BIOMKR2
+# SAF1, SAF2, 
+# 
+# MDV = 1
+# 
+# BASE CHG PCHG   Holizonal
+# All others are vertical
+# verticalLayout()
+# 
+# 
+# source("./script/build_adsl.R")
+# source("./script/build_adpx.R")
+# source("./script/build_adex.R")
+# source("./script/build_adpc.R")
+# source("./script/build_nmdat.R")
+```
+
+
+
+```{r, setup, include=FALSE}
+
+   
+
+# if you use \\tarisilonsmb02\sasgrid01data_prod\Data using 
+# ps -fs | grep 
+
+# https://rpubs.com/videep90/288782
+# Single Dose Oral - PK
+# Models available in the library include:
+# 
+# PK models: pk1cmt, pk2cmt, pk3cmt, tmdd
+# 
+# PKPD models: irm1, irm2, irm3, irm4, emax, effect
+# 
+# Other models: viral1, viral2
+
+rm(list = ls())
+
+HOME = "c:/FYANG/Handbook/" 
+setwd(HOME)
+  
+actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
+  
+  
+source("util.R")
+#source("./global.R")
+
+#source("./module/load_data.R")
+#source("./module/ggplot_brush.R") 
+ 
+
+```
+
+ 
+```{r}
+
+ALL <- reactiveValues(
+  DATA   = list(), 
+  FIGURE = list(), 
+  TABLE = list(), 
+  cppModel = list(), 
+  ctlModel = list()
+)  
+
+
+  
+```
+ 
+
+ 
+```{r, eval=TRUE}
+ folder.loc <- "./module/"
+ file.lst <-list.files(path = folder.loc, all.files = FALSE,full.names = TRUE, include.dirs = TRUE, recursive =TRUE)     
+ file.lst = file.lst[which(substr(file.lst, nchar(file.lst)-1, nchar(file.lst)) %in% c(".r", ".R"))]
+ 
+ file.lst = file.lst[which(!substr(gsub(folder.loc, "", file.lst, fix=TRUE), 2, 2) %in% c("_"))]
+  
+  for (ifile in 1:length(file.lst)) { 
+    #print(file.lst[ifile]);  
+    source(file=file.lst[ifile])  
+ }     #sys.source('file.R', envir=environment())
+```
+ 
+   
+   
+ 
+```{r eval=FALSE}
+rmd <- list.files(pattern = '*.Rmd', recursive = T)
+chunks <- paste0("```{r child = '", rmd, "'}\n```\n")
+cat(chunks, sep = '\n')
+```
+
+ 
+
+
+
+```{r child = 'rmd/01_preface/01_preface.Rmd'}
+```
+
+```{r child = 'rmd/02_construct_dataset/10_construct_dataset.Rmd'}
+```
+
+```{r child = 'rmd/03_summary_dataset/01_summary_dataset.Rmd'}
+```
+
+```{r child = 'rmd/04_descriptive_analysis/01_load_dataset.Rmd'}
+```
+
+```{r child = 'rmd/04_descriptive_analysis/02_stdtimeprofile_for_drug.Rmd'}
+```
+
+```{r child = 'rmd/04_descriptive_analysis/03_stdtimeprofile_for_target.Rmd'}
+```
+
+```{r child = 'rmd/04_descriptive_analysis/04_stdtimeprofile_for_response.Rmd'}
+```
+
+```{r child = 'rmd/04_descriptive_analysis/05_explore_pkpd_relationship.Rmd'}
+```
+
+```{r child = 'rmd/04_descriptive_analysis/06_sigmoid_PKPD.Rmd'}
+```
+
+```{r child = 'rmd/04_descriptive_analysis/07_hysterisis_PKPD.Rmd'}
+```
+
+```{r child = 'rmd/05_NCA_analysis/01_NCA_analysis.Rmd'}
+```
+
+```{r}
+# 
+#```{r child = 'rmd/06_nmdat_integrity_check/01_load_data.Rmd'}
+#```
+
+#```{r child = 'rmd/06_nmdat_integrity_check/02_quick_check.Rmd'}
+#```
+
+#```{r child = 'rmd/06_nmdat_integrity_check/03_advanced_check.Rmd'}
+#```
+
+#```{r child = 'rmd/06_nmdat_integrity_check/04_buildIn_model.Rmd'}
+#```
+
+```
+
+```{r child = 'rmd/07_run_nmmodel/01_run_nonmem_model.Rmd'}
+```
+
+```{r child = 'rmd/07_run_nmmodel/02_model_diagnostic.Rmd'}
+```
+
+```{r child = 'rmd/08_run_simulation/50_run_sim.Rmd'}
+```
+
+```{r child = 'rmd/09_exposure_response/60_exposure_response.Rmd'}
+```
+
+```{r child = 'rmd/10_advanced_model/01_advanced_model.Rmd'}
+```
+
+```{r child = 'rmd/11_reporting/01_reporting.Rmd'}
+```
+
+```{r child = 'rmd/references.Rmd'}
+```
+
+```{r child = 'rmd/91_appendix_model_library/01_model_library.Rmd'}
+```
+
+```{r child = 'rmd/92_appendix_dplyr/01_dplyr.Rmd'}
+```
+
+```{r child = 'rmd/93_appendix_ggplot/01_ggplot.Rmd'}
+```
+
+```{r child = 'rmd/94_appendix_mrgsolve/01_mrgsolve.Rmd'}
+```
+
+```{r child = 'rmd/95_appendix_tools/01_tools.Rmd'}
+```
+ 
+
+
+
+
+
+
+```{r number_figures, echo=FALSE, eval=TRUE, cache=FALSE}
+# source: https://gist.github.com/benmarwick/f3e0cafe668f3d6ff6e5
+
+# This is a knitr hook to enable figure and table captions
+# number figures
+# from http://stackoverflow.com/a/18672268/1036500
+library("knitr")
+tn = local({
+  i = 0
+  function(x) {
+    i <<- i + 1
+    paste("<table><caption>", 'Figure ', i, ': ', x, "</caption><colgroup><col width='100'></col></colgroup><thead><tr class='header'></tr></thead><tbody></tbody></table><p>", sep = '')
+  }
+})
+knit_hooks$set(fig.cap = function(before, options, envir) {
+  if(!before)
+    tn(options$fig.cap)
+})
+default_output_hook = knit_hooks$get("output")
+knit_hooks$set(output = function(x, options) {
+  if (is.null(options$fig.cap) == F)  
+    x
+  else
+    default_output_hook(x,options)
+})
+# number tables
+# from http://stackoverflow.com/a/18672268/1036500
+to = local({
+  i = 0
+  function(x) {
+    i <<- i + 1
+    paste("<table><caption>", 'Table ', i, ': ', x, "</caption><colgroup><col width='100'></col></colgroup><thead><tr class='header'></tr></thead><tbody></tbody></table><p>", sep = '')
+  }
+})
+knit_hooks$set(tab.cap = function(before, options, envir) {
+  if(!before)
+    to(options$tab.cap)
+})
+default_output_hook = knit_hooks$get("output")
+knit_hooks$set(output = function(x, options) {
+  if (is.null(options$tab.cap) == F)  
+    x
+  else
+    default_output_hook(x,options)
+})
+```
+
+
+<!--
+ 
+#       collapsed: true
+#       smooth_scroll: true
+#           number_sections: true
+#https://github.com/timelyportfolio/vueR/issues/1
+
+# ioslides_presentation   html_document   pdf_document
+# https://bookdown.org/yihui/rmarkdown/shiny-embedded.html#shiny-embed-inline
+# https://bookdown.org/yihui/rmarkdown/parameterized-reports.html#overview
+# https://shiny.rstudio.com/articles/generating-reports.html
+
+# https://github.com/rstudio/shiny-examples/blob/master/016-knitr-pdf/server.R
+
+# Markdown to create pages and table of contents?
+#https://stackoverflow.com/questions/11948245/markdown-to-create-pages-and-table-of-contents
+
+# Combining Shiny & R Markdown
+# https://beta.rstudioconnect.com/content/2671/Combining-Shiny-R-Markdown.html
+
+
+# http://seankross.com/2016/11/17/How-to-Start-a-Bookdown-Book.html
+# 
+# https://github.com/seankross/bookdown-start
+# https://github.com/rstudio/bookdown-demo
+# 
+
+#cheat sheet for Rmarkdown
+# https://www.rstudio.com/wp-content/uploads/2016/03/rmarkdown-cheatsheet-2.0.pdf
+
+# I want his TOC 
+# https://ijlyttle.github.io/communicate_custom_html_document_format_r_markdown.html
+
+
+# pdf_document    figure legend
+#```{r, fig.width=9,fig.height=6,fig.cap="\\label{fig:fig1}plotting examplesfsfsgssfsfs"}
+#
+#``` 
+ 
+
+--> 

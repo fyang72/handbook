@@ -1,0 +1,462 @@
+
+## Model diagnostic   <!-- {.tabset .tabset-pills}--> 
+
+back to [nonmem_dataset_integrity_check](#nonmem_dataset_integrity_check)
+ 
+```{r}
+HOME = "~/FYANG/Template/Handbook/"
+user.name = tolower(Sys.info()["user"])  # determineCurrentUser()
+
+values4xpdb = reactiveValues(diagnostic=NULL) 
+
+
+
+ output$select_which_program_container <- renderUI({
+    #validate(need(globalVars$login$status, message=FALSE))
+     
+    dirs.list = list.files(path = paste0("./output/", user.name, "/"), full.names = FALSE, recursive = FALSE)
+    dirs.list = c("", dirs.list)
+    selectizeInput(("which_program"), 
+                   label    = "Select program:", 
+                   choices  = dirs.list, 
+                   multiple = FALSE,
+                   selected = dirs.list[1]) 
+    
+  })
+
+  output$select_which_job_container <- renderUI({
+    #validate(need(globalVars$login$status, message=FALSE))
+     
+    dirs.list = list.files(path = paste0("./output/", user.name, "/", input$which_program, "/"), 
+                           full.names = FALSE, recursive = FALSE)
+    dirs.list = c("", dirs.list)
+    selectizeInput(("which_job"), 
+                   label    = "Select job:", 
+                   choices  = dirs.list, 
+                   multiple = FALSE,
+                   selected = dirs.list[1]) 
+    
+  })
+  
+ output$select_which_runno_container <- renderUI({
+    #validate(need(globalVars$login$status, message=FALSE))
+     
+    # dirs.list = list.files(path = paste0("./output/", user.name, "/", input$which_program, "/"), 
+    #                        full.names = FALSE, recursive = FALSE)
+    # dirs.list = c("", dirs.list)
+    # selectizeInput(("which_runno"), 
+    #                label    = "Select runno:", 
+    #                choices  = dirs.list, 
+    #                multiple = FALSE,
+    #                selected = dirs.list[1]) 
+   textInput("which_runno", value="001", label="Which runno:")
+    
+  })
+ 
+  fluidRow(
+    column(width=4, uiOutput(("select_which_program_container"))), 
+    
+    column(width=4, uiOutput(("select_which_job_container"))), 
+    
+    column(width=4, uiOutput(("select_which_runno_container")))
+    
+  ) 
+ 
+   
+```
+
+
+```{r}
+ xpdb_inputData <- reactive({
+   
+   validate(need(input$which_program, message=FALSE), 
+            need(input$which_job, message=FALSE),
+            need(input$which_runno, message=FALSE)
+   )  
+   #input$which_program = "TEST"
+   # input$which_run = "control5_THEOPP"
+   #user.name = tolower(Sys.info()["user"])  # determineCurrentUser()
+    
+   file.dir = paste0("./output/", user.name, "/", input$which_program, "/", input$which_job, "/")
+     
+    #slotNames(xpdb)
+   # "Xvardef"       "Labels"   "Graph.prefs"   "Miss"   "Cat.levels"    "DV.Cat.levels" "Subset"        "Gam.prefs"     "Bootgam.prefs"
+    #slotNames(slot(xpdb,"Prefs"))
+    
+    #slot(slot(xpdb,"Prefs"), "Xvardef")
+    #names(slot(slot(xpdb,"Prefs"), "Xvardef"))
+     
+    xpdb = xpose.data(input$which_runno, directory = file.dir)
+    slot(xpdb, "Data") = slot(xpdb, "Data")%>% 
+      rename(DV=CP) %>% 
+      mutate(SEX = 1)
+    #xpdb =  slot(xpose4.obj,"Data")
+    # runno = slot(xpose4.obj,"Runno")
+    
+    xpdb
+  })
+
+renderUI({
+  xpdb = xpdb_inputData()
+  validate(need(xpdb, message=FALSE))
+  
+  callModule(module_table_output, "xpdb_inputData",  
+               mytab = slot(xpdb, "Data"))
+  
+  module_table_output_UI(id="xpdb_inputData", 
+                          label="xpdb_inputData" ) 
+})
+
+
+```
+
+
+
+ 
+
+```{r, eval=TRUE}
+  
+
+  output$diagnostic.PRED.DVOR <- renderUI({ 
+      xpdb = xpdb_inputData()
+      validate(need(xpdb, message=FALSE))
+       
+      fig = values4xpdb$diagnostic$PRED_DVOR   
+      validate(need(fig, message=FALSE))
+  
+    
+    callModule(module_ggplot_brush, "xpdb.diagnostic.PRED.DVOR", 
+             fig=fig, 
+             mydata = slot(xpdb, "Data"), 
+             xvar="PRED", yvar="DV")
+    
+    module_ggplot_brush_UI(id="xpdb.diagnostic.PRED.DVOR", 
+                       label = "xpdb.diagnostic.PRED.DVOR")
+ 
+  })
+  
+  
+    output$diagnostic.IPRED.DVOR <- renderUI({ 
+      xpdb = xpdb_inputData()
+      validate(need(xpdb, message=FALSE))
+       
+      fig = values4xpdb$diagnostic$IPRED_DVOR   
+      validate(need(fig, message=FALSE))
+  
+    
+    callModule(module_ggplot_brush, "xpdb.diagnostic.IPRED.DVOR", 
+             fig=fig, 
+             mydata = slot(xpdb, "Data"), 
+             xvar="IPRED", yvar="DV")
+    
+   module_ggplot_brush_UI(id="xpdb.diagnostic.IPRED.DVOR", 
+                       label = "xpdb.diagnostic.IPRED.DVOR")
+ 
+  })
+    
+    
+    
+    
+    output$diagnostic.PRED.DVOR.LOG <- renderUI({ 
+      xpdb = xpdb_inputData()
+      validate(need(xpdb, message=FALSE))
+       
+      fig = values4xpdb$diagnostic$PRED_DVOR_LOG   
+      validate(need(fig, message=FALSE))
+  
+    
+    callModule(module_ggplot_brush, "xpdb.diagnostic.PRED.DVOR.LOG", 
+             fig=fig, 
+             mydata = slot(xpdb, "Data"), 
+             xvar="PRED", yvar="DV")
+    
+    module_ggplot_brush_UI(id="xpdb.diagnostic.PRED.DVOR.LOG", 
+                       label = "xpdb.diagnostic.PRED.DVOR.LOG")
+ 
+  })
+    
+    
+    output$diagnostic.IPRED.DVOR.LOG <- renderUI({ 
+      xpdb = xpdb_inputData()
+      validate(need(xpdb, message=FALSE))
+       
+      fig = values4xpdb$diagnostic$IPRED_DVOR_LOG   
+      validate(need(fig, message=FALSE))
+  
+    
+    callModule(module_ggplot_brush, "xpdb.diagnostic.IPRED.DVOR.LOG", 
+             fig=fig, 
+             mydata = slot(xpdb, "Data"), 
+             xvar="IPRED", yvar="DV")
+    
+   module_ggplot_brush_UI(id="xpdb.diagnostic.IPRED.DVOR.LOG", 
+                       label = "xpdb.diagnostic.IPRED.DVOR.LOG")
+ 
+  })
+    
+    
+    
+    fluidRow(
+  fluidRow(
+  
+   column(6,
+          uiOutput(("diagnostic.PRED.DVOR"))  
+          #style='margin-bottom:30px;  border:1px solid; padding: 10px;'   
+          ), 
+   column(6,
+          uiOutput(("diagnostic.IPRED.DVOR")) 
+          #style='margin-bottom:30px;  border:1px solid; padding: 10px;'  
+          ) 
+ ), 
+  
+  fluidRow(
+  
+   column(6,
+          uiOutput(("diagnostic.PRED.DVOR.LOG"))  
+          #style='margin-bottom:30px;  border:1px solid; padding: 10px;'   
+          ), 
+   column(6,
+          uiOutput(("diagnostic.IPRED.DVOR.LOG")) 
+          #style='margin-bottom:30px;  border:1px solid; padding: 10px;'  
+          ) 
+ )
+ 
+    )
+```
+
+
+
+
+
+
+
+```{r}
+ 
+  output$diagnostic.CWRES.TIME <- renderUI({ 
+      xpdb = xpdb_inputData()
+      validate(need(xpdb, message=FALSE))
+       
+      fig = values4xpdb$diagnostic$CWRES.TIME   
+      validate(need(fig, message=FALSE))
+  
+    
+    callModule(module_ggplot_brush, "xpdb.diagnostic.CWRES.TIME", 
+             fig=fig, 
+             mydata = slot(xpdb, "Data"), 
+             xvar="CWRES", yvar="TIME")
+    
+    module_ggplot_brush_UI(id="xpdb.diagnostic.CWRES.TIME", 
+                       label = "xpdb.diagnostic.CWRES.TIME")
+ 
+  })
+  
+  
+    output$diagnostic.CWRES.IPRED <- renderUI({ 
+      xpdb = xpdb_inputData()
+      validate(need(xpdb, message=FALSE))
+       
+      fig = values4xpdb$diagnostic$CWRES.IPRED   
+      validate(need(fig, message=FALSE))
+  
+    
+    callModule(module_ggplot_brush, "xpdb.diagnostic.CWRES.IPRED", 
+             fig=fig, 
+             mydata = slot(xpdb, "Data"), 
+             xvar="CWRES", yvar="IPRED")
+    
+    module_ggplot_brush_UI(id="xpdb.diagnostic.CWRES.IPRED", 
+                       label = "xpdb.diagnostic.CWRES.IPRED")
+ 
+  })
+    
+    
+    
+    
+    output$diagnostic.CWRES.ID <- renderUI({ 
+      xpdb = xpdb_inputData()
+      validate(need(xpdb, message=FALSE))
+       
+      fig = values4xpdb$diagnostic$CWRES.ID   
+      validate(need(fig, message=FALSE))
+  
+    
+    callModule(module_ggplot_brush, "xpdb.diagnostic.CWRES.ID", 
+             fig=fig, 
+             mydata = slot(xpdb, "Data"), 
+             xvar="CWRES", yvar="ID")
+    
+    module_ggplot_brush_UI(id="xpdb.diagnostic.CWRES.ID", 
+                       label = "xpdb.diagnostic.CWRES.ID")
+ 
+  })
+    
+    
+    output$diagnostic.CWRES.QUANTILE <- renderUI({ 
+      xpdb = xpdb_inputData()
+      validate(need(xpdb, message=FALSE))
+       
+      fig = values4xpdb$diagnostic$CWRES.QUANTILE   
+      validate(need(fig, message=FALSE))
+  
+    
+    callModule(module_ggplot_brush, "xpdb.diagnostic.CWRES.QUANTILE", 
+             fig=fig, 
+             mydata = slot(xpdb, "Data"), 
+             xvar="x", yvar="y")
+    
+    module_ggplot_brush_UI(id="xpdb.diagnostic.CWRES.QUANTILE", 
+                       label = "xpdb.diagnostic.CWRES.QUANTILE")
+ 
+  })
+    
+    
+    
+    fluidRow(
+  fluidRow(
+  
+   column(6,
+          uiOutput(("diagnostic.CWRES.TIME"))  
+          #style='margin-bottom:30px;  border:1px solid; padding: 10px;'   
+          ), 
+   column(6,
+          uiOutput(("diagnostic.CWRES.IPRED")) 
+          #style='margin-bottom:30px;  border:1px solid; padding: 10px;'  
+          ) 
+ ), 
+  
+  fluidRow(
+  
+   column(6,
+          uiOutput(("diagnostic.CWRES.ID"))  
+          #style='margin-bottom:30px;  border:1px solid; padding: 10px;'   
+          ), 
+   column(6,
+          uiOutput(("diagnostic.CWRES.QUANTILE")) 
+          #style='margin-bottom:30px;  border:1px solid; padding: 10px;'  
+          ) 
+ )
+ 
+    )
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+  output$diagnostic.INDIV_PLOT25 <- renderUI({ 
+      xpdb = xpdb_inputData()
+      validate(need(xpdb, message=FALSE))
+       
+      fig = values4xpdb$diagnostic$INDIV_PLOT25  
+      validate(need(fig, message=FALSE))
+  
+    
+    callModule(module_ggplot_brush, "xpdb.diagnostic.INDIV_PLOT25", 
+             fig=fig, 
+             mydata = slot(xpdb, "Data"), 
+             xvar="TIME", yvar="DV")
+    
+    module_ggplot_brush_UI(id="xpdb.diagnostic.INDIV_PLOT25", 
+                       label = "xpdb.diagnostic.INDIV_PLOT25")
+ 
+  })
+
+  
+  fluidRow(column(12,uiOutput(("diagnostic.INDIV_PLOT25"))))
+```
+
+
+
+
+```{r}
+
+  output$diagnostic.ETAvsCOV <- renderUI({ 
+      xpdb = xpdb_inputData()
+      validate(need(xpdb, message=FALSE))
+       
+      fig = values4xpdb$diagnostic$ETAvsCOV[[2]]  
+      validate(need(fig, message=FALSE))
+  
+    
+    callModule(module_ggplot_brush, "xpdb.diagnostic.ETAvsCOV", 
+             fig=fig, 
+             mydata = slot(xpdb, "Data"), 
+             xvar="cov_value", yvar="ETA1") # cov_value, y = ETA1
+    
+    module_ggplot_brush_UI(id="xpdb.diagnostic.ETAvsCOV", 
+                       label = "xpdb.diagnostic.ETAvsCOV")
+ 
+  })
+
+  
+  fluidRow(column(12, uiOutput(("diagnostic.ETAvsCOV"))))
+```
+
+
+
+ 
+
+
+```{r}
+
+  output$diagnostic.ETAvsETA <- renderUI({ 
+      xpdb = xpdb_inputData()
+      validate(need(xpdb, message=FALSE))
+        
+      fig = values4xpdb$diagnostic$ETAvsETA[[1]]  
+      validate(need(fig, message=FALSE))
+   
+    
+    callModule(module_ggplot_brush, "xpdb.diagnostic.ETAvsETA", 
+             fig=fig, 
+             mydata = slot(xpdb, "Data"), 
+             xvar="ETA_1", yvar="ETA_2") # cov_value, y = ETA1
+    
+    module_ggplot_brush_UI(id="xpdb.diagnostic.ETAvsETA", 
+                       label = "xpdb.diagnostic.ETAvsETA")
+ 
+  })
+  
+  fluidRow(column(12, uiOutput(("diagnostic.ETAvsETA"))))
+```
+
+
+```{r}
+
+ observeEvent({xpdb_inputData()}, {
+                 
+   xpdb = xpdb_inputData() 
+   validate(need(xpdb, message=FALSE) 
+   )
+    
+   # all diagnostic model 
+   #
+   values4xpdb = xpdb_diagnostic_GOF1(xpdb, values4xpdb)
+   
+   #
+   values4xpdb = xpdb_diagnostic_GOF2(xpdb, values4xpdb) 
+   
+   #
+   values4xpdb = xpdb_diagnostic_GOF3(xpdb, values4xpdb, 
+                                      n=25, ids=NA)
+      
+   #
+   values4xpdb = xpdb_diagnostic_ETAvsETA(xpdb, values4xpdb, 
+                                          eta_name_lst=paste("ETA", 1:3, sep=""))
+   
+   #
+   values4xpdb = xpdb_diagnostic_ETAvsCOV(xpdb, values4xpdb, 
+                                     cov_name_lst=c("WT", "SEX"), 
+                                     eta_name_lst=c("ETA1", "ETA2", "ETA3" ))
+      
+ })
+```
+ 
+

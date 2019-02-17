@@ -1,0 +1,81 @@
+ 
+### Concentration of target  <a name="run_sim"></a>
+
+
+#### Mean time-profile <a name="run_sim"></a>
+```{r}
+target_despcriptive_analysis_inputData <- reactive({
+  tdata = ALL$DATA[["mYtEsT_for_despcriptive_analysis"]] 
+  validate(need(tdata, message="no data found yet"))
+  
+  if ("TESTCAT" %in% colnames(tdata)) {
+    tdata = tdata %>% filter(TESTCAT=="TARGET")
+  }
+  tdata
+  
+})
+```
+
+
+```{r}  
+ 
+output$target_despcriptive_analysis_population_mean_plot <- renderUI({ 
+  # Create a namespace function using the provided id
+  #ns <- NS(id)
+  
+  validate(need(target_despcriptive_analysis_inputData(), message="no data found yet"))
+  
+    script = readLines("./script/desp_mean_profile.R")
+    script = paste0(script, sep="\n")   # sep="<br/>")
+    script = paste0(script, collapse="")
+  
+   isolate({ 
+      ALL = callModule(module_run_script, "target_despcriptive_analysis_population_mean_plot", 
+                       ALL, 
+                       dataset=target_despcriptive_analysis_inputData(), 
+                       script=script)
+   }) 
+  
+
+   module_run_script_UI(("target_despcriptive_analysis_population_mean_plot"), label = NULL) 
+     
+})
+
+ fluidRow(column(12, uiOutput(("target_despcriptive_analysis_population_mean_plot"))))
+
+```
+ 
+
+
+#### Individual time-profile <a name="run_sim"></a>
+
+
+
+```{r}  
+ 
+output$target_despcriptive_analysis_population_indiv_plot <- renderUI({ 
+  # Create a namespace function using the provided id
+  #ns <- NS(id)
+  
+  validate(need(target_despcriptive_analysis_inputData(), message="no data found yet"))
+  
+    script = readLines("./script/desp_indiv_profile.R")
+    script = paste0(script, sep="\n")   # sep="<br/>")
+    script = paste0(script, collapse="")
+  
+   isolate({ 
+      ALL = callModule(module_run_script, "target_despcriptive_analysis_population_indiv_plot", 
+                       ALL, 
+                       dataset=target_despcriptive_analysis_inputData(), 
+                       script=script)
+   }) 
+  
+
+   module_run_script_UI(("target_despcriptive_analysis_population_indiv_plot"), label = NULL) 
+     
+})
+
+ fluidRow(column(12, uiOutput(("target_despcriptive_analysis_population_indiv_plot"))))
+
+```
+

@@ -1,0 +1,114 @@
+ 
+# E/R analysis <a name="exposure_response"></a>
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+```{r}
+
+innerModUI <- function(id) {
+  ns <- NS(id)
+  
+  fluidPage(fluidRow(
+    uiOutput(ns("inner_slider")),
+    plotOutput(ns("inner_plot"))
+  ))
+}
+
+innerMod <- function(input, output, session) {
+  
+  ns <- session$ns
+  
+  output$inner_slider <- renderUI({
+    sliderInput(ns("slider2"), label = "inner module slider", min = round(min(mtcars$mpg)), 
+      max = round(max(mtcars$mpg)), value = c(min(mtcars$mpg), max(mtcars$mpg), step = 1))
+  })
+  
+  output$inner_plot <- renderPlot({
+    #req(input$slider2)
+    validate(need(input$slider2, message=FALSE))
+    
+    data <- filter(mtcars, between(mpg, input$slider2[1], input$slider2[2]))
+    ggplot(data, aes(mpg, wt)) + geom_point()
+  })
+}
+
+
+
+
+
+outerModUI <- function(id) {
+  ns <- NS(id)
+  fluidPage(fluidRow(
+    uiOutput(ns("outer_slider")),
+    plotOutput(ns("outer_plot")),
+    uiOutput(ns("inner_slider")) 
+    
+  ))
+}
+
+outerMod <- function(input, output, session) {
+  
+   ns <- session$ns
+   
+  
+  output$inner_slider <- renderUI({
+    callModule(innerMod, "innerID")
+      innerModUI(ns("innerID"))
+  })
+  
+  
+  
+  output$outer_slider <- renderUI({
+    sliderInput(ns("slider1"), label = "outer module slider", min = round(min(mtcars$mpg)), 
+      max = round(max(mtcars$mpg)), value = c(min(mtcars$mpg), max(mtcars$mpg), step = 1))
+  })
+  
+  output$outer_plot <- renderPlot({
+    #req(input$slider1)
+    validate(need(input$slider1, message=FALSE))
+    
+    data <- filter(mtcars, between(mpg, input$slider1[1], input$slider1[2]))
+    ggplot(data, aes(mpg, wt)) + geom_point()
+  })
+}
+ 
+ 
+
+
+
+  callModule(outerMod, "outer")
+  
+ #fluidPage(
+ #fluidRow(
+    outerModUI("outer")
+  #)
+#)
+ 
+```
+
+
+
+
+
+```{r, eval=FALSE}
+renderUI({
+  
+  callModule(module_tabBox_next_previous, "testerwrf")
+   
+  fluidRow(
+    column(12, 
+           module_tabBox_next_previous_UI(id="testerwrf", label = "")
+          )
+      )
+   
+  })
+
+ 
+  
+  
+  
+```
+

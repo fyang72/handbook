@@ -1,0 +1,250 @@
+ 
+
+# Construct dataset <a name="construct_dataset"></a>
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+ 
+
+## Assemble nonmem data <a name="construct_dataset"></a>
+
+### adsl  <a name="construct_dataset"></a>
+
+```{r, standardize_adsl}
+
+#----------------------------------------------------
+# standardize_adsl
+#----------------------------------------------------
+# default_adpc_checkin
+default_adsl_checkin <- reactive({ 
+  read_excel("./lib/pkmeta.xlsx",sheet="adsl",col_names = TRUE)  %>% 
+    as.data.frame() %>% filter(!is.na(standard.name))
+})
+
+output$standardize_adsl <-renderUI({
+  validate(need(globalVars$login$status, message=FALSE))
+  
+  script = readLines("./script/build_adsl.R")
+  script = paste0(script, sep="\n")   # sep="<br/>")
+  script = paste0(script, collapse="")
+  
+  # callModule 
+  ALL = callModule(module_build_dataset_wrapper, "standardize_adsl", 
+                   ALL, 
+                   dataset_name="mYtEsT_for_standardize_adsl",
+                   script=script,
+                   default_checkin =  default_adsl_checkin()
+  )
+  
+  
+  # UI  
+  fluidRow(column(12, 
+                  module_build_dataset_wrapper_UI(id="standardize_adsl", label=NULL)
+                  ) 
+  )  
+})
+
+fluidRow(column(12, uiOutput(("standardize_adsl"))))
+```
+
+### adex  <a name="construct_dataset"></a>
+
+```{r, standardize_adex}
+
+#----------------------------------------------------
+# standardize_adex
+#----------------------------------------------------
+# default_adpc_checkin
+default_adex_checkin <- reactive({ 
+  read_excel("./lib/pkmeta.xlsx",sheet="adex",col_names = TRUE)  %>% 
+    as.data.frame() %>% filter(!is.na(standard.name))
+})
+
+output$standardize_adex <-renderUI({
+  validate(need(globalVars$login$status, message=FALSE))
+  
+  script = readLines("./script/build_adex.R")
+  script = paste0(script, sep="\n")   # sep="<br/>")
+  script = paste0(script, collapse="")
+  
+  # callModule 
+  ALL = callModule(module_build_dataset_wrapper, "standardize_adex", 
+                   ALL, 
+                   dataset_name="mYtEsT_for_standardize_adex",
+                   script=script,
+                   default_checkin =  default_adex_checkin()
+  )
+  
+  # UI  
+  fluidRow(column(12, 
+                  module_build_dataset_wrapper_UI(id="standardize_adex", label=NULL)
+                  ) 
+  )  
+})
+
+fluidRow(column(12, uiOutput(("standardize_adex"))))
+```
+
+### adpc  <a name="construct_dataset"></a>
+
+```{r, standardize_adpc}
+
+#----------------------------------------------------
+# standardize_adpc
+#----------------------------------------------------
+# default_adpc_checkin
+default_adpc_checkin <- reactive({ 
+  read_excel("./lib/pkmeta.xlsx",sheet="adpc",col_names = TRUE)  %>% 
+    as.data.frame() %>% filter(!is.na(standard.name))
+})
+
+output$standardize_adpc <-renderUI({
+  validate(need(globalVars$login$status, message=FALSE))
+  
+  script = readLines("./script/build_adpc.R")
+  script = paste0(script, sep="\n")   # sep="<br/>")
+  script = paste0(script, collapse="")
+    
+  # callModule 
+  ALL = callModule(module_build_dataset_wrapper, "standardize_adpc", 
+                   ALL, 
+                   dataset_name="mYtEsT_for_standardize_adpc",
+                   script=script,
+                   default_checkin =  default_adpc_checkin()
+  )
+  
+  
+  # UI  
+  fluidRow(column(12, 
+                  module_build_dataset_wrapper_UI(id="standardize_adpc", label=NULL)
+                  ) 
+          )  
+})
+
+fluidRow(column(12, uiOutput(("standardize_adpc"))))
+```
+
+### other  <a name="construct_dataset"></a>
+
+```{r, standardize_adpd}
+
+#----------------------------------------------------
+# standardize_adpd
+#----------------------------------------------------
+# default_adpd_checkin
+default_adpd_checkin <- reactive({ 
+  read_excel("./lib/pkmeta.xlsx",sheet="adpc",col_names = TRUE)  %>% 
+    as.data.frame() %>% filter(!is.na(standard.name))
+})
+
+output$standardize_adpd <-renderUI({
+  validate(need(globalVars$login$status, message=FALSE))
+  
+  script = readLines("./script/build_adpc.R")
+  script = paste0(script, sep="\n")   # sep="<br/>")
+  script = paste0(script, collapse="")
+  
+  # callModule 
+  ALL = callModule(module_build_dataset_wrapper, "standardize_adpd", 
+                   ALL, 
+                   dataset_name="mYtEsT_for_standardize_adpd",
+                   script=script,
+                   default_checkin =  default_adpd_checkin()
+  )
+  
+  
+  # UI  
+  fluidRow(column(12, 
+                  module_build_dataset_wrapper_UI(id="standardize_adpd", label=NULL)
+                  ) 
+          )  
+})
+
+fluidRow(column(12, uiOutput(("standardize_adpd"))))
+```
+
+### assemble  <a name="construct_dataset"></a>
+ 
+
+```{r, standardize_adpx}
+
+#----------------------------------------------------
+# standardize_adpx
+#----------------------------------------------------
+# default_adpx_checkin
+default_adpx_checkin <- reactive({ 
+  read_excel("./lib/pkmeta.xlsx",sheet="adpx",col_names = TRUE)  %>% 
+    as.data.frame() %>% filter(!is.na(standard.name))
+})
+
+output$standardize_adpx <-renderUI({
+  validate(need(globalVars$login$status, message=FALSE))
+  
+  script = readLines("./script/build_adpx.R")
+  script = paste0(script, sep="\n")   # sep="<br/>")
+  script = paste0(script, collapse="")
+  
+  # callModule 
+  ALL = callModule(module_build_dataset_wrapper, "standardize_adpx", 
+                   ALL, 
+                   dataset_name="mYtEsT_for_standardize_adpx",
+                   script=script,
+                   default_checkin =  default_adpx_checkin()
+  )
+  
+  
+  # UI  
+  fluidRow(column(12, 
+                  module_build_dataset_wrapper_UI(id="standardize_adpx", label=NULL)
+  ) 
+  )  
+})
+
+fluidRow(column(12, uiOutput(("standardize_adpx"))))
+```
+
+
+
+
+## Standardize nonmem data <a name="construct_dataset"></a>
+
+```{r, standardize_nmdat}
+
+#----------------------------------------------------
+# standardize_nmdat
+#----------------------------------------------------
+# default_adpc_checkin
+default_nmdat_checkin <- reactive({ 
+  read_excel("./lib/pkmeta.xlsx",sheet="nmdat",col_names = TRUE)  %>% 
+    as.data.frame() %>% filter(!is.na(standard.name))
+})
+
+output$standardize_nmdat <-renderUI({
+  validate(need(globalVars$login$status, message=FALSE))
+  
+  script = readLines("./script/build_nmdat.R")
+  script = paste0(script, sep="\n")   # sep="<br/>")
+  script = paste0(script, collapse="")
+  
+  # callModule 
+  ALL = callModule(module_build_dataset_wrapper, "standardize_nmdat", 
+                   ALL, 
+                   dataset_name="mYtEsT_for_standardize_nmdat",
+                   script=script,
+                   default_checkin= default_nmdat_checkin()
+                  )
+  
+
+  # UI  
+  fluidRow(column(12, 
+                   module_build_dataset_wrapper_UI(id="standardize_nmdat", label=NULL)
+                 ) 
+          )  
+})
+
+fluidRow(column(12, uiOutput(("standardize_nmdat"))))
+```
+
+ 

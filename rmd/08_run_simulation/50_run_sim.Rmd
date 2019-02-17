@@ -1,0 +1,108 @@
+ 
+
+# Simulation <a name="run_sim"></a>
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this: 
+
+
+## Run simulation <a name="run_sim"></a>
+
+```{r}
+
+  actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
+
+
+
+  output$run.simulation <- renderUI({ 
+     
+    ALL = callModule(module_run_simulation, "run.simulation", ALL)  
+    module_run_simulation_UI(id="run.simulation", label = "run.simulation")
+ 
+  })
+  
+  fluidRow(column(12, uiOutput(("run.simulation"))))
+```
+
+ 
+## Summary of result <a name="run_sim"></a>
+
+
+### Individual plot <a name="run_sim"></a>
+ 
+  
+```{r}
+ 
+
+  dataset = data.frame(x=1:101, y=101:201)
+
+  dataset10 = data.frame(x=1:101, y=101:201) %>% mutate(x=x*10)
+
+  script0 = 'calcIt<-function(dataset, params=0) {
+                    tabl = dataset %>% mutate(x=x*2)
+                    plot = ggplot(dataset, aes(x=x, y=y)) + geom_point() + geom_line();
+          return(list(plot=plot, tabl=tabl))
+  } 
+   '
+  
+  
+    script = 'calcIt<-function(dataset, params=0) {
+                    tabl = dataset %>% mutate(F1=F1*2)
+                    plot = ggplot(dataset, aes(x=TIME, y=IPRED, group=USUBJID, col=ARMA)) + 
+                              geom_point() + geom_line();
+          return(list(plot=plot, tabl=tabl))
+  } 
+   '
+  
+  
+    #-----------------------------------------
+  # data_selector
+  #-----------------------------------------
+  output$data_selector <- renderUI({
+    ALL$DATA[['TEST']] = dataset
+    ALL$DATA[['TEST10']] = dataset10
+    
+    if (is.null(ALL$DATA)) {return(NULL)}
+    
+    data.lst = c("", unique(names(ALL$DATA)))
+    selectizeInput(("data_name"), 
+                   label    = "select which dataset:" , 
+                   choices  = data.lst,  #unique(inputData()%>%pull(TEST)),    
+                   multiple = FALSE, 
+                   
+                   selected = data.lst[1])  #unique(inputData()%>%pull(TEST))[1])   
+  })
+  fluidRow(column(12, uiOutput(("data_selector"))))
+  
+  
+  
+output$indiv_result <- renderUI({ 
+  # Create a namespace function using the provided id
+  #ns <- NS(id)
+  
+   
+  validate(need(input$data_name, message=FALSE))
+  
+  ALL =  callModule(module_run_script, "module_calcItteyte", ALL, 
+                    dataset=ALL$DATA[[input$data_name]], 
+                    script)
+
+   module_run_script_UI(("module_calcItteyte"), label = "module_calcItteyte") 
+     
+})
+
+ fluidRow(column(12, uiOutput(("indiv_result"))))
+
+```
+ 
+ 
+### Population-mean plot <a name="run_sim"></a>
+ 
+ 
+### Boxplot, etc
+ 
+```{r, eval=FALSE}
+ 
+```
+ 

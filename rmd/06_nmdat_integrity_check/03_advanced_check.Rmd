@@ -1,0 +1,305 @@
+
+## Advanced check  
+In this section, we mainly use a variety of visualization or table to check the integrity of the data.
+
+```{r} 
+
+   nmdat_advanced_check <- function(nmdat, values4nmdat)  {
+      validate(need(nmdat, message=FALSE)) 
+     
+      values4nmdat = check.nmdat.venn.diagram(nmdat, values4nmdat)      
+      
+      values4nmdat = check.NTIM.TIME(nmdat, values4nmdat)
+         
+      values4nmdat = check.missing.samples.events(nmdat, values4nmdat)
+      
+      values4nmdat = check.planned.dose.actual.dose(nmdat, values4nmdat)
+        
+   return(values4nmdat)
+   }
+   
+   # 0. `r colFmt("PK population",'green')`: a total of `r nmdat %>% filter(TIME>0, TEST==PK.TEST.NAME) %>% filter(as_numeric(DVOR)>LLOQ) %>% pull(ID) %>% unique() %>% length() %>% colFmt("green")` subjects who have at least 1 post-dose quantifiable (>LLOQ) sample in this dataset.
+```
+
+### Subject-related  
+ 
+0.  a total of subjects who have at least 1 post-dose quantifiable (>LLOQ) sample in this dataset.
+
+
+<!-- 1. Venn Diagram of Population in adsl, adex, and adpc-->
+1. Venn Diagram of Population in adsl, adex, and adpc, as shown below.  This diagram can be used to check any subjects who have dosing records but no PK measurements, or any subject who have pk measurements, but the dosing information is missing.
+
+
+```{r, venn.diagram, anchor="figure", echo = FALSE, fig.width=4, fig.height=4,  fig.cap="Venn Diagram of Population in adsl, adex, and adpc Dataset", eval=TRUE}
+# in `r figr('venn.diagram', TRUE, TRUE, type="Figure")`.
+check.nmdat.venn.diagram <- function(nmdat, values4nmdat)  {
+  
+ validate(need(nmdat, message=FALSE), 
+          need(all(c("ID", "EVID", "AMT", "TEST") %in% colnames(nmdat)), message=FALSE)
+ )
+   
+  adex = nmdat %>% filter(!is.na(as_numeric(ID)), EVID!=0, as_numeric(AMT)>=0)
+  adsl = nmdat %>% distinct(ID, .keep_all=TRUE) %>% filter(!is.na(as_numeric(ID))) 
+  adpc = nmdat %>% filter(!is.na(as_numeric(ID)), EVID==0, TEST == "REGN3918" )  # unique(TEST)[1])PK.TEST.NAME
+  
+ # https://scriptsandstatistics.wordpress.com/2018/04/26/how-to-plot-venn-diagrams-using-r-ggplot2-and-ggforce/
+    
+  require(VennDiagram)
+  a.list <- list(adsl=unique(as.character(adsl$ID)), 
+                 adex=unique(as.character(adex$ID)), 
+                 adpc=unique(as.character(adpc$ID)))
+  
+  #https://stackoverflow.com/questions/33393962/r-dont-write-log-file-for-venndiagram
+  t1 = futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
+   venn.plot <- venn.diagram(a.list,fill = c("red", "green", "blue"),
+                             alpha = c(0.5, 0.5, 0.5), cex = 2,cat.fontface = 4,lty =2, 
+                             euler.d = FALSE, scaled = FALSE, #fontfamily =3, 
+                             filename = NULL);
+    grid::grid.newpage()
+    grid::grid.draw(venn.plot)  
+  fig = grDevices::recordPlot() 
+  fig = ggplot(data=data.frame(x=5,y=15), aes(x, y)) + geom_point() + theme_bw() 
+  
+  #while (!is.null(dev.list()))  dev.off()
+  values4nmdat$FIGURE$nmdat.venn.diagram =  fig  
+  
+  return(values4nmdat)
+}
+   
+
+# ggplot_container
+  renderUI({
+    output$nmdat.venn.diagram8 <- renderPlot({
+       values4nmdat$FIGURE$nmdat.venn.diagram
+    })
+    
+    plotOutput("nmdat.venn.diagram8", width = "500px", height = "500px")  # 100%
+  })
+```
+where 'adsl' is the dataset containing patient's demographic information. Typically one row represent one patient. 'adex' is the dataset holding dosing records. 'adpc' is the dataset for all concentrations samples. 
+
+
+<!-- 3.  .-->
+3. 
+
+
+
+### Time-related:  
+
+<!-- 2. nominal time vs actual time -->
+
+2. Check the nominal time vs actual time, brush/click data point to view those outliers. 
+ 
+ 
+```{r, NTIM.vs.TIME, anchor="figure", cache=FALSE, fig.cap="Check the nominal time vs actual time, identify the potential outliers"}
+check.NTIM.TIME <- function(nmdat, values4nmdat) {
+     validate(need(nmdat, message='FALSE'), 
+              need(all(c("NTIM", "TIME") %in% colnames(nmdat)), message=FALSE)
+              )
+     
+   tdata = nmdat %>% mutate(NTIM=as_numeric(NTIM), 
+                            TIME=as_numeric(TIME), 
+                            DIFF=abs(NTIM-TIME)
+   )
+  
+   time.lst = c(tdata$NTIM, tdata$TIME)
+   fig = ggplot(tdata, aes(x=NTIM, y=TIME)) + 
+     geom_point() + 
+     geom_point(data=tdata %>% 
+                  filter(TIME>0) %>% top_n(20, DIFF) %>% 
+                  select(ID, NTIM, TIME, DIFF), 
+                color="red") + 
+     geom_abline(slope=1, lty="dashed" ) + 
+     coord_fixed(ratio = 1, 
+                 xlim = range(time.lst, na.rm=TRUE), 
+                 ylim = range(time.lst, na.rm=TRUE)) + 
+     xlab("Nominal Time (day)") + 
+     ylab("Actual Time (day)") + 
+     theme_bw() + base_theme(font.size=12)
+    
+     #while (!is.null(dev.list()))  dev.off()
+     values4nmdat$FIGURE$nmdat.NTIM.TIME =  fig  
+  
+     return(values4nmdat)
+
+}
+
+
+   renderUI({ 
+        callModule(module_ggplot_brush, "advanced.check.NTIM.TIME", 
+              fig=values4nmdat$FIGURE$nmdat.NTIM.TIME, 
+              mydata = nmdat_inputData(),  
+              xvar="NTIM", yvar="TIME")
+     
+     module_ggplot_brush_UI(id="advanced.check.NTIM.TIME", label = "advanced.check.NTIM.TIME")
+  
+   })
+
+```
+
+
+<!-- 2. nominal time vs actual time -->
+2. Check the nominal infusion time  vs. observed IV infusion time.
+
+
+<!-- 2. nominal time vs actual time -->
+3. Check TIME is in increasing order within a subject. 
+
+
+<!-- 2. nominal time vs actual time -->
+4. If TIME is negative, those records should be flagged and set CFALG as "Pre-dose". 
+    
+
+    
+
+
+
+
+
+
+### Concentration-related: 
+
+
+<!-- 1. missing dosing events or sample collections -->
+1. Using the following figure to check any missing sample collection or missing dosing event for any subjects, compared to planned dose and scheduled sample collection.  need(all(c("ID", "TIME", "ARMA", "EVID") %in% colnames(nmdat)).
+
+```{r}
+
+check.missing.samples.events <- function(nmdat, values4nmdat) {
+  validate(need(nmdat, message='FALSE'), 
+          need(all(c("ID", "TIME", "ARMA", "EVID") %in% colnames(nmdat)), message=FALSE)
+  )
+  
+  tdata = nmdat %>% mutate(ID=ordered(ID, levels=sort(unique(as.numeric(ID)), decreasing =TRUE))) %>% 
+    arrange(ARMA, ID) %>% 
+    mutate(TIME=as_numeric(TIME)) 
+           
+
+  xpos=setup_axis(xscale='7_14', xlimits=c(0, max(tdata$TIME, na.rm=TRUE)))
+  xneg=setup_axis(xscale='7_14', xlimits=c(0, -min(tdata$TIME, na.rm=TRUE)))
+  x=NULL
+  x$breaks = c(-rev(xneg$breaks), 
+               xpos$breaks[2:length(xpos$breaks)])
+  
+  x$labels = c( ifelse(rev(xneg$labels)%in%c("","0"), 
+                       rev(xneg$labels), 
+                       paste0("-", rev(xneg$labels))), 
+                xpos$labels[2:length(xpos$labels)])
+  #y=setup_axis(xscale='100_200', xlimits=c(0, max(tdata$meanPlusSE, na.rm=TRUE)))
+  
+fig = ggplot(tdata%>%filter(EVID==0), aes(x=TIME, y=ID)) + 
+  geom_point(aes(col="black" )) + 
+  geom_point(data=tdata%>%filter(EVID==1), aes(col="red")) + 
+  
+  #scale_x_continuous(breaks=x$breaks, label=x$labels) +
+    #scale_y_continuous(breaks=y$breaks, label=y$labels) +
+  
+  xlab("Actual Time(day)") + 
+  ylab("ID") + 
+  
+  theme_bw() + base_theme(font.size = 12)   + 
+  scale_color_manual( values = c("black", "red"),
+                      labels = c("concentration", "dose event"))
+ 
+ values4nmdat$FIGURE$missing.samples.events =  fig  
+  
+ return(values4nmdat)
+}
+
+
+
+   
+   renderUI({ 
+        callModule(module_ggplot_brush, "ggplot.missing.samples.events", 
+              fig=values4nmdat$FIGURE$missing.samples.events, 
+              mydata = nmdat_inputData(), #%>%filter(TEST%in%c("REGN3918", "CH50H")), 
+              xvar="TIME", yvar="ID")
+     
+     module_ggplot_brush_UI(id="ggplot.missing.samples.events", label = "ggplot.missing.samples.events")
+  
+   })
+   
+   
+   
+```
+
+
+<!-- 1. missing dosing events or sample collections -->
+2. Check the unrealistic peak:trough ratios 
+
+
+
+
+### Dose-related:  
+1. Check for trailing doses
+2. Check for unusual Time Since Previous Dose
+3. Check the total dose amount and infusion rate
+4. Check planned dose(s)  vs.  actual dose
+
+Check the dosing records, for example, the planned dose against the actual dose.
+
+
+```{r}
+
+check.planned.dose.actual.dose <- function(nmdat, values4nmdat) {
+  validate(need(nmdat, message='FALSE'), 
+          need(all(c("ID", "TIME", "ARMA", "EVID", "WGTBL") %in% colnames(nmdat)), message=FALSE)
+  )
+  #C, ROWID, USUBJID, ID, TIME, AMT, RATE, EVID, EXROUTN, CMT, MDV, WGTBL, ARMA, EXROUTE
+  
+  tdata = nmdat %>% filter(EVID==1) 
+
+  tdata = tdata %>% mutate(DOSE_MKG = as_numeric(AMT)/as_numeric(WGTBL), 
+                           INF_TIME = as_numeric(AMT)/as_numeric(RATE)*24*60     # in minutes
+  )
+  tdata = tdata %>% 
+    select(C, ROWID, ID, TIME, ARMA, DOSE_MKG, AMT, RATE, INF_TIME, EVID, EXROUTN, CMT, MDV, WGTBL, EXROUTE, USUBJID)
+  
+  print("checking adex...")
+  print(head(tdata))
+ values4nmdat$TABLE$planned.dose.actual.dose =  tdata  
+  
+ return(values4nmdat)
+}
+  
+renderUI({
+  callModule(module_table_output, "planned.dose.actual.dose",  
+               mytab = values4nmdat$TABLE$planned.dose.actual.dose)
+  
+  module_table_output_UI(id="planned.dose.actual.dose", 
+                          label="planned.dose.actual.dose" ) 
+}) 
+     
+    
+```
+
+
+### Covariate-related:  
+
+Report the percent of missing covariate values (body weight, etc.)
+Others:
+
+Check for missing records in NONMEM key variables, i.e., EVID, MDV, CMT, etc
+Compare if the number of subjects and observation records match to the numbers programmers provide
+
+
+
+
+Minor Check: 
+Summary statistics of demographics and covariates
+ 
+
+For subjects with missing observations, a null value '.' should be assigned.  Hong's comment: such record should not be included in the NM dataset, right? 
+
+
+Any variables with unit of Day (TIME, NTIM, TAD, etc) should have at least 6 significant digits. Hong's comments: is this necessary? usually 4 is good enough.
+ 
+All character values within the dataset is preferred in UPPER case  (???). Hong's comments: we should follow the SDTM or ADaM datasets value if retain the variables name, otherwise we can make is upper case or propecase,
+
+
+
+
+
+
+
+

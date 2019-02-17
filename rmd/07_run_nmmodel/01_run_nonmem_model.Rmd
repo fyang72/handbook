@@ -1,0 +1,258 @@
+ 
+# Model development <a name="model_development"></a>
+
+## Run NONMEM model  <a name="run_nonmem_model"></a>
+This section is to 1) load the nonmem dataset (nmdat tab), 2) load control stream file (ctlModel tab), 
+3) submit the job (submit tab), and 4) fetch the output after the run finish (fetch tab). 
+
+ 
+```{r}
+#----------------------------------------------------
+# renderUI for run_nonmem_model
+#----------------------------------------------------
+renderUI({
+tabBox(width=12, id = ("run_nonmem_model"), title =NULL, 
+      
+       # nmdat_container 
+       tabPanel(width=12, title="nmdat", value = "nmdat", collapsible = TRUE, 
+               collapsed = TRUE, solidHeader = TRUE,
+         fluidRow(  
+             column(12, 
+                    uiOutput(("load_nmdat_container")),
+                    uiOutput(("update_nmdat_container")), 
+                    style='margin-bottom:30px;  border:1px solid; padding: 10px;'
+                    )
+        )
+      ), 
+      
+      # ctlModel_container
+      tabPanel(width=12, title="ctlModel", value = "ctlModel", collapsible = TRUE, 
+               collapsed = TRUE, solidHeader = TRUE,
+         fluidRow(  
+             column(12, 
+                    uiOutput(("load_ctlModel_container")),
+                    uiOutput(("update_ctlModel_container")), 
+                    style='margin-bottom:30px;  border:1px solid; padding: 10px;'
+                    )
+        )
+      ),  
+      
+      # submit_container
+      tabPanel(width=12, title="submit", value = "submit", collapsible = TRUE, 
+               collapsed = TRUE, solidHeader = TRUE,
+        fluidRow(  
+             column(12, 
+                   uiOutput(("submit_container")), 
+                   style='margin-bottom:30px;  border:1px solid; padding: 10px;'
+                   )
+        )
+               
+      ), 
+       
+      # fetch_container
+      tabPanel(width=12, title="fetch", value = "fetch", collapsible = TRUE, 
+               collapsed = TRUE, solidHeader = TRUE,
+         fluidRow(  
+             column(12,  
+                   uiOutput(("fetch_container")), 
+                   style='margin-bottom:30px;  border:1px solid; padding: 10px;'
+                   )
+                )               
+      )
+)
+
+})
+
+#----------------------------------------------------
+# load_nmdat_container
+#----------------------------------------------------
+output$load_nmdat_container <-renderUI({
+   
+  # callModule 
+  #isolate({ 
+    ALL = callModule(module_load_dataset, "load_nmdat_for_nonmem_run", 
+                     ALL, dataset_name="mYtEsT_for_run_nonmem")
+  #})
+  
+  # UI  
+  fluidRow(column(6, 
+                   module_load_dataset_UI(id="load_nmdat_for_nonmem_run", label=NULL)
+                 ), 
+            column(6, 
+                   HTML(colFmt("internal library: build-in dataset <br>
+                                within session: secondary data derived from the original <br> 
+                                external file: external file", color="gray")
+                        )
+                   )
+            )  
+  })                             
+                                 
+# update_nmdat_container
+output$update_nmdat_container <- renderUI({ 
+ 
+  validate(need(ALL$DATA[['mYtEsT_for_run_nonmem']], message= "no data is loaded yet"))
+  
+  script = readLines("./script/script4_test.R")
+  script = paste0(paste0(script, sep="\n"), collapse="")   # sep="<br/>")
+  
+  isolate({ 
+      ALL = callModule(module_run_script, "update_nmdat_container", 
+                       ALL, 
+                       dataset = ALL$DATA[['mYtEsT_for_run_nonmem']],   
+                       script=script
+                )
+   }) 
+  
+  module_run_script_UI(("update_nmdat_container"),  label = NULL)  
+})
+ 
+ 
+#----------------------------------------------------
+# ctlModel
+#----------------------------------------------------
+# load_ctlModel_container  
+output$load_ctlModel_container <- renderUI({
+    
+  isolate({
+    ALL = callModule(module_load_ctlModel, "load_ctlModel_for_nonmem_run", 
+                   ALL, ctlModel_name="mYtEsT_for_run_nonmem")
+   })
+  
+  fluidRow(column(6, 
+               module_load_ctlModel_UI(id="load_ctlModel_for_nonmem_run",  label=NULL)
+               ), 
+           column(6, 
+                   HTML(colFmt("internal library: build-in ctlModel <br>
+                                within session: saved ctlModel within session <br> 
+                                external file: external file", color="gray")
+                        )
+                   )
+        )
+   
+  })
+
+
+# update_ctlModel_container
+output$update_ctlModel_container <- renderUI({
+   
+  isolate({
+    ALL = callModule(module_update_ctlModel, "module_update_ctlModel_for_nonmem_run", 
+                   ALL, ctlModel_name="mYtEsT_for_run_nonmem")
+  })
+  
+  fluidRow(
+    column(12, 
+            module_update_ctlModel_UI(id="module_update_ctlModel_for_nonmem_run", label=NULL)
+          )
+      )
+   
+  })
+
+ 
+#----------------------------------------------------
+# submit
+#----------------------------------------------------
+
+output$submit_container <-renderUI({
+    
+  # callModule
+  isolate({ 
+    callModule(module_submit_job, "submit_job_for_test_nonmem_run", 
+                 ALL, ctlModel_name="mYtEsT_for_run_nonmem")
+  })
+    
+  # UI  
+  module_submit_job_UI(id="submit_job_for_test_nonmem_run", label=NULL)
+                    
+})       
+
+
+  
+#----------------------------------------------------
+# fetch
+#----------------------------------------------------
+ output$fetch_container <-renderUI({
+    
+  isolate({ 
+  # callModule   ALL=???
+    callModule(module_fetch_job, "fetch_job_for_test_nonmem_run", 
+             ALL, ctlModel_name="mYtEsT_for_run_nonmem")
+  })
+ 
+  # UI  
+  module_fetch_job_UI(id="fetch_job_for_test_nonmem_run", label=NULL)
+                    
+  })       
+
+
+```
+
+ 
+ 
+  
+
+ 
+
+
+
+
+
+
+
+
+```{r, eval=FALSE}
+# If currently being run on the development server, replace the username with the name of the current developer.
+#  Sys.info()["user"]
+
+ 
+ 
+system(command = "mkdir -p /home/feng.yang/FYANG/Template/Handbook/model/output/feng.yang/test")
+         
+ 
+
+# processx 3.2.0
+# https://www.tidyverse.org/articles/2018/09/processx-3.2.0/
+#Running shell command and capturing the output   in R
+
+
+# system(command = "scp   ./model/ctl/control5.ctl    10.244.106.127:/home/feng.yang/test_data/test_nm/", intern = T)
+# system(command = "scp   ./data/THEOPP.csv     10.244.106.127:/home/feng.yang/test_data/test_nm/", intern = T)
+# 
+# txt = system(command = "ssh 10.244.106.127 'cd /home/feng.yang/test_data/test_nm/; execute control5.ctl  -clean=4'", intern = T)
+# system(command = "scp   10.244.106.127:/home/feng.yang/test_data/test_nm/control5.lst   ./model/ctl/")
+
+
+# ps -fs | grep 
+  
+   
+  
+  local RESULTS
+RESULTS=$(ssh user@server /usr/local/scripts/test_ping.sh)
+echo $?
+  
+  
+ system(command = paste0("scp 10.244.106.127:", paste0(server.model.dir, model.runno, ".ext   ", local.result.dir)))
+  
+
+ system(command = "scp   ./ctl/LN_BASE_WT/LN_BASE_WT.ctl  10.244.106.127:/home/feng.yang/R3918/ctl/LN_BASE_WT/", intern = T)
+#
+
+ system(command = "  local RESULTS") 
+ 
+ bash shell - ssh remote script capture output and exit code?
+ #  https://unix.stackexchange.com/questions/66581/bash-shell-ssh-remote-script-capture-output-and-exit-code
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,163 @@
+
+# Integrity check <a name="nonmem_dataset_integrity_check"></a>
+
+Here is the integrity check of the nonmem dataset. 
+
+```{r}
+HOME = dirname(dirname(getwd()))
+ 
+  
+  
+values8 <- reactiveValues(
+  nmdat.venn.diagram = NULL
+  ) 
+
+
+# only for internal use
+values4nmdat <- reactiveValues(
+  #nmdat.mandatory.col.lst = c("C","ROWID","ID","TIME","DV","CMT","MDV","AMT","RATE","EVID","CFLAG"),
+  mandatory_check = TRUE,
+  pass_quick_check=TRUE, 
+  red_alert=NULL, 
+  yellow_alert=NULL, 
+  
+  FIGURE = list(), 
+  TABLE = list()
+  )
+ 
+```
+
+
+## Load data
+You may load data from external sources or from internal datasets. The dataset is preferred to be in the  "sas7bdat" format since it typically contain meta information such data type and the corresponding label. The resulting dataset is presented in .
+
+
+```{r} 
+  ALL = callModule(module_load_data, "load_nmdat_for_integrity_check", ALL, data_name="check_nmdat")
+  
+  renderUI({
+    fluidRow( 
+        column(6,
+             module_load_data_UI(id="load_nmdat_for_integrity_check", label="Load data") 
+             )
+    )
+  })
+  
+```
+
+
+
+```{r}
+
+
+renderUI({
+  #isolate({ 
+  
+  #print(" ALL$DATA[[ check_nmdat ]]")
+  #print( ALL$DATA[["check_nmdat"]])
+
+  #})
+    callModule(module_table_output, "nmdat_inputData_3465346",  
+               mytab = (ALL$DATA[["check_nmdat"]])   # nmdat_inputData()    
+             )
+  
+  validate(need(ALL$DATA[["check_nmdat"]], message="no data loaded"))
+  
+  module_table_output_UI(id="nmdat_inputData_3465346", 
+                          label="nmdat_inputData" ) 
+})
+```
+
+
+
+
+
+
+```{r, eval=FALSE}
+  # inputData
+
+ 
+  file.name = paste0(HOME, "/data/nmdat_PKPD_1024_2018.csv")
+  #file.name = paste0(dirname(dirname(getwd())), file.name)
+  nmdat = read_csv(file.name, 
+                   col_type=cols(.default=col_character()))   # read as character as defualt
+  
+  
+nmdat <- nmdat %>% 
+  mutate(ARMA = gsub("_", " ", ARMA, fix=TRUE), 
+         ARMA = ordered(ARMA, levels=unique(as.character(ARMA))), # make ARMA as a ordered factor
+         ARMAN = as.integer(ARMA), 
+         TIME=as.numeric(TIME), 
+         DV   = as.numeric(DV),
+         DVOR = as.numeric(DVOR), 
+         ID = as.integer(ID), 
+         TIME = as.numeric(TIME), 
+         AMT = as.numeric(AMT),  ################
+         RATE = as.numeric(RATE), 
+         EVID = as.integer(EVID), 
+         CMT = as.integer(CMT), 
+         MDV = as.integer(MDV), 
+         NTIM = as.numeric(NTIM),
+         LLOQ = as.numeric(LLOQ),
+         
+         
+         WGTBL = as.numeric(WGTBL),
+         CH50HBL = as.numeric(CH50HBL), 
+         C5BL = as.numeric(C5BL) 
+)
+
+  # nmdat = nmdat %>%  mutate(
+  # SFSGSFSFSGSF = "656",
+  # f3653fhf = "656" )
+  # 
+  # nmdat$evid = nmdat$EVID
+  # nmdat[5, "TIME"] = 56
+  # 
+  # nmdat[100, "ID"] = NA
+  # 
+  # nmdat[20, "DV"] = NA
+  # nmdat[20, "MDV"] = 0
+  
+  nmdat.default = nmdat
+  
+```
+
+ 
+```{r DT_nmdat, eval=TRUE, anchor="table", tab.cap=paste0("Dataset Just Loaded (" ,  ")"), tab.align='center'}
+  
+  nmdat_inputData <- reactive({
+   
+    #validate(need(ALL$DATA, message="please load data"))
+     
+    #print("in nmdat_check_inputData  ")
+    # have to reset when a new dataset loaded.
+    values4nmdat$mandatory_check=TRUE    
+    values4nmdat$pass_quick_check=TRUE  
+    values4nmdat$red_alert=NULL 
+    values4nmdat$yellow_alert=NULL
+    
+    values4nmdat$nmdat.venn.diagram = plot(1,1)
+    
+    isolate({ 
+     name.lst = setdiff(names(values4nmdat), 
+                        c("pass_quick_check", "mandatory_check", "red_alert", "yellow_alert"))
+     for (i in name.lst) {
+        values4nmdat[[i]]$status = FALSE
+        values4nmdat[[i]]$info = NULL
+     }
+    }) 
+    
+    nmdat = ALL$DATA[['check_nmdat']] 
+   nmdat
+  })
+   
+  #
+
+
+
+ 
+ 
+```
+
+
+
