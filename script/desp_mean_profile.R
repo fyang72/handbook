@@ -1,0 +1,173 @@
+##########################################################################################
+# Mean time profile
+##########################################################################################
+ 
+desp_mean_profile <-function(dataset, params=NULL) {
+  #dataset=read_csv("./data/nmdatPKPD.csv")  # %>% filter(TESTCAT=="RESP1")
+
+  figure=NULL
+  table =NULL
+  data = NULL
+  
+  #------------------------------
+  # these key varaibles needed
+  #------------------------------
+  key.column.lst <- c("STUDYID", "USUBJID", "DOSEGRP", "NTIM", "TIMEPT", "TESTCD", "DVOR", "TIME", "LLOQ", "EXTRT")
+  missing.column.lst <- key.column.lst[which(!key.column.lst %in% colnames(dataset))]
+  message <- paste0("missing variable(s) of ", paste0(missing.column.lst, sep=", ", collapse=""))
+  
+  validate(need(all(key.column.lst %in% colnames(dataset)), message=message)
+  )
+   
+  #----------------------------------
+  # derived information fromd dataset
+  #-----------------------------------
+  study_name = ifelse(!"STUDYID" %in% colnames(dataset), "STUDYID", 
+                      paste0(unique(dataset$STUDYID), sep=" ", collapse=""))
+  
+  drug_name = ifelse(!"EXTRT" %in% colnames(dataset), "EXTRT",
+                     paste0(unique(dataset$EXTRT), sep=" ", collapse=""))
+  
+  test_name = ifelse(!"TESTCD" %in% colnames(dataset), "TESTCD",
+                     paste0(unique(dataset$TESTCD), sep=" ", collapse=""))
+  
+  test_label = ifelse(!"TESTLABL" %in% colnames(dataset), "TESTLABL",
+                      paste0(unique(dataset$TESTLABL), sep=" ", collapse=""))
+  
+  #------------------------------           
+  # prepare the dataset 
+  #------------------------------
+  tdata = dataset  %>%   
+    
+    mutate(DVOR=as_numeric(DVOR), 
+           NTIM=as_numeric(NTIM),
+           TIME=as_numeric(TIME), 
+           LLOQ = as_numeric(LLOQ)
+           ) %>% 
+    filter(TIME>=0) %>%  # exclude pre-dose samples
+    mutate(LLOQ = ifelse(is.na(LLOQ), 0, LLOQ)) %>% 
+    #Concentrations below the lower limit of quantification (LLOQ = 0.078 mg/L) are set to LLOQ/2 
+    mutate(DVOR = ifelse(DVOR<LLOQ, LLOQ/2, DVOR))  
+  
+  # order the dose group  
+  dosegrp.lst <- unique(tdata$DOSEGRP)
+  # print(dosegrp.lst)
+  # dosegrp.lst <- c("1 mg/kg IV","3 mg/kg IV","10 mg/kg IV", "30 mg/kg IV",  
+  #                  "300 mg SC", "600 mg SC")
+  
+  tdata = tdata %>%  mutate(DOSEGRP=ordered(DOSEGRP, levels=dosegrp.lst))
+  
+  #------------------
+  #  calculate stats:
+  #------------------ 
+  tdata = tdata  %>%    # exclude pre-dose samples
+     
+    # calculate the statistics (Mean, SE, SD)
+    calc_stats(id="USUBJID", 
+               group_by=c("STUDYID", "TESTCD","DOSEGRP", "NTIM","TIMEPT"), 
+               value="DVOR") %>% 
+    
+    # DOSEGRP = DOSEGRP + (N)
+    arrange(DOSEGRP) %>% group_by(DOSEGRP) %>% 
+    mutate(DOSEGRP2 = paste0(DOSEGRP, "(", max(N), ")")) %>% ungroup() %>%   # Note use Max(N)
+    mutate(DOSEGRP = ordered(DOSEGRP2, levels=unique(as.character(DOSEGRP2)))) %>%
+    
+    select(STUDYID, TESTCD, DOSEGRP, NTIM, TIMEPT, 
+           N, Mean, meanMinusSE, meanPlusSE, 
+           Mean_SD, SE, Median_Range) %>% 
+    arrange(TESTCD, DOSEGRP, NTIM)
+
+  #------------------
+  # plot
+  #------------------
+  tdata <- tdata%>%  
+       mutate(xvar = NTIM, 
+              yvar = Mean 
+              )
+      
+  x=setup_scale(myscale='1_2', mylimit=c(0, max(tdata$xvar/7, na.rm=TRUE)))
+  
+  # no pre-dose samples in plot
+  fig = ggplot(tdata%>%mutate(xvar=xvar/7), aes(x=xvar, y=yvar, group=DOSEGRP, col=DOSEGRP)) + 
+    #ggtitle("Concentration Time Profile") + 
+    
+    geom_point() + geom_line() +   
+    geom_errorbar(aes(ymin = meanMinusSE, ymax = meanPlusSE), width=0.2) + 
+    
+    scale_color_manual(values=colScheme()) +  
+    
+    scale_x_continuous(breaks=x$breaks, label=x$labels) +
+    #scale_y_continuous(breaks=y$breaks, label=y$labels) +
+    
+    #coord_cartesian(xlim = c(0, 85)) + 
+    
+    xlab("Time (week)") +  
+    ylab(paste0("Concentration(±SE) of ", test_label, " (mg/L)")) +   
+    
+    theme_bw() + base_theme(font.size = as.integer(12)) + 
+    guides(col=guide_legend(ncol=4,byrow=TRUE))    
+  
+  fig
+  
+  #------------------
+  # linear scale
+  #------------------
+  attr(fig, 'title') <-  paste0("Mean(±SE) ", 
+                                test_label, 
+                                " in Serum vs Nominal Sampling Day Following Subcutaneous or Intravenous Dose(s) of ", 
+                                drug_name, " (", study_name, ")")
+  figure[["mean_profile_ln"]] = fig 
+  figure[["mean_profile_ln"]]$data =  tdata%>%mutate(xvar=xvar/7)
+  
+  #------------------
+  # log scale 
+  #------------------
+  fig = fig + scale_y_log10(breaks = 10^(seq(-1,3,by=1)),      #trans_breaks("log10", function(x) 10^x),
+                            labels = 10^(seq(-1,3,by=1))) +      # trans_format("log10", math_format(10^.x))) +
+    annotation_logticks(sides ="l")  +  # "trbl", for top, right, bottom, and left.
+    
+    geom_hline(yintercept=c(0.078), lty="dashed") + 
+    geom_text(y=log10(0.092 ), x=0.1, aes(label="BLQ=0.078 mg/L", hjust=0), size=4, color='black')  
+  
+  fig
+  attr(fig, 'title') <- paste0("Mean(±SE) Log-scaled ",  
+                               test_label, " in Serum vs Nominal Sampling Day Following Subcutaneous or Intravenous Dose(s) of ", 
+                               drug_name, " (", study_name, ")")
+  figure[["mean_profile_log"]] = fig 
+  figure[["mean_profile_ln"]]$data =  tdata%>%mutate(xvar=xvar/7)
+  
+  #------------------
+  # associated table
+  #------------------
+  tabl = tdata %>% select(STUDYID, TESTCD, DOSEGRP, TIMEPT, NTIM, Mean_SD) %>% 
+    mutate(DOSEGRP = gsub("(", "\n(", DOSEGRP, fix=TRUE)) %>% 
+    spread(key=DOSEGRP, value=Mean_SD) %>% 
+    arrange(TESTCD, NTIM)
+  
+  # TESTCD
+  if (all(tabl$TESTCD==unique(tabl$TESTCD)[1])) {
+    tabl$TESTCD=NULL
+  }else{
+      tabl = tabl %>% mutate(TESTCD = ifelse(duplicated(TESTCD), "", TESTCD))
+  }
+  
+  # STUDYID
+  if (all(tabl$STUDYID==unique(tabl$STUDYID)[1])) {
+    tabl$STUDYID=NULL
+  }else{
+    tabl = tabl %>% mutate(STUDYID = ifelse(duplicated(STUDYID), "", STUDYID))
+    }
+  
+  attr(tabl, 'title') <-  paste0("Descriptive Statistics (±SD) of ", test_label, " in Serum ", "(", study_name, ")")
+  table[["stats_tab"]] = tabl
+  
+  return(list(figure=figure, table=table, message=message))
+  }
+  
+#################################################################
+# final output
+#################################################################
+if (ihandbook) {
+  output = desp_mean_profile(dataset, params=NULL)
+  
+}
