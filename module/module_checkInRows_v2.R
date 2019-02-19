@@ -94,9 +94,6 @@ module_checkInRows_v2 <- function(input, output, session,
         values$hotdf <- table 
       } else if (!is.null(input$rHandsontab)) {
         newtable = hot_to_r(input$rHandsontab)
-        attr(newtable, "key") = attr(table, "key")
-        attr(newtable, "value") = attr(table, "value")
-        
         values$hotdf = newtable
         #values0$table[[table_index]] = newtable  # values$hotdf
       }
@@ -161,7 +158,14 @@ module_checkInRows_v2 <- function(input, output, session,
              need(table_index, message=FALSE)
     )
     
-    values0$table[[table_index]] = values$hotdf
+    table = values0$table[[table_index]]
+    newtable = values$hotdf
+    attr(newtable, "key") = attr(table, "key")
+    attr(newtable, "value") = attr(table, "value")
+    attr(newtable, "title") = attr(table, "title")
+    attr(newtable, "footnote") = attr(table, "footnote")
+    
+    values0$table[[table_index]] = newtable
   })
   
   

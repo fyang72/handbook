@@ -14,14 +14,14 @@ module_build_dataset_v2_UI <- function(id, label = "") {
     
     fluidRow(
       column(width=12,  
-             HTML(colFmt("Note, the following tabset is used to  
+             HTML(colFmt("Note, the following tabset is used to  <br>
                           1) align the variable (column) against the standard one [column], <br> 
                           2) standardize the input dataset using script [script], <br>
-                          3) manual curation and confirmation [curation], <br>
-                          3) render the resulting data.", color="gray")))
+                          3) semi-auto curation and confirmation [curation], <br>
+                          4) render the resulting data and save [output].", color="gray")))
       ),
       
-  tabBox(width=12, id = ns("run_script_for_dataset_construction"), title =NULL, 
+    tabBox(width=12, id = ns("run_script_for_dataset_construction"), title =NULL, 
        
        # checkInCols_container 
        tabPanel(width=12, title="checkInCols", value = "checkIn_columns", collapsible = TRUE, 
@@ -29,10 +29,10 @@ module_build_dataset_v2_UI <- function(id, label = "") {
                   fluidRow(column(12, uiOutput(ns("checkInCols_container")))) 
        ),        
        
-       # script_container 
+       # runScript_container 
        tabPanel(width=12, title="runScript", value = "run_script", collapsible = TRUE, 
                 collapsed = TRUE, solidHeader = TRUE,
-                  fluidRow(column(12, uiOutput(ns("script_container"))))  
+                  fluidRow(column(12, uiOutput(ns("runScript_container"))))  
        ),     
            
        # checkInRows_container
@@ -41,10 +41,10 @@ module_build_dataset_v2_UI <- function(id, label = "") {
                 fluidRow(column(width=12, uiOutput(ns("checkInRows_container"))))
        ), 
        
-       # data_container
+       # output_container
        tabPanel(width=12, title="output", value = "output", collapsible = TRUE, 
                 collapsed = TRUE, solidHeader = TRUE,
-                fluidRow(column(width=12, uiOutput(ns("data_container"))))
+                fluidRow(column(width=12, uiOutput(ns("output_container"))))
        )
   ) 
   )
@@ -60,8 +60,7 @@ module_build_dataset_v2 <- function(input, output, session,
   
   ns <- session$ns
   values <- reactiveValues(data=NULL,figure=NULL,table = NULL)
-  values2 <- reactiveValues(data=NULL,figure=NULL,table = NULL)
-  
+
   ################################
   # UI for dataset_container
   ################################
@@ -76,17 +75,18 @@ module_build_dataset_v2 <- function(input, output, session,
     )
      
     # UI
-    fluidRow(column(12, 
-                    module_checkInCols_UI(ns("checkInCols"), label = NULL)
+    fluidRow(
+      column(12, 
+             module_checkInCols_UI(ns("checkInCols"), label = NULL)
              )
     )
   })  
    
      
   ################################
-  # UI for script_container
+  # UI for runScript_container
   ################################
-  output$script_container <- renderUI({
+  output$runScript_container <- renderUI({
     validate(need(globalVars$login$status, message=FALSE))
      
     tagList(
@@ -125,18 +125,18 @@ module_build_dataset_v2 <- function(input, output, session,
   
 
   ################################
-  # data_container
+  # output_container
   ################################
-  output$data_container <- renderUI({  
+  output$output_container <- renderUI({  
  
-    print("in data_container")
-       # why this not working as expected    
-       #   ALL = callModule(module_save_data, paste0("module_save_data_", 1), 
+    print("in output_container")
+        
+       #   ALL = callModule(module_save_data3, paste0("module_save_data_", 1), 
        #                    ALL,
        #                    data = ALL$DATA[[dataset_name]] ,   
        #                    data_name =  dataset_name    #names(values$data[i])
        #   )
-       # module_save_data_UI(ns(paste0("module_save_data_", 1)), label = NULL) 
+       # module_save_data3_UI(ns(paste0("module_save_data_", 1)), label = NULL) 
        #   
   
     tdata =  inputData() #ALL$DATA[[dataset_name]]   
@@ -272,14 +272,11 @@ module_build_dataset_v2 <- function(input, output, session,
         #                table_index = i, 
         #                table_name = names(values$table[i])
         #                )
-        
-        # values$table[[i]] = 
-        #isolate({ 
-          values = callModule(module_checkInRows_v2, paste0("module_save_table_", i), 
+     
+        values = callModule(module_checkInRows_v2, paste0("module_save_table_", i), 
                          values0 = values,
                          table_index = i
-        )      
-        #})
+        )   
         
         # UI
         module_checkInRows_v2_UI(ns(paste0("module_save_table_", i)), label = NULL) 
@@ -305,12 +302,7 @@ module_build_dataset_v2 <- function(input, output, session,
       table = values$table[[i]]
       if (is.null(table) ) {next} 
       if (nrow(table)==0) {next} 
-      
-      print("inside for loop")
-      print(i)
-      print(nrow(table))
-      print(table)
-      
+       
       # incompatible types (character / logical)
       KEY = attr(table, "key")
       tdata[, KEY] = as.character(tdata[, KEY])
