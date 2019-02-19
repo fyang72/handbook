@@ -250,8 +250,8 @@ module_build_dataset_v2 <- function(input, output, session,
      
     tagList(
       fluidRow(  
-        column(2,  
-               actionButton(ns("confirm"),label="Confirm", style=actionButton.style)
+        column(2, offset=10,
+               actionButton(ns("saveAll"),label="Save all", style=actionButton.style)
         ) 
       ),
   
@@ -291,8 +291,8 @@ module_build_dataset_v2 <- function(input, output, session,
   
   
   
-  observeEvent(input$confirm, {
-    validate(need(input$confirm, message=NULL), 
+  observeEvent(input$saveAll, {
+    validate(need(input$saveAll, message=NULL), 
              need(values$table, message=NULL), 
              need(values$data, message=NULL)
     ) 

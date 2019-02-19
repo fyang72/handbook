@@ -199,7 +199,7 @@ module_fetch_job <- function(input, output, session, ALL, ctlModel_name="ctlMode
     server.data.dir= input$server.data.dir   #"/home/feng.yang/test_data/test_nm/"
     
     
-    HOME = "~/FYANG/Template/Handbook/" 
+    HOME = "~/handbook/" 
     local.model.name = ctlModel.file.name # ifelse(ctlModel.locaton.source=="internal", ctlModel.file.name, NULL)   
     
     local.data.name = nmdat.file.name # ifelse(nmdat.locaton.source=="internal", nmdat.file.name, NULL)   #"/data/THEOPP.csv"  

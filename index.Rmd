@@ -119,21 +119,20 @@ cat(chunks, sep = '\n')
 ```{r child = 'rmd/05_NCA_analysis/01_NCA_analysis.Rmd'}
 ```
 
-```{r}
-# 
-#```{r child = 'rmd/06_nmdat_integrity_check/01_load_data.Rmd'}
-#```
-
-#```{r child = 'rmd/06_nmdat_integrity_check/02_quick_check.Rmd'}
-#```
-
-#```{r child = 'rmd/06_nmdat_integrity_check/03_advanced_check.Rmd'}
-#```
-
-#```{r child = 'rmd/06_nmdat_integrity_check/04_buildIn_model.Rmd'}
-#```
-
+ 
+ 
+```{r child = 'rmd/06_nmdat_integrity_check/01_load_data.Rmd'}
 ```
+```{r child = 'rmd/06_nmdat_integrity_check/02_quick_check.Rmd'}
+```
+
+```{r child = 'rmd/06_nmdat_integrity_check/03_advanced_check.Rmd'}
+```
+
+```{r child = 'rmd/06_nmdat_integrity_check/04_buildIn_model.Rmd'}
+```
+
+ 
 
 ```{r child = 'rmd/07_run_nmmodel/01_run_nonmem_model.Rmd'}
 ```

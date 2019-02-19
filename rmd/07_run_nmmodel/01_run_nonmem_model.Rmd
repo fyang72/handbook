@@ -92,7 +92,7 @@ output$update_nmdat_container <- renderUI({
  
   validate(need(ALL$DATA[['mYtEsT_for_run_nonmem']], message= "no data is loaded yet"))
   
-  script = readLines("./script/script4_test.R")
+  script = readLines("./script/desp_test.R")
   script = paste0(paste0(script, sep="\n"), collapse="")   # sep="<br/>")
   
   isolate({ 

@@ -81,7 +81,7 @@ library(scales)
 library("stringr")
 library('RColorBrewer')
 library("Hmisc")
-#library("gdata")
+library("gdata")     # trim
 library("RColorBrewer")
 #library(MASS)   # MUST BE FIST BEFORE dplyr
 library(Rcpp)
@@ -284,7 +284,7 @@ globalVars <- reactiveValues(login=login,
 #folder.loc <- "/data/BiCS_RDE_Development/shiny-server_development/pharmacometrics/regnR/R2"
 ihandbook = 0
 
- folder.loc <- "c:/FYANG/regnR/R2"
+ folder.loc <- "~/regnR/R2"
  
  file.lst <-list.files(path = folder.loc, all.files = FALSE,full.names = TRUE, include.dirs = TRUE, recursive =TRUE)     
  

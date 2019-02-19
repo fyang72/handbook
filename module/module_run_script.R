@@ -256,19 +256,8 @@ module_run_script <- function(input, output, session,
   observeEvent(input$run_script, {
     validate(need(input$script_content, message="no script loaded yet")
     )
-     
-    
-    
-    print("input$run_script in observeEvent123456789")
-    print(input$run_script)
-    
-    isolate({ 
-      print("PKPD_despcriptive_analysis_inputData in run_script")
-      print(head(dataset))
       
-    })
-    
-    
+    ihandbook = 1
     #isolate({ 
       
     # eval(parse(text=(input$script_content)))   removed 02/10/2019

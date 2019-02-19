@@ -23,11 +23,11 @@ module_checkInRows_v2_UI <- function(id, label = "") {
       column(12, uiOutput(ns("table_footnote_container")))
     ), 
     
-    # fluidRow(  
-    #   column(2,  
-    #          actionButton(ns("saveit"),label="Confirm", style=actionButton.style)
-    #   ) 
-    # ),  
+     fluidRow(  
+       column(2,  
+              actionButton(ns("confirm"),label="Confirm", style=actionButton.style)
+       ) 
+     ),  
     
     style='margin-bottom:30px;  border:1px solid; padding: 10px;'
     #fluidRow(column(width=12, tags$hr(style="border-color: gray;")))
@@ -92,14 +92,13 @@ module_checkInRows_v2 <- function(input, output, session,
       if (is.null(input$rHandsontab) ||  !isTRUE(all_equal(val_, table))) {
         val_ <<- table 
         values$hotdf <- table 
-        values0$table[[table_index]] = values$hotdf
-        
       } else if (!is.null(input$rHandsontab)) {
         newtable = hot_to_r(input$rHandsontab)
         attr(newtable, "key") = attr(table, "key")
+        attr(newtable, "value") = attr(table, "value")
         
         values$hotdf = newtable
-        values0$table[[table_index]] = values$hotdf
+        #values0$table[[table_index]] = newtable  # values$hotdf
       }
       
       # myindex = which(adpx_checkin$which.column=="?")
@@ -154,6 +153,15 @@ module_checkInRows_v2 <- function(input, output, session,
     rHandsontableOutput(ns("rHandsontab"))
     
     
+  })
+  
+   
+  observeEvent(input$confirm, {
+    validate(need(values$hotdf, message=FALSE), 
+             need(table_index, message=FALSE)
+    )
+    
+    values0$table[[table_index]] = values$hotdf
   })
   
   

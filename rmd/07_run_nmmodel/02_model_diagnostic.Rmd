@@ -4,7 +4,7 @@
 back to [nonmem_dataset_integrity_check](#nonmem_dataset_integrity_check)
  
 ```{r}
-HOME = "~/FYANG/Template/Handbook/"
+HOME = "~/handbook/"
 user.name = tolower(Sys.info()["user"])  # determineCurrentUser()
 
 values4xpdb = reactiveValues(diagnostic=NULL) 
