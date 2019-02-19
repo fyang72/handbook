@@ -1,7 +1,7 @@
 
 
 
-
+library(knitr)
 library(rmarkdown)
 library(shiny)
 
@@ -220,8 +220,7 @@ list.of.packages = sort((.packages()))
 #unloadNamespace("Rcpp")
 
 
- 
-
+  
 actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
 
  

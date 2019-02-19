@@ -1,0 +1,156 @@
+
+# legal issue
+# https://news.ycombinator.com/item?id=1112808
+
+#rm(list=ls())
+#    
+#https://shinydata.wordpress.com/2015/02/02/a-few-things-i-learned-about-shiny-and-reactive-programming/
+   
+# https://stackoverflow.com/questions/38513912/shiny-using-uioutput-inside-a-module-or-a-nested-module
+ 
+# multiline text
+# https://stackoverflow.com/questions/26368192/how-to-insert-new-line-in-r-shiny-string
+
+# https://stackoverflow.com/questions/24049159/change-the-color-and-font-of-text-in-shiny-app
+
+# http://www.unm.edu/~tbeach/IT145/color.html
+#("black", "white", "gray", "silver", "maroon", "red", "purple", "fushsia", "green", "lime", "olive", "yellow", "navy", "blue", "teal", and "aqua")
+
+
+# Cloud Computing for Pharmacometrics: Using AWS, NONMEM, PsN, Grid Engine, and Sonic
+# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4592533/
+  
+# http://www.pirana-software.com/#blog
+
+
+# https://www.tutorialspoint.com/r/r_boxplots.htm
+
+
+#  dataset=read_csv("./data/nmdatPKPD.csv")
+
+# TIIMEPT 0HR in DRUG and target (adpc) but EOI in response
+
+#   
+# 
+# source("./script/build_adsl.R")
+# source("./script/build_adpx.R")
+# source("./script/build_adex.R")
+# source("./script/build_adpc.R")
+# source("./script/build_nmdat.R")
+
+
+
+
+
+
+
+# if you use \\tarisilonsmb02\sasgrid01data_prod\Data using 
+# ps -fs | grep 
+
+# https://rpubs.com/videep90/288782
+# Single Dose Oral - PK
+# Models available in the library include:
+# 
+# PK models: pk1cmt, pk2cmt, pk3cmt, tmdd
+# 
+# PKPD models: irm1, irm2, irm3, irm4, emax, effect
+# 
+# Other models: viral1, viral2
+
+
+
+
+
+
+
+
+
+```{r number_figures, echo=FALSE, eval=TRUE, cache=FALSE}
+# source: https://gist.github.com/benmarwick/f3e0cafe668f3d6ff6e5
+
+# This is a knitr hook to enable figure and table captions
+# number figures
+# from http://stackoverflow.com/a/18672268/1036500
+library("knitr")
+tn = local({
+  i = 0
+  function(x) {
+    i <<- i + 1
+    paste("<table><caption>", 'Figure ', i, ': ', x, "</caption><colgroup><col width='100'></col></colgroup><thead><tr class='header'></tr></thead><tbody></tbody></table><p>", sep = '')
+  }
+})
+knit_hooks$set(fig.cap = function(before, options, envir) {
+  if(!before)
+    tn(options$fig.cap)
+})
+default_output_hook = knit_hooks$get("output")
+knit_hooks$set(output = function(x, options) {
+  if (is.null(options$fig.cap) == F)  
+    x
+  else
+    default_output_hook(x,options)
+})
+# number tables
+# from http://stackoverflow.com/a/18672268/1036500
+to = local({
+  i = 0
+  function(x) {
+    i <<- i + 1
+    paste("<table><caption>", 'Table ', i, ': ', x, "</caption><colgroup><col width='100'></col></colgroup><thead><tr class='header'></tr></thead><tbody></tbody></table><p>", sep = '')
+  }
+})
+knit_hooks$set(tab.cap = function(before, options, envir) {
+  if(!before)
+    to(options$tab.cap)
+})
+default_output_hook = knit_hooks$get("output")
+knit_hooks$set(output = function(x, options) {
+  if (is.null(options$tab.cap) == F)  
+    x
+  else
+    default_output_hook(x,options)
+})
+```
+
+
+<!--
+ 
+#       collapsed: true
+#       smooth_scroll: true
+#           number_sections: true
+#https://github.com/timelyportfolio/vueR/issues/1
+
+# ioslides_presentation   html_document   pdf_document
+# https://bookdown.org/yihui/rmarkdown/shiny-embedded.html#shiny-embed-inline
+# https://bookdown.org/yihui/rmarkdown/parameterized-reports.html#overview
+# https://shiny.rstudio.com/articles/generating-reports.html
+
+# https://github.com/rstudio/shiny-examples/blob/master/016-knitr-pdf/server.R
+
+# Markdown to create pages and table of contents?
+#https://stackoverflow.com/questions/11948245/markdown-to-create-pages-and-table-of-contents
+
+# Combining Shiny & R Markdown
+# https://beta.rstudioconnect.com/content/2671/Combining-Shiny-R-Markdown.html
+
+
+# http://seankross.com/2016/11/17/How-to-Start-a-Bookdown-Book.html
+# 
+# https://github.com/seankross/bookdown-start
+# https://github.com/rstudio/bookdown-demo
+# 
+
+#cheat sheet for Rmarkdown
+# https://www.rstudio.com/wp-content/uploads/2016/03/rmarkdown-cheatsheet-2.0.pdf
+
+# I want his TOC 
+# https://ijlyttle.github.io/communicate_custom_html_document_format_r_markdown.html
+
+
+# pdf_document    figure legend
+#```{r, fig.width=9,fig.height=6,fig.cap="\\label{fig:fig1}plotting examplesfsfsgssfsfs"}
+#
+#``` 
+ 
+
+--> 

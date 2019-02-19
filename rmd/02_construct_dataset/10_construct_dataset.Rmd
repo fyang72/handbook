@@ -8,16 +8,14 @@ When you click the **Knit** button a document will be generated that includes bo
 
  
 
-## Assemble nonmem data <a name="construct_dataset"></a>
+## Assemble nmdat <a name="construct_dataset"></a>
 
 ### adsl  <a name="construct_dataset"></a>
 
 ```{r, standardize_adsl}
-
 #----------------------------------------------------
 # standardize_adsl
 #----------------------------------------------------
-# default_adpc_checkin
 default_adsl_checkin <- reactive({ 
   read_excel("./lib/pkmeta.xlsx",sheet="adsl",col_names = TRUE)  %>% 
     as.data.frame() %>% filter(!is.na(standard.name))
@@ -37,8 +35,7 @@ output$standardize_adsl <-renderUI({
                    script=script,
                    default_checkin =  default_adsl_checkin()
   )
-  
-  
+
   # UI  
   fluidRow(column(12, 
                   module_build_dataset_wrapper_UI(id="standardize_adsl", label=NULL)
@@ -52,11 +49,9 @@ fluidRow(column(12, uiOutput(("standardize_adsl"))))
 ### adex  <a name="construct_dataset"></a>
 
 ```{r, standardize_adex}
-
 #----------------------------------------------------
 # standardize_adex
 #----------------------------------------------------
-# default_adpc_checkin
 default_adex_checkin <- reactive({ 
   read_excel("./lib/pkmeta.xlsx",sheet="adex",col_names = TRUE)  %>% 
     as.data.frame() %>% filter(!is.na(standard.name))
@@ -90,11 +85,9 @@ fluidRow(column(12, uiOutput(("standardize_adex"))))
 ### adpc  <a name="construct_dataset"></a>
 
 ```{r, standardize_adpc}
-
 #----------------------------------------------------
 # standardize_adpc
 #----------------------------------------------------
-# default_adpc_checkin
 default_adpc_checkin <- reactive({ 
   read_excel("./lib/pkmeta.xlsx",sheet="adpc",col_names = TRUE)  %>% 
     as.data.frame() %>% filter(!is.na(standard.name))
@@ -129,11 +122,9 @@ fluidRow(column(12, uiOutput(("standardize_adpc"))))
 ### other  <a name="construct_dataset"></a>
 
 ```{r, standardize_adpd}
-
 #----------------------------------------------------
 # standardize_adpd
 #----------------------------------------------------
-# default_adpd_checkin
 default_adpd_checkin <- reactive({ 
   read_excel("./lib/pkmeta.xlsx",sheet="adpc",col_names = TRUE)  %>% 
     as.data.frame() %>% filter(!is.na(standard.name))
@@ -169,11 +160,9 @@ fluidRow(column(12, uiOutput(("standardize_adpd"))))
  
 
 ```{r, standardize_adpx}
-
 #----------------------------------------------------
 # standardize_adpx
 #----------------------------------------------------
-# default_adpx_checkin
 default_adpx_checkin <- reactive({ 
   read_excel("./lib/pkmeta.xlsx",sheet="adpx",col_names = TRUE)  %>% 
     as.data.frame() %>% filter(!is.na(standard.name))
@@ -196,9 +185,10 @@ output$standardize_adpx <-renderUI({
   
   
   # UI  
-  fluidRow(column(12, 
-                  module_build_dataset_wrapper_UI(id="standardize_adpx", label=NULL)
-  ) 
+  fluidRow(
+    column(12, 
+           module_build_dataset_wrapper_UI(id="standardize_adpx", label=NULL)
+          ) 
   )  
 })
 
@@ -208,7 +198,7 @@ fluidRow(column(12, uiOutput(("standardize_adpx"))))
 
 
 
-## Standardize nonmem data <a name="construct_dataset"></a>
+## Standardize nmdat <a name="construct_dataset"></a>
 
 ```{r, standardize_nmdat}
 
@@ -246,5 +236,3 @@ output$standardize_nmdat <-renderUI({
 
 fluidRow(column(12, uiOutput(("standardize_nmdat"))))
 ```
-
- 

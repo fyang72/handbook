@@ -5,7 +5,7 @@
 # xxxUI, xxxInput, xxxOutput, xxxControl 
 #-----------------------------------------
 
-module_build_dataset_UI <- function(id, label = "") {
+module_build_dataset_v2_UI <- function(id, label = "") {
   # Create a namespace function using the provided id
   ns <- NS(id)
    
@@ -54,19 +54,20 @@ module_build_dataset_UI <- function(id, label = "") {
 # module_build_dataset
 ################################################################################
 
-module_build_dataset <- function(input, output, session, 
+module_build_dataset_v2 <- function(input, output, session, 
                               ALL, dataset_name, script, default_checkin
                               )  {
   
   ns <- session$ns
   values <- reactiveValues(data=NULL,figure=NULL,table = NULL)
- 
+  values2 <- reactiveValues(data=NULL,figure=NULL,table = NULL)
+  
   ################################
   # UI for dataset_container
   ################################
   output$checkInCols_container <- renderUI({ 
     validate(need(globalVars$login$status, message=FALSE))
-      
+     
     # call module
     ALL = callModule(module_checkInCols, "checkInCols",  
                ALL, 
@@ -247,30 +248,84 @@ module_build_dataset <- function(input, output, session,
     
     print("in checkInRows_container")
      
-    # all curation table   
-    lapply(1:length(names(values$table)), function(i) {
-      
-      validate(need(values$table[[i]], message="no table found"), 
-               #need(nrow(values$table[[i]])>0, message="no table found"),   # can't have his line
-               need(is.data.frame(values$table[[i]]), message="only data.frame allowed"),
-               need(values$data, message="no data found")
-      )
-      
-      # based on 'data', manually curate it based on table, and finally save to ALL  
-      ALL = callModule(module_checkInRows, paste0("module_save_table_", i), 
-                     ALL, dataset_name,
-                     data = values$data,
-                     table = values$table[[i]], 
-                     table_index = i, 
-                     table_name = names(values$table[i])
-                     )
-      
-      # UI
-      module_checkInRows_UI(ns(paste0("module_save_table_", i)), label = NULL) 
-    })
+    tagList(
+      fluidRow(  
+        column(2,  
+               actionButton(ns("confirm"),label="Confirm", style=actionButton.style)
+        ) 
+      ),
+  
+      # all curation table   
+      lapply(1:length(names(values$table)), function(i) {
+        
+        validate(need(values$table[[i]], message="no table found"), 
+                 #need(nrow(values$table[[i]])>0, message="no table found"),   # can't have his line
+                 need(is.data.frame(values$table[[i]]), message="only data.frame allowed"),
+                 need(values$data, message="no data found")
+        )
+        
+        # based on 'data', manually curate it based on table, and finally save to ALL  
+        # ALL = callModule(module_checkInRows, paste0("module_save_table_", i), 
+        #                ALL, dataset_name,
+        #                data = values$data,
+        #                table = values$table[[i]], 
+        #                table_index = i, 
+        #                table_name = names(values$table[i])
+        #                )
+        
+        # values$table[[i]] = 
+        #isolate({ 
+          values = callModule(module_checkInRows_v2, paste0("module_save_table_", i), 
+                         values0 = values,
+                         table_index = i
+        )      
+        #})
+        
+        # UI
+        module_checkInRows_v2_UI(ns(paste0("module_save_table_", i)), label = NULL) 
+      })
     
+    ) # tagList
   })
    
+  
+  
+  
+  observeEvent(input$confirm, {
+    validate(need(input$confirm, message=NULL), 
+             need(values$table, message=NULL), 
+             need(values$data, message=NULL)
+    ) 
+     
+    tdata = values$data
+    
+    ntabl = length(values$table)
+    
+    for (i in 1:ntabl) {
+      table = values$table[[i]]
+      if (is.null(table) ) {next} 
+      if (nrow(table)==0) {next} 
+      
+      print("inside for loop")
+      print(i)
+      print(nrow(table))
+      print(table)
+      
+      # incompatible types (character / logical)
+      KEY = attr(table, "key")
+      tdata[, KEY] = as.character(tdata[, KEY])
+      table[, KEY]  = as.character(table[, KEY])
+      
+      col.lst =  setdiff(colnames(table), KEY)
+      tdata = tdata %>% select(-one_of(intersect(col.lst, colnames(tdata)))) %>% 
+        left_join(table, by=KEY)
+    }
+    
+    ALL$DATA[[dataset_name]] <- tdata 
+    print("checkInRows sucessful")
+    
+  })
+  
   ################################
   # run_script  
   ################################ 
