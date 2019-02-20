@@ -1,5 +1,3 @@
-
- 
 ################################################################################
 # module_build_dataset_wrapper_UI
 ################################################################################
@@ -28,8 +26,7 @@ module_build_dataset_wrapper_UI <- function(id, label = "") {
 ################################################################################ 
 
 module_build_dataset_wrapper <- function(input, output, session, 
-                                 ALL, dataset_name, script, default_checkin
-)  {
+                                 ALL, dataset_name, script, default_checkin)  {
   
 ns <- session$ns
    
@@ -39,7 +36,7 @@ ns <- session$ns
 output$standardize_nmdat_data_selector <-renderUI({
   
   # callModule 
-    ALL = callModule(module_load_dataset, "load_nmdat_for_standardize_nmat", 
+  ALL = callModule(module_load_dataset, "load_nmdat_for_standardize_nmat", 
                      ALL, dataset_name=dataset_name)
 
   # UI  
@@ -51,8 +48,8 @@ output$standardize_nmdat_data_selector <-renderUI({
                                within session: saved data within session <br> 
                                external file: external file", color="gray")
                         )
-                   )
-            )  
+           )
+   )  
 })
  
 #----------------------------------------------------
@@ -63,7 +60,7 @@ output$standardize_nmdat_data_selector <-renderUI({
 output$standardize_nmdat_container <- renderUI({ 
   validate(need(globalVars$login$status, message=FALSE))
  
-  callModule(module_build_dataset_v2, "standardize_nmdat",  
+  callModule(module_build_dataset, "standardize_nmdat",  
              ALL, 
              dataset_name=dataset_name,   
              script = script,   
@@ -72,11 +69,11 @@ output$standardize_nmdat_container <- renderUI({
   
   fluidRow(
     column(12, 
-           module_build_dataset_v2_UI(ns("standardize_nmdat"), label = NULL)
+           module_build_dataset_UI(ns("standardize_nmdat"), label = NULL)
     )
   )
 }) 
 
-  return(ALL)
+return(ALL)
 }
  

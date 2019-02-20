@@ -276,8 +276,7 @@ module_run_script <- function(input, output, session,
     # if(is.null(output)) {values$run_script_message = colFmt("error found in runing script",'red')}
     # validate(need(output, message="error found in runing script"))
     # 
-    print("run script sucessfully") 
-  
+ 
     data.generating<- tryCatch(eval(parse(text="values$data = output$data")), 
                                  error=function(e) {
                                    print("warning: run script sucessfully, but no data generating by runing script"); 
@@ -307,9 +306,13 @@ module_run_script <- function(input, output, session,
      
     if (is.null(figure.generating) & is.null(table.generating) & is.null(data.generating) ) {
       values$run_script_message = colFmt("error: run script sucessfully, but no data/figure/table generating by runing script",'red')
+      
+      showNotification("error: no data/figure/table generating by runing script", type="error")
       #updateTextInput(session, "run_script_message", value="error: run script sucessfully, but no figure and table generating by runing script")
      }else{
       values$run_script_message = colFmt("run script sucessfully",'green')
+      showNotification("run script sucessfully", type="message")   # "default, "message", "warning", "error"
+      
     }
       
   })

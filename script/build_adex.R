@@ -221,12 +221,12 @@ if (ihandbook) {
   table = NULL
   
   adex <- build_adex(dataset, 
-                    date_time_format = c("Ymd HMS", "mdY HMS", "bdY HMS"), 
-                    dosu.lst = c("mg", "mg/kg"), 
-                    admin.route.lst = c("SUBCUTANEOUS", "INTRAVENOUS", "INTRAMUSCULAR", "IVT")
+                    date_time_format = date_time_format, 
+                    dosu.lst = dosu.lst, 
+                    admin.route.lst = admin.route.lst
                     )    
   
   data[["adex"]] = adex 
-  table <- check_adex(adex, topN=20)   # date_time_format = c("Ymd HMS")
+  table <- check_adex(adex, topN=20)    
   output <- list(data=data, table=table)
 }

@@ -13,7 +13,7 @@ build_adsl <-function(
                    "RACE",  "RACEN", 
                    "ETHNIC","ETHNICN" ), 
   
-  sex.lst = c("M", "F", "UNKNOWN"),
+  sex.lst = c("MALE", "FEMALE", "UNKNOWN"),
   
   ethnic.lst =c("NOT HISPANIC OR LATINO",  "HISPANIC OR LATINO", "UNKNOWN"),
   
@@ -170,7 +170,7 @@ check_adsl <- function(dataset, topN=20) {
   #----------------- 
   # SEX
   #-----------------
-  tabl = adsl %>% select(SEX, SEXN, SEX_ORG) %>% 
+  tabl = adsl %>% select(SEX, SEX_ORG) %>% 
     distinct(SEX_ORG, .keep_all=TRUE) %>% 
     arrange(SEX)  
   
@@ -184,7 +184,7 @@ check_adsl <- function(dataset, topN=20) {
   #----------------- 
   # ETHNIC
   #-----------------
-  tabl = adsl %>% select(ETHNIC, ETHNICN, ETHNIC_ORG) %>% 
+  tabl = adsl %>% select(ETHNIC, ETHNIC_ORG) %>% 
     distinct(ETHNIC_ORG, .keep_all=TRUE) %>% 
     arrange(ETHNIC)
   
@@ -198,7 +198,7 @@ check_adsl <- function(dataset, topN=20) {
   #----------------- 
   # RACE
   #-----------------
-  tabl = adsl %>% select(RACE, RACEN, RACE_ORG) %>% 
+  tabl = adsl %>% select(RACE, RACE_ORG) %>% 
     distinct(RACE_ORG, .keep_all=TRUE) %>% 
     arrange(RACE)  
   
@@ -223,8 +223,8 @@ if (ihandbook) {
   adsl <-  build_adsl(dataset,  
                       adsl.var.lst = adsl.var.lst, 
                       sex.lst = sex.lst,
-                      ethnic.lst =ethnic.lst,
-                      race.lst)   
+                      ethnic.lst = ethnic.lst,
+                      race.lst = race.lst)   
    
   table <- check_adsl(adsl, topN=topN)    
   output <- list(data=adsl, table=table)

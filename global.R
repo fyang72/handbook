@@ -420,11 +420,11 @@ adsl.var.lst = c("STUDYID", "USUBJID",
                  "BMIBL", "BSABL", "SITEID", 
                  "SAFFL", "ENRLFL","RANDFL","PKFL","COMPLFL" )
 
-sex.lst = c( "", "MALE", "FEMALE", "UNKNOWN")
+sex.lst = c( "MALE", "FEMALE", "UNKNOWN")
 
-ethnic.lst = c("", "NOT HISPANIC OR LATINO",  "HISPANIC OR LATINO")
+ethnic.lst = c("NOT HISPANIC OR LATINO",  "HISPANIC OR LATINO")
 
-race.lst =c("", "WHITE", 
+race.lst =c("WHITE", 
               "BLACK OR AFRICAN AMERICAN",
               "ASIAN",
               "AMERICAN INDIAN OR ALASKA NATIVE",

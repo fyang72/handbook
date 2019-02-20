@@ -153,14 +153,9 @@ module_checkInCols <- function(input, output, session, ALL, dataset_name, defaul
     #align columns based on adpx_checkin
     tt = adpx_checkin %>% filter(!is.na(which.column), !which.column %in% c("NA","", "----", "?"))
     if (nrow(tt)>0) { adpx[, tt$standard.name] = adpx[, as.character(tt$which.column)]}
-    
-    # key.lst = c("STUDYID","USUBJID","ARMA","TEST","NTIM","TIME","DVOR")
-    # key.lst = intersect(key.lst, colnames(adpx))
-    # adpx = adpx[, c(key.lst, setdiff(colnames(adpx), key.lst))]
-    
+
     ALL$DATA[[dataset_name]] <- adpx  
-    print("save to checkInCols sucessful")
-    
+    showNotification("check in columns sucessfully", type="message")   # "default, "message", "warning", "error"
   }) 
   
   return(ALL)
