@@ -42,7 +42,7 @@ library("ggplot2")     # library("gplots")
 # Pk specific package
 #------------------------------------------------------------
 library("mrgsolve") 
-#library("PKPDmisc")         #
+library("PKPDmisc")         #
 library("xpose4")
 #library(vpc)
  
@@ -80,7 +80,7 @@ library(scales)
 #library(lubridate)  FOR DATE AND TIME
 library("stringr")
 library('RColorBrewer')
-library("Hmisc")
+library("Hmisc")    # label(adex)
 library("gdata")     # trim
 library("RColorBrewer")
 #library(MASS)   # MUST BE FIST BEFORE dplyr

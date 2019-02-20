@@ -247,9 +247,9 @@ check.label.colnames.lt40 <- function(nmdat, values4nmdat)  {
   )
    print("inside label.colnames.lt40 ...")
  
-   YN = nchar(label(nmdat))<=40
+   YN = nchar(Hmisc::label(nmdat))<=40
    status <- all(YN)
-   info = paste0(label(nmdat)[which(!YN)], collapse=", ")
+   info = paste0(Hmisc::label(nmdat)[which(!YN)], collapse=", ")
    info = colFmt(paste0("Label of variables, ", info, ", greater than 40 characters."),'orange')
    
    values4nmdat$label.colnames.lt40$status <- status

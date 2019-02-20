@@ -40,6 +40,7 @@ rm(list = ls())
 #setwd(HOME)
    
 source("util.R") 
+# source("./global.R")
 
 ```
 
