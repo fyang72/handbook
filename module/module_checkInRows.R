@@ -21,22 +21,14 @@ module_checkInRows_UI <- function(id, label = "") {
       column(12, uiOutput(ns("table_footnote_container")))
     ), 
     
-     fluidRow(  
-       column(2,  
-              actionButton(ns("confirm"),label="Confirm", style=actionButton.style)
+    fluidRow(  
+      column(2,  
+             actionButton(ns("confirm"),label="Confirm", style=actionButton.style)
        ) 
      ),  
     
     style='margin-bottom:30px;  border:1px solid; padding: 10px;'
     #fluidRow(column(width=12, tags$hr(style="border-color: gray;")))
-    # fluidRow(column(width=12, tags$hr(
-    #   style="display: block;
-    #   height: 1px;
-    #   border: 0;
-    #   border-top: 1px solid #ccc;
-    #   margin: 1em 0;
-    #   padding: 0; "
-    # )))
   )
 } 
 
@@ -52,8 +44,12 @@ module_checkInRows <- function(input, output, session,
   values <- reactiveValues(hotdf=NULL)
   val_ = NULL
    
-  # reactive inputTable()
-  inputTable <- reactive({
+  # reactive inputTab()
+  inputTab <- reactive({
+    validate(need(value0$table, FALSE), 
+             need(table_index, FALSE)
+    )
+    
     table = values0$table[[table_index]]
     table[is.na(table)] = ""  # so every entries are editable.
     table 
@@ -61,14 +57,14 @@ module_checkInRows <- function(input, output, session,
     
   # table_title_container
   output$table_title_container <- renderUI(renderText({
-    table = inputTable()
+    table = inputTab()
     paste0("Table ", table_index, " ", attributes(table)$title)
     })() %>% HTML()
   )
   
   # table_footnote_container
   output$table_footnote_container <- renderUI(renderText({
-    table = inputTable()
+    table = inputTab()
     paste("<font size='", 2,"'>", attributes(table)$footnote, "</size>",sep="")
     })() %>% HTML()
   )
@@ -76,9 +72,8 @@ module_checkInRows <- function(input, output, session,
   # rHandsontab_container 
   # https://shiny.rstudio.com/articles/render-table.html
   # https://github.com/jrowen/rhandsontable/issues/27
-  #-------------------------------------- 
   output$rHandsontab_container <- renderUI({ 
-    table = inputTable()
+    table = inputTab()
     
     validate(need(table, message=FALSE), 
              need(nrow(table)>0, message=FALSE)
@@ -100,8 +95,7 @@ module_checkInRows <- function(input, output, session,
       mycolor = rep('lightblue', times=length(myindex))
  
       # https://stackoverflow.com/questions/39752455/changing-background-color-of-several-rows-in-rhandsontable
-      
-      rhandsontable(values$hotdf, useTypes = TRUE, stretchH = "all",  rowHeaders=NULL)  %>%  # stretchH = "all",  
+      rhandsontable(values$hotdf, useTypes = TRUE, stretchH = "all", rowHeaders=NULL)  %>%  # stretchH = "all",  
        # hot_table(overflow="hidden",
         #          highlightCol = TRUE,   
          #         allowRowEdit=FALSE ) #%>% 
@@ -129,7 +123,6 @@ module_checkInRows <- function(input, output, session,
     })
     rHandsontableOutput(ns("rHandsontab"))
   })
-  
    
   # observeEvent input$confirm
   observeEvent(input$confirm, {
@@ -140,18 +133,12 @@ module_checkInRows <- function(input, output, session,
     table = values0$table[[table_index]]
     newtable = values$hotdf
     
-    attr(newtable, "key") = attr(table, "key")
-    attr(newtable, "value") = attr(table, "value")
-    attr(newtable, "title") = attr(table, "title")
-    attr(newtable, "footnote") = attr(table, "footnote")
-    
+    mostattributes(newtable) <- attributes(table)
     values0$table[[table_index]] = newtable
+    
     showNotification("confirm sucessfully", type="message")   # "default, "message", "warning", "error"
   })
    
   return(values0)
 } 
-
-
-
-
+ 

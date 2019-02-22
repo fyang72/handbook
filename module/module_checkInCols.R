@@ -1,10 +1,9 @@
 
 ################################################################################ 
 ################################################################################
-# checkInColsUI
+# module_checkInCols_UI
 ################################################################################ 
 ################################################################################
-
 #-----------------------------------------
 #  xxxInput, xxxOutput, xxxControl, xxxUI
 #-----------------------------------------
@@ -47,7 +46,8 @@ module_checkInCols <- function(input, output, session, ALL, dataset_name, defaul
     output$adpx_rHandsontab <- renderRHandsontable({
       
       adpx_checkin =  values[["adpx_checkin"]]  # 
-      if (is.null(adpx_checkin)) {return(NULL)}
+      validate(need(adpx_checkin, message=FALSE)
+      )
        
       myindex = which(adpx_checkin$which.column=="?")
       mycolor = adpx_checkin %>% mutate(
@@ -63,7 +63,7 @@ module_checkInCols <- function(input, output, session, ALL, dataset_name, defaul
         mycolor="black"
        }
       
-      #  Handsontable.renderers.TextRenderer.apply, new version, 02-15-2019
+      # Handsontable.renderers.TextRenderer.apply, new version, 02-15-2019
       # Handsontable.TextCell.renderer.apply  old
       # https://jrowen.github.io/rhandsontable/
       # https://jrowen.github.io/rhandsontable/#custom_renderer
@@ -84,10 +84,8 @@ module_checkInCols <- function(input, output, session, ALL, dataset_name, defaul
          "
            )
          )
-      
     })
     rHandsontableOutput(ns("adpx_rHandsontab"))
-    
   })
   
      
@@ -95,9 +93,9 @@ module_checkInCols <- function(input, output, session, ALL, dataset_name, defaul
   #  inputData
   #------------------------- 
   inputData <- reactive({
-    validate( need(ALL$DATA, message=FALSE))
-    
-    # show adpx at the first place 
+    validate(need(ALL$DATA, message=FALSE), 
+             need(dataset_name, message=FALSE)
+    )
     ALL$DATA[[dataset_name]]  
   })
   
@@ -105,15 +103,11 @@ module_checkInCols <- function(input, output, session, ALL, dataset_name, defaul
   # update adpx_checkin based on new InputData
   adpx_checkinTab <- reactive({
     adpx_checkin = default_checkin #default_adpx_checkinTab()
-    if (is.null(adpx_checkin)) {return(NULL)}  
-    
-    # if new adpx loaded
     adpx = inputData()
-    if (is.null(adpx)) {return(adpx_checkin)}# must have the default 
-    
-    #colnames(adpx) = toupper(colnames(adpx))  #leave it alone
-    # based on adpx, update adpx_checkin, note VARS use globalVars$magicTab as background
-    #adpx_checkin$which.column = VARS(adpx, vars.lst=adpx_checkin$standard.name, Where="indivProfile", Who="feng.yang") 
+      
+    validate(need(adpx_checkin, message=FALSE), 
+             need(adpx, message=FALSE)
+    )
      
     adpx_checkin$which.column = colnames(adpx)[match(adpx_checkin$standard.name, colnames(adpx))]
     
@@ -155,9 +149,10 @@ module_checkInCols <- function(input, output, session, ALL, dataset_name, defaul
     if (nrow(tt)>0) { adpx[, tt$standard.name] = adpx[, as.character(tt$which.column)]}
 
     ALL$DATA[[dataset_name]] <- adpx  
-    showNotification("check in columns sucessfully", type="message")   # "default, "message", "warning", "error"
+    
+    # "default, "message", "warning", "error"
+    showNotification("check in columns sucessfully", type="message")   
   }) 
   
   return(ALL)
-  
 }
