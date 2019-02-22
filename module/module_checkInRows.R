@@ -2,8 +2,6 @@
 # module_checkInRows_UI                                                                                                                                          
 ################################################################################                                                                                                        
 
-# https://github.com/jrowen/rhandsontable/issues/27
-
 module_checkInRows_UI <- function(id, label = "") {
   ns <- NS(id)
   
