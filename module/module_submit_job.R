@@ -295,8 +295,8 @@ observeEvent({input$submit_job}, {
   print(server.model.dir)
   print(server.data.dir)
   
-  if (1==3) { 
-    run.model.in.HPC(HOME = "~/FYANG/Template/Handbook/",
+  if (1==1) { 
+    submit_job_to_HPC(HOME = "~/FYANG/Template/Handbook/",
                      local.model.name = local.model.name, 
                      local.data.name = local.data.name, 
                      local.result.dir=NULL, 
@@ -311,64 +311,5 @@ observeEvent({input$submit_job}, {
   #})
 })
 
-
-
-
-
-run.model.in.HPC <- function(
-  HOME = "~/FYANG/Template/Handbook/", 
-  local.model.name = "/ctl/LN_BASE_WT/LN_BASE_WT.ctl", 
-  local.data.name = "/data/nmdat_PK_1024_2018_test.csv", 
-  local.result.dir = NULL,   #"./ctl/LN_BASE_WT/", 
-  server.model.dir = "/home/feng.yang/R3918/ctl/LN_BASE_WT/", 
-  server.data.dir= "/home/feng.yang/R3918/data/"
-)  {
-  
-  # derive model and data information
-  model.name = basename(local.model.name)  # "/home/feng.yang/R3918/ctl/LN_BASE_WT/LN_BASE_WT.ctl"
-  model.runno = gsub(paste0(".", tools::file_ext(model.name)), "", model.name,  fix=TRUE)
-  data.name = basename(local.data.name)  # "/home/feng.yang/R3918/ctl/LN_BASE_WT/LN_BASE_WT.ctl"
-  
-  # create a server directory to hold data and model
-  system(command = paste0("ssh ", "10.244.106.127 '", paste0("mkdir -p ", server.model.dir), "'"), intern = T)
-  system(command = paste0("ssh ", "10.244.106.127 '", paste0("mkdir -p ", server.data.dir), "'"), intern = T)
-  
-  # upload model and dataset to server
-  system(command = paste0("scp  ", paste0(HOME, local.model.name), "  ",  "10.244.106.127:", server.model.dir), intern = T)
-  system(command = paste0("scp  ", paste0(HOME, local.data.name),  "  ",  "10.244.106.127:", server.data.dir), intern = T)
-  
-  # run the commands
-  command1 = paste0('cd ',  server.model.dir)            #'cd /home/feng.yang/R3918/ctl/LN_BASE_WT/;'
-  command2 = paste0('setsid execute ',  model.name, ' -clean=4 ', '> output.log 2>&1 & ') 
-  command = paste(command1, command2, sep="; ")
-  system(command = paste0("ssh ", "10.244.106.127 '", command, "'"), intern = T)
-  
-  #return(lst)
-}
-
-
-if (1==2) { 
-    run.model.in.HPC(
-      HOME = "~/FYANG/Template/Handbook/", 
-      local.model.name = "/model/ctl/LN001.ctl", 
-      local.data.name = "/data/nmdat4LN001.csv", 
-      local.result.dir = "/output/feng.yang/TEST/LN001_nmdat4LN001/",   #"./ctl/LN_BASE_WT/", 
-      server.model.dir = "/home/feng.yang/TEST/ctl/LN001_nmdat4LN001/", 
-      server.data.dir= "/home/feng.yang/TEST/data/"
-    ) 
-    
-    run.model.in.HPC(
-      HOME = "~/FYANG/Template/Handbook/", 
-      local.model.name = "/model/ctl/LN002.ctl", 
-      local.data.name = "/data/nmdat4LN002.csv", 
-      local.result.dir = "/output/feng.yang/TEST/LN002_nmdat4LN002/",   #"./ctl/LN_BASE_WT/", 
-      server.model.dir = "/home/feng.yang/TEST/ctl/LN002_nmdat4LN002/", 
-      server.data.dir= "/home/feng.yang/TEST/data/"
-    ) 
-
-}
-
-
-
-
+ 
 }
