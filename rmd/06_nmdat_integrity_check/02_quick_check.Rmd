@@ -5,286 +5,278 @@
 A NONMEM formatted data file is created by using the clinical and bioanalytical databases.   In general, the following rules will be applied.  In particular, a dataset not passing _quick check_ will not be processed further.  To ensure the integrity and traceability of the data, no samples should be deleted, use 'C' to flag samples if needed and specify the reasons in 'CFLAG'.
  
 ```{r}
-   nmdat.mandatory.col.lst = c("ROWID","ID","TIME","DV","CMT","MDV","AMT","RATE","EVID")
-    PK.TEST.NAME = "REGN3918"    # unique(TEST)[1])PK.TEST.NAME
-    
-    
-   nmdat_mandatory_check <- function(nmdat, values4nmdat)  {
-      validate(need(nmdat, message=FALSE)) 
+nmdat.mandatory.col.lst = c("ROWID","ID","TIME","DV","CMT","MDV","AMT","RATE","EVID")
+PK.TEST.NAME = "REGN3918"    # unique(TEST)[1])PK.TEST.NAME
+values <- reactiveValues()
+
+# nmdat_mandatory_check
+nmdat_mandatory_check <- function(nmdat, values4nmdat)  {
+  validate(need(nmdat, message=FALSE)) 
+ 
+  values4nmdat = check.colnames.in.stdlist(nmdat, col.lst=nmdat.mandatory.col.lst) %>% 
+    push_to_values4nmdat(values4nmdat, category="colnames.in.stdlist") 
+      
+return(values4nmdat)
+}
+
+# nmdat_quick_check
+nmdat_quick_check <- function(nmdat, values4nmdat)  {
+  validate(need(values4nmdat$mandatory_check, message=FALSE)) 
+ 
+  values4nmdat = check.col.in.numint(nmdat)  %>% 
+    push_to_values4nmdat(values4nmdat, category="col.in.numint")  
+  
+  values4nmdat = check.colnames.length.le8(nmdat)  %>% 
+    push_to_values4nmdat(values4nmdat, category="colnames.length.le8") 
+  
+  values4nmdat = check.colnames.uppercase(nmdat)  %>% 
+    push_to_values4nmdat(values4nmdat, category="colnames.uppercase") 
+  
+  values4nmdat = check.colnames.not.start.num(nmdat)  %>% 
+    push_to_values4nmdat(values4nmdat, category="colnames.not.start.num") 
+  
+  values4nmdat = check.label.colnames.lt40(nmdat)  %>% 
+    push_to_values4nmdat(values4nmdat, category="label.colnames.lt40") 
+  
+  values4nmdat = check.obs.order.by.time(nmdat, values4nmdat)                       
+  values4nmdat = check.missing.ID(nmdat, values4nmdat)                         
+  values4nmdat = check.missing.TIME(nmdat, values4nmdat)                         
+  values4nmdat = check.missing.MDV(nmdat, values4nmdat)                        
+  values4nmdat = check.missing.CMT(nmdat, values4nmdat)                         
+  values4nmdat = check.inconsistent.DV.MDV(nmdat, values4nmdat)     
      
-      values4nmdat = check.colnames.in.stdlist(nmdat, values4nmdat)      
-         
-   return(values4nmdat)
-   }
-   
-   
-   
-   nmdat_quick_check <- function(nmdat, values4nmdat)  {
-      validate(need(values4nmdat$mandatory_check, message=FALSE)) 
-     
-      values4nmdat = check.col.in.numint(nmdat, values4nmdat)     
-      values4nmdat = check.colnames3(nmdat, values4nmdat)      
-      values4nmdat = check.label.colnames.lt40(nmdat, values4nmdat)                       
-      values4nmdat = check.obs.order.by.time(nmdat, values4nmdat)                       
-      values4nmdat = check.missing.ID(nmdat, values4nmdat)                         
-      values4nmdat = check.missing.TIME(nmdat, values4nmdat)                         
-      values4nmdat = check.missing.MDV(nmdat, values4nmdat)                        
-      values4nmdat = check.missing.CMT(nmdat, values4nmdat)                         
-      values4nmdat = check.inconsistent.DV.MDV(nmdat, values4nmdat)     
-         
-   return(values4nmdat)
-   }
+return(values4nmdat)
+}
 ```
  
 *** 
 
 <!-- A NONMEM dataset must contain mandatory variables indicated in below table.-->
-```{r }
- check.colnames.in.stdlist <- function(nmdat, values4nmdat)  {
-   validate(need(nmdat, message=FALSE))
-   print("inside mandatory check...")
-   #nmdat.mandatory.col.lst = values4nmdat$nmdat.mandatory.col.lst
+```{r } 
    
-   YN = nmdat.mandatory.col.lst %in% colnames(nmdat)  
-   status <- all(YN)
-   info = paste0(setdiff(nmdat.mandatory.col.lst, colnames(nmdat) ), collapse=", ")
-   info = colFmt(paste0("Missing key variable in the dataset: ", info, "."),'red')
+check.colnames.in.stdlist <- function(nmdat, col.lst=NULL)  {
+  validate(need(nmdat, message=FALSE))
+  status=FALSE; info=""; table=NULL; figure=NULL
    
-   values4nmdat$colnames.in.stdlist$status = status
-   values4nmdat$colnames.in.stdlist$info = info
-   if(!status) {values4nmdat$red_alert = rbind(isolate(values4nmdat$red_alert), info)}
-    
-   values4nmdat$mandatory_check = values4nmdat$mandatory_check & status 
-  
-   # pass_quick_check
-   values4nmdat$pass_quick_check = isolate(values4nmdat$pass_quick_check) & status 
-   
-   return(values4nmdat)
- }
+  YN = col.lst %in% colnames(nmdat)  
+  status <- ifelse(all(YN), "green", "red")
+  info = paste0(setdiff(col.lst, colnames(nmdat) ), collapse=", ")
+  info = colFmt(paste0("Missing key variable in the dataset: ", info, "."),'red')
+ 
+  return(list(status=status, info=info, table=table, figure=figure))
+}
+ 
+status <- renderUI({
+  category = "colnames.in.stdlist"    
+  callModule(module_check_nmdat_status,paste0(category,"_status"), values4nmdat, category)
+  div(module_check_nmdat_status_UI(
+      id=paste0(category,"_status"),label=NULL ),style="display: inline-block")
+})
 
-yes_or_no <- renderUI(renderText({
-  validate(need(values4nmdat$colnames.in.stdlist$status %in% c(TRUE, FALSE), message=FALSE), 
-           need(values4nmdat$colnames.in.stdlist$info, message=FALSE))
-  
-  ifelse(values4nmdat$colnames.in.stdlist$status, colFmt(asis_output("\U2714"),'green'),  colFmt(asis_output("\U2718"),'red'))
-  })() %>% HTML())
+info <- renderUI({
+  category = "colnames.in.stdlist"    
+  validate(need(values4nmdat[[category]]$status %in% c("yellow", "red"), message=FALSE))
+  callModule(module_check_nmdat_info, paste0(category,"_info"), values4nmdat, category)
+  module_check_nmdat_info_UI(id=paste0(category,"_info"),label=NULL) 
+})
 
-info <- renderUI(renderText({
-  validate(need(values4nmdat$colnames.in.stdlist$status %in% c(TRUE, FALSE), message=FALSE), 
-           need(values4nmdat$colnames.in.stdlist$info, message=FALSE))
-  
-  if(!values4nmdat$colnames.in.stdlist$status) {colFmt(values4nmdat$colnames.in.stdlist$info,'red')} 
-  })() %>% HTML())
-  
 ```
 
-* `r (yes_or_no) `  A NONMEM dataset must contain mandatory variables incuding _ROWID_, _ID_, _TIME_, _DV_, _CMT_, _MDV_, _AMT_, _RATE_, _EVID_.  See [Confluence](https://sandboxconfluence.regeneron.com/display/PMx/Data+format). 
-    + `r (info) ` 
+* `r status ` A NONMEM dataset must contain mandatory variables incuding _ROWID_, _ID_, _TIME_, _DV_, _CMT_, _MDV_, _AMT_, _RATE_, _EVID_.  See [Confluence](https://sandboxconfluence.regeneron.com/display/PMx/Data+format). 
+    + `r info` 
  
  
 *** 
      
 <!-- 
-#######################################################################################################################
-#######################################################################################################################
-#######################################################################################################################
-#######################################################################################################################
-#######################################################################################################################
+#################################################################################
+################################################################################# 
 All mandatory primary variables except C and CFLAG must be numeric value.
---> 
-```{r }
- check.col.in.numint <- function(nmdat, values4nmdat)  {
+-->  
  
-   validate(need(nmdat, message=FALSE), 
-            need(values4nmdat$mandatory_check, message="Must pass mandatory check...")
-   )
-   print("inside col.in.numint")
+```{r}
+check.col.in.numint <- function(nmdat)  {
+   validate(need(nmdat, message=FALSE))
+  
+   status=FALSE; info=""; table=NULL; figure=NULL
    
    col.lst <- setdiff(intersect(nmdat.mandatory.col.lst, colnames(nmdat)), c("C", "CFLAG"))
    YN = sapply(nmdat[, col.lst], typeof) %in% c("double", "integer")  # class
-   status <- all(YN)
+   status <- ifelse(all(YN), "green", "red")
    info = paste0(col.lst[which(!YN)], collapse=", ")
-   info = colFmt(paste0("Colnames, ", info, ", is/are not numeric or integer in the dataset."),'red')
+   info = paste0("Colnames, ", info, ", is/are not numeric or integer in the dataset.")
    
-   values4nmdat$col.in.numint$status = status
-   values4nmdat$col.in.numint$info = info
-   if(!status) {values4nmdat$red_alert = rbind(isolate(values4nmdat$red_alert), info)}
-   
-   # pass_quick_check
-   values4nmdat$pass_quick_check = values4nmdat$pass_quick_check & status 
-   return(values4nmdat) 
+   return(list(status=status, info=info, table=table, figure=figure))
 }
  
-yes_or_no <- renderUI(renderText({
-  validate(need(values4nmdat$mandatory_check, message=FALSE),
-           need(values4nmdat$col.in.numint$status %in% c(TRUE, FALSE), message=FALSE), 
-           need(values4nmdat$col.in.numint$info, message=FALSE))
-   
-  ifelse(values4nmdat$col.in.numint$status, colFmt(asis_output("\U2714"),'green'),  colFmt(asis_output("\U2718"),'red'))
-  })() %>% HTML())
+status <- renderUI({
+  category = "col.in.numint"    
+  callModule(module_check_nmdat_status,paste0(category,"_status"), values4nmdat, category)
+  div(module_check_nmdat_status_UI(
+      id=paste0(category,"_status"),label=NULL ),style="display: inline-block")
+})
 
-info <- renderUI(renderText({
-  validate(need(values4nmdat$mandatory_check, message=FALSE),
-           need(values4nmdat$col.in.numint$status %in% c(TRUE, FALSE), message=FALSE), 
-           need(values4nmdat$col.in.numint$info, message=FALSE))
-     
-  if(!values4nmdat$col.in.numint$status) {colFmt(values4nmdat$col.in.numint$info,'red')} 
-  })() %>% HTML())
-  
-```
-
-* `r (yes_or_no) ` All mandatory primary variables except C and CFLAG must be integer or numeric, as shown in [Confluence](https://sandboxconfluence.regeneron.com/display/PMx/Data+format). 
-    + `r (info) ` 
+info <- renderUI({
+  category = "col.in.numint"    
+  validate(need(values4nmdat[[category]]$status %in% c("yellow", "red"), message=FALSE))
+  callModule(module_check_nmdat_info, paste0(category,"_info"), values4nmdat, category)
+  module_check_nmdat_info_UI(id=paste0(category,"_info"),label=NULL) 
+})  
  
+```
+ 
+  
+* `r status ` All mandatory primary variables except C and CFLAG must be integer or numeric, as shown in [Confluence](https://sandboxconfluence.regeneron.com/display/PMx/Data+format). 
+    + `r info ` 
+
  
 ***
   
-<!-- 3. The variable names can not exceed 8 characters,  should be in upper case, and can't start with numbers.  --> 
-```{r, echo = FALSE}
- check.colnames3 <- function(nmdat, values4nmdat)  {
-   
-   validate(need(nmdat, message=FALSE), 
-            need(values4nmdat$mandatory_check, message="Must pass mandatory check...")
-   )
-   print("inside nchar(colname) <8 ...")
-    
-   status1 = all(nchar(colnames(nmdat))<=8)
-   info = paste0(colnames(nmdat)[which((nchar(colnames(nmdat))>8))], collapse=", ")
-   info = colFmt(paste0("Length of colnames, ", info, ", greater than 8 characters."),'red')
-   values4nmdat$colnames.length.le8$status = status1
-   values4nmdat$colnames.length.le8$info = info
-   if(!status1) {values4nmdat$red_alert = rbind(isolate(values4nmdat$red_alert), info)}
-   
-   YN <- colnames(nmdat)==toupper(colnames(nmdat))
-   status2 = all(YN)
-   info = paste0(colnames(nmdat)[which(!YN)], collapse=", ")
-   info = colFmt(paste0("Variable name not in upper case: ", info, "."),'red')
-   values4nmdat$colnames.uppercase$status = status2
-   values4nmdat$colnames.uppercase$info = info
-   if(!status2) {values4nmdat$red_alert = rbind(isolate(values4nmdat$red_alert), info)}
-   
-   YN <- is.na(substr(colnames(nmdat), 1,1) %>% as_numeric())
-   status3 = all(YN)
-   info = paste0(colnames(nmdat)[which(!YN)], collapse=", ")
-   info = colFmt(paste0("Variable name can't start with numbers:", info, "."),'red')
-   values4nmdat$colnames.not.start.num$status = status3
-   values4nmdat$colnames.not.start.num$info = info
-   if(!status3) {values4nmdat$red_alert = rbind(isolate(values4nmdat$red_alert), info)}
-   
-   # pass_quick_check
-   values4nmdat$pass_quick_check = values4nmdat$pass_quick_check & status1 & status2 & status3 
-     
-   return(values4nmdat) 
+<!-- 3. The variable names can not exceed 8 characters,  should be in upper case, and can't start with numbers.  -->   
+
+```{r } 
+
+check.colnames.length.le8 <- function(nmdat)  {
+  validate(need(nmdat, message=FALSE))
+  status=FALSE; info=""; table=NULL; figure=NULL
+  
+  status = ifelse(all(nchar(colnames(nmdat))<=8), "green", "red")
+  info = paste0(colnames(nmdat)[which((nchar(colnames(nmdat))>8))], collapse=", ")
+  info = paste0("Length of colnames, ", info, ", greater than 8 characters.")
+  
+  return(list(status=status, info=info, table=table, figure=figure))
 }
 
+status <- renderUI({
+  category = "colnames.length.le8"    
+  callModule(module_check_nmdat_status,paste0(category,"_status"), values4nmdat, category)
+  div(module_check_nmdat_status_UI(
+    id=paste0(category,"_status"),label=NULL ),style="display: inline-block")
+})
 
-yes_or_no <- renderUI(renderText({
-    validate(need(values4nmdat$mandatory_check, message=FALSE),
-           need(values4nmdat$colnames.length.le8$status %in% c(TRUE, FALSE), message=FALSE), 
-           need(values4nmdat$colnames.length.le8$info, message=FALSE), 
-           
-           need(values4nmdat$colnames.uppercase$status %in% c(TRUE, FALSE), message=FALSE), 
-           need(values4nmdat$colnames.uppercase$info, message=FALSE), 
-           
-           need(values4nmdat$colnames.not.start.num$status %in% c(TRUE, FALSE), message=FALSE), 
-           need(values4nmdat$colnames.not.start.num$info, message=FALSE) 
-    )
-           
-   
-  ifelse(
-   values4nmdat$colnames.length.le8$status  & 
-   values4nmdat$colnames.uppercase$status   & 
-   values4nmdat$colnames.not.start.num$status,
-   
-   colFmt(asis_output("\U2714"),'green'), 
-   colFmt(asis_output("\U2718"),'red'))
-  })() %>% HTML())
+info <- renderUI({
+  category = "colnames.length.le8"    
+  validate(need(values4nmdat[[category]]$status %in% c("yellow", "red"), message=FALSE))
+  callModule(module_check_nmdat_info, paste0(category,"_info"), values4nmdat, category)
+  module_check_nmdat_info_UI(id=paste0(category,"_info"),label=NULL) 
+})
 
-info1 <- renderUI(renderText({
-  validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$colnames.length.le8$status %in% c(TRUE, FALSE), message=FALSE), 
-       need(values4nmdat$colnames.length.le8$info, message=FALSE)
-  )
-  if(!values4nmdat$colnames.length.le8$status) {colFmt(values4nmdat$colnames.length.le8$info,'red')} 
-  })() %>% HTML())
-
-info2 <- renderUI(renderText({
-    validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$colnames.uppercase$status %in% c(TRUE, FALSE), message=FALSE), 
-       need(values4nmdat$colnames.uppercase$info, message=FALSE)
-  )
-  
-  if(!values4nmdat$colnames.uppercase$status) {colFmt(values4nmdat$colnames.uppercase$info,'red')}
-  })() %>% HTML())
-
-info3 <- renderUI(renderText({
-      validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$colnames.not.start.num$status %in% c(TRUE, FALSE), message=FALSE), 
-       need(values4nmdat$colnames.not.start.num$info, message=FALSE)
-  )
-  
-  if(!values4nmdat$colnames.not.start.num$status) {colFmt(values4nmdat$colnames.not.start.num$info,'red')}
-  })() %>% HTML())
- 
 ```
 
-* `r (yes_or_no) ` The variable names can not exceed 8 characters, should be in upper case, and can't start with numbers. 
-    + `r (info1) ` 
-    + `r (info2) `
-    + `r (info3) `
-
-   
-  
-*** 
-
-<!-- The label for variables can not be exceeded 40 characters--> 
-```{r }
- 
-check.label.colnames.lt40 <- function(nmdat, values4nmdat)  {
-      
-  validate(need(nmdat, message=FALSE), 
-              need(values4nmdat$mandatory_check, message="Must pass mandatory check...")
-  )
-   print("inside label.colnames.lt40 ...")
- 
-   YN = nchar(Hmisc::label(nmdat))<=40
-   status <- all(YN)
-   info = paste0(Hmisc::label(nmdat)[which(!YN)], collapse=", ")
-   info = colFmt(paste0("Label of variables, ", info, ", greater than 40 characters."),'orange')
-   
-   values4nmdat$label.colnames.lt40$status <- status
-   values4nmdat$label.colnames.lt40$info = info
-   if(!status) {values4nmdat$yellow_alert = rbind(isolate(values4nmdat$yellow_alert), info)}
-   
-   # pass_quick_check
-   values4nmdat$pass_quick_check =  values4nmdat$pass_quick_check &  status
-   return(values4nmdat) 
- }
- 
-yes_or_no <- renderUI(renderText({
-     validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$label.colnames.lt40$status %in% c(TRUE, FALSE), message=FALSE), 
-       need(values4nmdat$label.colnames.lt40$info, message=FALSE)
-  )
-  
-  ifelse(values4nmdat$label.colnames.lt40$status, colFmt(asis_output("\U2714"),'green'),  colFmt(asis_output("\U2718"),'red'))
-  })() %>% HTML())
-
-info <- renderUI(renderText({
-       validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$label.colnames.lt40$status %in% c(TRUE, FALSE), message=FALSE), 
-       need(values4nmdat$label.colnames.lt40$info, message=FALSE)
-  )
-  
-  if(!values4nmdat$label.colnames.lt40$status) {colFmt(values4nmdat$label.colnames.lt40$info,'orange')} 
-  })() %>% HTML())
-  
-```
-
-* `r (yes_or_no) ` The label of variables can not be exceeded 40 characters.
+* `r status ` The variable names can not exceed 8 characters.
     + `r (info) ` 
- 
- 
+
+
+***
+
+<!-- 3. The variable namesshould be in upper case  -->
+```{r } 
+
+check.colnames.uppercase <- function(nmdat)  {
+  validate(need(nmdat, message=FALSE))
+  status=FALSE; info=""; table=NULL; figure=NULL
+  
+  YN <- colnames(nmdat)==toupper(colnames(nmdat))
+  status = ifelse(all(YN), "green", "red")
+  info = paste0(colnames(nmdat)[which(!YN)], collapse=", ")
+  info = paste0("Variable name not in upper case: ", info, ".") 
+  
+  return(list(status=status, info=info, table=table, figure=figure))
+}
+
+status <- renderUI({
+  category = "colnames.uppercase"    
+  callModule(module_check_nmdat_status,paste0(category,"_status"), values4nmdat, category)
+  div(module_check_nmdat_status_UI(
+    id=paste0(category,"_status"),label=NULL ),style="display: inline-block")
+})
+
+info <- renderUI({
+  category = "colnames.uppercase"    
+  validate(need(values4nmdat[[category]]$status %in% c("yellow", "red"), message=FALSE))
+  callModule(module_check_nmdat_info, paste0(category,"_info"), values4nmdat, category)
+  module_check_nmdat_info_UI(id=paste0(category,"_info"),label=NULL) 
+})
+
+```
+
+* `r status ` The variable names should be in upper case.
+    + `r (info) ` 
+
+
+***
+<!-- 3. The variable names can't start with numbers.  -->
+```{r } 
+
+check.colnames.not.start.num <- function(nmdat)  {
+  validate(need(nmdat, message=FALSE))
+  status=FALSE; info=""; table=NULL; figure=NULL
+  
+  YN <- is.na(substr(colnames(nmdat), 1,1) %>% as_numeric())
+  status = ifelse(all(YN), "green", "red")
+  info = paste0(colnames(nmdat)[which(!YN)], collapse=", ")
+  info = paste0("Variable name can't start with numbers:", info, ".") 
+  
+  return(list(status=status, info=info, table=table, figure=figure))
+}
+
+status <- renderUI({
+  category = "colnames.not.start.num"    
+  callModule(module_check_nmdat_status,paste0(category,"_status"), values4nmdat, category)
+  div(module_check_nmdat_status_UI(
+    id=paste0(category,"_status"),label=NULL ),style="display: inline-block")
+})
+
+info <- renderUI({
+  category = "colnames.not.start.num"    
+  validate(need(values4nmdat[[category]]$status %in% c("yellow", "red"), message=FALSE))
+  callModule(module_check_nmdat_info, paste0(category,"_info"), values4nmdat, category)
+  module_check_nmdat_info_UI(id=paste0(category,"_info"),label=NULL) 
+})
+
+```
+
+* `r status ` The variable names can't start with numbers. 
+    + `r (info) ` 
+
+
+***
+
+<!-- The label for variables can notexceed 40 characters--> 
+```{r } 
+
+check.label.colnames.lt40 <- function(nmdat)  {
+  validate(need(nmdat, message=FALSE))
+  status=FALSE; info=""; table=NULL; figure=NULL
+  
+   YN = nchar(Hmisc::label(nmdat))<=40
+   status <- ifelse(all(YN), "green", "orange")
+   info = paste0(Hmisc::label(nmdat)[which(!YN)], collapse=", ")
+   info = paste0("Label of variables, ", info, ", greater than 40 characters.")
+  
+  return(list(status=status, info=info, table=table, figure=figure))
+}
+
+status <- renderUI({
+  category = "label.colnames.lt40"    
+  callModule(module_check_nmdat_status,paste0(category,"_status"), values4nmdat, category)
+  div(module_check_nmdat_status_UI(
+    id=paste0(category,"_status"),label=NULL ),style="display: inline-block")
+})
+
+info <- renderUI({
+  category = "label.colnames.lt40"    
+  validate(need(values4nmdat[[category]]$status %in% c("yellow", "red"), message=FALSE))
+  callModule(module_check_nmdat_info, paste0(category,"_info"), values4nmdat, category)
+  module_check_nmdat_info_UI(id=paste0(category,"_info"),label=NULL) 
+})
+
+```
+
+* `r status ` The label of variables can not exceed 40 characters.
+    + `r (info) ` 
+
+
 ***
 
   
@@ -306,30 +298,30 @@ check.obs.order.by.time <- function(nmdat, values4nmdat)  {
      
      values4nmdat$obs.order.by.time$status = status
      values4nmdat$obs.order.by.time$info = info
-     if(!status) {values4nmdat$red_alert = rbind(isolate(values4nmdat$red_alert), info)}
+     if(!status=="green") {values4nmdat$red_alert = rbind(isolate(values4nmdat$red_alert), info)}
      
      # pass_quick_check
-     values4nmdat$pass_quick_check = values4nmdat$pass_quick_check & status 
+     values4nmdat$pass_quick_check = values4nmdat$pass_quick_check & status=="green"
      
    return(values4nmdat)
  }
  
 yes_or_no <- renderUI(renderText({
        validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$obs.order.by.time$status %in% c(TRUE, FALSE), message=FALSE), 
+       need(values4nmdat$obs.order.by.time$status %in% c("green", "yellow", "red"), message=FALSE), 
        need(values4nmdat$obs.order.by.time$info, message=FALSE)
   )
   
-  ifelse(values4nmdat$obs.order.by.time$status, colFmt(asis_output("\U2714"),'green'),  colFmt(asis_output("\U2718"),'red'))
+  ifelse(values4nmdat$obs.order.by.time$status=="green", colFmt(asis_output("Yes\U2714"),'green'),  colFmt(asis_output("No\U2714"),'red'))
   })() %>% HTML())
 
 info <- renderUI(renderText({
   validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$obs.order.by.time$status %in% c(TRUE, FALSE), message=FALSE), 
+       need(values4nmdat$obs.order.by.time$status %in% c("green", "yellow", "red"), message=FALSE), 
        need(values4nmdat$obs.order.by.time$info, message=FALSE)
   )
   
-  if(!values4nmdat$obs.order.by.time$status) {colFmt(values4nmdat$obs.order.by.time$info,'red')} 
+  if(!values4nmdat$obs.order.by.time$status=="green") {colFmt(values4nmdat$obs.order.by.time$info,'red')} 
   })() %>% HTML())
    
 ```
@@ -355,30 +347,30 @@ check.missing.ID <- function(nmdat, values4nmdat)  {
      
      values4nmdat$missing.ID$status = status
      values4nmdat$missing.ID$info = info
-     if(!status) {values4nmdat$red_alert = rbind(isolate(values4nmdat$red_alert), info)}
+     if(!status=="green") {values4nmdat$red_alert = rbind(isolate(values4nmdat$red_alert), info)}
      
      # pass_quick_check
-     values4nmdat$pass_quick_check = values4nmdat$pass_quick_check & status 
+     values4nmdat$pass_quick_check = values4nmdat$pass_quick_check & status=="green"
     
    return(values4nmdat)
 }
  
 yes_or_no <- renderUI(renderText({
        validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$missing.ID$status %in% c(TRUE, FALSE), message=FALSE), 
+       need(values4nmdat$missing.ID$status %in% c("green", "yellow", "red"), message=FALSE), 
        need(values4nmdat$missing.ID$info, message=FALSE)
   )
   
-  ifelse(values4nmdat$missing.ID$status, colFmt(asis_output("\U2714"),'green'),  colFmt(asis_output("\U2718"),'red'))
+  ifelse(values4nmdat$missing.ID$status=="green", colFmt(asis_output("Yes\U2714"),'green'),  colFmt(asis_output("No\U2714"),'red'))
   })() %>% HTML())
 
 info <- renderUI(renderText({
         validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$missing.ID$status %in% c(TRUE, FALSE), message=FALSE), 
+       need(values4nmdat$missing.ID$status %in% c("green", "yellow", "red"), message=FALSE), 
        need(values4nmdat$missing.ID$info, message=FALSE)
   )
   
-  if(!values4nmdat$missing.ID$status) {colFmt(values4nmdat$missing.ID$info,'red')} 
+  if(!values4nmdat$missing.ID$status=="green") {colFmt(values4nmdat$missing.ID$info,'red')} 
   })() %>% HTML())
    
 ```
@@ -408,30 +400,30 @@ check.missing.TIME <- function(nmdat, values4nmdat)  {
   
   values4nmdat$missing.TIME$status = status
   values4nmdat$missing.TIME$info = info
-  if(!status) {values4nmdat$red_alert = rbind(isolate(values4nmdat$red_alert), info)}
+  if(!status=="green") {values4nmdat$red_alert = rbind(isolate(values4nmdat$red_alert), info)}
   
   # pass_quick_check
-  values4nmdat$pass_quick_check = values4nmdat$pass_quick_check & status 
+  values4nmdat$pass_quick_check = values4nmdat$pass_quick_check & status=="green"
   
   return(values4nmdat) 
 }
 
 yes_or_no <- renderUI(renderText({
         validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$missing.TIME$status %in% c(TRUE, FALSE), message=FALSE), 
+       need(values4nmdat$missing.TIME$status %in% c("green", "yellow", "red"), message=FALSE), 
        need(values4nmdat$missing.TIME$info, message=FALSE)
   )
   
-  ifelse(values4nmdat$missing.TIME$status, colFmt(asis_output("\U2714"),'green'),  colFmt(asis_output("\U2718"),'red'))
+  ifelse(values4nmdat$missing.TIME$status=="green", colFmt(asis_output("Yes\U2714"),'green'),  colFmt(asis_output("No\U2714"),'red'))
 })() %>% HTML())
 
 info <- renderUI(renderText({
        validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$missing.TIME$status %in% c(TRUE, FALSE), message=FALSE), 
+       need(values4nmdat$missing.TIME$status %in% c("green", "yellow", "red"), message=FALSE), 
        need(values4nmdat$missing.TIME$info, message=FALSE)
   )
   
-  if(!values4nmdat$missing.TIME$status) {colFmt(values4nmdat$missing.TIME$info,'red')} 
+  if(!values4nmdat$missing.TIME$status=="green") {colFmt(values4nmdat$missing.TIME$info,'red')} 
 })() %>% HTML())
 
 ```
@@ -459,30 +451,30 @@ check.missing.MDV <- function(nmdat, values4nmdat)  {
    
    values4nmdat$missing.MDV$status = status
    values4nmdat$missing.MDV$info = info
-   if(!status) {values4nmdat$red_alert = rbind(isolate(values4nmdat$red_alert), info)}
+   if(!status=="green") {values4nmdat$red_alert = rbind(isolate(values4nmdat$red_alert), info)}
    
    # pass_quick_check
-   values4nmdat$pass_quick_check = values4nmdat$pass_quick_check & status 
+   values4nmdat$pass_quick_check = values4nmdat$pass_quick_check & status=="green"
      
    return(values4nmdat) 
 }
  
 yes_or_no <- renderUI(renderText({
        validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$missing.MDV$status %in% c(TRUE, FALSE), message=FALSE), 
+       need(values4nmdat$missing.MDV$status %in% c("green", "yellow", "red"), message=FALSE), 
        need(values4nmdat$missing.MDV$info, message=FALSE)
   )
   
-  ifelse(values4nmdat$missing.MDV$status, colFmt(asis_output("\U2714"),'green'),  colFmt(asis_output("\U2718"),'red'))
+  ifelse(values4nmdat$missing.MDV$status=="green", colFmt(asis_output("Yes\U2714"),'green'),  colFmt(asis_output("No\U2714"),'red'))
   })() %>% HTML())
 
 info <- renderUI(renderText({
         validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$missing.MDV$status %in% c(TRUE, FALSE), message=FALSE), 
+       need(values4nmdat$missing.MDV$status %in% c("green", "yellow", "red"), message=FALSE), 
        need(values4nmdat$missing.MDV$info, message=FALSE)
   )
   
-  if(!values4nmdat$missing.MDV$status) {colFmt(values4nmdat$missing.MDV$info,'red')} 
+  if(!values4nmdat$missing.MDV$status=="green") {colFmt(values4nmdat$missing.MDV$info,'red')} 
   })() %>% HTML())
    
 ```
@@ -511,30 +503,30 @@ check.missing.CMT <- function(nmdat, values4nmdat)  {
   
   values4nmdat$missing.CMT$status = status
   values4nmdat$missing.CMT$info = info
-  if(!status) {values4nmdat$red_alert = rbind(isolate(values4nmdat$red_alert), info)}
+  if(!status=="green") {values4nmdat$red_alert = rbind(isolate(values4nmdat$red_alert), info)}
   
   # pass_quick_check
-  values4nmdat$pass_quick_check = values4nmdat$pass_quick_check & status 
+  values4nmdat$pass_quick_check = values4nmdat$pass_quick_check & status=="green"
   
    return(values4nmdat) 
 }
 
 yes_or_no <- renderUI(renderText({
         validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$missing.CMT$status %in% c(TRUE, FALSE), message=FALSE), 
+       need(values4nmdat$missing.CMT$status %in% c("green", "yellow", "red"), message=FALSE), 
        need(values4nmdat$missing.CMT$info, message=FALSE)
   )
   
-  ifelse(values4nmdat$missing.CMT$status, colFmt(asis_output("\U2714"),'green'),  colFmt(asis_output("\U2718"),'red'))
+  ifelse(values4nmdat$missing.CMT$status=="green", colFmt(asis_output("Yes\U2714"),'green'),  colFmt(asis_output("No\U2714"),'red'))
 })() %>% HTML())
 
 info <- renderUI(renderText({
         validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$missing.CMT$status %in% c(TRUE, FALSE), message=FALSE), 
+       need(values4nmdat$missing.CMT$status %in% c("green", "yellow", "red"), message=FALSE), 
        need(values4nmdat$missing.CMT$info, message=FALSE)
   )
   
-  if(!values4nmdat$missing.CMT$status) {colFmt(values4nmdat$missing.CMT$info,'red')} 
+  if(!values4nmdat$missing.CMT$status=="green") {colFmt(values4nmdat$missing.CMT$info,'red')} 
 })() %>% HTML())
 
 ```
@@ -565,30 +557,30 @@ check.inconsistent.DV.MDV <- function(nmdat, values4nmdat)  {
   
   values4nmdat$inconsistent.DV.MDV$status = status
   values4nmdat$inconsistent.DV.MDV$info = info
-  if(!status) {values4nmdat$red_alert = rbind(isolate(values4nmdat$red_alert), info)}
+  if(!status=="green") {values4nmdat$red_alert = rbind(isolate(values4nmdat$red_alert), info)}
   
   # pass_quick_check
-  values4nmdat$pass_quick_check = values4nmdat$pass_quick_check & status 
+  values4nmdat$pass_quick_check = values4nmdat$pass_quick_check & status=="green"
   
   return(values4nmdat) 
 }
 
 yes_or_no <- renderUI(renderText({
         validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$inconsistent.DV.MDV$status %in% c(TRUE, FALSE), message=FALSE), 
+       need(values4nmdat$inconsistent.DV.MDV$status %in% c("green", "yellow", "red"), message=FALSE), 
        need(values4nmdat$inconsistent.DV.MDV$info, message=FALSE)
   )
   
-  ifelse(values4nmdat$inconsistent.DV.MDV$status, colFmt(asis_output("\U2714"),'green'),  colFmt(asis_output("\U2718"),'red'))
+  ifelse(values4nmdat$inconsistent.DV.MDV$status=="green", colFmt(asis_output("Yes\U2714"),'green'),  colFmt(asis_output("No\U2714"),'red'))
 })() %>% HTML())
 
 info <- renderUI(renderText({
          validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$inconsistent.DV.MDV$status %in% c(TRUE, FALSE), message=FALSE), 
+       need(values4nmdat$inconsistent.DV.MDV$status %in% c("green", "yellow", "red"), message=FALSE), 
        need(values4nmdat$inconsistent.DV.MDV$info, message=FALSE)
   )
   
-  if(!values4nmdat$inconsistent.DV.MDV$status) {colFmt(values4nmdat$inconsistent.DV.MDV$info,'red')} 
+  if(!values4nmdat$inconsistent.DV.MDV$status=="green") {colFmt(values4nmdat$inconsistent.DV.MDV$info,'red')} 
 })() %>% HTML())
 
 ```
@@ -613,7 +605,7 @@ info <- renderUI(renderText({
 # 
 # YN = length(tabl$sumDVOR)==0 || tabl$sumDVOR==0
 # ```
-# 2. `r ifelse(YN, colFmt(asis_output("\U2714"),'green'), colFmt(asis_output("\U2718"),'red'))` No placebo subjects have quantifiable PK measurements. 
+# 2. `r ifelse(YN, colFmt(asis_output("Yes\U2714"),'green'), colFmt(asis_output("No\U2714"),'red'))` No placebo subjects have quantifiable PK measurements. 
 #     
 #     
 # ```{r placebo.have.quantifiable.PK, anchor="table", tab.cap="The following placebo subjects have quantifiable PK measurements. ", tab.align='center'}

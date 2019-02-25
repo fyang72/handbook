@@ -300,7 +300,7 @@ ihandbook = 0
  file.lst <-list.files(path = folder.loc, all.files = FALSE,full.names = TRUE, include.dirs = TRUE, recursive =TRUE)     
  file.lst = file.lst[which(substr(file.lst, nchar(file.lst)-1, nchar(file.lst)) %in% c(".r", ".R"))]
  
- file.lst = file.lst[which(!substr(gsub(folder.loc, "", file.lst, fix=TRUE), 2, 2) %in% c("_"))]
+ file.lst = file.lst[which(!substr(gsub(folder.loc, "", file.lst, fix=TRUE), 1,1) %in% c("_"))]
   
   for (ifile in 1:length(file.lst)) { 
     print(file.lst[ifile]);  
@@ -311,7 +311,7 @@ ihandbook = 0
  file.lst <-list.files(path = folder.loc, all.files = FALSE,full.names = TRUE, include.dirs = TRUE, recursive =TRUE)     
  file.lst = file.lst[which(substr(file.lst, nchar(file.lst)-1, nchar(file.lst)) %in% c(".r", ".R"))]
  
- file.lst = file.lst[which(!substr(gsub(folder.loc, "", file.lst, fix=TRUE), 2, 2) %in% c("_"))]
+ file.lst = file.lst[which(!substr(gsub(folder.loc, "", file.lst, fix=TRUE), 1,1) %in% c("_"))]
  
  for (ifile in 1:length(file.lst)) { 
    print(file.lst[ifile]);  

@@ -2,6 +2,10 @@
 # legal issue
 # https://news.ycombinator.com/item?id=1112808
 
+# In system(cmd) : 'make' not found
+https://github.com/metrumresearchgroup/mrgsolve/issues/370
+
+
 #rm(list=ls())
 #    
 #https://shinydata.wordpress.com/2015/02/02/a-few-things-i-learned-about-shiny-and-reactive-programming/

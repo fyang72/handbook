@@ -143,10 +143,8 @@ $CAPTURE @annotated
   F1 : Individual bioavailability (unitless)
   
   CP     :  Plasma concentration (mg/mL)
-  IPRED  :  Plasma concentration (mg/mL)
   IPRED_CONC  :  Individual plasma concentration (mg/mL)
-  DV_CONC     :  Individual plasma concentration by adding SIGMA (mg/mL)
-  
+ 
   WGT_ON_CLQ  : WGT as covariate on CL/Q (Exponent)
   WGT_ON_VSS  : WGT as covariate on V2/V3 (Exponent)
   

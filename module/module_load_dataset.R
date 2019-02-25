@@ -25,9 +25,7 @@ module_load_dataset_UI <- function(id, label = "") {
 module_load_dataset <- function(input, output, session, ALL, dataset_name="dataset_name") {
   
   ns <- session$ns 
-  
-  actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
-  
+   
   #--------------------------------------  
   # dataset_source_selector
   #--------------------------------------

@@ -17,7 +17,8 @@ When you click the **Knit** button a document will be generated that includes bo
 
   output$run.simulation <- renderUI({ 
      
-    ALL = callModule(module_run_simulation, "run.simulation", ALL)  
+    ALL = callModule(module_run_simulation, "run.simulation", 
+                     ALL, cppModel_name = "mYtEsT_for_run_simulation")  
     module_run_simulation_UI(id="run.simulation", label = "run.simulation")
  
   })

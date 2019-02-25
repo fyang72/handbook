@@ -7,7 +7,6 @@ module_load_cppModel_UI <- function(id, label = "") {
   
   ns <- NS(id) # Create a namespace function using the provided id
   
-  
     fluidRow(
       column(width=12,   
              uiOutput(ns("cppModel_source_selector")),
@@ -145,8 +144,6 @@ module_load_cppModel <- function(input, output, session, ALL, cppModel_name="TES
     #cppModel <- mread("SHINY", tempdir(), mymodel)     # ?mread , ?mcode
     cppModel.file = basename(inFile$datapath)  #paste(inFile$datapath, ext, sep=".")
     
-    print("reactive load_external_cppModel")
-    
     cppModel <- mread(model ="Shiny", project = dirname(inFile$datapath), file=cppModel.file)     # ?mread , ?mcode
     if(input$YesNoIIV=="No") {cppModel <- cppModel %>% zero_re}
     
@@ -164,8 +161,6 @@ module_load_cppModel <- function(input, output, session, ALL, cppModel_name="TES
     validate(need(globalVars$login$status, message=FALSE), 
              need(input$which_internal_cppModel, message=FALSE))
     
-    print("reactive load_internal_cppModel")
-    
     cppModel.file = input$which_internal_cppModel 
  
     # try to read model after editing 
@@ -180,7 +175,7 @@ module_load_cppModel <- function(input, output, session, ALL, cppModel_name="TES
     if (is.function(cppModel)) {cppModel=NULL}  # avoid key words such as expand
     validate(need(cppModel, message="Load cppModel not sucefully"))
     
-    print("read model sucessfully")
+    showNotification("read cppModel sucessfully", type="message")   # "default, "message", "warning", "error"
     
     attr(cppModel, 'file.name') <- cppModel.file
     attr(cppModel, 'locaton.source') <- "internal"
@@ -195,9 +190,7 @@ module_load_cppModel <- function(input, output, session, ALL, cppModel_name="TES
     
     validate(need(globalVars$login$status, message=FALSE), 
              need(input$which_session_cppModel, message=FALSE))
-    
-    print("reactive load_session_cppModel")
-    
+     
     cppModel = ALL$cppModel[[input$which_session_cppModel]]
     
     attr(cppModel, 'file.name') <- input$which_session_cppModel
@@ -236,7 +229,5 @@ module_load_cppModel <- function(input, output, session, ALL, cppModel_name="TES
     ALL$cppModel[[cppModel_name]]  = cppModel  
   })
    
-  
-  
   return(ALL)
 }

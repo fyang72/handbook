@@ -43,7 +43,7 @@ check.nmdat.venn.diagram <- function(nmdat, values4nmdat)  {
   adpc = nmdat %>% filter(!is.na(as_numeric(ID)), EVID==0, TEST == "REGN3918" )  # unique(TEST)[1])PK.TEST.NAME
   
  # https://scriptsandstatistics.wordpress.com/2018/04/26/how-to-plot-venn-diagrams-using-r-ggplot2-and-ggforce/
-    
+if(1==2) {
   require(VennDiagram)
   a.list <- list(adsl=unique(as.character(adsl$ID)), 
                  adex=unique(as.character(adex$ID)), 
@@ -63,6 +63,7 @@ check.nmdat.venn.diagram <- function(nmdat, values4nmdat)  {
   #while (!is.null(dev.list()))  dev.off()
   values4nmdat$FIGURE$nmdat.venn.diagram =  fig  
   
+}
   return(values4nmdat)
 }
    
@@ -252,8 +253,7 @@ check.planned.dose.actual.dose <- function(nmdat, values4nmdat) {
   tdata = tdata %>% mutate(DOSE_MKG = as_numeric(AMT)/as_numeric(WGTBL), 
                            INF_TIME = as_numeric(AMT)/as_numeric(RATE)*24*60     # in minutes
   )
-  tdata = tdata %>% 
-    select(C, ROWID, ID, TIME, ARMA, DOSE_MKG, AMT, RATE, INF_TIME, EVID, EXROUTN, CMT, MDV, WGTBL, EXROUTE, USUBJID)
+  
   
   print("checking adex...")
   print(head(tdata))

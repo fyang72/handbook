@@ -27,13 +27,9 @@ module_ggplot_brush_UI2 <- function(id, label="") {
              h4("Selected Data"),
              uiOutput(ns("info_container"))
            )
-           
     )
   )
-
 }
-
-
 
 
 ################################################################################ 
@@ -65,7 +61,6 @@ module_ggplot_brush <- function(input, output, session, fig, mydata, xvar="NTIM"
     }else {
       NULL
     }
-     
   }) 
   
   # info_container
@@ -73,7 +68,6 @@ module_ggplot_brush <- function(input, output, session, fig, mydata, xvar="NTIM"
     validate(need(selected_data(), message=FALSE))
     
     output$info <- DT::renderDataTable({ 
-      
       DT::datatable(data = selected_data(),
                     options = list(pageLength = 3, lengthChange = FALSE, width="100%", scrollX = TRUE) 
       ) 
@@ -86,7 +80,7 @@ module_ggplot_brush <- function(input, output, session, fig, mydata, xvar="NTIM"
   output$ggplot_container <- renderUI({
     output$ggplot <-renderPlot({
        fig + coord_cartesian(xlim = ranges$x, ylim = ranges$y, expand = FALSE)
-    }, deleteFile = TRUE 
+    }#, deleteFile = TRUE 
     #outputArgs = list(brush = brushOpts(id = ns("plot_brush")),
     #                  click = clickOpts(id = ns("plot_click"))
                       #width = "500px",
@@ -133,7 +127,4 @@ module_ggplot_brush <- function(input, output, session, fig, mydata, xvar="NTIM"
       ranges$y <- NULL
     }
   })
-  
-  
-  
 }

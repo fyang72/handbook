@@ -33,15 +33,19 @@ You may load data from external sources or from internal datasets. The dataset i
 
 
 ```{r} 
-  ALL = callModule(module_load_data, "load_nmdat_for_integrity_check", ALL, data_name="check_nmdat")
-  
-  renderUI({
-    fluidRow( 
-        column(6,
-             module_load_data_UI(id="load_nmdat_for_integrity_check", label="Load data") 
-             )
-    )
-  })
+
+renderUI({
+
+ALL = callModule(module_load_dataset, "load_nmdat_for_integrity_check", 
+                 ALL, dataset_name="check_nmdat")
+
+
+  fluidRow( 
+      column(6,
+           module_load_dataset_UI(id="load_nmdat_for_integrity_check", label="Load data") 
+           )
+  )
+})
   
 ```
 
@@ -51,20 +55,16 @@ You may load data from external sources or from internal datasets. The dataset i
 
 
 renderUI({
-  #isolate({ 
-  
-  #print(" ALL$DATA[[ check_nmdat ]]")
-  #print( ALL$DATA[["check_nmdat"]])
+    validate(need(ALL$DATA[["check_nmdat"]], message="no data loaded yet"))
 
-  #})
-    callModule(module_table_output, "nmdat_inputData_3465346",  
-               mytab = (ALL$DATA[["check_nmdat"]])   # nmdat_inputData()    
+  callModule(module_save_data, "nmdat_inputData",  
+               ALL, 
+               data=ALL$DATA[["check_nmdat"]],
+               data_name ="check_nmdat"
+               #mytab = (ALL$DATA[["check_nmdat"]])   # nmdat_inputData()    
              )
   
-  validate(need(ALL$DATA[["check_nmdat"]], message="no data loaded"))
-  
-  module_table_output_UI(id="nmdat_inputData_3465346", 
-                          label="nmdat_inputData" ) 
+  module_save_data_UI(id="nmdat_inputData",label=NULL ) 
 })
 ```
 

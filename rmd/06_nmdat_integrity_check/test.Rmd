@@ -1,0 +1,37 @@
+```{r}
+
+render_values4nmdat <- function(ALL, values4nmdat, category="")  { 
+  
+status <- renderUI({
+  validate(need(ALL$DATA[["check_nmdat"]], message=FALSE))
+
+  #category = "colnames.in.stdlist"
+  callModule(module_check_nmdat_status,paste0(category,"_status"), 
+             values4nmdat, category )
+  div(
+    module_check_nmdat_status_UI(id=paste0(category,"_status"),label=NULL ), 
+    style="display: inline-block"
+  )
+  
+})
+
+info <- renderUI({
+  #category = "colnames.in.stdlist"
+  validate(need(ALL$DATA[["check_nmdat"]], message=FALSE), 
+           need(values4nmdat[[category]]$status %in% c("yellow", "red"), message=FALSE)
+  )
+ 
+  callModule(module_check_nmdat_info, paste0(category,"_info"), values4nmdat, category)
+  module_check_nmdat_info_UI(id=paste0(category,"_info"),label=NULL ) 
+})
+
+values4nmdat[[category]]$rendered_status = status
+values4nmdat[[category]]$rendered_info = info
+
+return(values4nmdat)
+}
+
+
+
+```
+
