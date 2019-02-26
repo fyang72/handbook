@@ -49,7 +49,7 @@ if (1==2) {
   #------------------ 
   #   adex  %>% .[[c("USUBJID")]] 
   adpc = adpc %>% select(-TRTSDTM) %>% left_join(
-    adex  %>% select(USUBJID, TRTSDTM) %>% distinct(USUBJID, .keep_all=TRUE), 
+    adex %>% select(USUBJID, TRTSDTM) %>% distinct(USUBJID, .keep_all=TRUE), 
     by="USUBJID")
   
   adpc = adpc %>% mutate(
@@ -78,7 +78,7 @@ if (1==2) {
   # merge to adpx
   #------------------
   # time variable must be character
-  adpx = bind_rows(adex, adpc)  %>% 
+  adpx = bind_rows(adex[, adpx.var.lst], adpc[, adpx.var.lst])  %>% 
     arrange(STUDYID, ARMA, USUBJID, TIME, TESTCD)
  
   #---------------------
@@ -88,7 +88,7 @@ if (1==2) {
     
     # remove PRE-DOSE, default flag
     CFLAG = ifelse(toupper(ARMA) %in% c("PLACEBO"), "Placebo", 
-                   ifelse(as_numeric(TIME)<=0, "Predose",  
+                   ifelse(as_numeric(TIME)<=0 &EVID==0, "Predose",  
                           ifelse(as_numeric(TIME)>0 & as.integer(BLQ)==1, "Postdose BLQ", 
                                  as.character(CFLAG)))),
      
@@ -123,7 +123,7 @@ if (1==2) {
     MDV = ifelse(is.na(as_numeric(DV)), 1, 0)
     
   )     
-  adpx = adpx %>% dplyr::arrange(ID, TIME, desc(EVID)) 
+  adpx = adpx %>% dplyr::arrange(USUBJID, TIME, desc(EVID)) 
   
   #remove NA, . and empty space
   if (1==2) { 
@@ -139,6 +139,14 @@ if (1==2) {
       adpx[, icol] = gsub(",", "_", adpx[, icol], fixed=TRUE)
       } 
   }
+  
+  col.lst = setdiff(colnames(adsl), c("STUDYID", "USUBJID", "WGTBL"))
+  adpx = adpx[, setdiff(colnames(adpx), col.lst)]
+  
+  adpx = adpx %>%  
+    left_join(adsl%>%distinct(USUBJID,.keep_all=TRUE)%>% select(-WGTBL), 
+                            by=c("STUDYID", "USUBJID")
+    )
   
   #ROWID 
   if ( nrow(adpx)>0) {adpx$ROWID=1:nrow(adpx) }

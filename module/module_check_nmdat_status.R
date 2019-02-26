@@ -8,8 +8,7 @@ push_to_values4nmdat <- function(out, values4nmdat, category)  {
   
   if(out$status=="orange") {values4nmdat$yellow_alert = rbind(isolate(values4nmdat$yellow_alert), out$info)}
   if(out$status=="red") {values4nmdat$red_alert = rbind(isolate(values4nmdat$red_alert), out$info)}
-  
-  #values4nmdat$mandatory_check = values4nmdat$mandatory_check & out$status %in% c("green", "yellow")
+
   values4nmdat$pass_quick_check = values4nmdat$pass_quick_check & out$status %in% c("green", "orange") 
   
   values4nmdat[[category]]$status = out$status

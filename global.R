@@ -406,7 +406,7 @@ knitr::opts_chunk$set(fig.width=9,
 # convention used in REGN
 ######################################################################
 topN = 20
-date_time_format = c("Ymd HMS", "mdY HMS", "bdY HMS")
+date_time_format = c("Ymd HMS", "mdY HMS", "bdY HMS", "dbY HMS")
 
 testcat.lst = c("PK1", "TARGET1", "SAF1", "EFF1", "BIOMKR1", "ADA1", "AE1")
 
@@ -454,7 +454,7 @@ adpc.var.lst <- c(
 )  
 
  
-
+nmdat.mandatory.var.lst = c("ROWID","ID","TIME","DV","CMT","MDV","AMT","RATE","EVID")
 nmdat.var.lst =  c(
   "C", "ROWID",   "ID", "ARMAN",  "TIME", "NTIM","TAD", 
   "EXTRTN", "AMT",  "RATE", "EXROUTN", "EVID",  "EXDUR",   "EXDOSE",   "EXDOSU",  "EXTDOSE",  "EXROUTE", "EXSTDTC", "EXENDTC", "TRTSDTM", 

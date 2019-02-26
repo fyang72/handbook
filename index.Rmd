@@ -35,11 +35,9 @@ pdf_document:
 
 rm(list = ls())
 
-#HOME = "c:/FYANG/Handbook/" 
 #HOME = "~/Handbook/" 
 #setwd(HOME)
-   
-#source("util.R") 
+    
 # source("./global.R")
 
 ```

@@ -69,7 +69,7 @@ build_adex <-function(
   # "ymd HM"  "09-01-03 12:02"  
   # x <- c("2011-12-31 12:59:59", "2010-01-01 12:11", "2010-01-01 12", "2010-01-01")
   # parse_date_time(x, "Ymd HMS", truncated = 3)
-  #UTC is not a time zone, but a time standard that is the basis for civil time and time zones worldwide. This means 
+  #UTC is n ot a time zone, but a time standard that is the basis for civil time and time zones worldwide. This means 
   # that no country or territory officially uses UTC as a local time.
   
   # SAMDTTM:  start Date/time of sampling   TRTSTDTM    TRTSDTM
@@ -87,20 +87,24 @@ build_adex <-function(
   library(lubridate) 
  
   adex = adex %>% mutate( 
-    EXDUR = difftime(parse_date_time(EXENDTC, date_time_format, truncated = 3), 
-                     parse_date_time(EXSTDTC, date_time_format, truncated = 3), 
-                     units = "days")%>% as_numeric() )  
+    EXENDTC = parse_date_time(EXENDTC, date_time_format, truncated = 3),
+    EXSTDTC = parse_date_time(EXSTDTC, date_time_format, truncated = 3) 
+  ) %>% 
+    group_by(USUBJID) %>% 
+      mutate(TRTSDTM = min(EXSTDTC))  
   
   # "TRTSDT"   "TRTSTM"   "TRTSDTM"    date/time of start treatment 
-  # "TRTEDT"   "TRTETM"   "TRTEDTM"    date/time of end of treatment 
-  adex = adex %>% group_by(USUBJID) %>% 
-    mutate(TRTSDTM = min(EXSTDTC), 
-           TIME = difftime(
-             parse_date_time(EXSTDTC, date_time_format, truncated = 3), 
-             parse_date_time(TRTSDTM, date_time_format, truncated = 3), 
-             units = "days") %>% as_numeric() 
-           )  %>% 
-    mutate(TRTSDTM = as.character(TRTSDTM)) %>% ungroup()
+  # "TRTEDT"   "TRTETM"   "TRTEDTM"    date/time of end of treatment   
+  adex = adex %>% mutate( 
+    EXDUR = difftime(EXENDTC, EXSTDTC, units = "days") %>% as_numeric(), 
+    TIME = difftime(EXSTDTC, TRTSDTM, units = "days") %>% as_numeric()
+  )
+  
+  adex = adex %>% 
+    mutate(EXENDTC = as.character(EXENDTC), 
+           EXSTDTC = as.character(EXSTDTC), 
+           TRTSDTM = as.character(TRTSDTM) 
+    ) %>% ungroup()
     
   
   #---------------------------------------------
@@ -113,7 +117,7 @@ build_adex <-function(
                          EXDOSE = as_numeric(EXDOSE), 
                          
                          EXDOSU_ORG = EXDOSU, 
-                         EXDOSU = ordered(toupper(EXDOSU), levels = dosu.lst)  
+                         EXDOSU = ordered(EXDOSU, levels = dosu.lst)  
   )
   
 

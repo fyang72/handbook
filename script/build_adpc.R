@@ -98,12 +98,11 @@ build_adpc <-function(dataset,
   adpc <- adpc %>%  mutate(METHOD = METHOD, 
                            TEST = TEST,
                            DVOR = DVOR,    # keep those ADA results (which is character-based)
-                           DVORU = tolower(DVORU), 
+                          
+                           DVOR = ifelse(tolower(DVORU)=="ng/ml", as_numeric(DVOR)/1000, DVOR), 
+                           DVORU = ifelse(tolower(DVORU)=="ng/ml", "mg/L", DVORU), 
                            
-                           DVOR = ifelse(DVORU=="ng/ml", as_numeric(DVOR)/1000, DVOR), 
-                           DVORU = ifelse(DVORU=="ng/ml", "mg/L", DVORU), 
-                           
-                           DVORU = ifelse(DVORU=="ug/ml", "mg/L", DVORU), 
+                           DVORU = ifelse(tolower(DVORU)=="ug/ml", "mg/L", DVORU), 
                            
                            LLOQ = ifelse(is.na(as_numeric(LLOQ)), NA, as_numeric(LLOQ)),
                            BLQ = ifelse(as_numeric(DVOR)<LLOQ, 1, 0) 
@@ -196,7 +195,7 @@ if (ihandbook) {
   table = NULL
   
   adpc <- build_adpc(dataset, 
-                     date_time_format = c("Ymd HMS", "mdY HMS", "bdY HMS") 
+                     date_time_format = date_time_format  # global variables. c("Ymd HMS", "mdY HMS", "bdY HMS") 
   )    
   
   data[["adpc"]] = adpc 

@@ -4,18 +4,18 @@
 ## Quick check  
 A NONMEM formatted data file is created by using the clinical and bioanalytical databases.   In general, the following rules will be applied.  In particular, a dataset not passing _quick check_ will not be processed further.  To ensure the integrity and traceability of the data, no samples should be deleted, use 'C' to flag samples if needed and specify the reasons in 'CFLAG'.
  
-```{r}
-nmdat.mandatory.col.lst = c("ROWID","ID","TIME","DV","CMT","MDV","AMT","RATE","EVID")
-PK.TEST.NAME = "REGN3918"    # unique(TEST)[1])PK.TEST.NAME
+```{r}  
 values <- reactiveValues()
 
 # nmdat_mandatory_check
 nmdat_mandatory_check <- function(nmdat, values4nmdat)  {
   validate(need(nmdat, message=FALSE)) 
  
-  values4nmdat = check.colnames.in.stdlist(nmdat, col.lst=nmdat.mandatory.col.lst) %>% 
+  values4nmdat = check.colnames.in.stdlist(nmdat, col.lst=nmdat.mandatory.var.lst) %>% 
     push_to_values4nmdat(values4nmdat, category="colnames.in.stdlist") 
       
+  values4nmdat$mandatory_check = values4nmdat$pass_quick_check  
+  
 return(values4nmdat)
 }
 
@@ -38,12 +38,23 @@ nmdat_quick_check <- function(nmdat, values4nmdat)  {
   values4nmdat = check.label.colnames.lt40(nmdat)  %>% 
     push_to_values4nmdat(values4nmdat, category="label.colnames.lt40") 
   
-  values4nmdat = check.obs.order.by.time(nmdat, values4nmdat)                       
-  values4nmdat = check.missing.ID(nmdat, values4nmdat)                         
-  values4nmdat = check.missing.TIME(nmdat, values4nmdat)                         
-  values4nmdat = check.missing.MDV(nmdat, values4nmdat)                        
-  values4nmdat = check.missing.CMT(nmdat, values4nmdat)                         
-  values4nmdat = check.inconsistent.DV.MDV(nmdat, values4nmdat)     
+  values4nmdat = check.obs.order.by.time(nmdat)  %>% 
+    push_to_values4nmdat(values4nmdat, category="obs.order.by.time")
+  
+  values4nmdat = check.missing.ID(nmdat)%>% 
+    push_to_values4nmdat(values4nmdat, category="missing.ID")                         
+  
+  values4nmdat = check.missing.TIME(nmdat)%>% 
+    push_to_values4nmdat(values4nmdat, category="missing.TIME") 
+  
+  values4nmdat = check.missing.MDV(nmdat) %>% 
+    push_to_values4nmdat(values4nmdat, category="missing.MDV")
+  
+  values4nmdat = check.missing.CMT(nmdat) %>% 
+    push_to_values4nmdat(values4nmdat, category="missing.CMT") 
+  
+  values4nmdat = check.inconsistent.DV.MDV(nmdat) %>% 
+    push_to_values4nmdat(values4nmdat, category="inconsistent.DV.MDV")    
      
 return(values4nmdat)
 }
@@ -100,7 +111,7 @@ check.col.in.numint <- function(nmdat)  {
   
    status=FALSE; info=""; table=NULL; figure=NULL
    
-   col.lst <- setdiff(intersect(nmdat.mandatory.col.lst, colnames(nmdat)), c("C", "CFLAG"))
+   col.lst <- setdiff(intersect(nmdat.mandatory.var.lst, colnames(nmdat)), c("C", "CFLAG"))
    YN = sapply(nmdat[, col.lst], typeof) %in% c("double", "integer")  # class
    status <- ifelse(all(YN), "green", "red")
    info = paste0(col.lst[which(!YN)], collapse=", ")
@@ -126,7 +137,7 @@ info <- renderUI({
 ```
  
   
-* `r status ` All mandatory primary variables except C and CFLAG must be integer or numeric, as shown in [Confluence](https://sandboxconfluence.regeneron.com/display/PMx/Data+format). 
+* `r status ` All mandatory primary variables except C and CFLAG must be integer or numeric, as shown in [Appendix-A](mmmm). 
     + `r info ` 
 
  
@@ -164,7 +175,7 @@ info <- renderUI({
 ```
 
 * `r status ` The variable names can not exceed 8 characters.
-    + `r (info) ` 
+    + `r info ` 
 
 
 ***
@@ -201,7 +212,7 @@ info <- renderUI({
 ```
 
 * `r status ` The variable names should be in upper case.
-    + `r (info) ` 
+    + `r info` 
 
 
 ***
@@ -237,7 +248,7 @@ info <- renderUI({
 ```
 
 * `r status ` The variable names can't start with numbers. 
-    + `r (info) ` 
+    + `r info ` 
 
 
 ***
@@ -274,7 +285,7 @@ info <- renderUI({
 ```
 
 * `r status ` The label of variables can not exceed 40 characters.
-    + `r (info) ` 
+    + `r info ` 
 
 
 ***
@@ -282,101 +293,77 @@ info <- renderUI({
   
 <!-- All observations (PK, biomarker and PD) or events within a subject should be ordered by TIME.-->
 
-```{r }
-check.obs.order.by.time <- function(nmdat, values4nmdat)  {
-     validate(need(nmdat, message=FALSE), 
-              need(values4nmdat$mandatory_check, message="Must pass mandatory check..."), 
-              need(all(c("ID", "TIME") %in% colnames(nmdat)), message="Need both ID and TIME variable"))
-     print("inside obs.order.by.time ...")
+```{r } 
    
-     t1 = nmdat %>% group_by(ID) %>% 
-       dplyr::mutate(TIME2 = sort(as_numeric(TIME))) %>% 
-       dplyr::summarise(YN=all(TIME==TIME2)) %>% arrange(ID) 
-     status <- all(t1$YN)   
-     info = paste0(t1[which(!t1$YN), "ID"], collapse=", ") 
-     info = colFmt(paste0("The observations or dose events within suject ID(s),", info, ", are not ordered by TIME."), "red")
-     
-     values4nmdat$obs.order.by.time$status = status
-     values4nmdat$obs.order.by.time$info = info
-     if(!status=="green") {values4nmdat$red_alert = rbind(isolate(values4nmdat$red_alert), info)}
-     
-     # pass_quick_check
-     values4nmdat$pass_quick_check = values4nmdat$pass_quick_check & status=="green"
-     
-   return(values4nmdat)
- }
+check.obs.order.by.time <- function(nmdat)  {
+  validate(need(nmdat, message=FALSE))
+  status=FALSE; info=""; table=NULL; figure=NULL
+   
+  t1 = nmdat %>% group_by(ID) %>% 
+    dplyr::mutate(TIME2 = sort(as_numeric(TIME))) %>% 
+    dplyr::summarise(YN=all(TIME==TIME2)) %>% arrange(ID) 
+  status <- ifelse(all(t1$YN), "green", "red")
+  info = paste0(t1[which(!t1$YN), "ID"], collapse=", ") 
+  info = paste0("The observations or dose events within suject ID(s),", info, ", are not ordered by TIME.")
  
-yes_or_no <- renderUI(renderText({
-       validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$obs.order.by.time$status %in% c("green", "yellow", "red"), message=FALSE), 
-       need(values4nmdat$obs.order.by.time$info, message=FALSE)
-  )
-  
-  ifelse(values4nmdat$obs.order.by.time$status=="green", colFmt(asis_output("Yes\U2714"),'green'),  colFmt(asis_output("No\U2714"),'red'))
-  })() %>% HTML())
+  return(list(status=status, info=info, table=table, figure=figure))
+}
+ 
+status <- renderUI({
+  category = "obs.order.by.time"    
+  callModule(module_check_nmdat_status,paste0(category,"_status"), values4nmdat, category)
+  div(module_check_nmdat_status_UI(
+      id=paste0(category,"_status"),label=NULL ),style="display: inline-block")
+})
 
-info <- renderUI(renderText({
-  validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$obs.order.by.time$status %in% c("green", "yellow", "red"), message=FALSE), 
-       need(values4nmdat$obs.order.by.time$info, message=FALSE)
-  )
-  
-  if(!values4nmdat$obs.order.by.time$status=="green") {colFmt(values4nmdat$obs.order.by.time$info,'red')} 
-  })() %>% HTML())
-   
+info <- renderUI({
+  category = "obs.order.by.time"    
+  validate(need(values4nmdat[[category]]$status %in% c("yellow", "red"), message=FALSE))
+  callModule(module_check_nmdat_info, paste0(category,"_info"), values4nmdat, category)
+  module_check_nmdat_info_UI(id=paste0(category,"_info"),label=NULL) 
+})
+
 ```
 
-* `r (yes_or_no) ` All observations (PK, biomarker and PD) or dose events within a subject have to be ordered by TIME. 
-    + `r (info) ` 
+* `r status ` All observations (PK, biomarker and PD) or dose events within a subject have to be ordered by TIME. 
+    + `r info` 
  
  
 *** 
   
 <!-- No missing ID values, all ID must be integer -->
 
-```{r }
-check.missing.ID <- function(nmdat, values4nmdat)  {
-     validate(need(nmdat, message=FALSE), 
-              need(values4nmdat$mandatory_check, message="Must pass mandatory check..."), 
-              need("ID" %in% colnames(nmdat), message="Need ID variable!"))
-     print("in missing.ID... ")
-         
-     status <- all(!is.na(as.integer(nmdat$ID)))  
-     info = paste0(nmdat[which(is.na(as.integer(nmdat$ID))), "ROWID"], collapse=", ") 
-     info = colFmt(paste0("The ID in ROWID(s), ", info, ", is/are missing."), "red")
-     
-     values4nmdat$missing.ID$status = status
-     values4nmdat$missing.ID$info = info
-     if(!status=="green") {values4nmdat$red_alert = rbind(isolate(values4nmdat$red_alert), info)}
-     
-     # pass_quick_check
-     values4nmdat$pass_quick_check = values4nmdat$pass_quick_check & status=="green"
-    
-   return(values4nmdat)
+```{r } 
+   
+check.missing.ID <- function(nmdat)  {
+  validate(need(nmdat, message=FALSE))
+  status=FALSE; info=""; table=NULL; figure=NULL
+   
+  status <- ifelse(all(!is.na(as.integer(nmdat$ID))), "green", "red")
+  info = paste0(nmdat[which(is.na(as.integer(nmdat$ID))), "ROWID"], collapse=", ") 
+  info = paste0("The ID in ROWID(s), ", info, ", is/are missing.") 
+ 
+  return(list(status=status, info=info, table=table, figure=figure))
 }
  
-yes_or_no <- renderUI(renderText({
-       validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$missing.ID$status %in% c("green", "yellow", "red"), message=FALSE), 
-       need(values4nmdat$missing.ID$info, message=FALSE)
-  )
-  
-  ifelse(values4nmdat$missing.ID$status=="green", colFmt(asis_output("Yes\U2714"),'green'),  colFmt(asis_output("No\U2714"),'red'))
-  })() %>% HTML())
+status <- renderUI({
+  category = "missing.ID"    
+  callModule(module_check_nmdat_status,paste0(category,"_status"), values4nmdat, category)
+  div(module_check_nmdat_status_UI(
+      id=paste0(category,"_status"),label=NULL ),style="display: inline-block")
+})
 
-info <- renderUI(renderText({
-        validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$missing.ID$status %in% c("green", "yellow", "red"), message=FALSE), 
-       need(values4nmdat$missing.ID$info, message=FALSE)
-  )
-  
-  if(!values4nmdat$missing.ID$status=="green") {colFmt(values4nmdat$missing.ID$info,'red')} 
-  })() %>% HTML())
-   
+info <- renderUI({
+  category = "missing.ID"    
+  validate(need(values4nmdat[[category]]$status %in% c("yellow", "red"), message=FALSE))
+  callModule(module_check_nmdat_info, paste0(category,"_info"), values4nmdat, category)
+  module_check_nmdat_info_UI(id=paste0(category,"_info"),label=NULL) 
+})
+
 ```
 
-* `r (yes_or_no) ` No missing ID values, all ID must be integer. 
-    + `r (info) ` 
+* `r status ` No missing ID values, all ID must be integer. 
+    + `r info` 
  
  
 *** 
@@ -384,221 +371,160 @@ info <- renderUI(renderText({
 
 
 <!-- No missing TIME values, all TIME must be integer -->
-  
-```{r }
-check.missing.TIME <- function(nmdat, values4nmdat)  {
-
-   validate(need(nmdat, message=FALSE), 
-            need(values4nmdat$mandatory_check, message="Must pass mandatory check..."),
-            need(all(c("ROWID", "TIME") %in% colnames(nmdat)), message=FALSE)
-   )
-  print("in missing.TIME ")
-  
-  status <- all(!is.na(as.integer(nmdat$TIME)))  
+  ```{r } 
+   
+check.missing.TIME <- function(nmdat)  {
+  validate(need(nmdat, message=FALSE))
+  status=FALSE; info=""; table=NULL; figure=NULL
+   
+  status <- ifelse(all(!is.na(as.integer(nmdat$TIME))), "green", "red")
   info = paste0(nmdat[which(is.na(as.integer(nmdat$TIME))), "ROWID"], collapse=", ") 
-  info = colFmt(paste0("The TIME in ROWID(s), ", info, ", is/are missing."), "red")
-  
-  values4nmdat$missing.TIME$status = status
-  values4nmdat$missing.TIME$info = info
-  if(!status=="green") {values4nmdat$red_alert = rbind(isolate(values4nmdat$red_alert), info)}
-  
-  # pass_quick_check
-  values4nmdat$pass_quick_check = values4nmdat$pass_quick_check & status=="green"
-  
-  return(values4nmdat) 
+  info = paste0("The TIME in ROWID(s), ", info, ", is/are missing.") 
+ 
+  return(list(status=status, info=info, table=table, figure=figure))
 }
+ 
+status <- renderUI({
+  category = "missing.TIME"    
+  callModule(module_check_nmdat_status,paste0(category,"_status"), values4nmdat, category)
+  div(module_check_nmdat_status_UI(
+      id=paste0(category,"_status"),label=NULL ),style="display: inline-block")
+})
 
-yes_or_no <- renderUI(renderText({
-        validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$missing.TIME$status %in% c("green", "yellow", "red"), message=FALSE), 
-       need(values4nmdat$missing.TIME$info, message=FALSE)
-  )
-  
-  ifelse(values4nmdat$missing.TIME$status=="green", colFmt(asis_output("Yes\U2714"),'green'),  colFmt(asis_output("No\U2714"),'red'))
-})() %>% HTML())
-
-info <- renderUI(renderText({
-       validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$missing.TIME$status %in% c("green", "yellow", "red"), message=FALSE), 
-       need(values4nmdat$missing.TIME$info, message=FALSE)
-  )
-  
-  if(!values4nmdat$missing.TIME$status=="green") {colFmt(values4nmdat$missing.TIME$info,'red')} 
-})() %>% HTML())
+info <- renderUI({
+  category = "missing.TIME"    
+  validate(need(values4nmdat[[category]]$status %in% c("yellow", "red"), message=FALSE))
+  callModule(module_check_nmdat_info, paste0(category,"_info"), values4nmdat, category)
+  module_check_nmdat_info_UI(id=paste0(category,"_info"),label=NULL) 
+})
 
 ```
 
-* `r (yes_or_no) ` No missing TIME values, all TIME must be integer. 
-    + `r (info) ` 
-
+* `r status ` No missing TIME values, all TIME must be integer. 
+    + `r info` 
+  
 
 *** 
 
 <!-- No missing MDV values, all MDV must be integer -->
 
-```{r }
-check.missing.MDV <- function(nmdat, values4nmdat)  {
-
-   validate(need(nmdat, message=FALSE), 
-            need(values4nmdat$mandatory_check, message="Must pass mandatory check..."),
-            need(all(c("ROWID", "MDV") %in% colnames(nmdat)), message=FALSE)
-   )
-   print("in missing.MDV ")
+```{r } 
    
-   status <- all(!is.na(as.integer(nmdat$MDV)))  
-   info = paste0(nmdat[which(is.na(as.integer(nmdat$MDV))), "ROWID"], collapse=", ") 
-   info = colFmt(paste0("The MDV in ROWID(s), ", info, ", is/are missing."), "red")
+check.missing.MDV <- function(nmdat)  {
+  validate(need(nmdat, message=FALSE))
+  status=FALSE; info=""; table=NULL; figure=NULL
    
-   values4nmdat$missing.MDV$status = status
-   values4nmdat$missing.MDV$info = info
-   if(!status=="green") {values4nmdat$red_alert = rbind(isolate(values4nmdat$red_alert), info)}
-   
-   # pass_quick_check
-   values4nmdat$pass_quick_check = values4nmdat$pass_quick_check & status=="green"
-     
-   return(values4nmdat) 
+  status <- ifelse(all(!is.na(as.integer(nmdat$MDV))), "green", "red")
+  info = paste0(nmdat[which(is.na(as.integer(nmdat$MDV))), "ROWID"], collapse=", ") 
+  info = paste0("The MDV in ROWID(s), ", info, ", is/are missing.") 
+ 
+  return(list(status=status, info=info, table=table, figure=figure))
 }
  
-yes_or_no <- renderUI(renderText({
-       validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$missing.MDV$status %in% c("green", "yellow", "red"), message=FALSE), 
-       need(values4nmdat$missing.MDV$info, message=FALSE)
-  )
-  
-  ifelse(values4nmdat$missing.MDV$status=="green", colFmt(asis_output("Yes\U2714"),'green'),  colFmt(asis_output("No\U2714"),'red'))
-  })() %>% HTML())
+status <- renderUI({
+  category = "missing.MDV"    
+  callModule(module_check_nmdat_status,paste0(category,"_status"), values4nmdat, category)
+  div(module_check_nmdat_status_UI(
+      id=paste0(category,"_status"),label=NULL ),style="display: inline-block")
+})
 
-info <- renderUI(renderText({
-        validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$missing.MDV$status %in% c("green", "yellow", "red"), message=FALSE), 
-       need(values4nmdat$missing.MDV$info, message=FALSE)
-  )
-  
-  if(!values4nmdat$missing.MDV$status=="green") {colFmt(values4nmdat$missing.MDV$info,'red')} 
-  })() %>% HTML())
-   
+info <- renderUI({
+  category = "missing.MDV"    
+  validate(need(values4nmdat[[category]]$status %in% c("yellow", "red"), message=FALSE))
+  callModule(module_check_nmdat_info, paste0(category,"_info"), values4nmdat, category)
+  module_check_nmdat_info_UI(id=paste0(category,"_info"),label=NULL) 
+})
+
 ```
 
-* `r (yes_or_no) ` No missing MDV values, all MDV must be integer. 
-    + `r (info) ` 
+* `r status ` No missing MDV values, all MDV must be integer. 
+    + `r info` 
  
  
 *** 
 
 
 <!-- No missing CMT values, all CMT must be integer -->
-  
-```{r }
-check.missing.CMT <- function(nmdat, values4nmdat)  {
-
-  validate(need(nmdat, message=FALSE), 
-            need(values4nmdat$mandatory_check, message="Must pass mandatory check..."),
-            need(all(c("ROWID", "CMT") %in% colnames(nmdat)), message=FALSE)
-  )
-  print("in missing.CMT ")
-  
-  status <- all(!is.na(as.integer(nmdat$CMT)))  
+```{r } 
+check.missing.CMT <- function(nmdat)  {
+  validate(need(nmdat, message=FALSE))
+  status=FALSE; info=""; table=NULL; figure=NULL
+   
+  status <- ifelse(all(!is.na(as.integer(nmdat$CMT))), "green", "red")
   info = paste0(nmdat[which(is.na(as.integer(nmdat$CMT))), "ROWID"], collapse=", ") 
-  info = colFmt(paste0("The CMT in ROWID(s), ", info, ", is/are missing."), "red")
-  
-  values4nmdat$missing.CMT$status = status
-  values4nmdat$missing.CMT$info = info
-  if(!status=="green") {values4nmdat$red_alert = rbind(isolate(values4nmdat$red_alert), info)}
-  
-  # pass_quick_check
-  values4nmdat$pass_quick_check = values4nmdat$pass_quick_check & status=="green"
-  
-   return(values4nmdat) 
+  info = paste0("The CMT in ROWID(s), ", info, ", is/are missing.") 
+ 
+  return(list(status=status, info=info, table=table, figure=figure))
 }
+ 
+status <- renderUI({
+  category = "missing.CMT"    
+  callModule(module_check_nmdat_status,paste0(category,"_status"), values4nmdat, category)
+  div(module_check_nmdat_status_UI(
+      id=paste0(category,"_status"),label=NULL ),style="display: inline-block")
+})
 
-yes_or_no <- renderUI(renderText({
-        validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$missing.CMT$status %in% c("green", "yellow", "red"), message=FALSE), 
-       need(values4nmdat$missing.CMT$info, message=FALSE)
-  )
-  
-  ifelse(values4nmdat$missing.CMT$status=="green", colFmt(asis_output("Yes\U2714"),'green'),  colFmt(asis_output("No\U2714"),'red'))
-})() %>% HTML())
-
-info <- renderUI(renderText({
-        validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$missing.CMT$status %in% c("green", "yellow", "red"), message=FALSE), 
-       need(values4nmdat$missing.CMT$info, message=FALSE)
-  )
-  
-  if(!values4nmdat$missing.CMT$status=="green") {colFmt(values4nmdat$missing.CMT$info,'red')} 
-})() %>% HTML())
+info <- renderUI({
+  category = "missing.CMT"    
+  validate(need(values4nmdat[[category]]$status %in% c("yellow", "red"), message=FALSE))
+  callModule(module_check_nmdat_info, paste0(category,"_info"), values4nmdat, category)
+  module_check_nmdat_info_UI(id=paste0(category,"_info"),label=NULL) 
+})
 
 ```
 
-* `r (yes_or_no) ` No missing CMT values, all CMT must be integer. 
-    + `r (info) ` 
+* `r status ` No missing CMT values, all CMT must be integer. 
+    + `r info` 
 
+***
 
-*** 
  
 
 <!--  when DV missing, should set MDV =1. -->
-```{r }
-check.inconsistent.DV.MDV <- function(nmdat, values4nmdat)  {
-
-   validate(need(nmdat, message=FALSE), 
-            need(values4nmdat$mandatory_check, message="Must pass mandatory check..."),
-            need(all(c("ROWID", "DV", "MDV") %in% colnames(nmdat)), message=FALSE)
-   )
- 
-  print("in inconsistent.DV.MDV ")
+```{r } 
+check.inconsistent.DV.MDV <- function(nmdat)  {
+  validate(need(nmdat, message=FALSE))
+  status=FALSE; info=""; table=NULL; figure=NULL
    
   tabl = nmdat %>% filter(is.na(as_numeric(DV)), as.integer(MDV)==0)  
-  status <- nrow(tabl)==0
+  status <- ifelse(nrow(tabl)==0, "green", "red")
  
   info = paste0(tabl[, "ROWID"], collapse=", ") 
-  info = colFmt(paste0("Inconsistent DV and MDV found in ROWID(s), ", info, "."), "red")
-  
-  values4nmdat$inconsistent.DV.MDV$status = status
-  values4nmdat$inconsistent.DV.MDV$info = info
-  if(!status=="green") {values4nmdat$red_alert = rbind(isolate(values4nmdat$red_alert), info)}
-  
-  # pass_quick_check
-  values4nmdat$pass_quick_check = values4nmdat$pass_quick_check & status=="green"
-  
-  return(values4nmdat) 
+  info = paste0("Inconsistent DV and MDV found in ROWID(s), ", info, ".")
+ 
+  return(list(status=status, info=info, table=table, figure=figure))
 }
+ 
+status <- renderUI({
+  category = "inconsistent.DV.MDV"    
+  callModule(module_check_nmdat_status,paste0(category,"_status"), values4nmdat, category)
+  div(module_check_nmdat_status_UI(
+      id=paste0(category,"_status"),label=NULL ),style="display: inline-block")
+})
 
-yes_or_no <- renderUI(renderText({
-        validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$inconsistent.DV.MDV$status %in% c("green", "yellow", "red"), message=FALSE), 
-       need(values4nmdat$inconsistent.DV.MDV$info, message=FALSE)
-  )
-  
-  ifelse(values4nmdat$inconsistent.DV.MDV$status=="green", colFmt(asis_output("Yes\U2714"),'green'),  colFmt(asis_output("No\U2714"),'red'))
-})() %>% HTML())
-
-info <- renderUI(renderText({
-         validate(need(values4nmdat$mandatory_check, message=FALSE),
-       need(values4nmdat$inconsistent.DV.MDV$status %in% c("green", "yellow", "red"), message=FALSE), 
-       need(values4nmdat$inconsistent.DV.MDV$info, message=FALSE)
-  )
-  
-  if(!values4nmdat$inconsistent.DV.MDV$status=="green") {colFmt(values4nmdat$inconsistent.DV.MDV$info,'red')} 
-})() %>% HTML())
+info <- renderUI({
+  category = "inconsistent.DV.MDV"    
+  validate(need(values4nmdat[[category]]$status %in% c("yellow", "red"), message=FALSE))
+  callModule(module_check_nmdat_info, paste0(category,"_info"), values4nmdat, category)
+  module_check_nmdat_info_UI(id=paste0(category,"_info"),label=NULL) 
+})
 
 ```
 
-* `r (yes_or_no) ` When DV missing, should set MDV=1.
-    + `r (info) ` 
-
+* `r status ` When DV missing, should set MDV=1. 
+    + `r info` 
 
 *** 
 
 
-<!--   a sammple can be 'missing', can be 'na'(not available), can be BLQ.  -->
- 
- 
+
 ```{r}
+#<!--   a sammple can be 'missing', can be 'na'(not available), can be BLQ.  -->
+ 
+ 
 # 
 # <!-- 2. No placebo subjects have quantifiable PK measurements.-->
-# ```{r,echo = FALSE}
+#  
 # tabl = nmdat %>% filter(toupper(ARMA)=="PLACEBO", 
 #                  TEST==PK.TEST.NAME) %>% group_by(ID, TEST) %>% dplyr::summarise(sumDVOR = sum(as_numeric(abs(DVOR)), na.rm=TRUE)) %>% 
 #          filter(sumDVOR>0) %>% ungroup()
@@ -628,6 +554,7 @@ renderUI(renderText({
     
     info = values4nmdat$red_alert
     info = info[which(!is.null(info) & info!="")]
+    info = colFmt(info, "red")
     n = length(info)
     paste0(paste0(1:n, ". ", info), sep = '<br/>')
   })() %>% HTML())
@@ -645,6 +572,7 @@ renderUI(renderText({
   
     info = values4nmdat$yellow_alert
     info = info[which(!is.null(info) & info!="")]
+    info = colFmt(info, "orange")
     n = length(info)
     paste0(paste0(1:n, ". ", info), sep = '<br/>')
   })() %>% HTML())
