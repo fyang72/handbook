@@ -58,6 +58,7 @@ if (1==2) {
                     units = "days"
                     ) %>% as_numeric()
     ) 
+  adpc = adpc %>% mutate(EVID = 0)
   
   #------------------
   # prepare for adex
@@ -73,7 +74,7 @@ if (1==2) {
     EXTDOSE = ifelse(EXDOSU=="mg/kg", as_numeric(EXDOSE)*as_numeric(WGTBL),  
                      ifelse(EXDOSU=="mg",  as_numeric(EXDOSE), NA)))
   
-  
+  adex = adex %>% mutate(EVID = 1)
   #------------------
   # merge to adpx
   #------------------
@@ -87,23 +88,21 @@ if (1==2) {
   adpx = adpx %>% mutate(
     
     # remove PRE-DOSE, default flag
-    CFLAG = ifelse(toupper(ARMA) %in% c("PLACEBO"), "Placebo", 
-                   ifelse(as_numeric(TIME)<=0 &EVID==0, "Predose",  
-                          ifelse(as_numeric(TIME)>0 & as.integer(BLQ)==1, "Postdose BLQ", 
-                                 as.character(CFLAG)))),
-     
+    CFLAG = ifelse(trim(toupper(ARMA)) %in% c("PLACEBO"), "Placebo", CFLAG), 
+    CFLAG = ifelse(as_numeric(TIME)<=0 & EVID==0, "Predose", CFLAG), 
+    CFLAG = ifelse(as_numeric(TIME)>0 & as.integer(BLQ)==1, "Postdose BLQ", CFLAG),  
+    
     ID    = as.integer(as.factor(USUBJID)),
     ARMA  = ordered(ARMA, levels=unique(ARMA)), 
     ARMAN = as.integer(as.factor(ARMA)),
     TIME  = as_numeric(TIME),
     NTIM  = as_numeric(NTIM), 
-    TAD   = as_numeric(TAD), 
     
     AMT  = as_numeric(EXTDOSE), 
     EVID = ifelse(!is.na(AMT)&AMT>0, 1, 0),
     
-    RATE = ifelse(EXROUTE %in% c("IV", "INTRAVENOUS"), as_numeric(AMT)/as_numeric(EXDUR),     #    "."            "SUBCUTANEOUS" "INTRAVENOUS" 
-                  ifelse(EXROUTE %in% c("SC", "SUBCUTANEOUS"), NA,  NA)),
+    RATE = as_numeric(AMT)/as_numeric(EXDUR),      #    "."            "SUBCUTANEOUS" "INTRAVENOUS" 
+                  #ifelse(EXROUTE %in% c("SC", "SUBCUTANEOUS"), NA,  NA)),
     RATE = ifelse(is.infinite(RATE)|is.na(RATE), NA, RATE), 
     
     CMT = ifelse(EXROUTE %in% c("IV", "INTRAVENOUS"), 2,
@@ -140,11 +139,11 @@ if (1==2) {
       } 
   }
   
-  col.lst = setdiff(colnames(adsl), c("STUDYID", "USUBJID", "WGTBL"))
+  col.lst = setdiff(colnames(adsl), c("STUDYID", "USUBJID"))
   adpx = adpx[, setdiff(colnames(adpx), col.lst)]
   
   adpx = adpx %>%  
-    left_join(adsl%>%distinct(USUBJID,.keep_all=TRUE)%>% select(-WGTBL), 
+    left_join(adsl%>%distinct(USUBJID,.keep_all=TRUE), 
                             by=c("STUDYID", "USUBJID")
     )
   

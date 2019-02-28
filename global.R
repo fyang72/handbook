@@ -411,14 +411,9 @@ date_time_format = c("Ymd HMS", "mdY HMS", "bdY HMS", "dbY HMS")
 testcat.lst = c("PK1", "TARGET1", "SAF1", "EFF1", "BIOMKR1", "ADA1", "AE1")
 
 adsl.var.lst = c("STUDYID", "USUBJID",  
-                 "WGTBL", 
-                 "HGTBL", 
-                 "AGE", "AGEU",  
-                 "SEX", "SEXN", 
-                 "RACE",  "RACEN", 
-                 "ETHNIC","ETHNICN", 
-                 "BMIBL", "BSABL", "SITEID", 
-                 "SAFFL", "ENRLFL","RANDFL","PKFL","COMPLFL" )
+                 "AGE",  "AGEU",  "SEX",  "SEXN", "RACE",  "RACEN", "ETHNIC", "ETHNICN", 
+                 "WGTBL", "HGTBL", "BMIBL", "BSABL","SITEID", 
+                 "PKFL", "FASFL", "SAFFL", "ENRLFL", "RANDFL", "COMPLFL" )
 
 sex.lst = c( "MALE", "FEMALE", "UNKNOWN")
 
@@ -436,32 +431,37 @@ race.lst =c("WHITE",
 
  
 
-adex.var.lst = c("STUDYID",  "USUBJID",  "ARMA", "ARMAN", "VISIT",    "VISITNUM",     "TIME",   
-                 "EXTRT", "EXSEQ",  "EXDOSE",   "EXDOSU",  "EXTDOSE",  "EXROUTE", "EXROUTN", "EXDUR" ,  
+adex.var.lst = c("STUDYID",  "USUBJID",  "ARMA", "ARMAN", "VISIT",    "VISITNUM",  "TIME",   
+                 "EXTRT", "EXDOSE",   "EXDOSU",  "EXTDOSE",  "EXDUR", "EXROUTE", "EXROUTN",   
                  "EXSTDTC",  "EXENDTC", "TRTSDTM")
  
 
 
-
+dvoru.lst = c("mg/L")
 dosu.lst = c("mg", "mg/kg")
 admin.route.lst = c("SUBCUTANEOUS", "INTRAVENOUS", "INTRAMUSCULAR", "IVT")
  
 
 adpc.var.lst <- c(
   "STUDYID",   "USUBJID", "ARMA",  "ARMAN",
-  "VISIT",   "VISITNUM",   "PCTPT", "TIME", "NTIM", "TAD", 
-  "TEST", "TESTCD", "TESTCAT", "TESTCATN",  "DVOR", "DVORU", "BLQ", "LLOQ",  "METHOD", "SAMDTTM"      
+  "VISIT",   "VISITNUM",   "PCTPT", "TIME", "NTIM",  
+  "TEST", "TESTN", "TESTCD", "TESTCAT",   "DVOR", "DVORU", "BLQ", "LLOQ",  "METHOD", "SAMDTTM"      
 )  
 
  
 nmdat.mandatory.var.lst = c("ROWID","ID","TIME","DV","CMT","MDV","AMT","RATE","EVID")
 nmdat.var.lst =  c(
-  "C", "ROWID",   "ID", "ARMAN",  "TIME", "NTIM","TAD", 
-  "EXTRTN", "AMT",  "RATE", "EXROUTN", "EVID",  "EXDUR",   "EXDOSE",   "EXDOSU",  "EXTDOSE",  "EXROUTE", "EXSTDTC", "EXENDTC", "TRTSDTM", 
-  "TEST", "TESTCD", "TESTCAT", "TESTCATN", "DV", "DVOR", "BLQ", "LLOQ", "CMT",  "MDV", "METHOD", "SAMDTTM",  "FASFL",
-  "STUDYID", "USUBJID", "ARMA",  "VISIT", "VISITNUM", "PCTPT", "DVORU", 
+  "C", "ROWID",  "ID", "ARMAN", "VISITNUM", "TIME", "NTIM",
+  "TESTN", "DV", "DVOR", "BLQ", "LLOQ", "CMT",  "MDV",
+  "EXTRTN", "AMT",  "RATE", "EXROUTN", "EVID",  
+  "AGE",  "AGEU",  "SEX",  "SEXN", "RACE",  "RACEN", "ETHNIC", "ETHNICN", 
+  "WGTBL", "HGTBL", "BMIBL", "BSABL","SITEID", 
   
-  "AGE",  "AGEU",  "SEX",  "SEXN", "RACE",  "RACEN", "ETHNIC", "ETHNICN", "WGTBL",  "HGTBL", "BMIBL",
+  "STUDYID", "USUBJID", "ARMA",  "VISIT",  "PCTPT", 
+  "TEST", "TESTCD", "TESTCAT",  "DVORU", "METHOD", "SAMDTTM",  
+  "EXTRT", "EXDOSE",   "EXDOSU",  "EXTDOSE", "EXDUR", "EXROUTE", "EXSTDTC", "EXENDTC", "TRTSDTM",
+  
+  "PKFL", "FASFL", "SAFFL", "ENRLFL", "RANDFL", "COMPLFL",
   "CFLAG"             
 )
 adpx.var.lst = nmdat.var.lst

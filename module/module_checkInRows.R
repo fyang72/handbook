@@ -46,7 +46,7 @@ module_checkInRows <- function(input, output, session,
    
   # reactive inputTab()
   inputTab <- reactive({
-    validate(need(value0$table, FALSE), 
+    validate(need(values0$table, FALSE), 
              need(table_index, FALSE)
     )
     

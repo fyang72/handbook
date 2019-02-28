@@ -87,8 +87,7 @@ build_adpc <-function(dataset,
   # c("Ymd HMS",  "db!Y HMS")  "mdY HMS"
   
   if ((!all(class(adpc$SAMDTTM) %in% c("POSIXct", "POSIXt" )))) { 
-    library(lubridate)
-    adpc$SAMDTTM_ORG = adpc$SAMDTTM
+    library(lubridate) 
     adpc$SAMDTTM = parse_date_time(adpc$SAMDTTM, date_time_format, truncated = 3) %>% as.character()
   } 
     
@@ -123,34 +122,41 @@ build_adpc <-function(dataset,
 # check_adpc
 #################################################################
 
-check_adpc <- function(dataset, topN=20) {
-  adpc = dataset%>% ungroup()
+check_adpc <- function(dataset, adpc, topN=20) {
+  adpc = adpc%>% ungroup()
  
+  dataset = dataset %>% 
+    rename_at(vars(colnames(dataset)),
+              ~ paste0(colnames(dataset), "_ORG")
+    ) 
+  adpc = bind_cols(adpc, dataset)
+  
+  table = NULL
   #----------------- 
   # ARMA
   #----------------- 
-  tabl = adpc %>% select(ARMA, ARMAN) %>% 
+  tabl = adpc %>% select(ARMA, ARMAN, ARMA_ORG) %>% 
     distinct(ARMA, .keep_all=TRUE) %>% 
     arrange(ARMA)
   
   if (nrow(tabl)>topN) {tabl = tabl %>% slice(1:topN) }
   attr(tabl, "title") = "List of treatment arm (ARMA) and its order (ARMAN)"  
-  attr(tabl, "key") = "ARMA"  
-  attr(tabl, "value") = "ARMAN"
+  attr(tabl, "key") = "ARMA_ORG"  
+  attr(tabl, "value") = "ARMA"
   if (nrow(tabl)>topN) {attr(tabl, "footnote") = paste0("Note, the default is to display top ", topN, " rows.")}
   table[["ARMA"]] = tabl
   
   #----------------- 
   # PCTPT
   #----------------- 
-  tabl = adpc %>% select(VISIT, VISITNUM, PCTPT, NTIM, TEST) %>% distinct(VISIT, PCTPT, .keep_all=TRUE) %>% 
+  tabl = adpc %>% select(PCTPT, PCTPT_ORG, NTIM) %>% distinct(PCTPT, .keep_all=TRUE) %>% 
     mutate(VISITNUM=as_numeric(VISITNUM), 
            NTIM=as_numeric(NTIM)
     ) %>% arrange(VISITNUM, NTIM)
   
   if (nrow(tabl)>topN) { tabl = tabl %>% slice(1:topN) }
   attr(tabl, "title") = "List of nominal time point (PCTPT) and its corresponding numerical value (NTIM)" 
-  attr(tabl, "key") = "PCTPT"
+  attr(tabl, "key") = "PCTPT_ORG"
   attr(tabl, "value") = "NTIM"
   if (nrow(tabl)>topN) {attr(tabl, "footnote") = paste0("Note, the default is to display top ", topN, " rows.")}
   table[["PCTPT"]] = tabl
@@ -166,7 +172,7 @@ check_adpc <- function(dataset, topN=20) {
   
   if (nrow(tabl)>topN) { tabl = tabl %>% slice(1:topN) }
   attr(tabl, "title") = "List of sampling time (SAMDTTM) failed to interpret"     
-  attr(tabl, "key") = "SAMDTTM"  
+  attr(tabl, "key") = "SAMDTTM_ORG"  
   attr(tabl, "value") = "SAMDTTM"
   if (nrow(tabl)>topN) {attr(tabl, "footnote") = paste0("Note, the default is to display top ", topN, " rows.")}
   table[["SAMDTTM"]] = tabl
@@ -175,11 +181,11 @@ check_adpc <- function(dataset, topN=20) {
   #----------------- 
   # TESTCD
   #----------------- 
-  tabl = adpc %>% select(TESTCD, METHOD, LLOQ, TEST, TESTCAT) %>% distinct(TEST, .keep_all=TRUE)
+  tabl = adpc %>% select(TESTCD, METHOD, LLOQ, TEST, TESTN, TESTCAT) %>% distinct(TEST, .keep_all=TRUE)
   
   if (nrow(tabl)>topN) { tabl = tabl %>% slice(1:topN) }
   attr(tabl, "title") = "List of analyte name (TEST), assay method, LLOQ, its category and its label"     
-  attr(tabl, "key") = "TESTCD"  
+  attr(tabl, "key") = "TESTCD_ORG"  
   attr(tabl, "value") = "TESTCD"
   if (nrow(tabl)>topN) {attr(tabl, "footnote") = paste0("Note, the default is to display top ", topN, " rows.")}
   table[["TESTCD"]] = tabl
@@ -199,6 +205,6 @@ if (ihandbook) {
   )    
   
   data[["adpc"]] = adpc 
-  table <- check_adpc(adpc, topN=20)   # date_time_format = c("Ymd HMS")
+  table <- check_adpc(dataset, adpc,  topN=topN)   # date_time_format = c("Ymd HMS")
   output <- list(data=data, table=table)
 }

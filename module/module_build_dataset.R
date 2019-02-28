@@ -137,9 +137,9 @@ output$checkInRows_container <- renderUI({
                need(values$data, message="no data found")
       )
 
-      values = callModule(module_checkInRows, paste0("module_save_table_", i), 
-                       values0 = values,
-                       table_index = i
+      values = callModule(module_checkInRows, paste0("module_save_table_", i),  
+                          values0 = values,
+                          table_index = i
       )   
       
       # UI
@@ -171,8 +171,14 @@ observeEvent(input$saveAll, {
            need(values$table, message=NULL), 
            need(values$data, message=NULL)
   ) 
+    
+  tdata_org = ALL$DATA[[dataset_name]] 
+  tdata_org = tdata_org %>% 
+    rename_at(vars(colnames(tdata_org)),
+              ~ paste0(colnames(tdata_org), "_ORG")
+    )
   
-  tdata = values$data
+  tdata = values$data %>% cbind(tdata_org)
   ntabl = length(values$table)
   
   # for all curation tables
@@ -191,7 +197,7 @@ observeEvent(input$saveAll, {
       left_join(table, by=KEY)
   }
   
-  ALL$DATA[[dataset_name]] <- tdata 
+  ALL$DATA[[dataset_name]] <- tdata[, setdiff(colnames(tdata), colnames(tdata_org))]
   showNotification("save all sucessfully", type="message")   # "default, "message", "warning", "error"
   
 })

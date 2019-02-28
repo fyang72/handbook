@@ -110,8 +110,7 @@ build_adex <-function(
   #---------------------------------------------
   # "EXROUTE"    "SUBCUTANEOUS"  "INTRAVENOUS"   "INTRAMUSCULAR" "IVT"      
   #--------------------------------------------- 
-  adex = adex %>% mutate(EXROUTE_ORG = EXROUTE, 
-                         EXROUTE = ordered(toupper(EXROUTE), levels = admin.route.lst),  
+  adex = adex %>% mutate(EXROUTE = ordered(toupper(EXROUTE), levels = admin.route.lst),  
                          EXROUTN = ifelse(is.na(EXROUTE), -99, as.integer(EXROUTE)), 
                          
                          EXDOSE = as_numeric(EXDOSE), 
@@ -131,7 +130,7 @@ build_adex <-function(
            ) %>% 
     select(-EVID)
   
-  adex %>% select(USUBJID, EXSTDTC, EXENDTC, EXDUR, TRTSDTM, TIME, EXSEQ)
+  # adex %>% select(USUBJID, EXSTDTC, EXENDTC, EXDUR, TRTSDTM, TIME, EXSEQ)
   
   
   #---------------------------------------------
@@ -148,8 +147,15 @@ build_adex <-function(
 # check_adex
 #################################################################
 
-check_adex <- function(dataset, topN=20) {
-  adex = dataset %>% ungroup()
+check_adex <- function(dataset, adex, topN=20) {
+  adex = adex %>% ungroup()
+  
+  dataset = dataset %>% 
+    rename_at(vars(colnames(dataset)),
+              ~ paste0(colnames(dataset), "_ORG")
+    )
+  adex = bind_cols(adex, dataset)
+  
   table = NULL
   
   #----------------- 
@@ -170,12 +176,12 @@ check_adex <- function(dataset, topN=20) {
   #----------------- 
   # ARMA
   #-----------------
-  tabl = adex %>% select(ARMA, ARMAN) %>% distinct(ARMA, .keep_all=TRUE) %>% 
+  tabl = adex %>% select(ARMA, ARMAN, ARMA_ORG) %>% distinct(ARMA, .keep_all=TRUE) %>% 
     arrange(ARMA)
   
   if (nrow(tabl)>topN) { tabl = tabl %>% slice(1:topN) }
   attr(tabl, "title") = "List of treatment arm (ARMA) and its order (ARMAN)"  
-  attr(tabl, "key") = "ARMA"  
+  attr(tabl, "key") = "ARMA_ORG"  
   attr(tabl, "value") = "ARMAN"
   if (nrow(tabl)>topN) {attr(tabl, "footnote") = paste0("Note, the default is to display top ", topN, " rows.")}
   table[["ARMA"]] = tabl
@@ -183,17 +189,19 @@ check_adex <- function(dataset, topN=20) {
   #----------------- 
   # EXROUTE
   #-----------------  
-  tabl = adex %>% select(EXROUTE, EXROUTN, EXROUTE_ORG) %>% 
+  tabl = adex %>% select(EXROUTE, EXROUTE_ORG) %>% 
     distinct(EXROUTE, .keep_all=TRUE) %>% 
     arrange(EXROUTE)
   
-  tabl = tabl %>% mutate(SUGGEST=ordered(NA, levels=admin.route.lst))
+  #tabl = tabl %>% mutate(SUGGEST=ordered(NA, levels=admin.route.lst))
   
   if (nrow(tabl)>topN) { tabl = tabl %>% slice(1:topN) }
   attr(tabl, "title") = "List of administration route (EXROUTE) and its order (EXROUTN)"  
-  attr(tabl, "key") = "EXROUTE"  
+  attr(tabl, "key") = "EXROUTE_ORG"  
   attr(tabl, "value") = "EXROUTN"
-  if (nrow(tabl)>topN) {attr(tabl, "footnote") = paste0("Note, the default is to display top ", topN, " rows.")}
+  
+  attr(tabl, "footnote") = paste0("Note, the standarad dose administration routes are ", paste0(admin.route.lst, collapse=", "), ". ")  
+  if (nrow(tabl)>topN) {attr(tabl, "footnote") = paste0(attr(tabl, "footnote"), "The default is to display top ", topN, " rows.")}
   table[["EXROUTE"]] = tabl
   
   
@@ -204,13 +212,16 @@ check_adex <- function(dataset, topN=20) {
     distinct(EXDOSU, .keep_all=TRUE) %>% 
     arrange(EXDOSU)
   
-  tabl = tabl %>% mutate(SUGGEST=ordered(NA, levels=dosu.lst))
+  #tabl = tabl %>% mutate(SUGGEST=ordered(NA, levels=dosu.lst))
   
   if (nrow(tabl)>topN) { tabl = tabl %>% slice(1:topN) }
   attr(tabl, "title") = "List of dose unit (EXDOSU)"  
-  attr(tabl, "key") = "EXDOSU"  
+  attr(tabl, "key") = "EXDOSU_ORG"  
   attr(tabl, "value") = "EXDOSU"
-  if (nrow(tabl)>topN) {attr(tabl, "footnote") = paste0("Note, the default is to display top ", topN, " rows.")}
+  
+  attr(tabl, "footnote") = paste0("Note, the standarad dose units are ", paste0(dosu.lst, collapse=", "), ". ")
+  if (nrow(tabl)>topN) {attr(tabl, "footnote") = paste0(attr(tabl, "footnote"), 
+                                                        "The default is to display top ", topN, " rows.")}
   table[["EXDOSU"]] = tabl
   
   
@@ -231,6 +242,6 @@ if (ihandbook) {
                     )    
   
   data[["adex"]] = adex 
-  table <- check_adex(adex, topN=20)    
+  table <- check_adex(dataset, adex, topN=topN)    
   output <- list(data=data, table=table)
 }

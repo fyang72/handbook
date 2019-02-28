@@ -97,14 +97,14 @@ build_adsl <-function(
   # Demographic categorical variables: "SEX" "SEXN" "ETHNIC" "ETHNICN" "RACE" "RACEN"  
   #-----------------------------------------------------------------------------
   # sex.lst = c("MALE", "FEMALE", "UNKNOWN")
-  adsl = adsl %>% mutate(SEX_ORG = SEX, 
+  adsl = adsl %>% mutate(#SEX_ORG = SEX, 
                          SEX = ordered(toupper(SEX), levels= sex.lst),  
                          SEXN = ifelse(is.na(SEX), -99, as.integer(SEX))# MALE: 1, FEMALE: 2
                       
   )
   
   # ethnic.lst = c("NOT HISPANIC OR LATINO",  "HISPANIC OR LATINO")
-  adsl = adsl %>% mutate(ETHNIC_ORG = ETHNIC, 
+  adsl = adsl %>% mutate(#ETHNIC_ORG = ETHNIC, 
                          ETHNIC = ordered(toupper(ETHNIC), levels = ethnic.lst),
                          ETHNICN = ifelse(is.na(ETHNIC), -99, as.integer(ETHNIC))
   )
@@ -118,7 +118,7 @@ build_adsl <-function(
   #               "OTHER", 
   #               "UNKNOWN",
   #               "NOT REPORTED")
-  adsl = adsl %>% mutate(RACE_ORG = RACE, 
+  adsl = adsl %>% mutate(#RACE_ORG = RACE, 
                          RACE = ordered(toupper(RACE), levels = race.lst),
                          RACEN = ifelse(is.na(RACE), -99,  as.integer(RACE)) 
   )
@@ -148,8 +148,15 @@ build_adsl <-function(
 # check_adsl
 #################################################################
 
-check_adsl <- function(dataset, topN=20) {
-  adsl = dataset%>% ungroup()
+check_adsl <- function(dataset, adsl, topN=20) {
+  adsl = adsl %>% ungroup()
+  
+  dataset = dataset %>% 
+    rename_at(vars(colnames(dataset)),
+              ~ paste0(colnames(dataset), "_ORG")
+              ) 
+  adsl = bind_cols(adsl, dataset)
+  
   table = NULL
   
   #----------------- 
@@ -178,7 +185,9 @@ check_adsl <- function(dataset, topN=20) {
   attr(tabl, "title") = "List of missing gender information (SEX)" 
   attr(tabl, "key") = "SEX_ORG"
   attr(tabl, "value") = "SEX"
-  if (nrow(tabl)==topN) {attr(tabl, "footnote") = paste0("Note, the default is to display top ", topN, " rows.")}
+  
+  attr(tabl, "footnote") = paste0("Note, the standarad names for gender are ", paste0(sex.lst, collapse=", "), ". ")  
+  if (nrow(tabl)==topN) {attr(tabl, "footnote") = paste0(attr(tabl, "footnote"), "The default is to display top ", topN, " rows.")}
   table[["SEX"]] = tabl
   
   #----------------- 
@@ -192,7 +201,9 @@ check_adsl <- function(dataset, topN=20) {
   attr(tabl, "title") = "List of missing ethnic information (ETHNIC)" 
   attr(tabl, "key") = "ETHNIC_ORG"
   attr(tabl, "value") = "ETHNIC"
-  if (nrow(tabl)==topN) {attr(tabl, "footnote") = paste0("Note, the default is to display top ", topN, " rows.")}
+
+  attr(tabl, "footnote") = paste0("Note, the standarad names for ethnic are ", paste0(ethnic.lst, collapse=", "), ". ")  
+  if (nrow(tabl)==topN) {attr(tabl, "footnote") = paste0(attr(tabl, "footnote"), "The default is to display top ", topN, " rows.")}
   table[["ETHNIC"]] = tabl
   
   #----------------- 
@@ -206,7 +217,9 @@ check_adsl <- function(dataset, topN=20) {
   attr(tabl, "title") = "List of missing race information (RACE)" 
   attr(tabl, "key") = "RACE_ORG"
   attr(tabl, "value") = "RACE"
-  if (nrow(tabl)==topN) {attr(tabl, "footnote") = paste0("Note, the default is to display top ", topN, " rows.")}
+  
+  attr(tabl, "footnote") = paste0("Note, the standarad names for race are ", paste0(race.lst, collapse=", "), ". ")  
+  if (nrow(tabl)==topN) {attr(tabl, "footnote") = paste0(attr(tabl, "footnote"), "The default is to display top ", topN, " rows.")}
   table[["RACE"]] = tabl
   
   return(table)
@@ -226,6 +239,8 @@ if (ihandbook) {
                       ethnic.lst = ethnic.lst,
                       race.lst = race.lst)   
    
-  table <- check_adsl(adsl, topN=topN)    
+  # dataset: original one
+  # adsl: parsed one
+  table <- check_adsl(dataset, adsl, topN=topN)    
   output <- list(data=adsl, table=table)
 }
