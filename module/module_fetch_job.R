@@ -51,8 +51,8 @@ module_fetch_job <- function(input, output, session, ALL, ctlModel_name="ctlMode
       nmdat.file.name = attributes(nmdat)$file.name
       nmdat.locaton.source = attributes(nmdat)$locaton.source
       
-      runno <- tools::file_path_sans_ext(ctlModel.file.name)
-      data.name <- tools::file_path_sans_ext(nmdat.file.name)
+      runno <- tools::file_path_sans_ext(basename(ctlModel.file.name))
+      data.name <- tools::file_path_sans_ext(basename(nmdat.file.name))
       
       #runno <- gsub(paste0(".", tools::file_ext(ctlModel.file.name)), "", basename(ctlModel.file.name))
       #data.name <- gsub(paste0(".", tools::file_ext(nmdat.file.name)),"",  basename(nmdat.file.name))
@@ -61,14 +61,17 @@ module_fetch_job <- function(input, output, session, ALL, ctlModel_name="ctlMode
       data.name = NULL
     }
     
-    tagList(
-    fluidRow(width = 12, textInput(ns("server.IP.address"), 
-                                   width = '100%',  
-                                   value= "10.244.106.127", 
-                                   placeholder = "xx.xx.xx.xx.xx", 
-                                   label="server IP address:"
-                          )
-    ),
+    tagList( 
+      fluidRow(
+        column(width = 6, 
+               textInput(ns("server.IP.address"), 
+                         width = '100%',  
+                         value= "10.244.106.127", 
+                         placeholder = "xx.xx.xx.xx.xx", 
+                         label="Server IP address:"
+               )
+        )
+      ),
     
     fluidRow(
       column(width = 6, #status = "primary",  #class = 'rightAlign', #background ="aqua",
@@ -78,7 +81,7 @@ module_fetch_job <- function(input, output, session, ALL, ctlModel_name="ctlMode
                                     tolower(Sys.info()["user"]), "/",
                                     "TEST/ctl/",
                                     paste(runno, data.name, sep="_" ), "/"), 
-                       label="Server directory of the loaded model:")),
+                       label="Directory of the loaded model on server:")),
       
       column(width = 6, #status = "primary",  #class = 'rightAlign', #background ="aqua",
              textInput(ns("server.data.dir"), 
@@ -86,7 +89,7 @@ module_fetch_job <- function(input, output, session, ALL, ctlModel_name="ctlMode
                        value=paste0("/home/", 
                                     tolower(Sys.info()["user"]), "/",
                                     "TEST/data/"),
-                       label="Server directory of the loaded data:"))
+                       label="Directory of the loaded data on server:"))
     )
     )
     
@@ -122,7 +125,7 @@ module_fetch_job <- function(input, output, session, ALL, ctlModel_name="ctlMode
                                     tolower(Sys.info()["user"]), "/",
                                     "TEST/",
                                     paste(runno, data.name, sep="_" ), "/"), 
-                       label="Local directory of the fetched result:"))
+                       label="Directory of the fetched result in local:"))
       
       # column(width = 6, #status = "primary",  #class = 'rightAlign', #background ="aqua",
       #               textInput("server.data.dir", 
@@ -236,10 +239,10 @@ module_fetch_job <- function(input, output, session, ALL, ctlModel_name="ctlMode
     
 
     lst.file = paste0(local.result.dir, model.name, ".lst")
-    tt <- read_lst(lst.file)
+ 
     
-    values$run.model$lst = tt$lst
-    values$run.model$lst.content = tt$lst.content  
+    values$run.model$lst = read.lst(lst.file)
+    values$run.model$lst.content = readLines(lst.file)
     if (!is.null(tt$lst)) {
       showNotification("fetch result sucessfully", type="message")}   # "default, "message", "warning", "error"
     

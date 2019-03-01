@@ -229,7 +229,7 @@ login = NULL
 login$status = TRUE
 login$user.name.lst = c("training",   "feng.yang"   )
 
- 
+globalVars <- reactiveValues(login=login)
 
 observeEvent(session, { 
   globalVars$login$user.name = "feng.yang"   # determineCurrentUser(session=session)
@@ -249,29 +249,29 @@ observeEvent(session, {
 
 library(readxl)
 library(magrittr)
-library(dplyr)
-file.name = "./lib/pkmeta.xlsx"
-magicTab <- read_excel(file.name, sheet="cheatsheet")
-magicTab <- magicTab %>% mutate(Domain=as.character(Domain), 
-                                Alias=as.character(Alias), 
-                                Freq=as.numeric(Freq), 
-                                Label=as.character(Label), 
-                                Where=as.character(Where), 
-                                Who=as.character(Who))
-magicTab = magicTab %>% filter(!is.na(Domain))
+# library(dplyr)
+# file.name = "./lib/pkmeta.xlsx"
+# magicTab <- read_excel(file.name, sheet="cheatsheet")
+# magicTab <- magicTab %>% mutate(Domain=as.character(Domain), 
+#                                 Alias=as.character(Alias), 
+#                                 Freq=as.numeric(Freq), 
+#                                 Label=as.character(Label), 
+#                                 Where=as.character(Where), 
+#                                 Who=as.character(Who))
+# magicTab = magicTab %>% filter(!is.na(Domain))
+# 
+# 
+# 
+# # scriptTab
+# scriptTab = read_csv("./lib/scriptTab.csv")
+# 
+# scriptTab = scriptTab %>% 
+#   mutate(DATE = as.Date(as.POSIXct(DATE, format= "%Y-%m-%d"), format = "yyyy-mm-dd"))
 
-
-
-# scriptTab
-scriptTab = read_csv("./lib/scriptTab.csv")
-
-scriptTab = scriptTab %>% 
-  mutate(DATE = as.Date(as.POSIXct(DATE, format= "%Y-%m-%d"), format = "yyyy-mm-dd"))
-
-
-globalVars <- reactiveValues(login=login, 
-                             magicTab=magicTab, 
-                             scriptTab=scriptTab)
+# 
+# globalVars <- reactiveValues(login=login, 
+#                              magicTab=magicTab, 
+#                              scriptTab=scriptTab)
 
 
 
@@ -284,7 +284,7 @@ globalVars <- reactiveValues(login=login,
 #folder.loc <- "/data/BiCS_RDE_Development/shiny-server_development/pharmacometrics/regnR/R2"
 ihandbook = 0
 
- folder.loc <- "~/regnR/R2"
+ folder.loc <- "~/handbook/util"
  
  file.lst <-list.files(path = folder.loc, all.files = FALSE,full.names = TRUE, include.dirs = TRUE, recursive =TRUE)     
  
@@ -296,7 +296,7 @@ ihandbook = 0
  }     #sys.source('file.R', envir=environment())
   
 
- folder.loc <- "./module/"
+ folder.loc <- "~/handbook/module/"
  file.lst <-list.files(path = folder.loc, all.files = FALSE,full.names = TRUE, include.dirs = TRUE, recursive =TRUE)     
  file.lst = file.lst[which(substr(file.lst, nchar(file.lst)-1, nchar(file.lst)) %in% c(".r", ".R"))]
  
@@ -307,7 +307,7 @@ ihandbook = 0
     source(file=file.lst[ifile])  
  }     #sys.source('file.R', envir=environment())
  
- folder.loc <- "./script/"
+ folder.loc <- "~/handbook/script/"
  file.lst <-list.files(path = folder.loc, all.files = FALSE,full.names = TRUE, include.dirs = TRUE, recursive =TRUE)     
  file.lst = file.lst[which(substr(file.lst, nchar(file.lst)-1, nchar(file.lst)) %in% c(".r", ".R"))]
  

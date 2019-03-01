@@ -1,5 +1,60 @@
 
-read_runno  <- function(MODEL.HOME, subdir="ctl/", runno="LN001", postfix="")  {
+
+read_runno <- function(local.model.home.dir="./KRM/output/", list.of.runs, runno="001", tab.suffix = "") {
+  library("readr")
+  library("dplyr")
+  library(xpose4) #read in the xopse library 
+  
+  for (i in 1:length(list.of.runs)) {
+   
+    runno = gsub("/", "", list.of.runs[i], fix=TRUE)
+    local.result.dir = paste0(local.model.home.dir, list.of.runs[i])
+    
+    file.lst <-list.files(path = local.result.dir, all.files = FALSE,
+                          full.names = TRUE, include.dirs = TRUE, recursive =TRUE)   
+    
+    # .lst
+    lst.file.name <- file.lst[which(tools::file_ext(file.lst) == "lst")]
+    if (length(lst.file.name)==1) {
+      lst <- read.lst(lst.file.name)
+      lst.content <- readLines(lst.file.name)
+    }  
+    
+    # xpdb.obj
+    xpdb.obj = xpose.data(runno=runno, 
+                          tab.suffix = tab.suffix, 
+                          directory = local.result.dir
+    )
+    # .ctl
+    ctl.file.name <- file.lst[which(tools::file_ext(file.lst) == "ctl")]
+    if (length(ctl.file.name)==1) {
+      ctl = readLines(ctl.file.name,warn=FALSE) 
+    } 
+    
+    # .csv
+    csv.file.name <- file.lst[which(tools::file_ext(file.lst) == "csv")]
+    if (length(csv.file.name)==1) {
+      adpx <- read.csv(file = csv.file.name, skip=0,  stringsAsFactors=FALSE)
+    } 
+    
+    values = NULL
+    values[[runno]]$lst = lst
+    values[[runno]]$lst.content = lst.content
+    values[[runno]]$xpdb.obj = xpdb.obj
+    values[[runno]]$ctl = ctl
+    values[[runno]]$adpx = adpx 
+    
+  }
+  return(values)
+  
+}
+
+
+
+
+
+
+read_runno_old  <- function(MODEL.HOME, subdir="ctl/", runno="LN001", postfix="")  {
   
   #postfix = ".nm7/"
   # need both sdtab001 and patab001,  "IPRED", +  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
