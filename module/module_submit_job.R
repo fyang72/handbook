@@ -56,12 +56,16 @@ module_submit_job <- function(input, output, session, ALL, ctlModel_name="ctlMod
   
 
 #--------------------------------------  
-# load_internal_data_container
+# which_program_container
 #-------------------------------------- 
 output$which_program_container <- renderUI({
   validate(need(globalVars$login$status, message=FALSE)) 
    
-         
+  
+  
+  list.of.runs <- list_folder_on_HPC(server.IP.address = "10.244.106.127", 
+                                     directory.on.server = "/home/feng.yang/R1979/ctl/")
+  
   dirs.list = c(list.files(path = paste0("./output/", 
                                              tolower(Sys.info()["user"]), "/"), 
                                full.names = FALSE, recursive = FALSE))
@@ -88,12 +92,7 @@ output$server_info_container <- renderUI({
   
   ctlModel = ALL$ctlModel[[ctlModel_name]]
   nmdat = ALL$DATA[[ctlModel_name]]
-  
-  #print("input$submit_job in server_info_container")
-  # ((input$submit_job))
-  # isolate({ 
-  # values$run.model$job.submited = FALSE
-  # })
+   
   
   if (!is.null(ctlModel) & !is.null(nmdat)) {
     ctlModel.file.name = attributes(ctlModel)$file.name
@@ -109,6 +108,14 @@ output$server_info_container <- renderUI({
     data.name = NULL
   }
   
+  tagList(
+  fluidRow(width = 12, textInput(ns("server.IP.address"), 
+                                 width = '100%',  
+                                 value= "10.244.106.127", 
+                                 placeholder = "xx.xx.xx.xx.xx", 
+                                 label="server IP address:"
+                                 )
+           ),
   
   fluidRow(
     column(width = 6, #status = "primary",  #class = 'rightAlign', #background ="aqua",
@@ -137,6 +144,7 @@ output$server_info_container <- renderUI({
     #                     ) 
     # )
   )
+  )
   
   
 })
@@ -163,7 +171,7 @@ output$server_info_container <- renderUI({
 
 # log_container
 output$check_status_container <-  renderUI({  
-  #log =   values$run.model$log
+ 
   validate(need(input$server.model.dir, message="empty server.model.dir"), 
            need(input$server.data.dir, message="empty server.data.dir")  
   )
@@ -178,7 +186,9 @@ output$check_status_container <-  renderUI({
 })
 
 
-
+#--------------------------------------------------------
+# check status 
+#--------------------------------------------------------
 observeEvent({input$check_status}, {
   
   validate(need(input$server.model.dir, message="empty server.model.dir"), 
@@ -186,14 +196,17 @@ observeEvent({input$check_status}, {
   )
   
   
-  server.model.dir = (input$server.model.dir)   #"/home/feng.yang/test_data/test_nm/"  
-  server.data.dir= (input$server.data.dir)   #"/home/feng.yang/test_data/test_nm/"
-  local.result.dir = "./tmp/"
-  system(command = paste0("scp 10.244.106.127:", paste0(server.model.dir,  "/output.log  ", local.result.dir))) 
-   
+  server.model.dir = (input$server.model.dir)    
+  server.data.dir= (input$server.data.dir)    
   
+  # create a folder locally if not exit
+  local.result.dir = "./tmp/"
+  system(command = paste0("mkdir -p ", local.result.dir), intern = T)
+  system(command = paste0("scp 10.244.106.127:", paste0(server.model.dir,  "/output.log  ", local.result.dir))) 
+    
+   
   error.message= "No such file or directory, cannot open the connection"
-  value =  tryCatch(readLines("./tmp/output.log"),     # ?mread , ?mcode, 
+  value =  tryCatch(readLines(paste0(local.result.dir, "/output.log")),      
                        error=function(e) {
                          print(error.message); 
                          return(NULL)
@@ -202,8 +215,6 @@ observeEvent({input$check_status}, {
                        #}
   )
   
-  print("value at 205:")
-  print(value)
   
   if (is.null(value)) { 
       updateTextAreaInput(session, "check_status_content", value=error.message)
@@ -211,7 +222,7 @@ observeEvent({input$check_status}, {
       value = paste0(value, sep="\n")   # sep="<br/>")
       value = paste0(value, collapse="")
       updateTextAreaInput(session, "check_status_content", value=value)
-      system(command=paste0("rm ./tmp/output.log"))
+      system(command=paste0("rm ", paste0(local.result.dir, "/output.log")))
   }
   
 
@@ -223,16 +234,7 @@ observeEvent({input$check_status}, {
  
 
 observeEvent({input$submit_job}, {
-  
-  # print("input$submit_job in observeEvent ")
-  # #print(isolate(input$submit_job))
-  # validate(
-  #   need(values$run.model$job.submited == FALSE, message=FALSE) #########################
-  # )
-  
-  #isolate({ 
-  #print("after observeEvent in submit job")
-  
+    
   ctlModel = ALL$ctlModel[[ctlModel_name]]
   nmdat = ALL$DATA[[ctlModel_name]]
   
@@ -256,10 +258,7 @@ observeEvent({input$submit_job}, {
     need(ctlModel.locaton.source %in% c("internal", "external", "session"), message=FALSE), 
     need(nmdat.locaton.source %in% c("internal", "external", "session"), message=FALSE)
   ) 
-  
-  #print("after validation submit job")
-  
-  values$run.model$log = "job submited"
+   
   
   if (nmdat.locaton.source %in% c("external", "session"))  {
     owd = "./tmp/"
@@ -277,38 +276,26 @@ observeEvent({input$submit_job}, {
     writeLines(ctlModel, con = paste0(owd,  basename(ctlModel.file.name)))
   }
   
-  HOME = "~/FYANG/Template/Handbook/" 
+  server.IP.address = input$server.IP.address 
   local.model.name = ifelse(ctlModel.locaton.source=="internal", ctlModel.file.name, 
                             ifelse(ctlModel.locaton.source%in% c("external", "session"), 
                                    paste0(owd, basename(ctlModel.file.name)), NULL))   #/model/ctl/control5copy.ctl"  
   local.data.name = ifelse(nmdat.locaton.source=="internal", nmdat.file.name, 
                            ifelse(nmdat.locaton.source%in% c("external", "session"), 
                                   paste0(owd, basename(nmdat.file.name)), NULL))  
-  local.result.dir = NULL    #"/ctl/LN_BASE_WT/"  
-  
-  server.model.dir = (input$server.model.dir)   #"/home/feng.yang/test_data/test_nm/"  
-  server.data.dir= (input$server.data.dir)   #"/home/feng.yang/test_data/test_nm/"
-  
-  
-  #print("just before submit job")
-  print("job submited")
-  print(server.model.dir)
-  print(server.data.dir)
-  
-  if (1==1) { 
-    submit_job_to_HPC(HOME = "~/FYANG/Template/Handbook/",
+ 
+  server.model.dir = (input$server.model.dir)   
+  server.data.dir= (input$server.data.dir)    
+ 
+    
+  submit_job_to_HPC(server.IP.address = server.IP.address,
                      local.model.name = local.model.name, 
-                     local.data.name = local.data.name, 
-                     local.result.dir=NULL, 
+                     local.data.name = local.data.name,  
                      server.model.dir = server.model.dir,
                      server.data.dir = server.data.dir
                      )
   
-     
-  }
-  
-  #values$run.model$job.submited = TRUE
-  #})
+   
 })
 
  

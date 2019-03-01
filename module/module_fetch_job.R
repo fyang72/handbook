@@ -31,8 +31,6 @@ module_fetch_job <- function(input, output, session, ALL, ctlModel_name="ctlMode
   
   ns <- session$ns 
   
-  actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
-  
   values<- reactiveValues()
   
   
@@ -41,6 +39,7 @@ module_fetch_job <- function(input, output, session, ALL, ctlModel_name="ctlMode
   #----------------------------------------------------
   
   output$server_info_container <- renderUI({
+    
     
     ctlModel = ALL$ctlModel[[ctlModel_name]]
     nmdat = ALL$DATA[[ctlModel_name]]
@@ -52,13 +51,24 @@ module_fetch_job <- function(input, output, session, ALL, ctlModel_name="ctlMode
       nmdat.file.name = attributes(nmdat)$file.name
       nmdat.locaton.source = attributes(nmdat)$locaton.source
       
-      runno <- gsub(paste0(".", tools::file_ext(ctlModel.file.name)), "", basename(ctlModel.file.name))
-      data.name <- gsub(paste0(".", tools::file_ext(nmdat.file.name)),"",  basename(nmdat.file.name))
+      runno <- tools::file_path_sans_ext(ctlModel.file.name)
+      data.name <- tools::file_path_sans_ext(nmdat.file.name)
+      
+      #runno <- gsub(paste0(".", tools::file_ext(ctlModel.file.name)), "", basename(ctlModel.file.name))
+      #data.name <- gsub(paste0(".", tools::file_ext(nmdat.file.name)),"",  basename(nmdat.file.name))
     }else {
       runno = NULL
       data.name = NULL
     }
     
+    tagList(
+    fluidRow(width = 12, textInput(ns("server.IP.address"), 
+                                   width = '100%',  
+                                   value= "10.244.106.127", 
+                                   placeholder = "xx.xx.xx.xx.xx", 
+                                   label="server IP address:"
+                          )
+    ),
     
     fluidRow(
       column(width = 6, #status = "primary",  #class = 'rightAlign', #background ="aqua",
@@ -78,7 +88,7 @@ module_fetch_job <- function(input, output, session, ALL, ctlModel_name="ctlMode
                                     "TEST/data/"),
                        label="Server directory of the loaded data:"))
     )
-    
+    )
     
   })
   
@@ -195,15 +205,16 @@ module_fetch_job <- function(input, output, session, ALL, ctlModel_name="ctlMode
       need(ctlModel.locaton.source %in% c("internal", "external", "session"), message=FALSE) 
     ) 
     
-    server.model.dir = input$server.model.dir   #"/home/feng.yang/test_data/test_nm/"  
-    server.data.dir= input$server.data.dir   #"/home/feng.yang/test_data/test_nm/"
+    server.IP.address = input$server.IP.address
+    server.model.dir = input$server.model.dir   
+    server.data.dir= input$server.data.dir    
+     
     
-    
-    HOME = "~/handbook/" 
     local.model.name = ctlModel.file.name # ifelse(ctlModel.locaton.source=="internal", ctlModel.file.name, NULL)   
+    model.name = tools::file_path_sans_ext(local.model.name)
     
     local.data.name = nmdat.file.name # ifelse(nmdat.locaton.source=="internal", nmdat.file.name, NULL)   #"/data/THEOPP.csv"  
-    
+    data.name = tools::file_path_sans_ext(local.data.name)
     
     # create a local directory to hold fetched data
     # runno <- gsub(paste0(".", tools::file_ext(ctlModel.file.name)), "", basename(ctlModel.file.name))
@@ -212,21 +223,26 @@ module_fetch_job <- function(input, output, session, ALL, ctlModel_name="ctlMode
     #                    tolower(Sys.info()["user"]), "/",
     #                    paste(runno, data.name, sep="_" ), "/")
     
-    local.result.dir = paste0(HOME, input$local.result.dir)
-    system(command = paste0("mkdir -p ", local.result.dir))
+    local.result.dir = input$local.result.dir
+    system(command = paste0("mkdir -p ", local.result.dir), intern = T) 
     
-    # 
-    tt= fetch_job_from_HPC(HOME = "~/FYANG/Template/Handbook/",
-                              local.model.name = local.model.name, 
-                              local.data.name = local.data.name, 
-                              local.result.dir=local.result.dir, 
-                              server.model.dir = server.model.dir,
-                              server.data.dir = server.data.dir)
+    fetch_job_from_HPC(  
+      server.IP.address = server.IP.address,
+      server.model.dir = server.model.dir, 
+      local.result.dir = local.result.dir,   #"./ctl/LN_BASE_WT/", 
+      
+      server.data.full.path = paste0(server.data.dir, data.name, ".csv")
+    ) 
     
+
+    lst.file = paste0(local.result.dir, model.name, ".lst")
+    tt <- read_lst(lst.file)
     
     values$run.model$lst = tt$lst
-    values$run.model$lst.content = tt$lst.content 
-    if (!is.null(tt$lst)) { print("lst output has been returned. ")}
+    values$run.model$lst.content = tt$lst.content  
+    if (!is.null(tt$lst)) {
+      showNotification("fetch result sucessfully", type="message")}   # "default, "message", "warning", "error"
+    
     
   })
   
