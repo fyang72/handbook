@@ -119,24 +119,17 @@ module_run_script <- function(input, output, session,
       fluidRow(
         column(3, 
                actionButton(ns("run_script"), label="Run script", style=actionButton.style )
-        ), 
-        column(9, uiOutput(ns("run_script_message"))
-                 #HTML(colFmt("values4nmdat$colnames.in.stdlist$info",'red'))
-                 # textInput(ns("run_script_message"), 
-                 #           width="100%",
-                 #           label= NULL, 
-                 #           value=  NULL,
-                 #           placeholder = "sucess/fail of running script will be shown here."
-                 #           )
-        )
+        ) 
       ),
       fluidRow(
         column(12,
-               textAreaInput(ns("script_content"), label=NULL, value=script, 
-                             rows=100,  #cols=200,
-                             width = '750px',   #400px', or '100%'
-                             placeholder= "Your script here."
-                             ) 
+               aceEditor(ns("script_content"), 
+                         mode="r", value=script, 
+                         theme = "crimson_editor",   # chrome
+                         autoComplete = "enabled",
+                         height = "1000px", 
+                         fontSize = 15 
+               )
         )
       )
     )
@@ -253,7 +246,7 @@ module_run_script <- function(input, output, session,
   ################################
   # run_script  
   ################################ 
-  observeEvent(input$run_script, {
+  observeEvent(input$run_script_org, {
     validate(need(input$script_content, message="no script loaded yet")
     )
       
@@ -271,11 +264,6 @@ module_run_script <- function(input, output, session,
               # eval(parse(text=txt)) %>% as.data.frame()
               #}
      )  
-    # if(is.function(output)) { print("output is a function"); output = NULL}
-    # 
-    # if(is.null(output)) {values$run_script_message = colFmt("error found in runing script",'red')}
-    # validate(need(output, message="error found in runing script"))
-    # 
  
     data.generating<- tryCatch(eval(parse(text="values$data = output$data")), 
                                  error=function(e) {
@@ -315,9 +303,36 @@ module_run_script <- function(input, output, session,
       
     }
       
+  })   
+    
+  
+  
+  ################################
+  # run_script  
+  ################################ 
+  observeEvent(input$run_script, {
+    validate(need(input$script_content, message="no script loaded yet")
+    )
+    
+    ihandbook = 1
+    output= NULL
+    error.message <- try_eval(text = input$script_content)
+      
+    if(is.data.frame(output$data)) {values$data = output$data}
+    if(is.ggplot(output$figure))   {values$figure = output$figure}
+    if(is.data.frame(output$data)) {values$table = output$table}
+  
+    if (length(error.message)>0) {
+      showNotification(paste0(error.message, collapse="\n"), type="error")
+    }
+  
+    if (length(error.message)==0) {
+      showNotification("run script sucessfully", type="message")   # "default, "message", "warning", "error"
+    }
+  
   })
   
-    
+     
     
   #--------------------------------------  
   # observeEvent  

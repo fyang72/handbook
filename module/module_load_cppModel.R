@@ -84,7 +84,7 @@ module_load_cppModel <- function(input, output, session, ALL, cppModel_name="TES
     validate(need(globalVars$login$status, message=FALSE), 
              need(input$cppModel_source=="internal library", message=FALSE)) 
     
-    dirs.list = c("", list.files(path = paste0("./model/cpp"), full.names = FALSE, recursive = FALSE)) 
+    dirs.list = c("", list.files(path = paste0(HOME, "/model/cpp"), full.names = FALSE, recursive = FALSE)) 
     fluidRow(
       column(6,
              selectizeInput(ns("which_internal_cppModel"), 
@@ -164,7 +164,7 @@ module_load_cppModel <- function(input, output, session, ALL, cppModel_name="TES
     cppModel.file = input$which_internal_cppModel 
  
     # try to read model after editing 
-    cppModel =  tryCatch(mread(model ="Shiny", project = "./model/cpp/", file=cppModel.file),     # ?mread , ?mcode, 
+    cppModel =  tryCatch(mread(model ="Shiny", project = paste0(HOME, "/model/cpp/"), file=cppModel.file),     # ?mread , ?mcode, 
                          error=function(e) {
                            print("mread cppModel not sucessful..."); 
                            return(NULL)

@@ -19,7 +19,7 @@ colScheme <- function() {
                     "brown",     "tan",       "violet",    "tomato",
                     "orange",    "magenta",   "pink",      "salmon",    "chocolate",
                     "plum",      "purple",    "navy",      "peru" ,     "khaki",
-                    "orchid",    "maroon",    "ivory",     "turquoise", "gold", "yellow"　  )
+                    "orchid",    "maroon",    "ivory",     "turquoise", "gold", "yellow")
   return(color.scheme)
   
 }

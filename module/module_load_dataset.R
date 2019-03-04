@@ -72,7 +72,7 @@ module_load_dataset <- function(input, output, session, ALL, dataset_name="datas
     validate(need(globalVars$login$status, message=FALSE), 
              need(input$dataset_source=="internal library", message=FALSE)) 
      
-    dirs.list = c("", list.files(path = paste0("./data"), full.names = FALSE, recursive = FALSE)) 
+    dirs.list = c("", list.files(path = paste0(HOME, "/data"), full.names = FALSE, recursive = FALSE)) 
     fluidRow(
       column(12,
              selectizeInput(ns("which_internal_dataset"), 
@@ -153,7 +153,7 @@ module_load_dataset <- function(input, output, session, ALL, dataset_name="datas
     validate(need(globalVars$login$status, message=FALSE), 
              need(input$which_internal_dataset, message=FALSE))
      
-    inFile = paste0("./data/", input$which_internal_dataset)
+    inFile = paste0(HOME, "/data/", input$which_internal_dataset)
     ext <- tools::file_ext(inFile) 
      
     tdata = switch(ext,

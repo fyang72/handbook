@@ -17,14 +17,14 @@ When you click the **Knit** button a document will be generated that includes bo
 # standardize_adsl
 #----------------------------------------------------
 default_adsl_checkin <- reactive({ 
-  read_excel("./lib/pkmeta.xlsx",sheet="adsl",col_names = TRUE)  %>% 
+  read_excel(paste0(HOME, "/lib/pkmeta.xlsx"),sheet="adsl",col_names = TRUE)  %>% 
     as.data.frame() %>% filter(!is.na(standard.name))
 })
 
 output$standardize_adsl <-renderUI({
   validate(need(globalVars$login$status, message=FALSE))
   
-  script = readLines("./script/build_adsl.R")
+  script = readLines(paste0(HOME, "/script/build_adsl.R"))
   script = paste0(script, sep="\n")   # sep="<br/>")
   script = paste0(script, collapse="")
   
@@ -53,14 +53,14 @@ fluidRow(column(12, uiOutput(("standardize_adsl"))))
 # standardize_adex
 #----------------------------------------------------
 default_adex_checkin <- reactive({ 
-  read_excel("./lib/pkmeta.xlsx",sheet="adex",col_names = TRUE)  %>% 
+  read_excel(paste0(HOME, "/lib/pkmeta.xlsx"),sheet="adex",col_names = TRUE)  %>% 
     as.data.frame() %>% filter(!is.na(standard.name))
 })
 
 output$standardize_adex <-renderUI({
   validate(need(globalVars$login$status, message=FALSE))
   
-  script = readLines("./script/build_adex.R")
+  script = readLines(paste0(HOME, "/script/build_adex.R"))
   script = paste0(script, sep="\n")   # sep="<br/>")
   script = paste0(script, collapse="")
   
@@ -89,14 +89,14 @@ fluidRow(column(12, uiOutput(("standardize_adex"))))
 # standardize_adpc
 #----------------------------------------------------
 default_adpc_checkin <- reactive({ 
-  read_excel("./lib/pkmeta.xlsx",sheet="adpc",col_names = TRUE)  %>% 
+  read_excel(paste0(HOME, "/lib/pkmeta.xlsx"),sheet="adpc",col_names = TRUE)  %>% 
     as.data.frame() %>% filter(!is.na(standard.name))
 })
 
 output$standardize_adpc <-renderUI({
   validate(need(globalVars$login$status, message=FALSE))
   
-  script = readLines("./script/build_adpc.R")
+  script = readLines(paste0(HOME, "/script/build_adpc.R"))
   script = paste0(script, sep="\n")   # sep="<br/>")
   script = paste0(script, collapse="")
     
@@ -126,14 +126,14 @@ fluidRow(column(12, uiOutput(("standardize_adpc"))))
 # standardize_adpd
 #----------------------------------------------------
 default_adpd_checkin <- reactive({ 
-  read_excel("./lib/pkmeta.xlsx",sheet="adpc",col_names = TRUE)  %>% 
+  read_excel(paste0(HOME, "/lib/pkmeta.xlsx"),sheet="adpc",col_names = TRUE)  %>% 
     as.data.frame() %>% filter(!is.na(standard.name))
 })
 
 output$standardize_adpd <-renderUI({
   validate(need(globalVars$login$status, message=FALSE))
   
-  script = readLines("./script/build_adpc.R")
+  script = readLines(paste0(HOME, "/script/build_adpc.R"))
   script = paste0(script, sep="\n")   # sep="<br/>")
   script = paste0(script, collapse="")
   
@@ -164,14 +164,14 @@ fluidRow(column(12, uiOutput(("standardize_adpd"))))
 # standardize_adpx
 #----------------------------------------------------
 default_adpx_checkin <- reactive({ 
-  read_excel("./lib/pkmeta.xlsx",sheet="adpx",col_names = TRUE)  %>% 
+  read_excel(paste0(HOME, "/lib/pkmeta.xlsx"),sheet="adpx",col_names = TRUE)  %>% 
     as.data.frame() %>% filter(!is.na(standard.name))
 })
 
 output$standardize_adpx <-renderUI({
   validate(need(globalVars$login$status, message=FALSE))
   
-  script = readLines("./script/build_adpx.R")
+  script = readLines(paste0(HOME, "/script/build_adpx.R"))
   script = paste0(script, sep="\n")   # sep="<br/>")
   script = paste0(script, collapse="")
   
@@ -207,14 +207,14 @@ fluidRow(column(12, uiOutput(("standardize_adpx"))))
 #----------------------------------------------------
 # default_adpc_checkin
 default_nmdat_checkin <- reactive({ 
-  read_excel("./lib/pkmeta.xlsx",sheet="nmdat",col_names = TRUE)  %>% 
+  read_excel(paste0(HOME, "/lib/pkmeta.xlsx"),sheet="nmdat",col_names = TRUE)  %>% 
     as.data.frame() %>% filter(!is.na(standard.name))
 })
 
 output$standardize_nmdat <-renderUI({
   validate(need(globalVars$login$status, message=FALSE))
   
-  script = readLines("./script/build_nmdat.R")
+  script = readLines(paste0(HOME, "/script/build_nmdat.R"))
   script = paste0(script, sep="\n")   # sep="<br/>")
   script = paste0(script, collapse="")
   

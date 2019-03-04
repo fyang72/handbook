@@ -4,7 +4,7 @@
 library(knitr)
 library(rmarkdown)
 library(shiny)
-
+library(shinyAce)
 # library(devtools)
 #devtools::install_github("jrowen/rhandsontable")
 
@@ -219,7 +219,8 @@ list.of.packages = sort((.packages()))
 #if("package:Rcpp" %in% search()) detach("package:Rcpp", unload=TRUE) 
 #unloadNamespace("Rcpp")
 
-
+HOME = "~/handbook/" 
+server.IP.address = "10.244.106.127"
   
 actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
 

@@ -34,9 +34,8 @@ pdf_document:
 ```{r, setup, include=FALSE}
 
 rm(list = ls())
-
-#HOME = "~/Handbook/" 
-#setwd(HOME)
+HOME = "~/handbook/" 
+setwd(HOME)
     
 # source("./global.R")
 

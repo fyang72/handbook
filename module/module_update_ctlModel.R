@@ -88,7 +88,7 @@ module_update_ctlModel <- function(input, output, session, ALL, ctlModel_name="c
                ),
         
         column(3, 
-               actionButton(ns("update_model"), label="Update model", style=actionButton.style )
+               actionButton(ns("update_model"), label="Save model", style=actionButton.style )
         )
       ),
       

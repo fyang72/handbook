@@ -106,11 +106,13 @@ output$runScript_container <- renderUI({
     
     fluidRow(
       column(12,
-             textAreaInput(ns("script_content"), label=NULL, value=script, 
-                           rows=100,  #cols=200,
-                           width = '750px',   #400px', or '100%'
-                           placeholder= "Your script here."
-                           ) 
+             aceEditor(ns("script_content"), 
+                       mode="r", value=script, 
+                       theme = "crimson_editor",   # chrome
+                       autoComplete = "enabled",
+                       height = "1000px", 
+                       fontSize = 15 
+             )
       )
     )
   )
@@ -212,24 +214,57 @@ observeEvent(input$run_script, {
   ihandbook = 1
   dataset = ALL$DATA[[dataset_name]]
 
-  output= NULL
-  # source the function
-  message= tryCatch(eval(parse(text=(input$script_content))), 
-            error=function(e) {
-              print("error found in runing script"); 
-              return(NULL)
-            } #, finally = {
-            # eval(parse(text=txt)) %>% as.data.frame()
-            #}
-   )  
-  if (!is.null(output$data)) {eval(parse(text="values$data = output$data"))}
-  if (!is.null(output$table)) {eval(parse(text="values$table = output$table"))}
+  # output= NULL
+  # # source the function
+  # message= tryCatch(eval(parse(text=(input$script_content))), 
+  #           error=function(e) {
+  #             print("error found in runing script"); 
+  #             return(NULL)
+  #           } #, finally = {
+  #           # eval(parse(text=txt)) %>% as.data.frame()
+  #           #}
+  #  )  
+  # if (!is.null(output$data)) {eval(parse(text="values$data = output$data"))}
+  # if (!is.null(output$table)) {eval(parse(text="values$table = output$table"))}
+  # 
+  # if (is.null(message) ) {
+  #   showNotification("error: no data/figure/table generating by runing script", type="error")
+  #  }else{
+  #   showNotification("run script sucessfully", type="message")   # "default, "message", "warning", "error"
+  # }
 
-  if (is.null(message) ) {
-    showNotification("error: no data/figure/table generating by runing script", type="error")
-   }else{
-    showNotification("run script sucessfully", type="message")   # "default, "message", "warning", "error"
-  }
+
+output= NULL
+setwd(tempdir())
+
+## capture messages and errors to a file.
+zz <- file("all.Rout", open="wt")
+sink(zz, type="message")
+
+# source the function
+try(
+  eval(parse(text=(input$script_content))) 
+)  
+
+## reset message sink and close the file connection
+sink(type="message")
+close(zz)
+
+## Display the log file
+error.message <- readLines("all.Rout")
+
+if(is.data.frame(output$data)) {values$data = output$data}
+if(is.ggplot(output$figure))   {values$figure = output$figure}
+if(is.data.frame(output$data)) {values$table = output$table}
+
+if (length(error.message)>0) {
+  showNotification(paste0(error.message, collapse="\n"), type="error")
+}
+
+if (length(error.message)==0) {
+  showNotification("run script sucessfully", type="message")   # "default, "message", "warning", "error"
+}
+
 })
 
 return(ALL)

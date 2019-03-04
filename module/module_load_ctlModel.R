@@ -71,7 +71,7 @@ module_load_ctlModel <- function(input, output, session, ALL, ctlModel_name="ctl
     validate(need(globalVars$login$status, message=FALSE), 
              need(input$ctlModel_source=="internal library", message=FALSE)) 
     
-    dirs.list = c("", list.files(path = paste0("./model/ctl"), full.names = FALSE, recursive = FALSE)) 
+    dirs.list = c("", list.files(path = paste0(HOME, "/model/ctl"), full.names = FALSE, recursive = FALSE)) 
     
     fluidRow(
       column(12, 
@@ -144,7 +144,7 @@ module_load_ctlModel <- function(input, output, session, ALL, ctlModel_name="ctl
     validate(need(globalVars$login$status, message=FALSE), 
              need(input$which_internal_ctlModel, message=FALSE))
     
-    ctlModel.file = paste0("./model/ctl/", input$which_internal_ctlModel)
+    ctlModel.file = paste0(HOME, "/model/ctl/", input$which_internal_ctlModel)
     ctlModel = readLines(ctlModel.file)   # "./model/ctl/control5.ctl")
     
     attr(ctlModel, 'file.name') <- ctlModel.file

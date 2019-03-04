@@ -92,7 +92,7 @@ output$update_nmdat_container <- renderUI({
  
   validate(need(ALL$DATA[['mYtEsT_for_run_nonmem']], message= "no data is loaded yet"))
   
-  script = readLines("./script/desp_test.R")
+  script = readLines(paste0(HOME, "/script/desp_test.R"))
   script = paste0(paste0(script, sep="\n"), collapse="")   # sep="<br/>")
   
   isolate({ 
@@ -157,7 +157,7 @@ output$submit_container <-renderUI({
     
   # callModule
   isolate({ 
-    callModule(module_submit_job, "submit_job_for_test_nonmem_run", 
+    ALL = callModule(module_submit_job, "submit_job_for_test_nonmem_run", 
                  ALL, ctlModel_name="mYtEsT_for_run_nonmem")
   })
     
