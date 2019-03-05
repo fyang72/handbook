@@ -24,11 +24,11 @@ module_fetch_job_UI <- function(id, label = "") {
                       uiOutput(ns("which_program_container"))    
                ), 
                
-               column(width = 3,
-                      uiOutput(ns("which_data_container"))    
-               ),
+               # column(width = 3,
+               #        uiOutput(ns("which_data_container"))    
+               # ),
                
-               column(width = 4,
+               column(width = 7,
                       uiOutput(ns("which_run_container"))    
                )
              ), 
@@ -87,7 +87,7 @@ output$which_program_container <- renderUI({
     )
     dirs.list = attributes(isolate(ALL$ctlModel[[ctlModel_name]]))$which.program
   }else if (input$want_batch_fetch=="Yes") {
-    dirs.list <- paste0("program-", 1:10)
+    dirs.list <- paste0("program", 1:10)
     # list_folder_on_HPC(
     # server.IP.address = input$server.IP.address, 
     # directory.on.server = paste0("/home/", tolower(Sys.info()["user"]), "/")
@@ -110,26 +110,26 @@ output$which_program_container <- renderUI({
 #--------------------------------------  
 # which_data_container
 #-------------------------------------- 
-output$which_data_container <- renderUI({
-  validate(need(globalVars$login$status, message=FALSE)) 
-  
-  validate(need(input$want_batch_fetch=="Yes", message=FALSE), 
-           need(input$which_program, message=FALSE)
-  )
-  
-  dirs.list = values$list_of_data 
-  
-  fluidRow(
-    column(12,
-           selectizeInput(ns("which_data"), 
-                          label    =  "Select data:", 
-                          choices  = dirs.list, 
-                          multiple = TRUE,
-                          width="100%", 
-                          selected = dirs.list[1]) 
-    )
-  )
-}) 
+# output$which_data_container <- renderUI({
+#   validate(need(globalVars$login$status, message=FALSE)) 
+#   
+#   validate(need(input$want_batch_fetch=="Yes", message=FALSE), 
+#            need(input$which_program, message=FALSE)
+#   )
+#   
+#   dirs.list = values$list_of_data 
+#   
+#   fluidRow(
+#     column(12,
+#            selectizeInput(ns("which_data"), 
+#                           label    =  "Select data:", 
+#                           choices  = dirs.list, 
+#                           multiple = TRUE,
+#                           width="100%", 
+#                           selected = dirs.list[1]) 
+#     )
+#   )
+# }) 
 
 
 
@@ -175,10 +175,10 @@ output$server_info_container <- renderUI({
     nmdat.locaton.source = attributes(nmdat)$locaton.source
     
     runno <- tools::file_path_sans_ext(basename(ctlModel.file.name))
-    data.name <- tools::file_path_sans_ext(basename(nmdat.file.name))
+    data_name <- tools::file_path_sans_ext(basename(nmdat.file.name))
   }else {
     runno = NULL
-    data.name = NULL
+    data_name = NULL
   }
   
   fluidRow(
@@ -188,7 +188,7 @@ output$server_info_container <- renderUI({
                      value=paste0("/home/", 
                                   tolower(Sys.info()["user"]), "/",
                                   paste0(input$which_program, "/ctl/"),
-                                  paste(runno, data.name, sep="_" ), "/"), 
+                                  paste(runno, data_name, sep="_" ), "/"), 
                      label="Directory of the loaded model on server:")
            ),
     
@@ -208,7 +208,7 @@ output$server_info_container <- renderUI({
     #                  value=paste0("/output/", 
     #                               tolower(Sys.info()["user"]), "/",
     #                               paste0(input$which_program, "/"), 
-    #                               paste(runno, data.name, sep="_" ), "/"), 
+    #                               paste(runno, data_name, sep="_" ), "/"), 
     #                  label="Directory of the fetched result at local:")
     # )
   ) 
@@ -253,16 +253,22 @@ output$output_container <- renderUI({   #renderPrint  renderText  renderUI
 
 # https://github.com/rstudio/shiny/issues/924
 output$dynamic_output_container <- renderUI({
-  tabs <- lapply(names(values),function(x){
+  validate(need(values$runno, message=FALSE))
+  
+  runno_lst = names(values$runno)
+  tabs <- lapply(1:length(runno_lst),function(i){
+    x = runno_lst[i]
+    text = paste0(paste0(values$runno[[x]]$lst.content, sep="\n"), collapse="")
+    
     tabPanel(
-      title = paste0(x)
-      ,h3(paste0('Tab showing:',x)) 
+      title = paste0("Run",i)
+      ,h5(paste0('runno: ',x)) 
       ,value=x
       ,fluidRow(
         column(12,
-               textAreaInput(paste0('example', x), 
+               textAreaInput(paste0('runno_', x), 
                              label=NULL, 
-                             value= values[[x]]$lst_content, 
+                             value= text, 
                              rows=100,
                              width = '780px', #   '800px',   #400px', or '100%'
                              placeholder= "Your output here.") 
@@ -278,7 +284,6 @@ output$dynamic_output_container <- renderUI({
 # look up runs under which program
 #----------------------------------------------------
 
-
 observeEvent({input$which_program}, {
   validate(need(input$want_batch_fetch=="Yes", message=FALSE))
   
@@ -289,22 +294,22 @@ observeEvent({input$which_program}, {
     # )
     
   # program-1
-  if (input$which_program=="program-1") {
-    values$list_of_run <- paste0("run-", 1:10)
+  if (input$which_program=="program1") {
+    values$list_of_run <- paste0("LN", 1:10, "~", "DAT", 1:10)
   }
   
-  if (input$which_program=="program-1") {
-    values$list_of_data <- paste0("data-", 1:10)
-  } 
+  # if (input$which_program=="program-1") {
+  #   values$list_of_data <- paste0("data-", 1:10)
+  # } 
   
   # program-2                
-  if (input$which_program=="program-2") {
-    values$list_of_run <- paste0("run-", 11:20)
+  if (input$which_program=="program2") {
+    values$list_of_run <- paste0("LN", 11:20, "~", "DAT", 11:20)
   }           
   
-  if (input$which_program=="program-2") {
-    values$list_of_data <- paste0("data-", 11:20)
-  }
+  # if (input$which_program=="program-2") {
+  #   values$list_of_data <- paste0("data-", "~", "DAT", 1:10 )
+  # }
 })
  
   
@@ -333,8 +338,8 @@ if (input$want_batch_fetch=="No") {
       need(ctlModel.locaton.source %in% c("internal", "external", "session"), message=FALSE) 
     ) 
     
-    model.name = tools::file_path_sans_ext(basename(ctlModel.file.name))
-    data.name = tools::file_path_sans_ext(basename(nmdat.file.name))
+    model_name = tools::file_path_sans_ext(basename(ctlModel.file.name))
+    data_name = tools::file_path_sans_ext(basename(nmdat.file.name))
      
     #--------------------------
     # fetch modeling result 
@@ -343,14 +348,14 @@ if (input$want_batch_fetch=="No") {
     local.result.dir = paste0("/output/", 
                               tolower(Sys.info()["user"]), "/",
                               paste0(input$which_program, "/ctl/"), 
-                              paste0(model.name, "_", data.name, "/")
+                              paste0(model_name, "~", data_name, "/")
     )
     
-    fetch_job_from_HPC(  
-       server.IP.address = input$server.IP.address,
-       server.model.dir = input$server.model.dir, 
-       local.result.dir = local.result.dir
-     ) 
+    # fetch_job_from_HPC(  
+    #    server.IP.address = input$server.IP.address,
+    #    server.model.dir = input$server.model.dir, 
+    #    local.result.dir = local.result.dir
+    #  ) 
     
     #--------------------------
     # fetch nmdat from HPC
@@ -368,19 +373,19 @@ if (input$want_batch_fetch=="No") {
     )
     
     
-    system(command = 
-             paste0("scp ", input$server.IP.address, ":", 
-                    server.data.file, "  ", local.data.dir 
-             )
-    )
+    # system(command = 
+    #          paste0("scp ", input$server.IP.address, ":", 
+    #                 server.data.file, "  ", local.data.dir 
+    #          )
+    # )
     
     #--------------------------
     # read lst file
     #--------------------------
-    lst.file = paste0(local.result.dir, model.name, ".lst")
-    runno <- paste0(model.name, "_", data.name)
-    text1 = paste0("values", "[[", runno, "]]$lst = read.lst(lst.file)")
-    text2 = paste0("values", "[[", runno, "]]$lst.content = readLines(lst.file)")
+    lst.file = paste0(local.result.dir, model_name, ".lst")
+    runno <- paste0(model_name, "_", data_name)
+    text1 = paste0("values$runno", "[[", runno, "]]$lst = read.lst(lst.file)")
+    text2 = paste0("values$runno", "[[", runno, "]]$lst.content = readLines(lst.file)")
     text = paste0(paste(text1, text2, sep=";"), collpase="")
     error.message <- try_eval(text = text)
      
@@ -404,101 +409,90 @@ if (input$want_batch_fetch=="Yes") {
            need(input$server.IP.address, message=FALSE)
   )
   
-  run_lst = input$which_run
+  runno_lst = input$which_run
   
+  df <- data.frame(do.call(
+    "rbind",
+    strsplit(runno_lst, "~")
+  ))
+  df <- cbind(runno_lst, df)
+  colnames(df) = c("runno", "ctlModel", "nmdat")
   
-  #---------------------------
-  # fetch modeling results
-  #---------------------------
-  for (i in 1:length(run_lst)) {
-    which_run = run_lst[i]
+  # loop for all runno(s)
+  for (i in 1:nrow(df)) {
+    model_name = df[i, "ctlModel"] 
+    data_name = df[i, "nmdat"] 
+    runno <- df[i, "runno"] # paste0(model_name, "_", data_name)
     
+    #---------------------------
+    # fetch modeling results
+    #--------------------------- 
     server.model.dir <- paste0("/home/", 
                                tolower(Sys.info()["user"]), "/",
                                paste0(input$which_program, "/ctl/"),
-                               paste0(which_run, "/")
+                               paste0(runno, "/")
     )
     
-    local.result.dir <- paste0("/output/", 
+    local.result.dir <- paste0(HOME, "/output/", 
                                tolower(Sys.info()["user"]), "/",
                                paste0(input$which_program, "/ctl/"), 
-                               paste0(which_run, "/")
+                               paste0(runno, "/")
     )
-    
-    #ctlModel= readLines("./model/ctl/LN001.ctl")
-    #extract_nmdat_name
-    
+   
     # fetch_job_from_HPC(  
     #   server.IP.address = input$server.IP.address,
     #   server.model.dir = server.model.dir, 
     #   local.result.dir = local.result.dir
     # )
     
-  }
+    #-------------------
+    # fetch dataset  
+    #-------------------  
+    from <- paste0("/home/", 
+                   tolower(Sys.info()["user"]), "/",
+                   paste0(input$which_program, "/data/"),
+                   paste0(data_name, "/")
+    )
+    
+    to <- paste0("/output/", 
+                   tolower(Sys.info()["user"]), "/",
+                   paste0(input$which_program, "/data/")
+    )
+    
+    # system(command = 
+    #          paste0("scp ", input$server.IP.address, ":", 
+    #                 from, "  ", to 
+    #          )
+    # ) 
   
-  #-------------------
-  # fetch dataset  
-  #-------------------
-  data_lst = input$which_data
-  
-  if(1==2)  {
-    for (i in 1:length(data_lst)) {
-      data_name = data_lst[i]
-      
-      server.data.file <- paste0("/home/", 
-                                 tolower(Sys.info()["user"]), "/",
-                                 paste0(input$which_program, "/data/"),
-                                 paste0(data_name, "/")
-      )
-      
-      local.result.dir <- paste0("/output/", 
-                                 tolower(Sys.info()["user"]), "/",
-                                 paste0(input$which_program, "/data/")
-      )
-      
-      system(command = 
-               paste0("scp ", input$server.IP.address, ":", 
-                      server.data.file, "  ",local.result.dir 
-               )
-      ) 
+    #--------------------------
+    # read lst file
+    #--------------------------
+    
+    lst.file = paste0(local.result.dir, model_name, ".lst") 
+    print(lst.file)
+    #print(read.lst(lst.file))
+    
+    text1 = paste0("values$runno", "[['", runno, "']]$lst = read.lst(lst.file)")
+    text2 = paste0("values$runno", "[['", runno, "']]$lst.content = readLines(lst.file)")
+    text = paste0(paste(text1, text2, sep=";"), collpase="")
+     
+    #error.message <- try_eval(text = text)
+    try(
+      eval(parse(text=text))
+    )
+     
+    error.message = NULL
+    # "default, "message", "warning", "error"
+    if (length(error.message)>0) {
+      showNotification(paste0(runno, ": ", error.message, collapse="\n"), type="error")
+    }
+    
+    if (length(error.message)==0) { 
+      showNotification(paste0(runno, ": ", "fetch result sucessfully"), type="message")   # "default, "message", "warning", "error"
     }
   }
   
-  
-  
-  #--------------------------
-  # read lst file
-  #--------------------------
-  df <- data.frame(do.call(
-    "rbind",
-    strsplit(input$which_run, "_")
-  ))
-  df <- cbind(input$which_run, df)
-  colnames(df) = c("runno", "ctlModel", "nmdat")
-  
-  all.error.message <- NULL
-  for (i in 1:nrow(df)) {
-    model.name = df[i, "ctlModel"]
-    lst.file = paste0(local.result.dir, model.name, ".lst")
-    runno <- df[i, "runno"] # paste0(model.name, "_", data.name)
-    text1 = paste0("values", "[[", runno, "]]$lst = read.lst(lst.file)")
-    text2 = paste0("values", "[[", runno, "]]$lst.content = readLines(lst.file)")
-    text = paste0(paste(text1, text2, sep=";"), collpase="")
-    error.message <- try_eval(text = text)
-    
-    all.error.message <- c(all.error.message, error.message)
-  }
-  
-  
-  # "default, "message", "warning", "error"
-  if (length(all.error.message)>0) {
-    showNotification(paste0(error.message, collapse="\n"), type="error")
-  }
-  
-  if (length(all.error.message)==0) { 
-    showNotification("batch fetch result sucessfully", type="message")   # "default, "message", "warning", "error"
-  }
-   
 } # end of batch fetch
   
 }) # end of observeEvent
