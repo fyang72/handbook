@@ -30,7 +30,7 @@ module_submit_job_UI <- function(id, label = "") {
              column(width = 12, 
                     actionButton(ns("submit_job"), 
                                  label="submit job", 
-                                 style=actionButton.style
+                                 style=actionButton_style
                     )
              )
            ),
@@ -42,7 +42,7 @@ module_submit_job_UI <- function(id, label = "") {
              column(width = 12,
                     actionButton(ns("check_status"), 
                                  label="check status", 
-                                 style=actionButton.style
+                                 style=actionButton_style
                     )
              )
            ),  
@@ -188,8 +188,8 @@ observeEvent({input$submit_job}, {
   ctlModel = ALL$ctlModel[[ctlModel_name]]
   nmdat = ALL$DATA[[ctlModel_name]]
   
-  attr(ctlModel, "which.program") = input$which_program  
-  attr(nmdat, "which.program") = input$which_program  
+  attr(ctlModel, "which_program") = input$which_program  
+  attr(nmdat, "which_program") = input$which_program  
   ALL$ctlModel[[ctlModel_name]] = ctlModel
   ALL$DATA[[ctlModel_name]] = nmdat
   

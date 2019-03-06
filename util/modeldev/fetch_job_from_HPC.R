@@ -1,31 +1,31 @@
 
 fetch_job_from_HPC <- function(  
-  server.IP.address = "xx.xx.xx.xx.xx",
-  server.model.dir = NULL, 
-  local.result.dir = NULL #,   #"./ctl/LN_BASE_WT/", 
+  server_IP_address = "xx.xx.xx.xx.xx",
+  server_model_dir = NULL, 
+  local_result_dir = NULL #,   #"./ctl/LN_BASE_WT/", 
   
   #server.data.full.path = NULL   
 )  {
   # derive model and data information
-  server.model.dir = paste0(server.model.dir, "/")
-  local.result.dir = paste0(local.result.dir, "/")
+  server_model_dir = paste0(server_model_dir, "/")
+  local_result_dir = paste0(local_result_dir, "/")
   
-  #if (is.null(local.result.dir)) {local.result.dir = paste0(HOME, dirname(local.model.name), "/")}
+  #if (is.null(local_result_dir)) {local_result_dir = paste0(HOME, dirname(local.model.name), "/")}
   
   # fetch the results
   #scp user@someRemoteHost.com:'/folder/*.{jpg,png}' .
   #https://unix.stackexchange.com/questions/417428/copying-files-with-certain-extensions-with-scp
-  #system(command = paste0("scp 10.244.106.127:", paste0(server.data.full.path, "   ", local.result.dir)))
+  #system(command = paste0("scp 10.244.106.127:", paste0(server.data.full.path, "   ", local_result_dir)))
   
-  system(command = paste0("mkdir -p ", local.result.dir), intern = T) 
+  system(command = paste0("mkdir -p ", local_result_dir), intern = T) 
   
   # all .ext, .ctl, .phi, .coi files
-  system(command = paste0("scp ", server.IP.address, ":", paste0(server.model.dir,  "*.ctl  "), local.result.dir))
-  system(command = paste0("scp ", server.IP.address, ":", paste0(server.model.dir,  "sdtab*  ", local.result.dir)))
-  system(command = paste0("scp ", server.IP.address, ":", paste0(server.model.dir,  "patab*  ", local.result.dir)))
-  system(command = paste0("scp ", server.IP.address, ":", paste0(server.model.dir,  "catab*  ", local.result.dir)))
-  system(command = paste0("scp ", server.IP.address, ":", paste0(server.model.dir,  "cotab*  ", local.result.dir)))
-  system(command = paste0("scp ", server.IP.address, ":", paste0(server.model.dir,  "mytab*  ", local.result.dir))) 
+  system(command = paste0("scp ", server_IP_address, ":", paste0(server_model_dir,  "*.ctl  "), local_result_dir))
+  system(command = paste0("scp ", server_IP_address, ":", paste0(server_model_dir,  "sdtab*  ", local_result_dir)))
+  system(command = paste0("scp ", server_IP_address, ":", paste0(server_model_dir,  "patab*  ", local_result_dir)))
+  system(command = paste0("scp ", server_IP_address, ":", paste0(server_model_dir,  "catab*  ", local_result_dir)))
+  system(command = paste0("scp ", server_IP_address, ":", paste0(server_model_dir,  "cotab*  ", local_result_dir)))
+  system(command = paste0("scp ", server_IP_address, ":", paste0(server_model_dir,  "mytab*  ", local_result_dir))) 
   
   # showNotification("download sucessfully")
   
@@ -33,7 +33,7 @@ fetch_job_from_HPC <- function(
   # 
   # # read the results  
   # # -------------------------------
-  # lst.file = paste0(local.result.dir, model.runno, ".lst")
+  # lst.file = paste0(local_result_dir, model.runno, ".lst")
   # 
   # #lst = read.lst(lst.file)
   # lst <- tryCatch(#source("text.R", local=TRUE),    #eval(parse(text=txt ))  , 

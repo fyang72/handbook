@@ -220,8 +220,10 @@ list.of.packages = sort((.packages()))
 #unloadNamespace("Rcpp")
 
 HOME = "~/handbook/" 
-server.IP.address = "10.244.106.127"
-  
+server_IP_address = NULL; # "10.244.106.127"
+server.IP.address = NULL;  
+
+actionButton_style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
 actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
 
  
