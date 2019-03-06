@@ -83,7 +83,7 @@ output$which_program_container <- renderUI({
   # if (length(dirs.list)==0) {dirs.list = "TEST"}
   
   # just for test
-  dirs.list = paste0("TEST", 1:10)
+  dirs.list = paste0("TEST")
   
   fluidRow(
     column(3,
@@ -238,14 +238,15 @@ observeEvent({input$submit_job}, {
   server.model.dir = input$server.model.dir  
   server.data.dir= input$server.data.dir  
   
-  showNotification("submit job sucessfully", type="message") # "default, "message", "warning", "error"
 
-  # submit_job_to_HPC(server.IP.address = server.IP.address,
-  #                   local.model.name = local.model.name, 
-  #                   local.data.name = local.data.name,  
-  #                   server.model.dir = server.model.dir,
-  #                   server.data.dir = server.data.dir
-  # )
+  submit_job_to_HPC(server.IP.address = server.IP.address,
+                     local.model.name = local.model.name, 
+                     local.data.name = local.data.name,  
+                     server.model.dir = server.model.dir,
+                     server.data.dir = server.data.dir
+   )
+  showNotification("submit job sucessfully", type="message") # "default, "message", "warning", "error"
+  
 })
 
 

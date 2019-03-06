@@ -115,6 +115,7 @@ output$which_program_container <- renderUI({
        directory_on_server = paste0("/home/", 
                                     tolower(Sys.info()["user"]), "/")
        )
+      list_of_program = gsub("/", "", list_of_program, fix=TRUE)
     }
     }
    
@@ -231,22 +232,23 @@ observeEvent({input$which_program}, {
   # test
   if (input$server_IP_address=="") {
     if (input$which_program=="program1") {
-      values$list_of_run <- paste0("LN", 1:10, "~", "DAT", 1:10)
+      values$list_of_run <- paste0("LN", 1:10, "_", "DAT", 1:10)
     }
     
     if (input$which_program=="program2") {
-      values$list_of_run <- paste0("LN", 11:20, "~", "DAT", 11:20)
+      values$list_of_run <- paste0("LN", 11:20, "_", "DAT", 11:20)
     }  
   
   # fetch from server
   }else{
-    values$list_of_run <- list_folder_on_HPC(
-     server_IP_address = input$server_IP_address, 
-     directory_on_server = paste0("/home/", 
+    values$list_of_run <- gsub("/", "", 
+                               list_folder_on_HPC(
+                               server_IP_address = input$server_IP_address, 
+                               directory_on_server = paste0("/home/", 
                                   tolower(Sys.info()["user"]), "/", 
-                                  input$which_program, "/"
-     )
-    )
+                                  input$which_program, "/ctl/"
+                               )), fix=TRUE)
+    
   }
    
 })
@@ -279,7 +281,7 @@ if (input$want_batch_fetch=="No") {
     local_result_dir = paste0("/output/", 
                               tolower(Sys.info()["user"]), "/",
                               paste0(input$which_program, "/ctl/"), 
-                              paste0(model_name, "~", data_name, "/")
+                              paste0(model_name, "_", data_name, "/")
     )
     
     if (input$server_IP_address==""){
@@ -307,6 +309,9 @@ if (input$want_batch_fetch=="No") {
                                tolower(Sys.info()["user"]), "/",
                                paste0(input$which_program, "/data/") 
     )
+    
+    # create a folder if not exist
+    system(command = paste0("mkdir -p ", local.data.dir), intern = T)
     
     if (input$server_IP_address==""){
       # nothing
@@ -358,7 +363,7 @@ if (input$want_batch_fetch=="Yes") {
   
   df <- data.frame(do.call(
     "rbind",
-    strsplit(runno_lst, "~")
+    strsplit(runno_lst, "_")
   ))
   df <- cbind(runno_lst, df)
   colnames(df) = c("runno", "ctlModel", "nmdat")
@@ -407,6 +412,10 @@ if (input$want_batch_fetch=="Yes") {
                    tolower(Sys.info()["user"]), "/",
                    paste0(input$which_program, "/data/")
     )
+    
+    # create a folder if not exist
+    system(command = paste0("mkdir -p ", to), intern = T)
+    
     if (input$server_IP_address==""){
       # nothing
     }else {

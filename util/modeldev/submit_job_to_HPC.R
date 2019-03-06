@@ -27,7 +27,7 @@ submit_job_to_HPC <- function(
   system(command = paste0("ssh ", server.IP.address, " '", command, "'"), intern = T)
    
   # showNotification("download sucessfully")
-  showNotification("job submited sucessfully", type="message")    # "default, "message", "warning", "error"
+  #showNotification("job submited sucessfully", type="message")    # "default, "message", "warning", "error"
  
 }
 

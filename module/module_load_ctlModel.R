@@ -130,8 +130,8 @@ module_load_ctlModel <- function(input, output, session, ALL, ctlModel_name="ctl
     ext <- tools::file_ext(inFile$name) 
     ctlModel = readLines(inFile$datapath)  
     
-    attr(ctlModel, 'file.name') <- inFile$name
-    attr(ctlModel, 'locaton.source') <- "external"
+    attr(ctlModel, 'file_name') <- inFile$name
+    attr(ctlModel, 'locaton_source') <- "external"
     ctlModel
   })
   
@@ -147,8 +147,8 @@ module_load_ctlModel <- function(input, output, session, ALL, ctlModel_name="ctl
     ctlModel.file = paste0(HOME, "/model/ctl/", input$which_internal_ctlModel)
     ctlModel = readLines(ctlModel.file)   # "./model/ctl/control5.ctl")
     
-    attr(ctlModel, 'file.name') <- ctlModel.file
-    attr(ctlModel, 'locaton.source') <- "internal"
+    attr(ctlModel, 'file_name') <- ctlModel.file
+    attr(ctlModel, 'locaton_source') <- "internal"
     ctlModel
   })
   
@@ -164,8 +164,8 @@ module_load_ctlModel <- function(input, output, session, ALL, ctlModel_name="ctl
     
     ctlModel = ALL$ctlModel[[input$which_session_ctlModel]]
     
-    attr(ctlModel, 'file.name') <- paste0(input$which_session_ctlModel, ".ctl")
-    attr(ctlModel, 'locaton.source') <- "session"
+    attr(ctlModel, 'file_name') <- paste0(input$which_session_ctlModel, ".ctl")
+    attr(ctlModel, 'locaton_source') <- "session"
     ctlModel
   }) 
   
