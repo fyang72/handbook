@@ -1,335 +1,23 @@
 
-
-
-library(knitr)
-library(rmarkdown)
-library(shiny)
-library(shinyAce)
-# library(devtools)
-#devtools::install_github("jrowen/rhandsontable")
-
-# load data
-#------------------- 
-library(readxl)
-library(readr)        
-library(haven)
-
- 
-# data manipulation
-#------------------- 
-library(dplyr)    # not include plyr,
-library(lubridate)
-library(tidyr)
-library(tidyverse)
-library(lazyeval)
-
-#library(dmutate)
-#library(xtable)
-#library("data.table")
-#library(reshape2)   # not reshape
-#library(datasets)
-
-#------------------------------------------------------------
-# plots
-#------------------------------------------------------------
-#library(Cairo)   # to solve X11 server problem
-library("ggplot2")     # library("gplots")
-#library(gridExtra)
-#library(ggpmisc)
-
-
-#------------------------------------------------------------
-# Pk specific package
-#------------------------------------------------------------
-library("mrgsolve") 
-library("PKPDmisc")         #
-library("xpose4")
-#library(vpc)
- 
-
-
-#------------------------------------------------------------
-# stats
-#------------------------------------------------------------
-#library(minqa)
-#library(methods) 
-
-#------------------------------------------------------------
-# Reporting
-#------------------------------------------------------------
-#library(ReporteRs)
-#library("rmarkdown")
-#library(knitr) #knitting
-
-
-#------------------------------------------------------------
-# Shiny, Rmarkdown
-#------------------------------------------------------------
-library(shiny)
-library(shinydashboard)
-library(rhandsontable)
-library(DT) 
-#library("plotly")
-
-
-
-#------------------------------------------------------------
-# utilities
-#------------------------------------------------------------
-library(scales) 
-#library(lubridate)  FOR DATE AND TIME
-library("stringr")
-library('RColorBrewer')
-library("Hmisc")    # label(adex)
-library("gdata")     # trim
-library("RColorBrewer")
-#library(MASS)   # MUST BE FIST BEFORE dplyr
-library(Rcpp)
-library(xtable) #pretty tables
-#library(kfigr) #figure referencing for markdown # devtools::install_github("github mkoohafkan/kfigr")
-#if ("metrumrg" %in% list.of.packages) {base::detach(package:metrumrg) } 
-#if ("MASS" %in% list.of.packages) {base::detach(package:MASS) } 
-#library(stargazer) #pretty tables
-
-
-
-
-
-
-
-
-
-
-######################################################################
-# Load packages
-######################################################################
-#rm(list = ls()) # 
-# installed.packages(.Library, priority = "high"))
-# installed.packages(lib.loc="./packrat/lib-R/x86_64-pc-linux-gnu/3.4.2/", priority = "high") 
-                   
-list.of.packages = sort((.packages()))
-#list.of.packages
-
-# [1] "grid"           "XML"            "reshape"        "pander"         "rmarkdown"      "xpose4"         "scales"         "bindrcpp"      
-# [9] "latticeExtra"   "Rcpp"           "PKPDmisc"       "mrgsolve"       "gdata"          "Hmisc"          "Formula"        "survival"      
-# [17] "lattice"        "forcats"        "stringr"        "purrr"          "tidyr"          "tibble"         "tidyverse"      "xtable"        
-# [25] "haven"          "knitr"          "plotly"         "readr"          "reshape2"       "DT"             "ReporteRs"      "ReporteRsjars" 
-# [33] "shinydashboard" "rhandsontable"  "dplyr"          "magrittr"       "readxl"         "shiny"          "RColorBrewer"   "ggplot2"       
-# [41] "lazyeval"       "stats"          "graphics"       "grDevices"      "utils"          "datasets"       "methods"        "base"
-
-
-#if ("metrumrg" %in% list.of.packages) {base::detach(package:metrumrg) } 
-#if ("MASS" %in% list.of.packages) {base::detach(package:MASS) } 
-
- 
-# 
-# #------------------------------------------------------------
-# # loading data
-# #------------------------------------------------------------
-# library(readxl)
-# library(readr)        
-# # library(haven)
-#  
-# #------------------------------------------------------------
-# # data manipulation
-# #------------------------------------------------------------
-#  
-# 
-# library(magrittr)
-# 
-# library(haven)
-# library(dplyr)    # not include plyr,
-# library(tidyr)
-# library(dmutate)
-# library(xtable)
-# #library("data.table")
-# library(reshape2)   # not reshape
-# library(tidyverse)
-# library(lazyeval)
-# library(lubridate)
-# 
-# #------------------------------------------------------------
-# # plots
-# #------------------------------------------------------------
-# #library(Cairo)   # to solve X11 server problem
-# #library("latticeExtra")
-# library("ggplot2")     # library("gplots")
-# library(gridExtra)
-# library(ggpmisc)
-# 
-# 
-# #------------------------------------------------------------
-# # Pk specific package
-# #------------------------------------------------------------
-# library("mrgsolve") 
-# library("PKPDmisc")         #
-# library("xpose4")
-# #library(vpc)
-# #library("deSolve")
-# 
-# 
-# #------------------------------------------------------------
-# # stats
-# #------------------------------------------------------------
-# library(minqa)
-# library(methods) 
-#  
-# #------------------------------------------------------------
-# # utilities
-# #------------------------------------------------------------
-# library(scales) 
-# #library(lubridate)  FOR DATE AND TIME
-# library("stringr")
-# library('RColorBrewer')
-# library("Hmisc")
-# library("gdata")
-# library("RColorBrewer")
-# #library(MASS)   # MUST BE FIST BEFORE dplyr
-# library(Rcpp)
-# library(xtable) #pretty tables
-# #library(kfigr) #figure referencing for markdown # devtools::install_github("github mkoohafkan/kfigr")
-# if ("metrumrg" %in% list.of.packages) {base::detach(package:metrumrg) } 
-# #if ("MASS" %in% list.of.packages) {base::detach(package:MASS) } 
-# #library(stargazer) #pretty tables
-# 
-# #------------------------------------------------------------
-# # Reporting
-# #------------------------------------------------------------
-# library(ReporteRs)
-# #library("rmarkdown")
-# library(knitr) #knitting
-#  
-# 
-# #------------------------------------------------------------
-# # Shiny, Rmarkdown
-# #------------------------------------------------------------
-# library(shiny)
-# library(shinydashboard)
-# library(rhandsontable)
-# library(DT) 
-#library("plotly")
-
-
-#------------------------------------------------------------
-# facilitator
-#------------------------------------------------------------
-#library("testthat")
-
- 
-#if("package:Rcpp" %in% search()) detach("package:Rcpp", unload=TRUE) 
-#unloadNamespace("Rcpp")
-
-HOME = "~/handbook/" 
-server_IP_address = "10.244.106.127"
-server.IP.address = "10.244.106.127" 
-
-actionButton_style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
-actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
-
- 
- 
-login = NULL
-login$status = TRUE
-login$user.name.lst = c("training",   "feng.yang"   )
-
-globalVars <- reactiveValues(login=login)
-
-observeEvent(session, { 
-  globalVars$login$user.name = "feng.yang"   # determineCurrentUser(session=session)
-  print("current users:")
-  print(globalVars$login$user.name)
-  
-  globalVars$login$status = globalVars$login$user.name %in% globalVars$login$user.name.lst  
-})
-
- 
-
-
-# password.lst = c("12345" )
-# loginTab = data.frame(user.name=user.name.lst, password=password.lst)
-# rownames(loginTab) = user.name.lst
-
-
-library(readxl)
-library(magrittr)
-# library(dplyr)
-# file.name = "./lib/pkmeta.xlsx"
-# magicTab <- read_excel(file.name, sheet="cheatsheet")
-# magicTab <- magicTab %>% mutate(Domain=as.character(Domain), 
-#                                 Alias=as.character(Alias), 
-#                                 Freq=as.numeric(Freq), 
-#                                 Label=as.character(Label), 
-#                                 Where=as.character(Where), 
-#                                 Who=as.character(Who))
-# magicTab = magicTab %>% filter(!is.na(Domain))
-# 
-# 
-# 
-# # scriptTab
-# scriptTab = read_csv("./lib/scriptTab.csv")
-# 
-# scriptTab = scriptTab %>% 
-#   mutate(DATE = as.Date(as.POSIXct(DATE, format= "%Y-%m-%d"), format = "yyyy-mm-dd"))
-
-# 
-# globalVars <- reactiveValues(login=login, 
-#                              magicTab=magicTab, 
-#                              scriptTab=scriptTab)
-
-
-
-
-######################################################################
-# Load local R functions
-######################################################################
-
-#folder.loc <- paste0(dirname(dirname(getwd())), "/regnR/R")
-#folder.loc <- "/data/BiCS_RDE_Development/shiny-server_development/pharmacometrics/regnR/R2"
-ihandbook = 0
-
- folder.loc <- "~/handbook/util"
- 
- file.lst <-list.files(path = folder.loc, all.files = FALSE,full.names = TRUE, include.dirs = TRUE, recursive =TRUE)     
- 
- file.lst = file.lst[which(substr(file.lst, nchar(file.lst)-1, nchar(file.lst)) %in% c(".r", ".R"))]
- 
- for (ifile in 1:length(file.lst)) { 
-   print(file.lst[ifile]);  
-   source(file=file.lst[ifile])  
- }     #sys.source('file.R', envir=environment())
-  
-
- folder.loc <- "~/handbook/module/"
- file.lst <-list.files(path = folder.loc, all.files = FALSE,full.names = TRUE, include.dirs = TRUE, recursive =TRUE)     
- file.lst = file.lst[which(substr(file.lst, nchar(file.lst)-1, nchar(file.lst)) %in% c(".r", ".R"))]
- 
- file.lst = file.lst[which(!substr(gsub(folder.loc, "", file.lst, fix=TRUE), 1,1) %in% c("_"))]
-  
-  for (ifile in 1:length(file.lst)) { 
-    print(file.lst[ifile]);  
-    source(file=file.lst[ifile])  
- }     #sys.source('file.R', envir=environment())
- 
- folder.loc <- "~/handbook/script/"
- file.lst <-list.files(path = folder.loc, all.files = FALSE,full.names = TRUE, include.dirs = TRUE, recursive =TRUE)     
- file.lst = file.lst[which(substr(file.lst, nchar(file.lst)-1, nchar(file.lst)) %in% c(".r", ".R"))]
- 
- file.lst = file.lst[which(!substr(gsub(folder.loc, "", file.lst, fix=TRUE), 1,1) %in% c("_"))]
- 
- for (ifile in 1:length(file.lst)) { 
-   print(file.lst[ifile]);  
-   source(file=file.lst[ifile])  
- }     #sys.source('file.R', envir=environment())
  
 ######################################################################
 # initialization of key variables
 ######################################################################
+ 
+HOME = "~/handbook/" 
+server_IP_address = NULL  #"10.244.106.127"
+server.IP.address = NULL  #"10.244.106.127" 
 
-# working directory
-# HOME = getwd() # "/data/BiCS_RDE_Development/shiny-server_development/pharmacometrics/R2810_popPK/"
-# PARENT = dirname(HOME)
-# setwd(HOME)
+actionButton_style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
+actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
 
+
+login = NULL
+login$status = TRUE
+login$user.name.lst = c("training",   "feng.yang"   )
+globalVars <- reactiveValues(login=login)
+globalVars$login$user.name = "feng.yang"   # determineCurrentUser(session=session)
+globalVars$login$status = globalVars$login$user.name %in% globalVars$login$user.name.lst  
 
 # placehold for all tables and figures  
 
@@ -343,6 +31,224 @@ mkg = 2
 
 SC = 1
 IV = 2
+
+
+######################################################################
+# convention 
+######################################################################
+topN = 20
+date_time_format = c("Ymd HMS", "mdY HMS", "bdY HMS", "dbY HMS")
+
+testcat.lst = c("PK1", "TARGET1", "SAF1", "EFF1", "BIOMKR1", "ADA1", "AE1")
+
+adsl.var.lst = c("STUDYID", "USUBJID",  
+               "AGE",  "AGEU",  "SEX",  "SEXN", "RACE",  "RACEN", "ETHNIC", "ETHNICN", 
+               "WGTBL", "HGTBL", "BMIBL", "BSABL","SITEID", 
+               "PKFL", "FASFL", "SAFFL", "ENRLFL", "RANDFL", "COMPLFL" )
+
+sex.lst = c( "MALE", "FEMALE", "UNKNOWN")
+
+ethnic.lst = c("NOT HISPANIC OR LATINO",  "HISPANIC OR LATINO")
+
+race.lst =c("WHITE", 
+          "BLACK OR AFRICAN AMERICAN",
+          "ASIAN",
+          "AMERICAN INDIAN OR ALASKA NATIVE",
+          "NATIVE HAWAIIAN OR OTHER PACIFIC ISLANDER",    
+          "OTHER", 
+          "UNKNOWN",
+          "NOT REPORTED"
+)
+
+
+
+adex.var.lst = c("STUDYID",  "USUBJID",  "ARMA", "ARMAN", "VISIT",    "VISITNUM",  "TIME",   
+               "EXTRT", "EXDOSE",   "EXDOSU",  "EXTDOSE",  "EXDUR", "EXROUTE", "EXROUTN",   
+               "EXSTDTC",  "EXENDTC", "TRTSDTM")
+
+
+
+dvoru.lst = c("mg/L")
+dosu.lst = c("mg", "mg/kg")
+admin.route.lst = c("SUBCUTANEOUS", "INTRAVENOUS", "INTRAMUSCULAR", "IVT")
+
+
+adpc.var.lst <- c(
+"STUDYID",   "USUBJID", "ARMA",  "ARMAN",
+"VISIT",   "VISITNUM",   "PCTPT", "TIME", "NTIM",  
+"TEST", "TESTN", "TESTCD", "TESTCAT",   "DVOR", "DVORU", "BLQ", "LLOQ",  "METHOD", "SAMDTTM"      
+)  
+
+
+nmdat.mandatory.var.lst = c("ROWID","ID","TIME","DV","CMT","MDV","AMT","RATE","EVID")
+nmdat.var.lst =  c(
+"C", "ROWID",  "ID", "ARMAN", "VISITNUM", "TIME", "NTIM",
+"TESTN", "DV", "DVOR", "BLQ", "LLOQ", "CMT",  "MDV",
+"EXTRTN", "AMT",  "RATE", "EXROUTN", "EVID",  
+"AGE",  "AGEU",  "SEX",  "SEXN", "RACE",  "RACEN", "ETHNIC", "ETHNICN", 
+"WGTBL", "HGTBL", "BMIBL", "BSABL","SITEID", 
+
+"STUDYID", "USUBJID", "ARMA",  "VISIT",  "PCTPT", 
+"TEST", "TESTCD", "TESTCAT",  "DVORU", "METHOD", "SAMDTTM",  
+"EXTRT", "EXDOSE",   "EXDOSU",  "EXTDOSE", "EXDUR", "EXROUTE", "EXSTDTC", "EXENDTC", "TRTSDTM",
+
+"PKFL", "FASFL", "SAFFL", "ENRLFL", "RANDFL", "COMPLFL",
+"CFLAG"             
+)
+adpx.var.lst = nmdat.var.lst
+
+
+
+######################################################################
+# Load packages
+######################################################################
+#rm(list = ls()) # 
+# installed.packages(.Library, priority = "high"))
+# installed.packages(lib.loc="./packrat/lib-R/x86_64-pc-linux-gnu/3.4.2/", priority = "high") 
+
+list.of.packages = sort((.packages())) 
+
+# [1] "grid"           "XML"            "reshape"        "pander"         "rmarkdown"      "xpose4"         "scales"         "bindrcpp"      
+# [9] "latticeExtra"   "Rcpp"           "PKPDmisc"       "mrgsolve"       "gdata"          "Hmisc"          "Formula"        "survival"      
+# [17] "lattice"        "forcats"        "stringr"        "purrr"          "tidyr"          "tibble"         "tidyverse"      "xtable"        
+# [25] "haven"          "knitr"          "plotly"         "readr"          "reshape2"       "DT"             "ReporteRs"      "ReporteRsjars" 
+# [33] "shinydashboard" "rhandsontable"  "dplyr"          "magrittr"       "readxl"         "shiny"          "RColorBrewer"   "ggplot2"       
+# [41] "lazyeval"       "stats"          "graphics"       "grDevices"      "utils"          "datasets"       "methods"        "base"
+#if ("metrumrg" %in% list.of.packages) {base::detach(package:metrumrg) } 
+#if ("MASS" %in% list.of.packages) {base::detach(package:MASS) } 
+
+#------------------------------------------------------------
+# Reporting
+#------------------------------------------------------------
+library(knitr)
+library(rmarkdown)
+#library(ReporteRs) 
+library(officer)
+
+
+#------------------------------------------------------------
+# Shiny, Rmarkdown
+#------------------------------------------------------------
+library(shiny)
+library(shinyAce)
+library(shinydashboard)
+library(rhandsontable)
+library(DT) 
+#library("plotly")
+
+
+# load data
+#------------------- 
+library(readxl)
+library(readr)        
+library(haven)
+
+
+# data manipulation
+#------------------- 
+library(dplyr)    # not include plyr, 
+library(tidyr)
+library(tidyverse)
+library(lazyeval)
+
+#library(dmutate)
+#library(xtable)
+#library(data.table)
+#library(reshape2)   # not reshape
+#library(datasets)
+
+#------------------------------------------------------------
+# plots
+#------------------------------------------------------------
+#library(Cairo)   # to solve X11 server problem
+library("ggplot2")     # library("gplots")
+library(gridExtra)
+#library(ggpmisc)
+
+
+#------------------------------------------------------------
+# Pk specific package
+#------------------------------------------------------------
+library("mrgsolve") 
+library("PKPDmisc")         #
+library("xpose4")
+#library(vpc)
+
+
+
+#------------------------------------------------------------
+# stats
+#------------------------------------------------------------
+#library(minqa)
+#library(methods) 
+
+
+
+#------------------------------------------------------------
+# utilities
+#------------------------------------------------------------
+
+# library(devtools) 
+library(scales) 
+library(lubridate)  
+library("stringr")
+library('RColorBrewer')
+library("Hmisc")     
+library("gdata")     # trim
+library("RColorBrewer")
+#library(MASS)   # MUST BE FIST BEFORE dplyr
+library(Rcpp)
+library(xtable) #pretty tables
+#library(packrat)
+#library("testthat")
+#library(kfigr) #figure referencing for markdown # devtools::install_github("github mkoohafkan/kfigr")
+#if ("metrumrg" %in% list.of.packages) {base::detach(package:metrumrg) } 
+#if ("MASS" %in% list.of.packages) {base::detach(package:MASS) } 
+#library(stargazer) #pretty tables
+
+
+
+######################################################################
+# Load local R functions
+######################################################################
+
+#folder.loc <- paste0(dirname(dirname(getwd())), "/regnR/R")
+#folder.loc <- "/data/BiCS_RDE_Development/shiny-server_development/pharmacometrics/regnR/R2"
+ihandbook = 0
+
+folder.loc <- "~/handbook/util"
+
+file.lst <-list.files(path = folder.loc, all.files = FALSE,full.names = TRUE, include.dirs = TRUE, recursive =TRUE)     
+
+file.lst = file.lst[which(substr(file.lst, nchar(file.lst)-1, nchar(file.lst)) %in% c(".r", ".R"))]
+
+for (ifile in 1:length(file.lst)) { 
+  print(file.lst[ifile]);  
+  source(file=file.lst[ifile])  
+}     #sys.source('file.R', envir=environment())
+
+
+folder.loc <- "~/handbook/module/"
+file.lst <-list.files(path = folder.loc, all.files = FALSE,full.names = TRUE, include.dirs = TRUE, recursive =TRUE)     
+file.lst = file.lst[which(substr(file.lst, nchar(file.lst)-1, nchar(file.lst)) %in% c(".r", ".R"))]
+
+file.lst = file.lst[which(!substr(gsub(folder.loc, "", file.lst, fix=TRUE), 1,1) %in% c("_"))]
+
+for (ifile in 1:length(file.lst)) { 
+  print(file.lst[ifile]);  
+  source(file=file.lst[ifile])  
+}     #sys.source('file.R', envir=environment())
+
+folder.loc <- "~/handbook/script/"
+file.lst <-list.files(path = folder.loc, all.files = FALSE,full.names = TRUE, include.dirs = TRUE, recursive =TRUE)     
+file.lst = file.lst[which(substr(file.lst, nchar(file.lst)-1, nchar(file.lst)) %in% c(".r", ".R"))]
+
+file.lst = file.lst[which(!substr(gsub(folder.loc, "", file.lst, fix=TRUE), 1,1) %in% c("_"))]
+
+for (ifile in 1:length(file.lst)) { 
+  print(file.lst[ifile]);  
+  source(file=file.lst[ifile])  
+}     #sys.source('file.R', envir=environment())
 
 ######################################################################
 # default options in shiny
@@ -405,69 +311,7 @@ knitr::opts_chunk$set(fig.width=9,
 
 
 
-######################################################################
-# convention used in REGN
-######################################################################
-topN = 20
-date_time_format = c("Ymd HMS", "mdY HMS", "bdY HMS", "dbY HMS")
 
-testcat.lst = c("PK1", "TARGET1", "SAF1", "EFF1", "BIOMKR1", "ADA1", "AE1")
-
-adsl.var.lst = c("STUDYID", "USUBJID",  
-                 "AGE",  "AGEU",  "SEX",  "SEXN", "RACE",  "RACEN", "ETHNIC", "ETHNICN", 
-                 "WGTBL", "HGTBL", "BMIBL", "BSABL","SITEID", 
-                 "PKFL", "FASFL", "SAFFL", "ENRLFL", "RANDFL", "COMPLFL" )
-
-sex.lst = c( "MALE", "FEMALE", "UNKNOWN")
-
-ethnic.lst = c("NOT HISPANIC OR LATINO",  "HISPANIC OR LATINO")
-
-race.lst =c("WHITE", 
-              "BLACK OR AFRICAN AMERICAN",
-              "ASIAN",
-              "AMERICAN INDIAN OR ALASKA NATIVE",
-              "NATIVE HAWAIIAN OR OTHER PACIFIC ISLANDER",    
-              "OTHER", 
-              "UNKNOWN",
-              "NOT REPORTED"
-              )
-
- 
-
-adex.var.lst = c("STUDYID",  "USUBJID",  "ARMA", "ARMAN", "VISIT",    "VISITNUM",  "TIME",   
-                 "EXTRT", "EXDOSE",   "EXDOSU",  "EXTDOSE",  "EXDUR", "EXROUTE", "EXROUTN",   
-                 "EXSTDTC",  "EXENDTC", "TRTSDTM")
- 
-
-
-dvoru.lst = c("mg/L")
-dosu.lst = c("mg", "mg/kg")
-admin.route.lst = c("SUBCUTANEOUS", "INTRAVENOUS", "INTRAMUSCULAR", "IVT")
- 
-
-adpc.var.lst <- c(
-  "STUDYID",   "USUBJID", "ARMA",  "ARMAN",
-  "VISIT",   "VISITNUM",   "PCTPT", "TIME", "NTIM",  
-  "TEST", "TESTN", "TESTCD", "TESTCAT",   "DVOR", "DVORU", "BLQ", "LLOQ",  "METHOD", "SAMDTTM"      
-)  
-
- 
-nmdat.mandatory.var.lst = c("ROWID","ID","TIME","DV","CMT","MDV","AMT","RATE","EVID")
-nmdat.var.lst =  c(
-  "C", "ROWID",  "ID", "ARMAN", "VISITNUM", "TIME", "NTIM",
-  "TESTN", "DV", "DVOR", "BLQ", "LLOQ", "CMT",  "MDV",
-  "EXTRTN", "AMT",  "RATE", "EXROUTN", "EVID",  
-  "AGE",  "AGEU",  "SEX",  "SEXN", "RACE",  "RACEN", "ETHNIC", "ETHNICN", 
-  "WGTBL", "HGTBL", "BMIBL", "BSABL","SITEID", 
-  
-  "STUDYID", "USUBJID", "ARMA",  "VISIT",  "PCTPT", 
-  "TEST", "TESTCD", "TESTCAT",  "DVORU", "METHOD", "SAMDTTM",  
-  "EXTRT", "EXDOSE",   "EXDOSU",  "EXTDOSE", "EXDUR", "EXROUTE", "EXSTDTC", "EXENDTC", "TRTSDTM",
-  
-  "PKFL", "FASFL", "SAFFL", "ENRLFL", "RANDFL", "COMPLFL",
-  "CFLAG"             
-)
-adpx.var.lst = nmdat.var.lst
 ######################################################################
 # default options in reportR
 ######################################################################

@@ -66,33 +66,50 @@ module_submit_job <- function(input, output, session, ALL, ctlModel_name="ctlMod
 ns <- session$ns 
 values<- reactiveValues()
 
+#derive model_name and data_name
+ctlModel = ALL$ctlModel[[ctlModel_name]]
+nmdat = ALL$DATA[[ctlModel_name]]
+
+if (!is.null(ctlModel) & !is.null(nmdat)) {
+  ctlModel_file_name = attributes(ctlModel)$file_name
+  nmdat_file_name = attributes(nmdat)$file_name
+  
+  # default: .ctl and .csv
+  model_name <- tools::file_path_sans_ext(basename(ctlModel_file_name)) # LN001
+  data_name <- tools::file_path_sans_ext(basename(nmdat_file_name)) # DAT001
+}else {
+  model_name = NULL
+  data_name = NULL
+}
+
+
 #--------------------------------------  
 # which_program_container
 #-------------------------------------- 
 output$which_program_container <- renderUI({
-  validate(need(globalVars$login$status, message=FALSE)) 
+  validate(need(globalVars$login$status, message=FALSE), 
+           need(!is.null(input$server_IP_address), message=FALSE)
+  )
   
-  # from server?
-  # list.of.runs <- list_folder_on_HPC(server.IP.address = "10.244.106.127", 
-  #                                    directory.on.server = "/home/feng.yang/R1979/ctl/")
-  
-  # from local?
-  # dirs.list = c(list.files(path = paste0("./output/", 
-  #                                            tolower(Sys.info()["user"]), "/"), 
-  #                              full.names = FALSE, recursive = FALSE))
-  # if (length(dirs.list)==0) {dirs.list = "TEST"}
-  
-  # just for test
-  dirs.list = paste0("TEST")
-  
+  if (input$server_IP_address=="") {
+    list_of_program <- paste0("program", 1:10)
+  }else{
+    list_of_program <- list_folder_on_HPC(
+      server_IP_address = input$server_IP_address, 
+      directory_on_server = paste0("/home/", 
+                                   tolower(Sys.info()["user"]), "/")
+    )
+    list_of_program = gsub("/", "", list_of_program, fix=TRUE)
+  }
+
   fluidRow(
     column(3,
            selectizeInput(ns("which_program"), 
                           label    =  "Select program:", 
-                          choices  = dirs.list, 
+                          choices  = list_of_program, 
                           multiple = FALSE,
                           width="100%", 
-                          selected = dirs.list[1]) 
+                          selected = list_of_program[1]) 
     )
   )
 })
@@ -103,50 +120,31 @@ output$which_program_container <- renderUI({
 #----------------------------------------------------
 output$server_info_container <- renderUI({
   
-  ctlModel = ALL$ctlModel[[ctlModel_name]]
-  nmdat = ALL$DATA[[ctlModel_name]]
-  
-  
-  if (!is.null(ctlModel) & !is.null(nmdat)) {
-    ctlModel.file.name = attributes(ctlModel)$file.name
-    ctlModel.locaton.source = attributes(ctlModel)$locaton.source
-    
-    nmdat.file.name = attributes(nmdat)$file.name
-    nmdat.locaton.source = attributes(nmdat)$locaton.source
-    
-    runno <- tools::file_path_sans_ext(basename(ctlModel.file.name))
-    data.name <- tools::file_path_sans_ext(basename(nmdat.file.name))
-    
-  }else {
-    runno = NULL
-    data.name = NULL
-  }
-  
   tagList( 
     fluidRow(
       column(width = 6, 
-             textInput(ns("server.IP.address"), 
+             textInput(ns("server_IP_address"), 
                        width = '100%',  
-                       value= server.IP.address,  # NULL
+                       value= server_IP_address,  # NULL
                        placeholder = "xx.xx.xx.xx.xx", 
-                       label="Server IP address:"
+                       label="Server IP address"
              )
       )
-    ),
+    ), 
     
     fluidRow(
       column(width = 6, #status = "primary",  #class = 'rightAlign', #background ="aqua",
-             textInput(ns("server.model.dir"), 
+             textInput(ns("server_model_dir"), 
                        width = '100%',  
                        value=paste0("/home/", 
                                     tolower(Sys.info()["user"]), "/",
                                     input$which_program,
                                     "/ctl/",
-                                    paste(runno, data.name, sep="_" ), "/"), 
+                                    paste(model_name, data_name, sep="_" ), "/"), 
                        label="Directory of the loaded model on server :")),
       
       column(width = 6, #status = "primary",  #class = 'rightAlign', #background ="aqua",
-             textInput(ns("server.data.dir"), 
+             textInput(ns("server_data_dir"), 
                        width = '100%',
                        value=paste0("/home/", 
                                     tolower(Sys.info()["user"]), "/",
@@ -154,8 +152,21 @@ output$server_info_container <- renderUI({
                                     "/data/"),
                        label="Directory of the loaded data on server:")
       ) 
-    )
-  )
+   ), 
+   
+   # run_command
+   fluidRow(
+     column(width = 6, 
+            textInput(ns("run_command"), 
+                      width = '100%',  
+                      value= paste0("execute ",  model_name, ".ctl -clean=4 -node=10 "),  #,  # NULL
+                      placeholder = "execute LN001.ctl -clean=4 ", 
+                      label="command to run"
+            )
+     )
+   )
+   
+  ) # tagList
   
 })
 
@@ -164,8 +175,8 @@ output$server_info_container <- renderUI({
 # log_container
 output$check_status_container <-  renderUI({  
   
-  validate(need(input$server.model.dir, message="empty server.model.dir"), 
-           need(input$server.data.dir, message="empty server.data.dir")  
+  validate(need(input$server_model_dir, message=FALSE), 
+           need(input$server_data_dir, message=FALSE)  
   )
   
   fluidRow(
@@ -177,6 +188,37 @@ output$check_status_container <-  renderUI({
   )  
 })
 
+# for multiple job submission and check their status
+# https://github.com/rstudio/shiny/issues/924
+output$dynamic_check_status_container <- renderUI({
+  validate(need(values$runno, message=FALSE), 
+           need(input$which_program, message = FALSE)
+  )
+  
+  runno_lst = names(values$runno)
+  tabs <- lapply(1:length(runno_lst),function(i){
+    x = runno_lst[i]
+    text = paste0(paste0(values$runno[[x]]$lst_content, sep="\n"), collapse="")
+    
+    tabPanel(
+      title = paste0("Run",i)
+      ,h5(paste0('runno: ',x)) 
+      ,value=x
+      ,fluidRow(
+        column(12,
+               textAreaInput(paste0('runno_', x), 
+                             label=NULL, 
+                             value= text, 
+                             rows=100,
+                             width = '780px', #   '800px',   #400px', or '100%'
+                             placeholder= "Your output here.") 
+        )
+      ) 
+    )
+  })
+  do.call(tabsetPanel,c(tabs,id='selected_runno'))
+})
+
 
 
 ###################################################
@@ -184,32 +226,18 @@ output$check_status_container <-  renderUI({
 ###################################################
 
 observeEvent({input$submit_job}, {
-  
-  ctlModel = ALL$ctlModel[[ctlModel_name]]
-  nmdat = ALL$DATA[[ctlModel_name]]
-  
-  attr(ctlModel, "which_program") = input$which_program  
-  attr(nmdat, "which_program") = input$which_program  
-  ALL$ctlModel[[ctlModel_name]] = ctlModel
-  ALL$DATA[[ctlModel_name]] = nmdat
-  
-  ctlModel.file.name = attributes((ctlModel))$file.name
-  ctlModel.locaton.source = attributes((ctlModel))$locaton.source
-  
-  nmdat.file.name = attributes((nmdat))$file.name
-  nmdat.locaton.source = attributes((nmdat))$locaton.source
-  
-  validate(
-    # need(values$run.model$job.submited == FALSE, message=FALSE), #########################
-    need(input$server.model.dir, message =FALSE), 
-    need(input$server.data.dir, message =FALSE),
-    
+  validate( 
     need(nmdat, message=FALSE), 
     need(ctlModel, message=FALSE), 
-    
-    need(ctlModel.locaton.source %in% c("internal", "external", "session"), message=FALSE), 
-    need(nmdat.locaton.source %in% c("internal", "external", "session"), message=FALSE)
-  ) 
+    need(input$server_model_dir, message =FALSE), 
+    need(input$server_data_dir, message =FALSE)
+  )
+  
+  ctlModel_file_name = attributes((ctlModel))$file_name
+  ctlModel_locaton_source = attributes((ctlModel))$locaton_source
+  
+  nmdat_file_name = attributes((nmdat))$file_name
+  nmdat_locaton_source = attributes((nmdat))$locaton_source
   
   # create a folder locally if not exit
   # temporarily switch to the temp dir, in case you do not have write
@@ -217,35 +245,40 @@ observeEvent({input$submit_job}, {
   owd <- tempdir()
   on.exit(setwd(owd))
   
-  if (nmdat.locaton.source %in% c("external", "session"))  {
-    write.csv(nmdat, file= paste0(owd,  basename(nmdat.file.name)), 
+  if (nmdat_locaton_source %in% c("external", "session"))  {
+    write.csv(nmdat, file= paste0(owd,  basename(nmdat_file_name)), 
               row.names = FALSE,
               na = ".", quote=FALSE) 
   }
   
-  if (ctlModel.locaton.source %in% c("external", "session"))  {
-    writeLines(ctlModel, con = paste0(owd,  basename(ctlModel.file.name)))
+  if (ctlModel_locaton_source %in% c("external", "session"))  {
+    writeLines(ctlModel, con = paste0(owd,  basename(ctlModel_file_name)))
   }
   
-  server.IP.address = input$server.IP.address 
-  local.model.name = ifelse(ctlModel.locaton.source=="internal", ctlModel.file.name, 
-                            ifelse(ctlModel.locaton.source%in% c("external", "session"), 
-                                   paste0(owd, basename(ctlModel.file.name)), NULL))    
-  local.data.name = ifelse(nmdat.locaton.source=="internal", nmdat.file.name, 
-                           ifelse(nmdat.locaton.source%in% c("external", "session"), 
-                                  paste0(owd, basename(nmdat.file.name)), NULL))  
+  local_model_name = ifelse(ctlModel_locaton_source=="internal", ctlModel_file_name, 
+                            ifelse(ctlModel_locaton_source%in% c("external", "session"), 
+                                   paste0(owd, basename(ctlModel_file_name)), NULL))    
+  local_data_name = ifelse(nmdat_locaton_source=="internal", nmdat_file_name, 
+                           ifelse(nmdat_locaton_source%in% c("external", "session"), 
+                                  paste0(owd, basename(nmdat_file_name)), NULL))  
   
-  server.model.dir = input$server.model.dir  
-  server.data.dir= input$server.data.dir  
-  
-
-  submit_job_to_HPC(server.IP.address = server.IP.address,
-                     local.model.name = local.model.name, 
-                     local.data.name = local.data.name,  
-                     server.model.dir = server.model.dir,
-                     server.data.dir = server.data.dir
+  if (!input$server_IP_address == "") {
+    submit_job_to_HPC(server_IP_address = input$server_IP_address,
+                    local_model_name = local_model_name, 
+                    local_data_name = local_data_name,  
+                    server_model_dir = input$server_model_dir,
+                    server_data_dir = input$server_data_dir, 
+                    run_command = input$run_command
    )
+  }
+  
   showNotification("submit job sucessfully", type="message") # "default, "message", "warning", "error"
+  
+  # carry it to fetch tab if a single fetch
+   attr(ctlModel, "which_program") = input$which_program  
+   attr(nmdat, "which_program") = input$which_program  
+   ALL$ctlModel[[ctlModel_name]] = ctlModel
+   ALL$DATA[[ctlModel_name]] = nmdat
   
 })
 
@@ -255,27 +288,26 @@ observeEvent({input$submit_job}, {
 #--------------------------------------------------------
 observeEvent({input$check_status}, {
   
-  validate(need(input$server.model.dir, message="empty server.model.dir"), 
-           need(input$server.data.dir, message="empty server.data.dir")  
+  validate(need(!is.null(input$server_IP_address), message=FALSE),
+           need(input$server_model_dir, message=FALSE), 
+           need(input$server_data_dir, message=FALSE)  
   )
-  
-  server.model.dir = (input$server.model.dir)    
-  server.data.dir= (input$server.data.dir)    
-  
+   
   # create a folder locally if not exit
   # temporarily switch to the temp dir, in case you do not have write
   # permission to the current working directory
   owd <- setwd(tempdir())
   on.exit(setwd(owd))
   
-  system(command = paste0("scp ", input$server.IP.address, ":", 
-                          paste0(server.model.dir,  "/output.log  ", "."))) 
+  if (!input$server_IP_address == "") {
+  system(command = paste0("scp ", input$server_IP_address, ":", 
+                          paste0(input$server_model_dir,  "/output.log  ", "."))) 
+  }
   
-  
-  error.message= "No such file or directory, cannot open the connection"
+  error_message= "No such file or directory, cannot open the connection"
   value =  tryCatch(readLines(paste0("./output.log")),      
                     error=function(e) {
-                      print(error.message); 
+                      print(error_message); 
                       return(NULL)
                     } #, finally = {
                     # eval(parse(text=txt)) %>% as.data.frame()
@@ -283,7 +315,7 @@ observeEvent({input$check_status}, {
   )
   
   if (is.null(value)) { 
-    updateTextAreaInput(session, "check_status_content", value=error.message)
+    updateTextAreaInput(session, "check_status_content", value=error_message)
     showNotification("check status failed", type="error") # "default, "message", "warning", "error"
   }else {
     value = paste0(value, sep="\n")   # sep="<br/>")

@@ -66,9 +66,16 @@ output$cppModelContent_container <- renderUI({
     ),
     fluidRow(
       column(12,
-             textAreaInput(ns("cppModelContent"), label=NULL, value=value, rows=200,
-                           width = '785px',   #400px', or '100%'
-                           placeholder= "Your cppModel here.") 
+             # textAreaInput(ns("cppModelContent"), label=NULL, value=value, rows=200,
+             #               width = '785px',   #400px', or '100%'
+             #               placeholder= "Your cppModel here.") 
+             aceEditor(ns("cppModelContent"), 
+                       mode="c_cpp", value=value, 
+                       theme = "crimson_editor",   # chrome
+                       autoComplete = "enabled",
+                       height = "1000px", 
+                       fontSize = 15 
+             )
       )
     )
   )

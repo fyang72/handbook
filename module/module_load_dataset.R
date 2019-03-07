@@ -139,8 +139,8 @@ module_load_dataset <- function(input, output, session, ALL, dataset_name="datas
     if (is.null(tdata)) {print(message.info)}
     validate(need(tdata, message.info)) 
        
-    attr(tdata, 'file.name') <- inFile$name   # only file name, no directory for external file
-    attr(tdata, 'locaton.source') <- "external"
+    attr(tdata, 'file_name') <- inFile$name   # only file name, no directory for external file
+    attr(tdata, 'locaton_source') <- "external"
     tdata
   })
   
@@ -169,8 +169,8 @@ module_load_dataset <- function(input, output, session, ALL, dataset_name="datas
     if (is.null(tdata)) {print(message.info)}
     validate(need(tdata, message.info)) 
     
-    attr(tdata, 'file.name') <- inFile  # with directory
-    attr(tdata, 'locaton.source') <- "internal"
+    attr(tdata, 'file_name') <- inFile  # with directory
+    attr(tdata, 'locaton_source') <- "internal"
     tdata
     
   })
@@ -188,8 +188,8 @@ module_load_dataset <- function(input, output, session, ALL, dataset_name="datas
              need(dataset, message="no data found")
     )
      
-    attr(data, 'file.name') <- paste0(input$which_session_dataset, ".csv")  # only .csv
-    attr(data, 'locaton.source') <- "session"
+    attr(dataset, 'file_name') <- paste0(input$which_session_dataset, ".csv")  # only .csv
+    attr(dataset, 'locaton_source') <- "session"
     dataset
   }) 
   

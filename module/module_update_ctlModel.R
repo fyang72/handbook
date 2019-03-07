@@ -65,7 +65,7 @@ module_update_ctlModel <- function(input, output, session, ALL, ctlModel_name="c
         #column(2, "$DATA:"),
         column(12, 
                textInput(ns("nmdat_name"), 
-                         value= basename(attributes(ALL$DATA[[ctlModel_name]])$file.name),
+                         value= basename(attributes(ALL$DATA[[ctlModel_name]])$file_name),
                          width="100%",
                          label="$DATA:") 
         )
@@ -94,11 +94,18 @@ module_update_ctlModel <- function(input, output, session, ALL, ctlModel_name="c
       
       fluidRow(
         column(12,
-               textAreaInput(ns("ctlModelContent"), label=NULL, value=value, rows=200,
-                             #width="100%",
-                             width = '785px', #   '800px',   #400px', or '100%'
-                             placeholder= "Your ctlModel here."
-                             ) 
+               # textAreaInput(ns("ctlModelContent"), label=NULL, value=value, rows=200,
+               #               #width="100%",
+               #               width = '785px', #   '800px',   #400px', or '100%'
+               #               placeholder= "Your ctlModel here."
+               #               ) 
+               aceEditor(ns("ctlModelContent"), 
+                         mode="fortran", value=value, 
+                         theme = "crimson_editor",   # chrome
+                         autoComplete = "enabled",
+                         height = "1000px", 
+                         fontSize = 15 
+               )
         )
       )
     )
@@ -118,6 +125,10 @@ module_update_ctlModel <- function(input, output, session, ALL, ctlModel_name="c
     )
      
     print("Update model sucessfully")
+    
+    attr(ctlModel, 'file_name') <- input$ctlModel_name
+    attr(ctlModel, 'locaton_source') <- "session"
+    
     ALL$ctlModel[[input$ctlModel_name]]  = ctlModel
     
   })

@@ -71,13 +71,14 @@ module_fetch_job <- function(input, output, session, ALL, ctlModel_name="ctlMode
 ns <- session$ns 
 values<- reactiveValues()
 
+#derive model_name and data_name
 ctlModel = ALL$ctlModel[[ctlModel_name]]
 nmdat = ALL$DATA[[ctlModel_name]]
 
 if (!is.null(ctlModel) & !is.null(nmdat)) {
   ctlModel_file_name = attributes(ctlModel)$file_name
   nmdat_file_name = attributes(nmdat)$file_name
-  
+    
   # default: .ctl and .csv
   model_name <- tools::file_path_sans_ext(basename(ctlModel_file_name)) # LN001
   data_name <- tools::file_path_sans_ext(basename(nmdat_file_name)) # DAT001
@@ -85,8 +86,6 @@ if (!is.null(ctlModel) & !is.null(nmdat)) {
   model_name = NULL
   data_name = NULL
 }
-  
-  
   
 #--------------------------------------  
 # which_program_container
@@ -342,7 +341,7 @@ if (input$want_batch_fetch=="No") {
     )
     
     # "default, "message", "warning", "error"
-    if (error_message=="fetch_failed") {
+    if (error_message[1]=="fetch_failed") {
       showNotification(paste0(runno, ": ", "Error in file(file, 'r') : cannot open the connection"), type="error")
     }else { 
       showNotification(paste0(runno, ": ", "fetch result sucessfully"), type="message")   # "default, "message", "warning", "error"
