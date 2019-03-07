@@ -1,12 +1,13 @@
-
+library(shiny)
+library(dplyr)
  
 ######################################################################
 # initialization of key variables
 ######################################################################
  
 HOME = "~/handbook/" 
-server_IP_address = NULL  #"10.244.106.127"
-server.IP.address = NULL  #"10.244.106.127" 
+server_IP_address = "10.244.106.127"   # NULL  #
+server.IP.address = "10.244.106.127"    # NULL  #
 
 actionButton_style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
 actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
@@ -15,9 +16,9 @@ actionButton.style ="float:left;color: #fff; background-color: #328332; border-c
 login = NULL
 login$status = TRUE
 login$user.name.lst = c("training",   "feng.yang"   )
+login$user.name = "feng.yang"   # determineCurrentUser(session=session)
+login$status = login$user.name %in% login$user.name.lst  
 globalVars <- reactiveValues(login=login)
-globalVars$login$user.name = "feng.yang"   # determineCurrentUser(session=session)
-globalVars$login$status = globalVars$login$user.name %in% globalVars$login$user.name.lst  
 
 # placehold for all tables and figures  
 

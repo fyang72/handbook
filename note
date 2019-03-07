@@ -1,3 +1,23 @@
+
+to do list: 
+
+construct dataset
+#----------------
+1) ***, instead of 1,2,3
+
+
+
+
+run nonmem model
+#----------------
+1) after save model, redirect to use "session"
+2) after multiple submission, check their status
+3) why show progress status not work for submission tab
+
+
+
+
+
 https://github.com/dpastoor/nonmemutils
 
 https://github.com/dpastoor/nonmemutils

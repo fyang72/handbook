@@ -21,15 +21,19 @@ fetch_job_from_HPC <- function(
   
   # all .ext, .ctl, .phi, .coi files
   system(command = paste0("scp ", server_IP_address, ":", paste0(server_model_dir,  "*.ctl  "), local_result_dir))
+  system(command = paste0("scp ", server_IP_address, ":", paste0(server_model_dir,  "*.lst  "), local_result_dir))
+  system(command = paste0("scp ", server_IP_address, ":", paste0(server_model_dir,  "*.coi  "), local_result_dir))
+  system(command = paste0("scp ", server_IP_address, ":", paste0(server_model_dir,  "*.cor  "), local_result_dir))
+  system(command = paste0("scp ", server_IP_address, ":", paste0(server_model_dir,  "*.cov  "), local_result_dir))
+  system(command = paste0("scp ", server_IP_address, ":", paste0(server_model_dir,  "*.ext  "), local_result_dir))
+  system(command = paste0("scp ", server_IP_address, ":", paste0(server_model_dir,  "*.phi  "), local_result_dir))
+  
   system(command = paste0("scp ", server_IP_address, ":", paste0(server_model_dir,  "sdtab*  ", local_result_dir)))
   system(command = paste0("scp ", server_IP_address, ":", paste0(server_model_dir,  "patab*  ", local_result_dir)))
   system(command = paste0("scp ", server_IP_address, ":", paste0(server_model_dir,  "catab*  ", local_result_dir)))
   system(command = paste0("scp ", server_IP_address, ":", paste0(server_model_dir,  "cotab*  ", local_result_dir)))
   system(command = paste0("scp ", server_IP_address, ":", paste0(server_model_dir,  "mytab*  ", local_result_dir))) 
-  
-  # showNotification("download sucessfully")
-  
-   print("download sucessfully")
+ 
   # 
   # # read the results  
   # # -------------------------------

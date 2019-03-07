@@ -15,7 +15,6 @@ module_load_ctlModel_UI <- function(id, label = "") {
            uiOutput(ns("load_session_ctlModel_container"))
           )
     ) 
- 
 }
 
 ################################################################################ 
@@ -25,10 +24,8 @@ module_load_ctlModel_UI <- function(id, label = "") {
 module_load_ctlModel <- function(input, output, session, ALL, ctlModel_name="ctlModel_name") {
   
   ns <- session$ns 
-  #values <- reactiveValues()
-  
-  actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
-  
+  values <- reactiveValues()
+   
   #--------------------------------------  
   # ctlModel_source_selector
   #--------------------------------------
@@ -40,7 +37,6 @@ module_load_ctlModel <- function(input, output, session, ALL, ctlModel_name="ctl
                           choices=c("internal library", "within session", "external file"), inline=TRUE, width="100%",
                           selected="internal library"))
     )
-    
   })
   
   #--------------------------------------  
@@ -71,21 +67,19 @@ module_load_ctlModel <- function(input, output, session, ALL, ctlModel_name="ctl
     validate(need(globalVars$login$status, message=FALSE), 
              need(input$ctlModel_source=="internal library", message=FALSE)) 
     
-    dirs.list = c("", list.files(path = paste0(HOME, "/model/ctl"), full.names = FALSE, recursive = FALSE)) 
+    dirs_list = c("", list.files(path = paste0(HOME, "/model/ctl"), full.names = FALSE, recursive = FALSE)) 
     
     fluidRow(
       column(12, 
         selectizeInput(ns("which_internal_ctlModel"), 
                        label    = "load internal ctlModel", 
-                       choices  = dirs.list, 
+                       choices  = dirs_list, 
                        multiple = FALSE,
                        width="100%", 
-                       selected = dirs.list[1])
+                       selected = dirs_list[1])
       )
     )
-    
   })
-  
   
   
   #--------------------------------------  
@@ -98,21 +92,19 @@ module_load_ctlModel <- function(input, output, session, ALL, ctlModel_name="ctl
      
     name_lst <- names(ALL$ctlModel)
     only_for_internal_use <- name_lst[which(substr(name_lst, 1, 6)=="mYtEsT")]
-    dirs.list = c("", setdiff(name_lst, only_for_internal_use))
+    dirs_list = c("", setdiff(name_lst, only_for_internal_use))
     
     fluidRow(
-      column(6, 
+      column(12, 
              selectizeInput(ns("which_session_ctlModel"), 
                             label    = "load session ctlModel", 
-                            choices  = dirs.list, 
+                            choices  = dirs_list, 
                             multiple = FALSE,
-                            width="100%", 
-                            selected = dirs.list[1])
+                            width ="100%", 
+                            selected = dirs_list[1])
       )
     ) 
-     
   })
-  
    
   #--------------------------------------  
   # reactive of load_external_ctlModel
@@ -122,11 +114,10 @@ module_load_ctlModel <- function(input, output, session, ALL, ctlModel_name="ctl
              need(input$which_external_ctlModel, message = FALSE))
     
     inFile = input$which_external_ctlModel
-    
     # print(inFile)
-    # name            size type  datapath
-    # 1 cpp.model.cpp 6369      /tmp/RtmprQR1xU/1eb54214311d1970e61c917f/0.cpp
-    # 
+    # name            size  type  datapath
+    # cpp.model.cpp   6369        /tmp/RtmprQR1xU/1eb54214311d1970e61c917f/0.cpp
+ 
     ext <- tools::file_ext(inFile$name) 
     ctlModel = readLines(inFile$datapath)  
     
@@ -160,18 +151,13 @@ module_load_ctlModel <- function(input, output, session, ALL, ctlModel_name="ctl
     validate(need(globalVars$login$status, message=FALSE), 
              need(input$which_session_ctlModel, message=FALSE))
     
-    print("reactive load_session_ctlModel")
-    
     ctlModel = ALL$ctlModel[[input$which_session_ctlModel]]
     
     attr(ctlModel, 'file_name') <- paste0(input$which_session_ctlModel, ".ctl")
     attr(ctlModel, 'locaton_source') <- "session"
     ctlModel
   }) 
-  
    
-  
-  
   #--------------------------------------  
   # observeEvent  
   #-------------------------------------- 
@@ -191,33 +177,8 @@ module_load_ctlModel <- function(input, output, session, ALL, ctlModel_name="ctl
   
   observeEvent({input$which_session_ctlModel}, {
     validate(need(input$ctlModel_source=="within session", message=FALSE) )
-    
-    # ctlModel = load_session_ctlModel()
-    # print("save to session ctlmodel:")
-    # print(ctlModel_name)
-    # ctlModel.file.name = attributes(ctlModel)$file.name
-    # ctlModel.locaton.source = attributes(ctlModel)$locaton.source
-    # print(ctlModel.file.name)
-    # print(ctlModel.locaton.source)
-    
     ALL$ctlModel[[ctlModel_name]]  = load_session_ctlModel()
   })
-  
-  
-
-  
-  # #--------------------
-  # # ctlModelContent
-  # #--------------------
-  # observeEvent(input$update_model, {
-  #   
-  #   ctlModel =input$ctlModelContent
-  #   validate(need(ctlModel, message="Empty ctlModel..."))
-  # 
-  #   print("Update model sucessfully")
-  #   ALL$ctlModel[[ctlModel_name]]  = ctlModel
-  #   
-  # })
   
   return(ALL)
 }
