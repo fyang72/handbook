@@ -1,34 +1,32 @@
 
 submit_job_to_HPC <- function(
-  server.IP.address = "xx.xx.xx.xx.xx",
-  local.model.name = NULL, 
-  local.data.name = NULL, 
-  server.model.dir = NULL, 
-  server.data.dir= NULL
+  server_IP_address = "xx.xx.xx.xx.xx",
+  local_model_name = NULL, 
+  local_data_name = NULL, 
+  server_model_dir = NULL, 
+  server_data_dir= NULL, 
+  run_command = ""
 )  {
   
   # derive model and data information
-  model.name = basename(local.model.name)  
-  model.runno = gsub(paste0(".", tools::file_ext(model.name)), "", model.name,  fix=TRUE)
-  data.name = basename(local.data.name)  
+  model_name = basename(local_model_name)  
+  model_runno = tools::file_path_sans_ext(basename(local_model_name)) # LN001
+  data_name = basename(local_data_name)  
   
   # create a server directory to hold data and model
-  system(command = paste0("ssh ", server.IP.address, " '", paste0("mkdir -p ", server.model.dir), "'"), intern = T)
-  system(command = paste0("ssh ", server.IP.address, " '", paste0("mkdir -p ", server.data.dir), "'"), intern = T)
+  system(command = paste0("ssh ", server_IP_address, " '", paste0("mkdir -p ", server_model_dir), "'"), intern = T)
+  system(command = paste0("ssh ", server_IP_address, " '", paste0("mkdir -p ", server_data_dir), "'"), intern = T)
   
   # upload model and dataset to server
-  system(command = paste0("scp  ", local.model.name, "  ", server.IP.address, ":", server.model.dir), intern = T)
-  system(command = paste0("scp  ", local.data.name,  "  ", server.IP.address, ":", server.data.dir), intern = T)
+  system(command = paste0("scp  ", local_model_name, "  ", server_IP_address, ":", server_model_dir), intern = T)
+  system(command = paste0("scp  ", local_data_name,  "  ", server_IP_address, ":", server_data_dir), intern = T)
   
   # run the commands
-  command1 = paste0('cd ',  server.model.dir)         
-  command2 = paste0('setsid execute ',  model.name, ' -clean=4 ', '> output.log 2>&1 & ') 
+  command1 = paste0('cd ',  server_model_dir)         
+  command2 = paste0('setsid ', run_command, ' > output.log 2>&1 & ') 
   command = paste(command1, command2, sep="; ")
-  system(command = paste0("ssh ", server.IP.address, " '", command, "'"), intern = T)
-   
-  # showNotification("download sucessfully")
-  #showNotification("job submited sucessfully", type="message")    # "default, "message", "warning", "error"
- 
+  system(command = paste0("ssh ", server_IP_address, " '", command, "'"), intern = T)
+    
 }
 
  
