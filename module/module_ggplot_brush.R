@@ -36,7 +36,7 @@ module_ggplot_brush_UI2 <- function(id, label="") {
 # log in and load data (sidebar)
 ################################################################################
 
-module_ggplot_brush <- function(input, output, session, fig, mydata, xvar="NTIM", yvar="TIME") {
+module_ggplot_brush <- function(input, output, session, fig, mydata, xvar="xvar", yvar="yvar") {
   
   ns <- session$ns
 

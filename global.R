@@ -76,7 +76,7 @@ admin.route.lst = c("SUBCUTANEOUS", "INTRAVENOUS", "INTRAMUSCULAR", "IVT")
 
 adpc.var.lst <- c(
 "STUDYID",   "USUBJID", "ARMA",  "ARMAN",
-"VISIT",   "VISITNUM",   "PCTPT", "TIME", "NTIM",  
+"VISIT",   "VISITN",   "PCTPT", "TIME", "NTIM",  
 "TEST", "TESTN", "TESTCD", "TESTCAT",   "DVOR", "DVORU", "BLQ", "LLOQ",  "METHOD", "SAMDTTM"      
 )  
 
@@ -97,6 +97,48 @@ nmdat.var.lst =  c(
 "CFLAG"             
 )
 adpx.var.lst = nmdat.var.lst
+
+
+
+
+library(dplyr)
+library(readxl)
+std_nmdat <- read_excel(paste0(HOME, "/lib/pkmeta.xlsx"),sheet="nmdat",col_names = TRUE)  %>% 
+  as.data.frame() %>% filter(!is.na(standard.name))
+
+std_adsl <- read_excel(paste0(HOME, "/lib/pkmeta.xlsx"),sheet="adsl",col_names = TRUE)  %>% 
+  as.data.frame() %>% filter(!is.na(standard.name))
+
+std_adex <- read_excel(paste0(HOME, "/lib/pkmeta.xlsx"),sheet="adex",col_names = TRUE)  %>% 
+  as.data.frame() %>% filter(!is.na(standard.name))
+
+std_adpc <- read_excel(paste0(HOME, "/lib/pkmeta.xlsx"),sheet="adpc",col_names = TRUE)  %>% 
+  as.data.frame() %>% filter(!is.na(standard.name))
+
+std_adpx <- read_excel(paste0(HOME, "/lib/pkmeta.xlsx"),sheet="adpx",col_names = TRUE)  %>% 
+  as.data.frame() %>% filter(!is.na(standard.name))
+
+std_convention <- read_excel(paste0(HOME, "/lib/pkmeta.xlsx"),sheet="convention",col_names = TRUE)  %>% 
+  as.data.frame() %>% filter(!is.na(domain))
+
+
+nmdat_var_lst <- std_nmdat %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
+adsl_var_lst <- std_adsl %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
+adex_var_lst <- std_adex %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
+adpc_var_lst <- std_adpc %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
+adpx_var_lst <- std_adpx %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
+
+dvoru_var_lst <- std_convention %>% filter(domain=="DVORU") %>% pull(value)
+sex_var_lst <- std_convention %>% filter(domain=="SEX") %>% pull(value)
+race_var_lst <- std_convention %>% filter(domain=="RACE") %>% pull(value)
+ethnic_var_lst <- std_convention %>% filter(domain=="ETHNIC") %>% pull(value)
+dosu_var_lst <- std_convention %>% filter(domain=="DOSU") %>% pull(value)
+route_var_lst <- std_convention %>% filter(domain=="ROUTE") %>% pull(value)
+testcat_var_lst <- std_convention %>% filter(domain=="TESTCAT") %>% pull(value)
+timefmt_var_lst <- std_convention %>% filter(domain=="TIMEFMT") %>% pull(value)
+
+topN = 20
+nmdat.mandatory.var.lst = c("ROWID","ID","TIME","DV","CMT","MDV","AMT","RATE","EVID")
 
 
 
