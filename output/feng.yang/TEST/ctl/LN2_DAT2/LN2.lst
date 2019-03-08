@@ -1,4 +1,4 @@
-Thu Mar  7 17:46:29 UTC 2019
+Fri Mar  8 16:27:29 UTC 2019
 $PROBLEM    THEOPHYLLINE POPULATION DATA
 $INPUT      C=DROP ID AMT TIME DV WGTBL SEXN
 $DATA      DAT2.csv IGNORE=C
@@ -86,8 +86,8 @@ NM-TRAN MESSAGES
 
 License Registered to: Regeneron Pharmaceuticals Inc
 Expiration Date:    14 JUN 2019
-Current Date:        7 MAR 2019
-Days until program expires :  97
+Current Date:        8 MAR 2019
+Days until program expires :  96
 1NONLINEAR MIXED EFFECTS MODEL PROGRAM (NONMEM) VERSION 7.4.1
  ORIGINALLY DEVELOPED BY STUART BEAL, LEWIS SHEINER, AND ALISON BOECKMANN
  CURRENT DEVELOPERS ARE ROBERT BAUER, ICON DEVELOPMENT SOLUTIONS,
@@ -421,11 +421,11 @@ Days until program expires :  97
  TOTAL EFFECTIVE ETAS (NIND*NETA):                            36
   
  #TERE:
- Elapsed estimation  time in seconds:     0.59
+ Elapsed estimation  time in seconds:     0.58
 0S MATRIX ALGORITHMICALLY SINGULAR
 0COVARIANCE MATRIX UNOBTAINABLE
  Elapsed covariance  time in seconds:     0.06
- Elapsed postprocess time in seconds:     0.02
+ Elapsed postprocess time in seconds:     0.01
 1
  
  
@@ -584,7 +584,7 @@ Days until program expires :  97
  SG22
 +       -6.76E+01 -5.68E+02 -1.23E+04 -3.11E+01 -7.88E+03  1.12E+02  9.15E+05 -5.79E+03  0.00E+00  6.61E+03 .........  3.43E+03
  
- Elapsed finaloutput time in seconds:     0.06
- #CPUT: Total CPU Time in Seconds,        0.605
+ Elapsed finaloutput time in seconds:     0.05
+ #CPUT: Total CPU Time in Seconds,        0.596
 Stop Time:
-Thu Mar  7 17:46:35 UTC 2019
+Fri Mar  8 16:27:34 UTC 2019

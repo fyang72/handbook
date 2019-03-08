@@ -3,7 +3,7 @@ module_save_data_UI <- function(id, label="") {
   
 ns <- NS(id)
 
-fluidRow( 
+tagList( 
   fluidRow( 
     column(width=3, 
            uiOutput(ns("data_name_container"))),                                                                                                                             

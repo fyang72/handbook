@@ -20,20 +20,20 @@ module_assess_model_basic_UI <- function(id, label = "") {
     tabBox(width=12, id = ns("basic_assess_model"), title =NULL, 
            
            # dataset_container 
-           tabPanel(width=12, title="dataset", value = "dataset", collapsible = TRUE, 
-                    collapsed = TRUE, solidHeader = TRUE,
-                    tagList(
-                      fluidRow(
-                        column(width=4, uiOutput(ns("select_which_program_container"))), 
-                        
-                        column(width=4, uiOutput(ns("select_which_job_container"))), 
-                        
-                        column(width=4, uiOutput(ns("select_which_runno_container")))
-                        
-                      ),
-                      fluidRow(column(12, uiOutput(ns("dataset_container")))) 
-                    )
-           ),       
+           # tabPanel(width=12, title="dataset", value = "dataset", collapsible = TRUE, 
+           #          collapsed = TRUE, solidHeader = TRUE,
+           #          tagList(
+           #            fluidRow(
+           #              column(width=4, uiOutput(ns("select_which_program_container"))), 
+           #              
+           #              column(width=4, uiOutput(ns("select_which_job_container"))), 
+           #              
+           #              column(width=4, uiOutput(ns("select_which_runno_container")))
+           #              
+           #            ),
+           #            fluidRow(column(12, uiOutput(ns("dataset_container")))) 
+           #          )
+           # ),       
            
            # script_container 
            tabPanel(width=12, title="GOF1", value = "GOF1", collapsible = TRUE, 
@@ -138,12 +138,12 @@ module_assess_model_basic_UI <- function(id, label = "") {
 #should pass the input value wrapped in a reactive expression (i.e. reactive(...)):
 
 module_assess_model_basic <- function(input, output, session, 
-                              ALL
+                              ALL, xpdb, values4xpdb
 )  {
   
   ns <- session$ns
   values <- reactiveValues(data=NULL, figure=NULL,table = NULL)
-  values4xpdb = reactiveValues(diagnostic=NULL) 
+  #values4xpdb = reactiveValues(diagnostic=NULL) 
   
   user.name = tolower(Sys.info()["user"])
   
@@ -198,7 +198,7 @@ module_assess_model_basic <- function(input, output, session,
   output$dataset_container <- renderUI({ 
     validate(need(globalVars$login$status, message=FALSE))
      
-    xpdb = xpdb_inputData()
+    #xpdb = xpdb_inputData()
     validate(need(xpdb, message=FALSE))
       
     callModule(module_table_output, "loaded_dataset", mytab=slot(xpdb, "Data"))
@@ -215,7 +215,7 @@ module_assess_model_basic <- function(input, output, session,
   ################################
   
   output$diagnostic.PRED.DVOR <- renderUI({ 
-    xpdb = xpdb_inputData()
+    #xpdb = xpdb_inputData()
     validate(need(xpdb, message=FALSE))
     
     fig = values4xpdb$diagnostic$PRED_DVOR   
@@ -223,9 +223,9 @@ module_assess_model_basic <- function(input, output, session,
      
     
     callModule(module_ggplot_brush, "xpdb.diagnostic.PRED.DVOR", 
-               fig=fig, 
-               mydata = slot(xpdb, "Data") %>% mutate(xvar="PRED", yvar="DV"), 
-               xvar="xvar", yvar="yvar")
+               fig=fig$fig, 
+               mydata = fig$data
+               )
     
     module_ggplot_brush_UI(ns("xpdb.diagnostic.PRED.DVOR"), 
                            label = "xpdb.diagnostic.PRED.DVOR")
@@ -234,7 +234,7 @@ module_assess_model_basic <- function(input, output, session,
   
   
   output$diagnostic.IPRED.DVOR <- renderUI({ 
-    xpdb = xpdb_inputData()
+    #xpdb = xpdb_inputData()
     validate(need(xpdb, message=FALSE))
     
     fig = values4xpdb$diagnostic$IPRED_DVOR   
@@ -242,9 +242,8 @@ module_assess_model_basic <- function(input, output, session,
     
     
     callModule(module_ggplot_brush, "xpdb.diagnostic.IPRED.DVOR", 
-               fig=fig, 
-               mydata = slot(xpdb, "Data")%>% mutate(xvar="IPRED", yvar="DV"),  
-               xvar="xvar", yvar="yvar")
+               fig=fig$fig, 
+               mydata = fig$data)
     
     module_ggplot_brush_UI(ns("xpdb.diagnostic.IPRED.DVOR"), 
                            label = "xpdb.diagnostic.IPRED.DVOR")
@@ -255,7 +254,7 @@ module_assess_model_basic <- function(input, output, session,
   
   
   output$diagnostic.PRED.DVOR.LOG <- renderUI({ 
-    xpdb = xpdb_inputData()
+    #xpdb = xpdb_inputData()
     validate(need(xpdb, message=FALSE))
     
     fig = values4xpdb$diagnostic$PRED_DVOR_LOG   
@@ -263,9 +262,8 @@ module_assess_model_basic <- function(input, output, session,
     
     
     callModule(module_ggplot_brush, "xpdb.diagnostic.PRED.DVOR.LOG", 
-               fig=fig, 
-               mydata = slot(xpdb, "Data") %>% mutate(xvar="PRED", yvar="DV"),  
-               xvar="xvar", yvar="yvar")
+               fig=fig$fig, 
+               mydata = fig$data)
     
     module_ggplot_brush_UI(ns("xpdb.diagnostic.PRED.DVOR.LOG"), 
                            label = "xpdb.diagnostic.PRED.DVOR.LOG")
@@ -274,17 +272,16 @@ module_assess_model_basic <- function(input, output, session,
   
   
   output$diagnostic.IPRED.DVOR.LOG <- renderUI({ 
-    xpdb = xpdb_inputData()
+    #xpdb = xpdb_inputData()
     validate(need(xpdb, message=FALSE))
     
     fig = values4xpdb$diagnostic$IPRED_DVOR_LOG   
-    validate(need(fig, message=FALSE))
+    validate(need(fig$fig, message=FALSE))
     
     
     callModule(module_ggplot_brush, "xpdb.diagnostic.IPRED.DVOR.LOG", 
-               fig=fig, 
-               mydata = slot(xpdb, "Data") %>% mutate(xvar="IPRED", yvar="DV"),  
-               xvar="xvar", yvar="yvar")
+               fig=fig$fig, 
+               mydata = fig$data)
     
     module_ggplot_brush_UI(ns("xpdb.diagnostic.IPRED.DVOR.LOG"), 
                            label = "xpdb.diagnostic.IPRED.DVOR.LOG")
@@ -300,7 +297,7 @@ module_assess_model_basic <- function(input, output, session,
   ################################
   
   output$diagnostic.CWRES.TIME <- renderUI({ 
-    xpdb = xpdb_inputData()
+    #xpdb = xpdb_inputData()
     validate(need(xpdb, message=FALSE))
     
     fig = values4xpdb$diagnostic$CWRES.TIME   
@@ -319,7 +316,7 @@ module_assess_model_basic <- function(input, output, session,
   
   
   output$diagnostic.CWRES.IPRED <- renderUI({ 
-    xpdb = xpdb_inputData()
+    #xpdb = xpdb_inputData()
     validate(need(xpdb, message=FALSE))
     
     fig = values4xpdb$diagnostic$CWRES.IPRED   
@@ -340,7 +337,7 @@ module_assess_model_basic <- function(input, output, session,
   
   
   output$diagnostic.CWRES.ID <- renderUI({ 
-    xpdb = xpdb_inputData()
+    #xpdb = xpdb_inputData()
     validate(need(xpdb, message=FALSE))
     
     fig = values4xpdb$diagnostic$CWRES.ID   
@@ -359,7 +356,7 @@ module_assess_model_basic <- function(input, output, session,
   
   
   output$diagnostic.CWRES.QUANTILE <- renderUI({ 
-    xpdb = xpdb_inputData()
+    #xpdb = xpdb_inputData()
     validate(need(xpdb, message=FALSE))
     
     fig = values4xpdb$diagnostic$CWRES.QUANTILE   
@@ -384,7 +381,7 @@ module_assess_model_basic <- function(input, output, session,
   ################################
   
   output$diagnostic.INDIV_PLOT25 <- renderUI({ 
-    xpdb = xpdb_inputData()
+    #xpdb = xpdb_inputData()
     validate(need(xpdb, message=FALSE))
     
     fig = values4xpdb$diagnostic$INDIV_PLOT25  
@@ -409,7 +406,7 @@ module_assess_model_basic <- function(input, output, session,
   ################################
   
   output$diagnostic.ETAvsCOV <- renderUI({ 
-    xpdb = xpdb_inputData()
+    #xpdb = xpdb_inputData()
     validate(need(xpdb, message=FALSE))
     
     fig = values4xpdb$diagnostic$ETAvsCOV[[1]]  
@@ -428,7 +425,7 @@ module_assess_model_basic <- function(input, output, session,
   
   
   output$diagnostic.ETAvsETA <- renderUI({ 
-    xpdb = xpdb_inputData()
+    #xpdb = xpdb_inputData()
     validate(need(xpdb, message=FALSE))
     
     fig = values4xpdb$diagnostic$ETAvsETA[[1]]  
@@ -488,7 +485,7 @@ module_assess_model_basic <- function(input, output, session,
   
   observeEvent({xpdb_inputData()}, {
     
-    xpdb = xpdb_inputData() 
+    #xpdb = xpdb_inputData() 
     validate(need(xpdb, message=FALSE) 
     )
      

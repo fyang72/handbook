@@ -2,14 +2,20 @@
 xpdb_diagnostic_GOF1 <- function(xpdb, values4xpdb)  {
   validate(need(xpdb, message=FALSE))
   
-  tdata = slot(xpdb, "Data")   # or xpdb@Data
+  tdata0 = slot(xpdb, "Data")    # or xpdb@Data
   runno = slot(xpdb, "Runno")  # or xpdb@Runno
   
+  validate(need(all(c("PRED", "IPRED", "DV") %in% colnames(tdata0)), 
+                message="need PRED, IPRED and DV in the data")
+  )
+           
+
+  tdata <- tdata0 %>% mutate(xvar=PRED, yvar=DV)
   limits = range(c(tdata$DV, tdata$PRED), na.rm=TRUE)
   
-  fig.PRED.DV = tdata %>%
-    filter(WRES!=0) %>%
-    ggplot(aes(x=PRED, y=DV))+
+  fig.PRED.DV = tdata   %>% 
+    ##filter(WRES!=0) %>%
+    ggplot(aes(x=xvar, y=yvar))+
     geom_point(color="black",size=2, alpha=0.5)+
     coord_fixed(ratio=1, xlim = limits, ylim = limits) + 
     #geom_smooth(show.legend = FALSE,lwd=1,alpha=0.5)+ 
@@ -21,12 +27,16 @@ xpdb_diagnostic_GOF1 <- function(xpdb, values4xpdb)  {
       x=xpdb@Prefs@Labels$PRED, y=xpdb@Prefs@Labels$DV)+
     theme(plot.title = element_text(size=12,face="bold"),
           plot.caption = element_text(face="italic"))
+  values4xpdb$diagnostic$PRED_DVOR$fig = fig.PRED.DV
+  values4xpdb$diagnostic$PRED_DVOR$data = tdata
+  
   
   values = c(tdata$DV, tdata$PRED)
   limits = range(values[is.finite(log(values))], na.rm=TRUE)
-  fig.PRED.DV.LOG = tdata %>%
-    filter(WRES!=0) %>%
-    ggplot(aes(x=PRED, y=DV))+
+  fig.PRED.DV.LOG = tdata %>%  
+    filter(is.finite(log(xvar)), is.finite(log(yvar))) %>% 
+    ##filter(WRES!=0) %>%
+    ggplot(aes(x=xvar, y=yvar))+
     geom_point(color="black",size=2, alpha=0.5)+
     coord_fixed(ratio=1, xlim = limits, ylim = limits) + 
     scale_y_log10() + scale_x_log10() + 
@@ -42,12 +52,22 @@ xpdb_diagnostic_GOF1 <- function(xpdb, values4xpdb)  {
     
     annotation_logticks(sides ="bl")     # "trbl", for top, right, bottom, and left.
   
+  values4xpdb$diagnostic$PRED_DVOR_LOG$fig = fig.PRED.DV.LOG
+  values4xpdb$diagnostic$PRED_DVOR_LOG$data = tdata
   
+  
+  
+  
+  
+  tdata <- tdata0 %>% mutate(xvar=IPRED, yvar=DV)
+  
+  values = c(tdata$DV, tdata$IPRED)
+  limits = range(values[is.finite(log(values))], na.rm=TRUE)
   
   limits = range(c(tdata$DV, tdata$IPRED), na.rm=TRUE)
-  fig.IPRED.DV = tdata %>%
-    filter(WRES!=0) %>%
-    ggplot(aes(x=IPRED, y=DV))+
+  fig.IPRED.DV = tdata   %>% 
+    #filter(WRES!=0) %>%
+    ggplot(aes(x=xvar, y=yvar))+
     geom_point(color="black",size=2, alpha=0.5)+
     coord_fixed(ratio=1, xlim = limits, ylim = limits) + 
     #geom_smooth(show.legend = FALSE,lwd=1,alpha=0.5)+ 
@@ -59,13 +79,18 @@ xpdb_diagnostic_GOF1 <- function(xpdb, values4xpdb)  {
       x=xpdb@Prefs@Labels$IPRED, y=xpdb@Prefs@Labels$DV)+
     theme(plot.title = element_text(size=12,face="bold"),
           plot.caption = element_text(face="italic"))
+  values4xpdb$diagnostic$IPRED_DVOR$fig = fig.IPRED.DV
+  values4xpdb$diagnostic$IPRED_DVOR$data = tdata
+  
+  
   
   values = c(tdata$DV, tdata$IPRED)
   limits = range(values[is.finite(log(values))], na.rm=TRUE)
   
-  fig.IPRED.DV.LOG = tdata %>%
-    filter(WRES!=0) %>%
-    ggplot(aes(x=IPRED, y=DV))+
+  fig.IPRED.DV.LOG = tdata %>%  
+    filter(is.finite(log(xvar)), is.finite(log(yvar))) %>% 
+    #filter(WRES!=0) %>%
+    ggplot(aes(x=xvar, y=yvar))+
     geom_point(color="black",size=2, alpha=0.5)+
     coord_fixed(ratio=1, xlim = limits, ylim = limits) + 
     scale_y_log10() + scale_x_log10() + 
@@ -80,12 +105,11 @@ xpdb_diagnostic_GOF1 <- function(xpdb, values4xpdb)  {
           plot.caption = element_text(face="italic")) + 
     
     annotation_logticks(sides ="bl")    # "trbl", for top, right, bottom, and left.
+   
+  values4xpdb$diagnostic$IPRED_DVOR_LOG$fig = fig.IPRED.DV.LOG
+  values4xpdb$diagnostic$IPRED_DVOR_LOG$data = tdata
   
-  values4xpdb$diagnostic$PRED_DVOR = fig.PRED.DV 
-  values4xpdb$diagnostic$PRED_DVOR_LOG = fig.PRED.DV.LOG
   
-  values4xpdb$diagnostic$IPRED_DVOR = fig.IPRED.DV
-  values4xpdb$diagnostic$IPRED_DVOR_LOG = fig.IPRED.DV.LOG
   
   add_legend = FALSE
   if (add_legend) {
