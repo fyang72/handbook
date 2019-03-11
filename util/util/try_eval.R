@@ -12,13 +12,14 @@ try_eval <-function(text="") {
 #setwd(tempdir())
 owd <- tempdir()
 on.exit(setwd(owd))  
-  
+
 zz <- file("all.Rout", open="wt")
 sink(zz, type="message")
 
+
 # source the function
 try(
-  eval(parse(text=text))
+  eval(parse(text=text)) #, silent = TRUE
 )  
 
 ## reset message sink and close the file connection
@@ -26,7 +27,11 @@ sink(type="message")
 close(zz)
 
 ## Display the log file
-error_message <- readLines("all.Rout")
+message <- readLines("all.Rout")
 
-return(error_message)
+#return(list(output=output, error_message=error_message))
+
+#rm(owd, text, zz)
+return(environment())
+
 }

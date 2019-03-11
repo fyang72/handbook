@@ -1,4 +1,3 @@
- 
 $PROB
 - Name: MM001.cpp
 - model with parallel linear and Michaelis-Menten elimination with direct-effect inhibitory sigmoid Emax structural model  

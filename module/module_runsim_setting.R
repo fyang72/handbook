@@ -50,7 +50,13 @@ module_runsim_setting <- function(input, output, session, ALL, values)  {
   
   ns <- session$ns 
    
-  observeEvent(input$confirm, {
+  observeEvent({
+    input$seed
+    input$delta
+    input$followup_period
+    input$infusion_hrs_lst
+    }, {
+      
     validate(need(input$seed, message=FALSE), 
              need(input$delta, message=FALSE), 
              need(input$followup_period, message=FALSE), 
@@ -58,10 +64,8 @@ module_runsim_setting <- function(input, output, session, ALL, values)  {
     )
     
     #  infusion hours if IV dose
-    infusion_hrs_lst =  tryCatch({eval(parse(text=paste0("c(",input$infusion_hrs_lst, ")")))}, 
+    output =  tryCatch({eval(parse(text=paste0("c(",input$infusion_hrs_lst, ")")))}, 
                                  error=function(e) {
-                                   
-                                   print("error in parsing infusion_hrs_lst"); 
                                    return(NULL)   # default 
                                  } #, finally = {
                                  # eval(parse(text=txt)) %>% as.data.frame()
@@ -71,13 +75,11 @@ module_runsim_setting <- function(input, output, session, ALL, values)  {
     values$seed = input$seed
     values$delta = input$delta
     values$followup_period = input$followup_period
-    values$infusion_hrs_lst = infusion_hrs_lst
+    values$infusion_hrs_lst = output
     
-    if (is.null(infusion_hrs_lst)) {
+    if (is.null(output)) {
       showNotification("error in parsing infusion_hrs_lst", type="error")   # "default, "message", "warning", "error"}
-    }else{
-      showNotification("confirm sucessfully", type="message")   # "default, "message", "warning", "error"
-    }      
+    }       
     
   })
   

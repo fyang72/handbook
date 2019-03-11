@@ -134,12 +134,7 @@ module_run_script <- function(input, output, session,
       )
     )
   })
-   
-  output$run_script_message <- renderUI(renderText({
-    { values$run_script_message } 
-  })() %>% HTML())
-  
-  
+    
   
   
   ################################
@@ -242,71 +237,7 @@ module_run_script <- function(input, output, session,
     
     )
   })
-   
-  ################################
-  # run_script  
-  ################################ 
-  observeEvent(input$run_script_org, {
-    validate(need(input$script_content, message="no script loaded yet")
-    )
-      
-    ihandbook = 1
-    #isolate({ 
-      
-    # eval(parse(text=(input$script_content)))   removed 02/10/2019
-    output= NULL
-    # source the function
-     tryCatch(eval(parse(text=(input$script_content)))  , 
-              error=function(e) {
-                print("error found in runing script"); 
-                return(NULL)
-              } #, finally = {
-              # eval(parse(text=txt)) %>% as.data.frame()
-              #}
-     )  
- 
-    data.generating<- tryCatch(eval(parse(text="values$data = output$data")), 
-                                 error=function(e) {
-                                   print("warning: run script sucessfully, but no data generating by runing script"); 
-                                   return(NULL)
-                                 } , finally = {
-                                   ("sucess!")
-                                 }
-    )
     
-    figure.generating<- tryCatch(eval(parse(text="values$figure = output$figure")), 
-                      error=function(e) {
-                        print("warning: run script sucessfully, but no figure generating by runing script"); 
-                        return(NULL)
-                      } , finally = {
-                        ("sucess!")
-                      }
-    )
-    
-    table.generating<- tryCatch(eval(parse(text="values$table = output$table")), 
-                              error=function(e) {
-                                print("warning: run script sucessfully, but no table generating by runing script"); 
-                                return(NULL)
-                              } , finally = {
-                                 ("sucess!")
-                              }
-    ) 
-     
-    if (is.null(figure.generating) & is.null(table.generating) & is.null(data.generating) ) {
-      values$run_script_message = colFmt("error: run script sucessfully, but no data/figure/table generating by runing script",'red')
-      
-      showNotification("error: no data/figure/table generating by runing script", type="error")
-      #updateTextInput(session, "run_script_message", value="error: run script sucessfully, but no figure and table generating by runing script")
-     }else{
-      values$run_script_message = colFmt("run script sucessfully",'green')
-      showNotification("run script sucessfully", type="message")   # "default, "message", "warning", "error"
-      
-    }
-      
-  })   
-    
-  
-  
   ################################
   # run_script  
   ################################ 
@@ -316,17 +247,33 @@ module_run_script <- function(input, output, session,
     
     ihandbook = 1
     output= NULL
-    error.message <- try_eval(text = input$script_content)
+    
+    owd <- tempdir()
+    on.exit(setwd(owd)) 
+    
+    ## capture messages and errors to a file.
+    zz <- file("all.Rout", open="wt")
+    sink(zz, type="message")
+    
+    # source the function
+    try(
+      eval(parse(text=(input$script_content))), silent = TRUE 
+    )  
+    
+    ## reset message sink and close the file connection
+    sink(type="message")
+    close(zz)
+    
+    ## Display the log file
+    error_message <- readLines("all.Rout")
+     
+    if (length(error_message)>0) {
+      showNotification(paste0(error_message, collapse="\n"), type="error")
+    }else {
+      if("data" %in% names(output)) {values$data = output$data}
+      if("figure" %in% names(output))   {values$figure = output$figure}
+      if("table" %in% names(output)) {values$table = output$table}
       
-    if(is.data.frame(output$data)) {values$data = output$data}
-    if(is.ggplot(output$figure))   {values$figure = output$figure}
-    if(is.data.frame(output$data)) {values$table = output$table}
-  
-    if (length(error.message)>0) {
-      showNotification(paste0(error.message, collapse="\n"), type="error")
-    }
-  
-    if (length(error.message)==0) {
       showNotification("run script sucessfully", type="message")   # "default, "message", "warning", "error"
     }
   

@@ -13,15 +13,33 @@ module_runsim_output_UI <- function(id, label = "") {
   
 tagList(
   fluidRow(
-    column(width=8,  
+  fluidRow(
+    column(width=4, #offset = 1, 
+         radioButtons(ns("YesNoIIV"), 
+                      label = "Inter-Individual Variability (IIV)", 
+                      inline = TRUE,
+                      choices = list("Yes" = "Yes", 
+                                     "No" = "No"), 
+                      width = "100%",
+                      selected = "Yes")),
+    
+    column(width=4, numericInput(ns("seed"), label = "Random seed:",
+                                  value=1234, min=1, max=10000)
+    )), 
+  
+  fluidRow(
+    column(width=4,  
            actionButton(ns("run_simulation"), label="Run simulation", style=actionButton.style ) 
     ),
     
-    column(width=2, #status = "primary",  #class = 'rightAlign', #background ="aqua",
+    column(width=4, #status = "primary",  #class = 'rightAlign', #background ="aqua",
            textInput(ns("data_name"), value="simDat-", label=NULL)),
     
-    column(width=2, #status = "primary",  #class = 'rightAlign',#background ="aqua",
+    column(width=4, #status = "primary",  #class = 'rightAlign',#background ="aqua",
            actionButton(ns("save_simdata"),label="Save data", style=actionButton.style))
+  ), 
+  style='margin-bottom:30px;  border:1px solid; padding: 10px;' 
+  #fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
   ), 
   
   fluidRow(
@@ -52,7 +70,8 @@ module_runsim_output <- function(input, output, session, ALL, values, cppModel_n
     x=setup_scale(myscale='1_2', mylimit=c(0, max(tdata$xvar/7, na.rm=TRUE)))
     
     # no pre-dose samples in plot
-    fig = ggplot(tdata%>%mutate(xvar=xvar/7), aes(x=xvar, y=yvar, group=ARMA, col=ARMA)) + 
+    tdata = tdata%>%mutate(xvar=xvar/7)
+    fig = ggplot(tdata, aes(x=xvar, y=yvar, group=ARMA, col=ARMA)) + 
       #ggtitle("Concentration Time Profile") + 
       
       geom_point() + geom_line() +   
@@ -70,14 +89,7 @@ module_runsim_output <- function(input, output, session, ALL, values, cppModel_n
       
       theme_bw() + base_theme(font.size = as.integer(12)) + 
       guides(col=guide_legend(ncol=4,byrow=TRUE))    
-    
-    fig  
-    
-    # output$figLog <- renderPlot({ 
-    #   fig 
-    # })
-    # plotOutput(ns("figLog"), width = "100%", height = "500px")
-    #   
+     
    
     attr(fig, "title") = "Predicted concentration (mg/L)" 
     ALL = callModule(module_save_figure, "simulated_profile", ALL, 
@@ -96,7 +108,21 @@ module_runsim_output <- function(input, output, session, ALL, values, cppModel_n
 #--------------------  
 cppModel <- reactive({
   cppModel =  ALL$cppModel[[cppModel_name]]
+  
+  if (is.null(cppModel)) {
+    # "default, "message", "warning", "error"  
+    showNotification("No valid cppModel found", type="error")  
+  }
   validate(need(cppModel, message="no cppModel found"))
+  
+  if (input$YesNoIIV=="No") {
+     cppModel  =  cppModel  %>% zero_re  
+    #message = "Simulation with no inter-individual variability (IIV)"
+    # "default, "message", "warning", "error"  
+    #showNotification(message, type="message")  
+  }
+  
+   
   
   cppModel
 })
@@ -107,6 +133,10 @@ cppModel <- reactive({
 #--------------------  
 adex <- reactive({
   adex =  values$adex
+  if (is.null(adex)) {
+    # "default, "message", "warning", "error"  
+    showNotification("No valid adex found", type="error")  
+  }
   validate(need(adex, message="no adex found"))
   
   adex
@@ -145,12 +175,11 @@ observeEvent(input$run_simulation, {
   
   # setup parameters for simulation
   # -----------------------------------
-  seed = values$seed
+  seed = input$seed
   delta = values$delta
   followup_period = values$followup_period
   infusion_hrs_lst = values$infusion_hrs_lst
-  
-  
+   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (1==2) { 
   mod = mread("./model/cpp/LN001.cpp")
@@ -166,7 +195,7 @@ observeEvent(input$run_simulation, {
   
   adex = adex %>%          # a data.frame or a event object
     capitalize_names()
-  
+   
   adex = adex %>% left_join(adsl, by="ID")
   
   # POP + REP + ID + DOSEID(ARMA) + TIME
@@ -188,7 +217,10 @@ observeEvent(input$run_simulation, {
   treat_end2 = adex %>% pull(TIME) %>% as_numeric() %>% max(na.rm=TRUE) # 
   treat_end = max(treat_end1, treat_end2)
   
-  sim_end = treat_end + followup_period   # default 112 days                      # note dose by week only
+  sim_end = treat_end + followup_period   # default 112 days  
+   
+  
+  # note dose by week only
   tgrid = sim_timept(start=0, end=treat_end, delta=delta, dtime=seq(0,treat_end, by=7))
  
   # run simulation

@@ -9,101 +9,201 @@ When you click the **Knit** button a document will be generated that includes bo
 
 ## Run simulation <a name="run_sim"></a>
 
+Simulated results were generated at this section, including 
+1. single, population mean simulatin; 
+2. population simulation
+3. post-hoc simulation
+
 ```{r}
+output$run_simulation <- renderUI({ 
+   
+  ALL = callModule(module_runsim, "run_simulation", 
+                   ALL, cppModel_name = "mYtEsT_for_run_simulation")  
+  module_runsim_UI(id="run_simulation", label = NULL)
 
-  actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
+})
 
-
-
-  output$run.simulation <- renderUI({ 
-     
-    ALL = callModule(module_run_simulation, "run.simulation", 
-                     ALL, cppModel_name = "mYtEsT_for_run_simulation")  
-    module_run_simulation_UI(id="run.simulation", label = "run.simulation")
- 
-  })
-  
-  fluidRow(column(12, uiOutput(("run.simulation"))))
+fluidRow(column(12, uiOutput(("run_simulation"))))
 ```
 
  
-## Summary of result <a name="run_sim"></a>
+ 
+## Summarise exposure <a name="run_sim"></a>
+You can calculate the individual exposure, and summarise them based on the dose group. 
+generate summary tables and visualizations. 
 
+```{r}
+#-----------------------------------------
+# data_selector
+#-----------------------------------------
+output$data_selector_for_summarise_exposure <- renderUI({
 
-### Individual plot <a name="run_sim"></a>
+  validate(need(ALL$DATA, message=FALSE))
+  
+  data.lst = c("", unique(names(ALL$DATA)))
+  selectizeInput(("data_name_for_summarise_exposure"), 
+                 label    = "select dataset:" , 
+                 choices  = data.lst,  #unique(inputData()%>%pull(TEST)),    
+                 multiple = FALSE, 
+                 
+                 selected = data.lst[1])  #unique(inputData()%>%pull(TEST))[1])   
+})
+fluidRow(column(12, uiOutput(("data_selector_for_summarise_exposure"))))
+  
+```
  
   
 ```{r}
  
-
-  dataset = data.frame(x=1:101, y=101:201)
-
-  dataset10 = data.frame(x=1:101, y=101:201) %>% mutate(x=x*10)
-
-  script0 = 'calcIt<-function(dataset, params=0) {
-                    tabl = dataset %>% mutate(x=x*2)
-                    plot = ggplot(dataset, aes(x=x, y=y)) + geom_point() + geom_line();
-          return(list(plot=plot, tabl=tabl))
-  } 
-   '
   
-  
-    script = 'calcIt<-function(dataset, params=0) {
-                    tabl = dataset %>% mutate(F1=F1*2)
-                    plot = ggplot(dataset, aes(x=TIME, y=IPRED, group=USUBJID, col=ARMA)) + 
-                              geom_point() + geom_line();
-          return(list(plot=plot, tabl=tabl))
-  } 
-   '
-  
-  
-    #-----------------------------------------
-  # data_selector
-  #-----------------------------------------
-  output$data_selector <- renderUI({
-    ALL$DATA[['TEST']] = dataset
-    ALL$DATA[['TEST10']] = dataset10
-    
-    if (is.null(ALL$DATA)) {return(NULL)}
-    
-    data.lst = c("", unique(names(ALL$DATA)))
-    selectizeInput(("data_name"), 
-                   label    = "select which dataset:" , 
-                   choices  = data.lst,  #unique(inputData()%>%pull(TEST)),    
-                   multiple = FALSE, 
-                   
-                   selected = data.lst[1])  #unique(inputData()%>%pull(TEST))[1])   
-  })
-  fluidRow(column(12, uiOutput(("data_selector"))))
-  
-  
-  
-output$indiv_result <- renderUI({ 
-  # Create a namespace function using the provided id
-  #ns <- NS(id)
-  
+script = 'calcIt<-function(dataset, params=0) {
+                tabl = dataset %>% mutate(F1=F1*2)
+                plot = ggplot(dataset, aes(x=TIME, y=IPRED, group=USUBJID, col=ARMA)) + 
+                          geom_point() + geom_line();
+      return(list(plot=plot, tabl=tabl))
+} 
+'
    
-  validate(need(input$data_name, message=FALSE))
+output$summarise_exposure<- renderUI({  
+  validate(need(input$data_name_for_summarise_exposure, message=FALSE))
   
-  ALL =  callModule(module_run_script, "module_calcItteyte", ALL, 
-                    dataset=ALL$DATA[[input$data_name]], 
+  ALL =  callModule(module_run_script, "summarise_exposure", ALL, 
+                    dataset=ALL$DATA[[input$data_name_for_summarise_exposure]], 
                     script)
 
-   module_run_script_UI(("module_calcItteyte"), label = "module_calcItteyte") 
+   module_run_script_UI(("summarise_exposure"), label = NULL) 
      
 })
 
- fluidRow(column(12, uiOutput(("indiv_result"))))
+ fluidRow(column(12, uiOutput(("summarise_exposure"))))
+
+```
+  
+
+
+## Set threshold <a name="run_sim"></a>
+In this section, you may calculate the percent of population above specified threshold concentration.  
+
+```{r}
+#-----------------------------------------
+# data_selector
+#-----------------------------------------
+output$data_selector_for_set_threshold <- renderUI({
+
+  validate(need(ALL$DATA, message=FALSE))
+  
+  data.lst = c("", unique(names(ALL$DATA)))
+  selectizeInput(("data_name_for_set_threshold"), 
+                 label    = "select dataset:" , 
+                 choices  = data.lst,  #unique(inputData()%>%pull(TEST)),    
+                 multiple = FALSE, 
+                 
+                 selected = data.lst[1])  #unique(inputData()%>%pull(TEST))[1])   
+})
+fluidRow(column(12, uiOutput(("data_selector_for_set_threshold"))))
+  
+```
+ 
+  
+```{r}
+ 
+  
+script = 'calcIt<-function(dataset, params=0) {
+                tabl = dataset %>% mutate(F1=F1*2)
+                plot = ggplot(dataset, aes(x=TIME, y=IPRED, group=USUBJID, col=ARMA)) + 
+                          geom_point() + geom_line();
+      return(list(plot=plot, tabl=tabl))
+} 
+'
+   
+output$set_threshold <- renderUI({  
+  
+  validate(need(input$data_name_for_set_threshold, message=FALSE))
+  
+  ALL =  callModule(module_run_script, "set_threshold", ALL, 
+                    dataset=ALL$DATA[[input$data_name_for_set_threshold]], 
+                    script)
+
+   module_run_script_UI(("set_threshold"), label = NULL) 
+     
+})
+
+ fluidRow(column(12, uiOutput(("set_threshold"))))
+
+```
+  
+
+## Plot VPC <a name="run_sim"></a>
+In this section, you may overlay observed data on top of simulation data with 95% CI. 
+
+```{r}
+#-----------------------------------------
+# data_selector
+#-----------------------------------------
+tagList(
+fluidRow(column(12, uiOutput(("simdata_selector_for_VPC")))),
+  
+fluidRow(column(12, uiOutput(("obsdata_selector_for_VPC"))))
+)
+
+output$simdata_selector_for_VPC <- renderUI({
+
+  validate(need(ALL$DATA, message=FALSE))
+  
+  data.lst = c("", unique(names(ALL$DATA)))
+  selectizeInput(("simdata_name_for_VPC"), 
+                 label    = "select simulated dataset:" , 
+                 choices  = data.lst,  #unique(inputData()%>%pull(TEST)),    
+                 multiple = FALSE, 
+                 
+                 selected = data.lst[1])  #unique(inputData()%>%pull(TEST))[1])   
+})
+
+output$obsdata_selector_for_VPC <- renderUI({
+
+  validate(need(ALL$DATA, message=FALSE))
+  
+  data.lst = c("", unique(names(ALL$DATA)))
+  selectizeInput(("obsdata_name_for_VPC"), 
+                 label    = "select observed dataset:" , 
+                 choices  = data.lst,  #unique(inputData()%>%pull(TEST)),    
+                 multiple = FALSE, 
+                 
+                 selected = data.lst[1])  #unique(inputData()%>%pull(TEST))[1])   
+})
+
+  
 
 ```
  
+  
+```{r}
  
-### Population-mean plot <a name="run_sim"></a>
- 
- 
-### Boxplot, etc
- 
-```{r, eval=FALSE}
- 
+  
+script = 'calcIt<-function(dataset, params=0) {
+                tabl = dataset %>% mutate(F1=F1*2)
+                plot = ggplot(dataset, aes(x=TIME, y=IPRED, group=USUBJID, col=ARMA)) + 
+                          geom_point() + geom_line();
+      return(list(plot=plot, tabl=tabl))
+} 
+'
+   
+output$plot_VPC <- renderUI({  
+  validate(need(input$simdata_name_for_VPC, message=FALSE), 
+           need(input$obsdata_name_for_VPC, message=FALSE)
+  )
+  
+  ALL =  callModule(module_run_script, "plot_VPC", ALL, 
+                    dataset=ALL$DATA[[input$simdata_name_for_VPC]], 
+                    script)
+
+   module_run_script_UI(("plot_VPC"), label = NULL) 
+     
+})
+
+ fluidRow(column(12, uiOutput(("plot_VPC"))))
+
 ```
+ 
+  
  

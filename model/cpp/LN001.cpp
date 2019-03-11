@@ -1,4 +1,3 @@
- 
 $PROB
 - Name: LN001.cpp
 - Model with linear elimination model 
@@ -62,7 +61,7 @@ $CMT @annotated
 // derived variable, Using C++ grammar                                                     
 //##############################################################################
 $MAIN 
-  double KA = exp(log(TV_KA) + ETA_KA);
+  double KA = exp(log(TV_KA) + ETA_KA)
   double CL = exp(log(TV_CL) + ETA_CLQ);
   double V2 = exp(log(TV_V2) + ETA_VSS );
   double V3 = exp(log(TV_V3) + ETA_VSS);

@@ -5,9 +5,11 @@ library(dplyr)
 # initialization of key variables
 ######################################################################
  
-HOME = "~/handbook/" 
-server_IP_address = "10.244.106.127"   # NULL  #
-server.IP.address = "10.244.106.127"    # NULL  #
+#HOME = "~/handbook/" 
+HOME = normalizePath(".")
+
+server_IP_address = NULL  #"10.244.106.127"   # NULL  #
+server.IP.address = NULL  #"10.244.106.127"    # NULL  #
 
 actionButton_style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
 actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332"

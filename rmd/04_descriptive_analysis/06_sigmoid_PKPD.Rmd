@@ -11,7 +11,7 @@ output$PKPD_despcriptive_analysis_sigmoid_plot <- renderUI({
   
   validate(need(values$data4_PKPD, message="no data found yet"))
   
-    script = readLines("./script/desp_sigmoid_PKPD.R")
+    script = readLines(paste0(HOME, "/script/desp_sigmoid_PKPD.R"))
     script = paste0(script, sep="\n")   # sep="<br/>")
     script = paste0(script, collapse="")
     

@@ -71,7 +71,7 @@ output$response_despcriptive_analysis_population_mean_plot <- renderUI({
            need(nrow(response_despcriptive_analysis_inputData())>0, message="data is empty")
   )
   
-    script = readLines("./script/desp_mean_profile.R")
+    script = readLines(paste0(HOME, "/script/desp_mean_profile.R"))
     script = paste0(script, sep="\n")   # sep="<br/>")
     script = paste0(script, collapse="")
   
@@ -105,7 +105,7 @@ output$response_despcriptive_analysis_population_indiv_plot <- renderUI({
   
   validate(need(response_despcriptive_analysis_inputData(), message="no data found yet"))
   
-    script = readLines("./script/desp_indiv_profile.R")
+    script = readLines(paste0(HOME, "/script/desp_indiv_profile.R"))
     script = paste0(script, sep="\n")   # sep="<br/>")
     script = paste0(script, collapse="")
   

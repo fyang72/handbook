@@ -25,7 +25,10 @@ output$drug_despcriptive_analysis_population_mean_plot <- renderUI({
   
   validate(need(drug_despcriptive_analysis_inputData(), message="no data found yet"))
   
-    script = readLines("./script/desp_mean_profile.R")
+  print("line 28")
+ print( normalizePath(".") )
+  
+    script = readLines(paste0(HOME, "/script/desp_mean_profile.R"))
     script = paste0(script, sep="\n")   # sep="<br/>")
     script = paste0(script, collapse="")
   
@@ -59,7 +62,7 @@ output$drug_despcriptive_analysis_population_indiv_plot <- renderUI({
   
   validate(need(drug_despcriptive_analysis_inputData(), message="no data found yet"))
   
-    script = readLines("./script/desp_indiv_profile.R")
+    script = readLines(paste0(HOME, "/script/desp_indiv_profile.R"))
     script = paste0(script, sep="\n")   # sep="<br/>")
     script = paste0(script, collapse="")
   

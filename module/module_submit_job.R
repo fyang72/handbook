@@ -421,16 +421,16 @@ observeEvent({input$check_status}, {
     text = paste0("values$runno", "[['", irunno, "']]$status = readLines('./output.log')") 
   
     #error_message <- try_eval(text = text)
-    error_message =  tryCatch(eval(parse(text=text))  , 
+    output =  tryCatch(eval(parse(text=text))  , 
                               error=function(e) {
-                                return("check_failed")
+                                return(NULL)
                               } #, finally = {
                               # eval(parse(text=txt)) %>% as.data.frame()
                               #}
     )
     
     # "default, "message", "warning", "error"
-    if (error_message[1]=="check_failed") {
+    if (is.null(output)) {
       showNotification(paste0(irunno, ": ", "Error in file(file, 'r') : cannot open the connection"), type="error")
     }else { 
       showNotification(paste0(irunno, ": ", "Status was returned"), type="message")   # "default, "message", "warning", "error"

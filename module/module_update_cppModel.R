@@ -7,12 +7,27 @@ module_update_cppModel_UI <- function(id, label = "") {
   
   ns <- NS(id) # Create a namespace function using the provided id
   
-  fluidRow(
-    column(width=12,   
-           uiOutput(ns("cppModelContent_container")) 
-    )
-  ) 
-  
+  tagList(
+    fluidRow(
+      column(width=12, 
+             HTML(colFmt("You may modify the loaded model and then re-assign a name for it.", color="gray")))
+    ), 
+    
+    fluidRow(
+      column(width=4,   #status = "primary",  #class = 'rightAlign', #background ="aqua",
+             textInput(ns("model_name"), value=NULL, placeholder ="cppModel-name", label=NULL, width="100%")
+      ),
+      
+      column(2, 
+             actionButton(ns("save_model"), label="Save model", style=actionButton_style )
+      )
+    ),
+    fluidRow(
+      column(width=12,   
+             uiOutput(ns("cppModel_content_container")) 
+      )
+    ) 
+  ) # tagList
 }
 
 ################################################################################ 
@@ -21,99 +36,69 @@ module_update_cppModel_UI <- function(id, label = "") {
 
 module_update_cppModel <- function(input, output, session, ALL, cppModel_name="cppModel_name") {
   
-  ns <- session$ns 
-  #values <- reactiveValues()
-  
-  actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
-  
-  #--------------------------------------  
-  # cppModelContent_container
-  #--------------------------------------
- 
-output$cppModelContent_container <- renderUI({
+ns <- session$ns 
+#values <- reactiveValues()
+
+#--------------------------------------  
+# cppModel_content_container
+#--------------------------------------
+output$cppModel_content_container <- renderUI({
   cppModel =  ALL$cppModel[[cppModel_name]]
   
   validate(need(globalVars$login$status, message=FALSE), 
            need(cppModel, message=FALSE)
   )
-  
-  #value = readLines(cppFile)
-  value = see(cppModel,raw=TRUE)
-  value = paste0(value, sep="\n")   # sep="<br/>")
-  value = paste0(value, collapse="")
-  #value = gsub("\n", '<br/>', value, fixed=TRUE)
-  
-  # HTML(value) 
-  tagList(
-    fluidRow(
-      column(width=12, "You may modify the loaded model and then re-assign a name for it.")), 
-    fluidRow(
-      #column(width=2, "model name"),
-      column(width=4,   #status = "primary",  #class = 'rightAlign', #background ="aqua",
-             textInput(ns("model_name"), value=NULL, placeholder ="cppModel-name", label=NULL, width="100%")),
-      
-      column(6, 
-             textInput(ns("read_cppModel_message"), 
-                       width="100%",
-                       label= NULL, 
-                       placeholder = "read cppModel sucessfully/failed?"
-             )
-      ),
-       
-      column(2, 
-             actionButton(ns("update_model"), label="Save model", style=actionButton.style )
-      )
-    ),
-    fluidRow(
-      column(12,
-             # textAreaInput(ns("cppModelContent"), label=NULL, value=value, rows=200,
-             #               width = '785px',   #400px', or '100%'
-             #               placeholder= "Your cppModel here.") 
-             aceEditor(ns("cppModelContent"), 
-                       mode="c_cpp", value=value, 
-                       theme = "crimson_editor",   # chrome
-                       autoComplete = "enabled",
-                       height = "1000px", 
-                       fontSize = 15 
-             )
-      )
+    
+  fluidRow(
+    column(12,
+         aceEditor(ns("cppModel_content"), 
+                   mode="c_cpp", 
+                   value=paste0(see(cppModel,raw=TRUE) , collapse="\n"), 
+                   theme = "crimson_editor",   # chrome
+                   autoComplete = "enabled",
+                   height = "1000px", 
+                   fontSize = 15 
+         )
     )
   )
-  
 })
 
-
-
 #--------------------
-# cppModelContent
+# event for save_model
 #--------------------
-observeEvent(input$update_model, {
+observeEvent(input$save_model, {
   
-  mymodel =input$cppModelContent
+  mymodel =input$cppModel_content
   validate(need(mymodel, message="Empty cppModel..."))
   
-  # try to read model after editing 
-  cppModel =  tryCatch(mread("cppModel", tempdir(), mymodel),     # ?mread , ?mcode, 
-                       error=function(e) {
-                         print("mread cppModel not sucessful..."); 
-                         return(NULL)
-                       } #, finally = {
-                       # eval(parse(text=txt)) %>% as.data.frame()
-                       #}
-  )
+  owd <- tempdir()
+  on.exit(setwd(owd)) 
   
-  if (is.function(cppModel)) {cppModel=NULL}  # avoid key words such as expand
-  #validate(need(cppModel, message="Load cppModel not sucefully"))
-   
-  if(is.null(cppModel)) {updateTextInput(session, "read_cppModel_message", value="error found in cppModel")}
-  validate(need(cppModel, message="error found in cppModel"))
+  ## capture messages and errors to a file.
+  zz <- file("all.Rout", open="wt")
+  sink(zz, type="message")
   
-  print("update cppModel sucessfully")
-  updateTextInput(session, "read_cppModel_message", value="read cppModel successfully")
+  # source the function
+  cppModel <- NULL
+  try(
+    eval(parse(text="cppModel=mread('shiny', tempdir(), mymodel")), silent = TRUE 
+  )  
   
-  ALL$cppModel[[input$model_name]]  = cppModel
+  ## reset message sink and close the file connection
+  sink(type="message")
+  close(zz)
   
+  ## Display the log file
+  error_message <- readLines("all.Rout")
+  
+  if (length(error_message)>0) {
+    showNotification(paste0(error_message, collapse="\n"), type="error")
+  }else {
+    ALL$cppModel[[input$model_name]]  = cppModel
+    showNotification("cppModel saved", type="message")   # "default, "message", "warning", "error"
+  }
+ 
 })
   
-  return(ALL)
+return(ALL)
 }

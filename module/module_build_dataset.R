@@ -211,7 +211,7 @@ observeEvent(input$run_script, {
   validate(need(input$script_content, message="no script loaded yet")
   ) 
     
-  ihandbook = 1
+
   dataset = ALL$DATA[[dataset_name]]
 
   # output= NULL
@@ -233,9 +233,12 @@ observeEvent(input$run_script, {
   #   showNotification("run script sucessfully", type="message")   # "default, "message", "warning", "error"
   # }
 
-
+ihandbook = 1
 output= NULL
-setwd(tempdir())
+# setwd(tempdir())
+# on.exit(setwd(owd)) 
+owd <- tempdir()
+on.exit(setwd(owd)) 
 
 ## capture messages and errors to a file.
 zz <- file("all.Rout", open="wt")
@@ -243,7 +246,7 @@ sink(zz, type="message")
 
 # source the function
 try(
-  eval(parse(text=(input$script_content))) 
+  eval(parse(text=(input$script_content))), silent = TRUE
 )  
 
 ## reset message sink and close the file connection
@@ -251,17 +254,15 @@ sink(type="message")
 close(zz)
 
 ## Display the log file
-error.message <- readLines("all.Rout")
+error_message <- readLines("all.Rout")
 
-if(is.data.frame(output$data)) {values$data = output$data}
-if(is.ggplot(output$figure))   {values$figure = output$figure}
-if(is.data.frame(output$data)) {values$table = output$table}
-
-if (length(error.message)>0) {
-  showNotification(paste0(error.message, collapse="\n"), type="error")
-}
-
-if (length(error.message)==0) {
+if (length(error_message)>0) {
+  showNotification(paste0(error_message, collapse="\n"), type="error")
+}else {
+  if("data" %in% names(output)) {values$data = output$data}
+  if("figure" %in% names(output))   {values$figure = output$figure}
+  if("table" %in% names(output)) {values$table = output$table}
+  
   showNotification("run script sucessfully", type="message")   # "default, "message", "warning", "error"
 }
 
