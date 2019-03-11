@@ -36,12 +36,12 @@ module_runsim_UI <- function(id, label = "") {
     ), 
     
     # setting_container 
-    tabPanel(width=12, title="Simulation setting ", value = "simulation_setting", collapsible = TRUE, 
-            collapsed = TRUE, solidHeader = TRUE,
-            fluidRow(column(12, uiOutput(ns("setting_container"))), 
-                     style='margin-bottom:30px;  border:1px solid; padding: 10px;')
-    ), 
-    
+    # tabPanel(width=12, title="Simulation setting ", value = "simulation_setting", collapsible = TRUE, 
+    #         collapsed = TRUE, solidHeader = TRUE,
+    #         fluidRow(column(12, uiOutput(ns("setting_container"))), 
+    #                  style='margin-bottom:30px;  border:1px solid; padding: 10px;')
+    # ), 
+    # 
     # run_simulation_container 
     tabPanel(width=12, title="Run simulation", value = "run_simulation", collapsible = TRUE, 
             collapsed = TRUE, solidHeader = TRUE,

@@ -140,9 +140,12 @@ testcat_var_lst <- std_convention %>% filter(domain=="TESTCAT") %>% pull(value)
 timefmt_var_lst <- std_convention %>% filter(domain=="TIMEFMT") %>% pull(value)
 
 topN = 20
+n_subject_showing_in_simulation = 10
 nmdat.mandatory.var.lst = c("ROWID","ID","TIME","DV","CMT","MDV","AMT","RATE","EVID")
 
-
+infusion_hrs_lst = c(0.5, 1, 2)
+followup_period = 112   # days
+simulation_delta = 1  # days
 
 ######################################################################
 # Load packages

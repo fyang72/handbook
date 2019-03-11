@@ -80,6 +80,16 @@ module_runsim_adsl <- function(input, output, session, ALL, values)  {
       value = paste0(value, collapse="")
       #value = gsub("\n", '<br/>', value, fixed=TRUE)
        
+      # adsl <- 
+      #   data_frame(ID=1:nsubject) %>% 
+      #   mutate_random(WGTBL[50,110] ~ rnorm(80,30)) %>%   # [lower,upper] ~ rnorm(mu,sd))
+      #   mutate_random(SEX ~ rbinomial(0.7)) %>%    # "1"=70%, "0"=30%
+      #   
+      #   mutate(POP="TEST",     # be compatiable with a general nonmem dataset
+      #          USUBJID = ID)
+      
+      
+      
       tagList(
         fluidRow(
           column(width=12, "You may modify the script and then re-assign a name for it.")), 
@@ -186,14 +196,32 @@ module_runsim_adsl <- function(input, output, session, ALL, values)  {
              need(input$n_subject, message=FALSE), 
              need(input$pop_WT, message=FALSE)
     ) 
-     
-    adsl = data.frame(ID=1:input$n_subject, 
-                      WGTBL = rep(input$pop_WT, time=input$n_subject)
-                      )
-    adsl
+      
+  # mread cppModel
+  environment(try_eval) <- environment()
+  text=paste0("pop_WT=c(", input$pop_WT, ")")
+  env = try_eval(text)
+  
+  if ("pop_WT" %in% ls(env)) {
+    pop_WT = get("pop_WT", env)
+  }else{
+    pop_WT = NULL
+    error_message = get("message", env)
+    # "default, "message", "warning", "error" 
+    showNotification(paste0(error_message, collapse="\n"), type="error")
+  }
+   
+  pop_WT = unique(pop_WT)
+  if (is.function(pop_WT)|is.list(pop_WT)) {pop_WT=NULL}
+  validate(need(pop_WT, message=FALSE))
+ 
+  adsl = data.frame(ID=1:(input$n_subject * length(pop_WT)), 
+                    WGTBL = rep(pop_WT, each=input$n_subject)
+  )
+  
+  adsl 
+  
   })
-  
-  
   #--------------------------------------  
   # reactive of load_script_adsl
   #-------------------------------------- 

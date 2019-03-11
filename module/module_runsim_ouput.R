@@ -21,11 +21,18 @@ tagList(
                       choices = list("Yes" = "Yes", 
                                      "No" = "No"), 
                       width = "100%",
-                      selected = "Yes")),
+                      selected = "Yes")
+         ),
     
     column(width=4, numericInput(ns("seed"), label = "Random seed:",
                                   value=1234, min=1, max=10000)
-    )), 
+    ),
+    
+    column(width=4, numericInput(ns("infusion_hrs_lst"), label = "Infusion Hour",
+                                 value=1, min=0, max=10)
+    )
+    
+    ), 
   
   fluidRow(
     column(width=4,  
@@ -71,11 +78,11 @@ module_runsim_output <- function(input, output, session, ALL, values, cppModel_n
     
     # no pre-dose samples in plot
     tdata = tdata%>%mutate(xvar=xvar/7)
-    fig = ggplot(tdata, aes(x=xvar, y=yvar, group=ARMA, col=ARMA)) + 
+    fig = ggplot(tdata, aes(x=xvar, y=yvar, group=ID, col=ARMA)) + 
       #ggtitle("Concentration Time Profile") + 
       
       geom_point() + geom_line() +   
-      geom_errorbar(aes(ymin = meanMinusSE, ymax = meanPlusSE), width=0.2) + 
+      #geom_errorbar(aes(ymin = meanMinusSE, ymax = meanPlusSE), width=0.2) + 
       
       scale_color_manual(values=colScheme()) +  
       
@@ -162,9 +169,11 @@ observeEvent(input$run_simulation, {
   mod = cppModel() 
   adsl = adsl();  
   adex = adex()  
+  
   validate(need(mod, message="no model loaded"), 
            need(adsl, message="no adsl loaded"), 
-           need(adex, message="no adex loaded")
+           need(adex, message="no adex loaded"), 
+           need(input$infusion_hrs_lst, message=FALSE)
            )
   
   # Create a Progress object
@@ -173,44 +182,47 @@ observeEvent(input$run_simulation, {
   progress$set(message = "Running Simulation...Please Wait", value = 0)
   
   
-  # setup parameters for simulation
-  # -----------------------------------
-  seed = input$seed
-  delta = values$delta
-  followup_period = values$followup_period
-  infusion_hrs_lst = values$infusion_hrs_lst
+
    
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (1==2) { 
-  mod = mread("./model/cpp/LN001.cpp")
+  mod = mread(model='cppModel', project=paste0(HOME, '/model/cpp/'),file="LN001.cpp")
   adsl = data.frame(ID=c(1,2), WGTBL=75)  # a data.frame
-  adex = parseARMA(c("3 mg/kg IV Q2W*12", "350 mg IV Q3W*8"))            # a data.frame or a event object
+  adex = parseARMA(c("3 mg/kg IV Q2W*12 ", "3 mg/kg IV QW*1 + 350 mg IV Q3W*8"))            # a data.frame or a event object
      
   seed = 1234
-  delta = 1
+  simulation_delta = 1
   followup_period = 112
   infusion_hrs_lst = 1 
   }
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # adex: expand.grid on DOSEID and ID
+  dose = adex %>% capitalize_names() %>% rename(DOSEID = ID)
+  adex = expand.grid(DOSEID = unique(dose$DOSEID), ID = unique(adsl$ID)) %>%   #, POP=unique(adsl$POP))
+    mutate(DOSEID = as.integer(DOSEID), 
+           ID = as.integer(ID)) %>% 
+    left_join(dose, by="DOSEID") %>% 
+    left_join(adsl %>% mutate(ID=as.integer(ID)), by="ID") %>% 
+    mutate(WGTBL = as_numeric(WGTBL)) %>% 
+    rename(USUBJID=ID)
   
-  adex = adex %>%          # a data.frame or a event object
-    capitalize_names()
-   
-  adex = adex %>% left_join(adsl, by="ID")
+  adex = adex %>% 
+    mutate(ID = as.integer(as.factor(paste0(USUBJID,"_", DOSEID))))  # New ID , "_", POP
   
   # POP + REP + ID + DOSEID(ARMA) + TIME
   adex = adex %>% mutate(AMT = ifelse(UNIT=="mg/kg", AMT * as_numeric(WGTBL), AMT), 
                          CMT = ifelse(ROUTE=="IV", 2, 
                                       ifelse(ROUTE=="SC", 1, 0)), 
-                         RATE = ifelse(ROUTE=="IV", AMT/(infusion_hrs_lst/24), 0), 
+                         RATE = ifelse(ROUTE=="IV", AMT/(input$infusion_hrs_lst/24), 0), 
                          
                          ROUTEN = ifelse(ROUTE=="IV", 1, 
                                          ifelse(ROUTE=="SC", 2, 0))) 
   
   
-  
+  # setup parameters for simulation
+  # -----------------------------------
   # set seed to make reproducible simulation (if IIV=1)
-  set.seed(seed)
+  set.seed(input$seed)
   
   # library("PKPDmisc")
   treat_end1 = ifelse(all(c("ADDL", "II") %in% colnames(adex)), max((adex$ADDL+1)*adex$II), 0) 
@@ -221,12 +233,17 @@ observeEvent(input$run_simulation, {
    
   
   # note dose by week only
-  tgrid = sim_timept(start=0, end=treat_end, delta=delta, dtime=seq(0,treat_end, by=7))
+  tgrid = sim_timept(start=0, 
+                     end=treat_end, 
+                     delta=simulation_delta, 
+                     dtime=seq(0,treat_end, by=7))
  
   # run simulation
   # -----------------------------------
-  out = mod %>% data_set((adex)) %>% 
-    mrgsim(end=sim_end, delta=delta, add=tgrid, tad=TRUE, carry.out=c("ii", "evid")) %>% 
+  col_lst = names(which(sapply(adex, typeof) == "character"))
+  
+  out = mod %>% data_set(adex %>% select(-one_of(col_lst))) %>% 
+    mrgsim(end=sim_end, delta=simulation_delta, add=tgrid, tad=TRUE, carry.out=c("ii", "evid")) %>% 
     as.data.frame() %>% capitalize_names()  %>% slice(2:n())
   
   # add back ID, STUDYID, USUBJID, ARMA, and EXROUTE
@@ -279,24 +296,34 @@ statsTab <- reactive({
   tdata = values$simData # run_simulation()
   validate(need(tdata, message="no simdata found"))
   
-  tdata = tdata %>% mutate(NTIM=TIME, DVOR=IPRED) %>%   # use IPRED as DVOR
-    mutate(NTIM=as_numeric(NTIM), 
-           DVOR=as_numeric(DVOR))
+  subj.lst = sample(unique(tdata$ID), 
+                    min(n_subject_showing_in_simulation, 
+                        length(unique(tdata$ID))
+                        )
+                    )
   
-  statsTab = tdata %>% select(one_of("ARMA", "ID", "NTIM", "DVOR"))  %>% 
-    calc_stats(id="ID", group_by=c("ARMA",  "NTIM"), value="DVOR")  %>%
-    filter(!is.na(NTIM) & !is.na(Mean))
-     
-  EPS= 0.078/2
-  tdata = statsTab %>% 
-    mutate(NTIM=NTIM+EPS, 
-           Mean=Mean+EPS, 
-           meanPlusSE=meanPlusSE+EPS, 
-           meanMinusSE=meanMinusSE+EPS) %>% 
-    mutate(xvar=as_numeric(NTIM), 
-           yvar=as_numeric(Mean))
-  
+  tdata = tdata %>% 
+    filter(ID %in% subj.lst) %>% 
+    mutate(xvar=as_numeric(TIME), 
+           yvar=as_numeric(IPRED))
+   
   tdata 
+  
+  # 
+  # statsTab = tdata %>% select(one_of("ARMA", "ID", "NTIM", "DVOR"))  %>% 
+  #   calc_stats(id="ID", group_by=c("ARMA",  "NTIM"), value="DVOR")  %>%
+  #   filter(!is.na(NTIM) & !is.na(Mean))
+  #    
+  # EPS= 0.078/2
+  # tdata = statsTab %>% 
+  #   mutate(NTIM=NTIM+EPS, 
+  #          Mean=Mean+EPS, 
+  #          meanPlusSE=meanPlusSE+EPS, 
+  #          meanMinusSE=meanMinusSE+EPS) %>% 
+  #   mutate(xvar=as_numeric(NTIM), 
+  #          yvar=as_numeric(Mean))
+  # 
+  # tdata 
 })
 
 
