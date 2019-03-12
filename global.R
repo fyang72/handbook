@@ -199,7 +199,7 @@ library(tidyr)
 library(tidyverse)
 library(lazyeval)
 
-#library(dmutate)
+library(dmutate)
 #library(xtable)
 #library(data.table)
 #library(reshape2)   # not reshape
