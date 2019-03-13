@@ -23,6 +23,12 @@ module_build_dataset_UI <- function(id, label = "") {
       
     tabBox(width=12, id = ns("run_script_for_dataset_construction"), title =NULL, 
        
+        # dataset_container 
+        tabPanel(width=12, title="dataset", value = "dataset", collapsible = TRUE, 
+                 collapsed = TRUE, solidHeader = TRUE,
+                 fluidRow(column(12, uiOutput(ns("dataset_container")))) 
+        ),
+       
        # checkInCols_container 
        tabPanel(width=12, title="checkInCols", value = "checkIn_columns", collapsible = TRUE, 
                 collapsed = TRUE, solidHeader = TRUE,
@@ -60,6 +66,28 @@ module_build_dataset <- function(input, output, session,
 
 ns <- session$ns
 values <- reactiveValues(data=NULL,figure=NULL,table = NULL)
+
+ 
+
+
+################################
+# UI for dataset_container
+################################
+output$dataset_container <- renderUI({ 
+   
+  validate(need(ALL$DATA[[dataset_name]], message="no data found yet"))
+   
+  #0312_2019, NEED to return the data to ALL.  
+  ALL = callModule(module_save_data, "dataset_to_be_built", 
+                     ALL, 
+                     data =ALL$DATA[[dataset_name]], 
+                     data_name=dataset_name)
+  
+  module_save_data_UI(ns("dataset_to_be_built"), label = NULL) 
+  
+})
+
+  
 
 ################################
 # UI for checkInCols_container
@@ -214,6 +242,8 @@ observeEvent(input$run_script, {
 
   dataset = ALL$DATA[[dataset_name]]
 
+  print("sf")
+  print(head(dataset))
   # output= NULL
   # # source the function
   # message= tryCatch(eval(parse(text=(input$script_content))), 
@@ -246,7 +276,7 @@ sink(zz, type="message")
 
 # source the function
 try(
-  eval(parse(text=(input$script_content))), silent = TRUE
+  eval(parse(text=(input$script_content))) 
 )  
 
 ## reset message sink and close the file connection
@@ -263,6 +293,7 @@ if (length(error_message)>0) {
   if("figure" %in% names(output))   {values$figure = output$figure}
   if("table" %in% names(output)) {values$table = output$table}
   
+  print(names(output))
   showNotification("run script sucessfully", type="message")   # "default, "message", "warning", "error"
 }
 

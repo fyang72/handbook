@@ -140,6 +140,9 @@ testcat_var_lst <- std_convention %>% filter(domain=="TESTCAT") %>% pull(value)
 timefmt_var_lst <- std_convention %>% filter(domain=="TIMEFMT") %>% pull(value)
 
 topN = 20
+fuzzy_match_method = "jw"
+fuzzy_match_threshold = 0.5
+
 n_subject_showing_in_simulation = 10
 nmdat.mandatory.var.lst = c("ROWID","ID","TIME","DV","CMT","MDV","AMT","RATE","EVID")
 
@@ -202,7 +205,7 @@ library(lazyeval)
 library(dmutate)
 #library(xtable)
 #library(data.table)
-#library(reshape2)   # not reshape
+library(reshape2)   # not reshape
 #library(datasets)
 
 #------------------------------------------------------------

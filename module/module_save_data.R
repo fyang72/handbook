@@ -57,7 +57,7 @@ output$data_name_container <- renderUI({
 })
 
 output$mydatatable <- DT::renderDataTable(                                                                                                                                          
-  DT::datatable(data = inputData(),                                                                                                                                                       
+  DT::datatable(data = filtered_data(),                                                                                                                                                       
                 options = list(pageLength = input$pageLength, 
                                lengthChange = FALSE, width="100%", scrollX = TRUE)                                                                   
   ))
