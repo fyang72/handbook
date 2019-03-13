@@ -227,7 +227,10 @@ observeEvent(input$saveAll, {
       left_join(table, by=KEY)
   }
   
-  ALL$DATA[[dataset_name]] <- tdata[, setdiff(colnames(tdata), colnames(tdata_org))]
+  tdata = tdata[, setdiff(colnames(tdata), colnames(tdata_org))]
+  tdata = tdata[, colnames(values$data)]
+  
+  ALL$DATA[[dataset_name]] <- tdata
   showNotification("save all sucessfully", type="message")   # "default, "message", "warning", "error"
   
 })
@@ -242,8 +245,6 @@ observeEvent(input$run_script, {
 
   dataset = ALL$DATA[[dataset_name]]
 
-  print("sf")
-  print(head(dataset))
   # output= NULL
   # # source the function
   # message= tryCatch(eval(parse(text=(input$script_content))), 
@@ -293,7 +294,6 @@ if (length(error_message)>0) {
   if("figure" %in% names(output))   {values$figure = output$figure}
   if("table" %in% names(output)) {values$table = output$table}
   
-  print(names(output))
   showNotification("run script sucessfully", type="message")   # "default, "message", "warning", "error"
 }
 

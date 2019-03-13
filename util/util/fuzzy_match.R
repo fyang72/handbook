@@ -1,23 +1,25 @@
   
- adsl = read_csv("./data/adsl.csv")  
- print(fuzzy_match(toupper(adsl$SEX)%>% unique(), sex_var_lst))
-
-
-fuzzy_match <- function(str_vec="", std_name="") {
-   
-data.frame(s1name=str_vec, stringsAsFactors = FALSE) %>% 
-    left_join(fuzzy_match0(str_vec, std_name, method = fuzzy_match_method), by="s1name") %>% 
-    rename(score = one_of(fuzzy_match_method)) %>% 
-    mutate(score = ifelse(score>fuzzy_match_threshold, NA, score)) %>% 
-    mutate(s2name = ordered(s2name, levels=std_name)) %>% 
-  pull(s2name)
+ # adsl = read_csv("./data/adsl.csv")  
+ # print(fuzzy_match(toupper(adsl$RACE)%>% unique(), race_var_lst))
+ # 
+ # s1 = c("Whiteee", "", NA)
+ # s2 = c("White", "Black")
+ # fuzzy_match(s1, s2, method = "jw")
+ # 
+fuzzy_match <- function(str_vec="", std_name="", 
+                        method = "jw", threshold = 0.50) {
+    
+ tt = fuzzy_match0(str_vec, std_name, method = method)
+ tt = cbind(str_vec, tt[match(str_vec, tt$s1name), ])
+ tt %>% rename(score = one_of(method)) %>% 
+   mutate(score = ifelse(is.na(score) | score>threshold, NA, score)) %>% 
+   mutate(s2name = ifelse(is.na(score), NA, s2name), 
+          s2name = ordered(s2name, levels=std_name)) %>% 
+   pull(s2name)
 }
+ 
 
-s1 = toupper(adsl$SEX)
-s2 = sex_var_lst
-fuzzy_match0(s1, s2, method = fuzzy_match_method)
-
-
+  
 #https://www.r-bloggers.com/fuzzy-string-matching-a-survival-skill-to-tackle-unstructured-information/
 
 fuzzy_match0 <- function(s1="", s2="", method = "jw") {

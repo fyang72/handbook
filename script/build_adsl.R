@@ -98,7 +98,9 @@ build_adsl <-function(
   #-----------------------------------------------------------------------------
   # sex.lst = c("MALE", "FEMALE", "UNKNOWN")
   adsl = adsl %>% mutate(#SEX_ORG = SEX, 
-                         SEX = fuzzy_match(toupper(SEX), sex_var_lst),  
+                         SEX = fuzzy_match(toupper(SEX), sex_var_lst, 
+                                           fuzzy_match_method, fuzzy_match_threshold
+                                           ),  
                          SEXN = ifelse(is.na(SEX), -99, as.integer(SEX))# MALE: 1, FEMALE: 2
                       
   )
@@ -106,7 +108,9 @@ build_adsl <-function(
  
   # ethnic.lst = c("NOT HISPANIC OR LATINO",  "HISPANIC OR LATINO")
   adsl = adsl %>% mutate(#ETHNIC_ORG = ETHNIC, 
-                         ETHNIC = fuzzy_match(toupper(ETHNIC), ethnic_var_lst), #ordered(toupper(ETHNIC), levels = ethnic.lst),
+                         ETHNIC = fuzzy_match(toupper(ETHNIC), ethnic_var_lst, 
+                                              fuzzy_match_method, fuzzy_match_threshold
+                         ),
                          ETHNICN = ifelse(is.na(ETHNIC), -99, as.integer(ETHNIC))
   )
   
@@ -120,7 +124,9 @@ build_adsl <-function(
   #               "UNKNOWN",
   #               "NOT REPORTED")
   adsl = adsl %>% mutate(#RACE_ORG = RACE, 
-                         RACE = fuzzy_match(toupper(RACE), race_var_lst), # ordered(toupper(RACE), levels = race.lst),
+                         RACE = fuzzy_match(toupper(RACE), race_var_lst, 
+                                            fuzzy_match_method, fuzzy_match_threshold
+                         ),
                          RACEN = ifelse(is.na(RACE), -99,  as.integer(RACE)) 
   )
   
