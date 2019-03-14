@@ -45,7 +45,7 @@ module_save_data <- function(input, output, session, ALL, data, data_name) {
 ns <- session$ns 
   
 inputData <- reactive({
-  tdata = ALL$DATA[[data_name]]
+  tdata = data # ALL$DATA[[data_name]]
   validate(need(tdata, message="no data found"))      
   tdata
 })

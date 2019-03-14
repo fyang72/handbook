@@ -243,26 +243,7 @@ observeEvent(input$run_script, {
   ) 
     
 
-  dataset = ALL$DATA[[dataset_name]]
-
-  # output= NULL
-  # # source the function
-  # message= tryCatch(eval(parse(text=(input$script_content))), 
-  #           error=function(e) {
-  #             print("error found in runing script"); 
-  #             return(NULL)
-  #           } #, finally = {
-  #           # eval(parse(text=txt)) %>% as.data.frame()
-  #           #}
-  #  )  
-  # if (!is.null(output$data)) {eval(parse(text="values$data = output$data"))}
-  # if (!is.null(output$table)) {eval(parse(text="values$table = output$table"))}
-  # 
-  # if (is.null(message) ) {
-  #   showNotification("error: no data/figure/table generating by runing script", type="error")
-  #  }else{
-  #   showNotification("run script sucessfully", type="message")   # "default, "message", "warning", "error"
-  # }
+dataset = ALL$DATA[[dataset_name]]
 
 ihandbook = 1
 output= NULL

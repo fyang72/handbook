@@ -48,27 +48,47 @@ output$data_selector_for_summarise_exposure <- renderUI({
                  
                  selected = data.lst[1])  #unique(inputData()%>%pull(TEST))[1])   
 })
-fluidRow(column(12, uiOutput(("data_selector_for_summarise_exposure"))))
+#fluidRow(column(12, uiOutput(("data_selector_for_summarise_exposure"))))
   
+```
+
+
+```{r}
+output$load_dataset_container <-renderUI({
+   
+  # callModule 
+  #isolate({ 
+    ALL = callModule(module_load_dataset, "load_dataset_for_summarise_exposure", 
+                     ALL, dataset_name="mYtEsT_for_summarise_exposure")
+  #})
+  
+  # UI  
+  fluidRow(column(6, 
+                   module_load_dataset_UI(id="load_dataset_for_summarise_exposure", label=NULL)
+                 ), 
+            column(6, 
+                   HTML(colFmt("internal library: build-in dataset <br>
+                                within session: secondary data derived from the original <br> 
+                                external file: external file", color="gray")
+                        )
+                   )
+            )  
+  })
+fluidRow(column(12, uiOutput(("load_dataset_container"))))
 ```
  
   
-```{r}
- 
-  
-script = 'calcIt<-function(dataset, params=0) {
-                tabl = dataset %>% mutate(F1=F1*2)
-                plot = ggplot(dataset, aes(x=TIME, y=IPRED, group=USUBJID, col=ARMA)) + 
-                          geom_point() + geom_line();
-      return(list(plot=plot, tabl=tabl))
-} 
-'
-   
+```{r} 
+
 output$summarise_exposure<- renderUI({  
-  validate(need(input$data_name_for_summarise_exposure, message=FALSE))
+  validate(need(ALL$DATA[["mYtEsT_for_summarise_exposure"]], message=FALSE))
   
+  
+script= readLines(paste0(HOME, "/script/simdata_summary_exposure.R"))
+script  = paste0(script, collapse="\n")
+
   ALL =  callModule(module_run_script, "summarise_exposure", ALL, 
-                    dataset=ALL$DATA[[input$data_name_for_summarise_exposure]], 
+                    dataset=ALL$DATA[["mYtEsT_for_summarise_exposure"]], 
                     script)
 
    module_run_script_UI(("summarise_exposure"), label = NULL) 

@@ -1,25 +1,23 @@
- 
 #-----------------------------------------
 # xxxUI, xxxInput, xxxOutput, xxxControl 
 #-----------------------------------------
-
 module_run_script_UI <- function(id, label = "") {
   # Create a namespace function using the provided id
   ns <- NS(id)
-  
-  actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
-  
+   
   tagList(
     fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
     
     fluidRow(
       column(width=12,  
-             HTML(colFmt("Note, the following tabset is used to 1) render the source dataset (dataset tab), 
+             HTML(colFmt("Note, the following tabset is used to 
+                         1) render the source dataset (dataset tab), 
                          2) perform the work based on the source dataset (script tab), 
-                         3) render the secondary data (data tab), final table (table tab) and figure (figure tab).", color="gray")))
+                         3) render the secondary data (data tab), final table (table tab) and figure (figure tab).", 
+                         color="gray")))
       ),
       
-  tabBox(width=12, id = ns("run_script_for_data_figure_table"), title =NULL, 
+    tabBox(width=12, id = ns("run_script_for_data_figure_table"), title =NULL, 
        
        # dataset_container 
        tabPanel(width=12, title="dataset", value = "dataset", collapsible = TRUE, 
@@ -53,281 +51,261 @@ module_run_script_UI <- function(id, label = "") {
                   fluidRow(column(12, uiOutput(ns("figure_container"))))   
        )
   ) 
-  )
+  ) # tagList
 }
-
-
 
 ################################################################################ 
 ################################################################################
 # module_run_script
 ################################################################################
-################################################################################
-# If a module needs to use a reactive expression, take the reactive expression as a 
-# function parameter. If a module wants to return reactive expressions to the calling app, 
-# then return a list of reactive expressions from the function.
-#
-#If a module needs to access an input that isn't part of the module, the containing app 
-#should pass the input value wrapped in a reactive expression (i.e. reactive(...)):
+################################################################################ 
 
 module_run_script <- function(input, output, session, 
                               ALL, dataset, script
                               )  {
+
+ns <- session$ns
+values <- reactiveValues(data=NULL, figure=NULL,table = NULL)
+
+################################
+# UI for dataset_container
+################################
+output$dataset_container <- renderUI({ 
+  validate(need(globalVars$login$status, message=FALSE))
   
-  ns <- session$ns
-   
-  actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
-   
-  #globalVars = NULL
-  #globalVars$login$status = TRUE
-    
-  values <- reactiveValues(data=NULL, figure=NULL,table = NULL)
+  callModule(module_save_data, "loaded_dataset", ALL, data=dataset, data_name="")
   
-  print("in module_run_script:::")
-  
-  ################################
-  # UI for dataset_container
-  ################################
-  output$dataset_container <- renderUI({ 
-    validate(need(globalVars$login$status, message=FALSE))
-    
-    callModule(module_table_output, "loaded_dataset", mytab=dataset)
+  fluidRow(column(12, 
+                  module_save_data_UI(ns("loaded_dataset"), label = "loaded_dataset")
+  )
+  )
+}) 
+
+
+################################
+# UI for script_container
+################################
+output$script_container <- renderUI({
+  validate(need(globalVars$login$status, message=FALSE))
    
+  tagList(
     fluidRow(column(12, 
-                    module_table_output_UI(ns("loaded_dataset"), label = "loaded_dataset")
+                    HTML(colFmt("Note, by running/modifying the following script template, 
+                                you will be able to generate any derived dataset(s), table(s) and figure(s) 
+                                based on the input data (dataset) with the parameters (param). 
+                                Certain key words should not be changed; certain formatting should be followed. 
+                                See instruction carefully.", color="gray"))
                     )
-             )
-  }) 
-   
-     
-  ################################
-  # UI for script_container
-  ################################
-  output$script_container <- renderUI({
-    validate(need(globalVars$login$status, message=FALSE))
-     
-    tagList(
-      fluidRow(column(12, 
-                      HTML(colFmt("Note, by running/modifying the following script template, 
-                                  you will be able to generate any derived dataset(s), table(s) and figure(s) 
-                                  based on the input data (dataset) with the parameters (param). 
-                                  Certain key words should not be changed; certain formatting should be followed. 
-                                  See instruction carefully.", color="gray"))
-                      )
-               ), 
-      
-      fluidRow(
-        column(3, 
-               actionButton(ns("run_script"), label="Run script", style=actionButton.style )
-        ) 
-      ),
-      fluidRow(
-        column(12,
-               aceEditor(ns("script_content"), 
-                         mode="r", value=script, 
-                         theme = "crimson_editor",   # chrome
-                         autoComplete = "enabled",
-                         height = "1000px", 
-                         fontSize = 15 
-               )
-        )
-      )
-    )
-  })
+             ), 
     
-  
-  
-  ################################
-  # figure_container
-  ################################
-  output$figure_container <- renderUI({  
-    validate(need(is.list(values$figure), message="no figure found, or output$figure needs to be a list"))
-    
-    tagList(
     fluidRow(
-      column(12,  offset=10,
-           actionButton(ns("save_all_figure"),label="Save all", style=actionButton.style)
-            )
-      ), 
-    
-    lapply(1:length((values$figure)), function(i) {
-      validate(need(values$figure[[i]], message="no figure found"), 
-               need(is.ggplot(values$figure[[i]]), message="only ggpot object allowed")
+      column(3, 
+             actionButton(ns("run_script"), label="Run script", style=actionButton_style )
+      ) 
+    ),
+    fluidRow(
+      column(12,
+             aceEditor(ns("script_content"), 
+                       mode="r", value=script, 
+                       theme = "crimson_editor",   # chrome
+                       autoComplete = "enabled",
+                       height = "1000px", 
+                       fontSize = 15 
+             )
       )
-      
-      # save values$figure into ALL$FIGURE
-      isolate({ 
-          ALL = callModule(module_save_figure, paste0("module_save_figure_", i), 
-                           ALL, 
-                           figure = values$figure[[i]], 
-                           figure_index = i, 
-                           figure_name=names(values$figure[i]), 
-                           figure_data = values$figure[[i]]$data
+    )
+  )
+})
+  
+
+
+################################
+# figure_container
+################################
+output$figure_container <- renderUI({  
+  validate(need(is.list(values$figure), message="no figure found, or output$figure needs to be a list"))
+  
+  tagList(
+  fluidRow(
+    column(12,  offset=10,
+         actionButton(ns("save_all_figure"),label="Save all", style=actionButton_style)
           )
-      })
-      module_save_figure_UI(ns(paste0("module_save_figure_", i)), label = NULL) 
-    })
+    ), 
+  
+  lapply(1:length((values$figure)), function(i) {
+    validate(need(values$figure[[i]], message="no figure found"), 
+             need(is.ggplot(values$figure[[i]]), message="only ggpot object allowed")
+    )
     
-    ) # tagList
+    # save values$figure into ALL$FIGURE
+    ALL = callModule(module_save_figure, paste0("module_save_figure_", i), 
+                     ALL, 
+                     figure = values$figure[[i]], 
+                     figure_index = i, 
+                     figure_name=names(values$figure[i]), 
+                     figure_data = values$figure[[i]]$data
+    )
+     
+    module_save_figure_UI(ns(paste0("module_save_figure_", i)), label = NULL) 
   })
   
+  ) # tagList
+})
+
+
+################################
+# data_container
+################################
+output$data_container <- renderUI({  
+  validate(need(is.list(values$data), message="No data found, or values$data needs to be a list"))
   
-  ################################
-  # data_container
-  ################################
-  output$data_container <- renderUI({  
-    validate(need(is.list(values$data), message="No data found, or values$data needs to be a list"))
-    
-    tagList(
-      fluidRow(
-        column(12, offset=10, 
-               actionButton(ns("save_all_data"),label="Save all", style=actionButton.style)
-        )
-      ),
-      
-    lapply(1:length(names(values$data)), function(i) {
-      validate(need(values$data[[i]], message="no data found"), 
-               need(is.data.frame(values$data[[i]]), message="only data.frame allowed")
+  tagList(
+    fluidRow(
+      column(12, offset=10, 
+             actionButton(ns("save_all_data"),label="Save all", style=actionButton_style)
       )
-     
-      isolate({ 
-        ALL = callModule(module_save_data, paste0("module_save_data_", i), 
-                         ALL,
-                         data = values$data[[i]],   
-                         data_name =  names(values$data[i])
-        )
-      })
-      module_save_data_UI(ns(paste0("module_save_data_", i)), label = NULL) 
-    })
+    ),
     
+  lapply(1:length(names(values$data)), function(i) {
+    validate(need(values$data[[i]], message="no data found"), 
+             need(is.data.frame(values$data[[i]]), message="only data.frame allowed")
     )
+   
+    
+    ALL = callModule(module_save_data, paste0("module_save_data_", i), 
+                     ALL,
+                     data = values$data[[i]],   
+                     data_name =  names(values$data[i])
+    )
+    
+    module_save_data_UI(ns(paste0("module_save_data_", i)), label = NULL) 
   })
   
+  )
+})
+
+################################
+# tabl_container
+################################
+output$table_container <- renderUI({  
+  validate(need(is.list(values$table), message="No table found, or values$table needs to be a list"))
   
-  
-  ################################
-  # tabl_container
-  ################################
-  output$table_container <- renderUI({  
-    validate(need(is.list(values$table), message="No table found, or values$table needs to be a list"))
-    
-    tagList(
-      fluidRow(
-        column(12, offset=10,
-               actionButton(ns("save_all_table"),label="Save all", style=actionButton.style)
-        )
-      ),
-      
-    lapply(1:length(names(values$table)), function(i) {
-      validate(need(values$table[[i]], message="no table found"), 
-               need(is.data.frame(values$table[[i]]), message="only data.frame allowed")
+  tagList(
+    fluidRow(
+      column(12, offset=10,
+             actionButton(ns("save_all_table"),label="Save all", style=actionButton_style)
       )
-      
-      # save values$table into ALL$TABLE
-      isolate({ 
-        ALL = callModule(module_save_table, paste0("module_save_table_", i), 
-                        ALL,
-                        table = values$table[[i]], 
-                        table_index = i, 
-                        table_name = names(values$table[i])
-                        )
-      })
-      module_save_table_UI(ns(paste0("module_save_table_", i)), label = NULL) 
-    })
+    ),
     
-    )
-  })
-    
-  ################################
-  # run_script  
-  ################################ 
-  observeEvent(input$run_script, {
-    validate(need(input$script_content, message="no script loaded yet")
+  lapply(1:length(names(values$table)), function(i) {
+    validate(need(values$table[[i]], message="no table found"), 
+             need(is.data.frame(values$table[[i]]), message="only data.frame allowed")
     )
     
-    ihandbook = 1
-    output= NULL
+    # save values$table into ALL$TABLE
+    ALL = callModule(module_save_table, paste0("module_save_table_", i), 
+                    ALL,
+                    table = values$table[[i]], 
+                    table_index = i, 
+                    table_name = names(values$table[i])
+                    )
     
-    owd <- tempdir()
-    on.exit(setwd(owd)) 
-    
-    ## capture messages and errors to a file.
-    zz <- file("all.Rout", open="wt")
-    sink(zz, type="message")
-    
-    # source the function
-    try(
-      eval(parse(text=(input$script_content))), silent = TRUE 
-    )  
-    
-    ## reset message sink and close the file connection
-    sink(type="message")
-    close(zz)
-    
-    ## Display the log file
-    error_message <- readLines("all.Rout")
-     
-    if (length(error_message)>0) {
-      showNotification(paste0(error_message, collapse="\n"), type="error")
-    }else {
-      if("data" %in% names(output)) {values$data = output$data}
-      if("figure" %in% names(output))   {values$figure = output$figure}
-      if("table" %in% names(output)) {values$table = output$table}
-      
-      showNotification("run script sucessfully", type="message")   # "default, "message", "warning", "error"
-    }
-  
+    module_save_table_UI(ns(paste0("module_save_table_", i)), label = NULL) 
   })
   
-     
-    
-  #--------------------------------------  
-  # observeEvent  
-  #-------------------------------------- 
-  # https://groups.google.com/forum/#!topic/shiny-discuss/vd_nB-BH8sw
+  )
+})
   
-  observeEvent({input$save_all_table}, {
-    validate(need(length(values$table), message="no table found") )
-    isolate({ 
-      #lapply(1:length(values$table), function(i) ALL$TABLE[[names(values$table)[i]]] = values$table[[i]])
+################################
+# run_script  
+################################ 
+observeEvent(input$run_script, {
+  validate(need(input$script_content, message="no script loaded yet")
+  )
+  
+  ihandbook = 1
+  output= NULL
+  
+  owd <- tempdir()
+  on.exit(setwd(owd)) 
+  
+  ## capture messages and errors to a file.
+  zz <- file("all.Rout", open="wt")
+  sink(zz, type="message")
+  
+  # source the function
+  try(
+    eval(parse(text=(input$script_content))), silent = TRUE 
+  )  
+  
+  ## reset message sink and close the file connection
+  sink(type="message")
+  close(zz)
+  
+  ## Display the log file
+  error_message <- readLines("all.Rout")
+   
+  if (length(error_message)>0) {
+    showNotification(paste0(error_message, collapse="\n"), type="error")
+  }else {
+    if("data" %in% names(output)) {values$data = output$data}
+    if("figure" %in% names(output))   {values$figure = output$figure}
+    if("table" %in% names(output)) {values$table = output$table}
     
-      ALL$TABLE = (c(ALL$TABLE, values$table))
-    print("all table have been saved")
-    print(names(ALL$TABLE))
-    })
-    
+    showNotification("run script sucessfully", type="message")   # "default, "message", "warning", "error"
+  }
+
+})
+
+   
+  
+#--------------------------------------  
+# observeEvent  
+#-------------------------------------- 
+# https://groups.google.com/forum/#!topic/shiny-discuss/vd_nB-BH8sw
+
+observeEvent({input$save_all_table}, {
+  validate(need(length(values$table), message="no table found") )
+  isolate({ 
+    #lapply(1:length(values$table), function(i) ALL$TABLE[[names(values$table)[i]]] = values$table[[i]])
+  
+    ALL$TABLE = (c(ALL$TABLE, values$table))
+  print("all table have been saved")
+  print(names(ALL$TABLE))
   })
   
-  
-  observeEvent({input$save_all_data}, {
-    validate(need(length(values$data), message="no data found") )
-    #ALL$DATA[[data_name]]  = load_external_data()
-    isolate({ 
-    #lapply(1:length(values$data), function(i) ALL$DATA[[names(values$data)[i]]] = values$data[[i]])
-      ALL$DATA = (c(ALL$DATA, values$data))
-      
-    print("all data have been saved")
-    print(names(ALL$DATA))
-    })
-  })
-  
-  
-  observeEvent({input$save_all_figure}, {
-    validate(need(length(values$figure), message="no figure found") )
-    isolate({ 
-    #lapply(1:length(values$figure), function(i) ALL$FIGURE[[names(values$figure)[i]]] = values$figure[[i]])
-      ALL$FIGURE = (c(ALL$FIGURE, values$figure))
-      
-    print("all figure have been saved")
-    print(names(ALL$FIGURE))
-    })
+})
+
+
+observeEvent({input$save_all_data}, {
+  validate(need(length(values$data), message="no data found") )
+  #ALL$DATA[[data_name]]  = load_external_data()
+  isolate({ 
+  #lapply(1:length(values$data), function(i) ALL$DATA[[names(values$data)[i]]] = values$data[[i]])
+    ALL$DATA = (c(ALL$DATA, values$data))
     
+  print("all data have been saved")
+  print(names(ALL$DATA))
   })
+})
+
+
+observeEvent({input$save_all_figure}, {
+  validate(need(length(values$figure), message="no figure found") )
+  isolate({ 
+  #lapply(1:length(values$figure), function(i) ALL$FIGURE[[names(values$figure)[i]]] = values$figure[[i]])
+    ALL$FIGURE = (c(ALL$FIGURE, values$figure))
+    
+  print("all figure have been saved")
+  print(names(ALL$FIGURE))
+  })
+    
+})
   
   
   
- # }) # isolate 
-  return(ALL)
+# }) # isolate 
+return(ALL)
 }
 
 
