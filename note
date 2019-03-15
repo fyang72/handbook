@@ -2,7 +2,14 @@
 
 1) module_run_script and module_build_dataset  why different parameters  use dataset_name? 
 2 why have both data and data_name in module_save_data? 
+3) Tree structure of Model derivation
+https://stats.stackexchange.com/questions/41443/how-to-actually-plot-a-sample-tree-from-randomforestgettree
+https://blog.exploratory.io/visualizing-a-decision-tree-using-r-packages-in-explortory-b26d4cb5e71f
+https://www.r-bloggers.com/draw-nicer-classification-and-regression-trees-with-the-rpart-plot-package/
+https://www.analyticsvidhya.com/blog/2016/04/complete-tutorial-tree-based-modeling-scratch-in-python/
 
+neural-network
+https://www.analyticsvidhya.com/blog/2017/09/creating-visualizing-neural-network-in-r/
 
 https://www.cultureofinsight.com/blog/2018/01/05/2017-11-13-reproducible-shiny-app-development-with-modules/
 

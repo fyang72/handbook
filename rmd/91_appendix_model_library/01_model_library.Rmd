@@ -9,6 +9,96 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
  
+```{r}
+ # http://kateto.net/network-visualization
+
+library(igraph)
+HOME = "C:/Users/feng.yang/Documents/Data files/"
+
+nodes <- read.csv(paste0(HOME, "/Dataset1-Media-Example-NODES.csv"), header=T, as.is=T)
+links <- read.csv(paste0(HOME, "/Dataset1-Media-Example-EDGES.csv"), header=T, as.is=T)
+
+head(nodes)
+head(links)
+
+
+library("visNetwork") 
+visNetwork(nodes, links, width="100%", height="400px")
+
+ 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+library("visNetwork") 
+HOME = "~/"
+nodes <- read.csv(paste0(HOME, "/nodes.csv"), header=T, as.is=T)
+links <- read.csv(paste0(HOME, "/links.csv"), header=T, as.is=T)
+
+# We'll start by adding new node and edge attributes to our dataframes. 
+vis.nodes <- nodes
+vis.links <- links
+vis.nodes$shape  <- "dot"  
+vis.nodes$shadow <- TRUE # Nodes will drop shadow
+vis.nodes$title  <- vis.nodes$media # Text on click
+vis.nodes$label  <- vis.nodes$type.label # Node label
+vis.nodes$size   <- vis.nodes$audience.size # Node size
+vis.nodes$borderWidth <- 2 # Node border width
+
+vis.nodes$color.background <- rep(c("slategrey", "tomato", "gold"), times=20)[1:nrow(nodes)]  # [nodes$media.type]
+vis.nodes$color.border <- "black"
+vis.nodes$color.highlight.background <- "orange"
+vis.nodes$color.highlight.border <- "darkred"
+
+visNetwork(vis.nodes, vis.links, width="100%", height="400px", #background="#eeefff",
+           main="Network", submain="And what a great network it is!",
+           footer= "Hyperlinks and mentions among media sources") %>% 
+  visEdges(arrows = "to") #%>% 
+#visHierarchicalLayout()
+
+
+
+
+ 
+library(igraph)
+HOME = "C:/Users/feng.yang/Documents/Data files/"
+
+nodes <- read.csv(paste0(HOME, "/Dataset1-Media-Example-NODES.csv"), header=T, as.is=T)
+links <- read.csv(paste0(HOME, "/Dataset1-Media-Example-EDGES.csv"), header=T, as.is=T)
+
+head(nodes)
+head(links)
+
+
+library("visNetwork") 
+visNetwork(nodes, links, width="100%", height="400px")
+
+
+
+
+visNetwork(nodes, links, width="100%", height="400px", background="#eeefff",
+           main="Network", submain="And what a great network it is!",
+           footer= "Hyperlinks and mentions among media sources")
+
+
+
+# We'll start by adding new node and edge attributes to our dataframes. 
+vis.nodes <- nodes
+vis.links <- links
+
+vis.nodes$shape  <- "dot"  
+vis.nodes$shadow <- TRUE # Nodes will drop shadow
+vis.nodes$title  <- vis.nodes$media # Text on click
+vis.nodes$label  <- vis.nodes$type.label # Node label
+vis.nodes$size   <- vis.nodes$audience.size # Node size
+vis.nodes$borderWidth <- 2 # Node border width
+
+vis.nodes$color.background <- c("slategrey", "tomato", "gold")[nodes$media.type]
+vis.nodes$color.border <- "black"
+vis.nodes$color.highlight.background <- "orange"
+vis.nodes$color.highlight.border <- "darkred"
+
+visNetwork(vis.nodes, vis.links)
+
+
+```
 
 ## One compartment model
 

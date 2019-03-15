@@ -4,7 +4,6 @@
 #-----------------------------------------
 # xxxUI, xxxInput, xxxOutput, xxxControl 
 #-----------------------------------------
-
 module_runsim_adsl_UI <- function(id, label = "") {
 # Create a namespace function using the provided id
 ns <- NS(id)
@@ -12,13 +11,13 @@ ns <- NS(id)
 fluidRow(
   column(width=12,   
          uiOutput(ns("adsl_source_selector")),
+          
+         fluidRow(column(width=6, uiOutput(ns("load_manual_adsl_container")))), 
+         fluidRow(column(width=12, uiOutput(ns("load_script_adsl_container")))), 
+         fluidRow(column(width=6, uiOutput(ns("load_session_adsl_container")))),
+         fluidRow(column(width=6, uiOutput(ns("load_external_adsl_container")))),
          
-         uiOutput(ns("load_external_adsl_container")),
-         uiOutput(ns("load_manual_adsl_container")), 
-         uiOutput(ns("load_script_adsl_container")), 
-         uiOutput(ns("load_session_adsl_container")),
-         
-         uiOutput(ns("adsl_tab_container"))
+         uiOutput(ns("adsl_table_container"))
   )
 )
 }
@@ -58,11 +57,16 @@ output$load_manual_adsl_container <- renderUI({
            need(input$adsl_source=="manual input", message=FALSE)) 
   
   tagList(
-    numericInput(ns("n_subject"), label = "# of subjects in each population",
-                 value=1, min=1, max=2000,step = 1), 
+    numericInput(ns("n_subject"), 
+                 label = "Number of subjects in each population",
+                 value=1, 
+                 min=1, max=2000,step = 1
+                 ), 
     
-    textInput(ns("pop_WT"), label = "Body weight(s) in populations",
-              value="75")
+    textInput(ns("pop_WT"), 
+              label = "Body weight(s) in populations",
+              value="75"
+              )
   )
   
 })
@@ -101,33 +105,19 @@ adsl <-
 script <- readLines(textConnection(script)) 
 script <- paste0(script, collapse="\n")
     
-    
-    tagList(
-      # fluidRow(
-      #   column(width=12, "You may modify the script and then re-assign a name for it.")), 
-      # fluidRow(
-      #   #column(width=2, "model name"),
-      #   column(width=4,   #status = "primary",  #class = 'rightAlign', #background ="aqua",
-      #          textInput(ns("script_name"), value=NULL, 
-      #                    placeholder ="construct_adsl", label=NULL, width="100%")),
-      #    
-      #   column(2, 
-      #          actionButton(ns("save_script"), label="Save script", style=actionButton_style )
-      #   )
-      # ),
-      
-      fluidRow(
-        column(12, 
-               aceEditor(ns("script_for_adsl"), 
-                         mode="r", value=script, 
-                         theme = "crimson_editor",   # chrome
-                         autoComplete = "enabled",
-                         height = "500px", 
-                         fontSize = 15 
-               ) 
-        )
-      )
-    )
+fluidRow(
+  column(12, 
+         aceEditor(ns("script_for_adsl"), 
+                   mode="r", 
+                   value=script, 
+                   theme = "crimson_editor",   # chrome
+                   autoComplete = "enabled",
+                   height = "500px", 
+                   fontSize = 15 
+         ) 
+  )
+)
+  
 }) 
  
 
@@ -141,18 +131,15 @@ output$load_session_adsl_container <- renderUI({
   
   name_lst <- names(ALL$DATA)
   only_for_internal_use <- name_lst[which(substr(name_lst, 1, 6)=="mYtEsT")]
-  dirs.list = c("", setdiff(name_lst, only_for_internal_use))
+  dirs_list = c("", setdiff(name_lst, only_for_internal_use))
   
-  fluidRow(
-    column(12,
-           selectizeInput(ns("which_session_adsl"), 
-                          label    = "load session adsl", 
-                          choices  = dirs.list, 
-                          multiple = FALSE,
-                          width="100%", 
-                          selected = dirs.list[1]) 
-    )
-  )
+  selectizeInput(ns("which_session_adsl"), 
+                label    = "load session adsl", 
+                choices  = dirs_list, 
+                multiple = FALSE,
+                width="100%", 
+                selected = dirs_list[1]) 
+ 
 }) 
 
 
@@ -175,23 +162,27 @@ output$load_external_adsl_container <- renderUI({
            #          '.RData'))
     )
   )
+  
 })
 
 #--------------------------------------  
-# adsl_tab_container
+# adsl_table_container
 #-------------------------------------- 
-output$adsl_tab_container <- renderUI({
+output$adsl_table_container <- renderUI({
   
   validate(need(globalVars$login$status, message=FALSE), 
            need(adsl(), message=FALSE)
   )
  
-  output$mydatatable <- DT::renderDataTable(                                                                                                                                          
-    DT::datatable(data = adsl(), #load_manual_adsl(),  #ifelse(is.null(values$adsl),load_manual_adsl(), values$adsl),                                                                                                                                                       
+  output$my_adsl_table <- DT::renderDataTable(                                                                                                                                          
+    DT::datatable(data = adsl(),                                                                                                                                                     
                   options = list(pageLength = 10, 
-                                 lengthChange = FALSE, width="100%", scrollX = TRUE)                                                                   
+                                 lengthChange = FALSE, 
+                                 width="100%", 
+                                 scrollX = TRUE)                                                                   
     ))
-  DT::dataTableOutput(ns("mydatatable"))
+  DT::dataTableOutput(ns("my_adsl_table"))
+  
 }) 
 
 
@@ -222,12 +213,13 @@ load_manual_adsl <- reactive({
   } 
   
   pop_WT = unique(pop_WT)
-  if (!is.vector(pop_WT)) {pop_WT=NULL}
-  validate(need(pop_WT, message=FALSE))
-  
-  adsl = data.frame(ID=1:(input$n_subject * length(pop_WT)), 
-                    WGTBL = rep(pop_WT, each=input$n_subject)
-  )
+  if (is.vector(pop_WT)) {
+    adsl = data.frame(ID=1:(input$n_subject * length(pop_WT)), 
+                      WGTBL = rep(pop_WT, each=input$n_subject)
+    )
+  }else{
+    adsl = NULL
+  }
   
   adsl 
 
@@ -241,9 +233,9 @@ load_script_adsl <- reactive({
            need(input$script_for_adsl, message=FALSE)
   )
    
-  # mread cppModel
+  # script_for_adsl
   environment(try_eval) <- environment()
-  env = try_eval(text=input$script_for_adsl)
+  env = try_eval(text=input$script_for_adsl) # need "adsl= "
   
   if ("adsl" %in% ls(env)) {
     adsl = get("adsl", env)
@@ -266,7 +258,7 @@ load_script_adsl <- reactive({
 load_session_adsl <- reactive({
   validate(need(globalVars$login$status, message=FALSE), 
            need(input$which_session_adsl, message=FALSE), 
-           need(adsl, message="no adsl found")
+           need(ALL$DATA, message="no adsl found")
   )
    
   adsl = ALL$DATA[[input$which_session_adsl]]
@@ -289,10 +281,10 @@ load_external_adsl <- reactive({
   ext <- tools::file_ext(inFile$name) 
   adsl = switch(ext,
                  "csv" = read_csv(inFile$datapath, col_names=TRUE,  
-                                  col_type=cols(.default=col_character()))  %>% as.data.frame(),
-                 "xlsx"=read_excel(inFile$datapath, sheet = 1, col_names = TRUE)  %>% as.data.frame(),
-                 "xls" = read_excel(inFile$datapath)  %>% as.data.frame(),
-                 "sas7bdat" =  read_sas(inFile$datapath)  %>% as.data.frame(), 
+                                  col_type=cols(.default=col_character())),
+                 "xlsx"=read_excel(inFile$datapath, sheet = 1, col_names = TRUE),
+                 "xls" = read_excel(inFile$datapath, sheet = 1, col_names = TRUE),
+                 "sas7bdat" =  read_sas(inFile$datapath), 
                  "RData" =  load(inFile$datapath), 
                  NULL
   )
@@ -302,7 +294,6 @@ load_external_adsl <- reactive({
   if (is.null(adsl)) {
     showNotification(paste0(error_message, collapse="\n"), type="error")
     }
-  validate(need(adsl, message=error_message)) 
    
   adsl
 })
@@ -316,19 +307,15 @@ adsl <- reactive({
                  "script" = load_script_adsl(), 
                  "within session" = load_session_adsl(), 
                  "external file" = load_external_adsl(), 
-                 NULL)
+                 NULL) %>% as.data.frame()
   
-  adsl = adsl %>% as.data.frame()
-  print(adsl)
-  
-  std.col.name.lst = c("ID", "WGTBL")
-  all_yes = all(std.col.name.lst %in% colnames(adsl))
-  print(all_yes)
-   
+  # must have ID and WGTBL
+  col_name_lst = c("ID", "WGTBL")
+  all_yes = all(col_name_lst %in% colnames(adsl))
   if(all_yes==FALSE) {
-    adsl = NULL
-    error_message = paste0("Missing columns of ", paste0(setdiff(std.col.name.lst, colnames(adsl)), collapse=", "), " in ", "adsl")
+    error_message = paste0("Missing column(s) of ", paste0(setdiff(col_name_lst, colnames(adsl)), collapse=", "), " in ", "adsl")
     showNotification(paste0(error_message, collapse="\n"), type="error")
+    adsl = NULL
   }
   
   values$adsl = adsl
