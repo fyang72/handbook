@@ -6,7 +6,7 @@
 module_assess_model_basic_UI <- function(id, label = "") {
   # Create a namespace function using the provided id
   ns <- NS(id)
-   
+  
   tagList(
     fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
     
@@ -40,32 +40,32 @@ module_assess_model_basic_UI <- function(id, label = "") {
                     collapsed = TRUE, solidHeader = TRUE,
                     
                     tagList(
-                    fluidRow(
                       fluidRow(
-                        
-                        column(6,
-                               uiOutput(ns("diagnostic.PRED.DVOR"))  
-                               #style='margin-bottom:30px;  border:1px solid; padding: 10px;'   
+                        fluidRow(
+                          
+                          column(6,
+                                 uiOutput(ns("diagnostic.PRED.DVOR"))  
+                                 #style='margin-bottom:30px;  border:1px solid; padding: 10px;'   
+                          ), 
+                          column(6,
+                                 uiOutput(ns("diagnostic.IPRED.DVOR")) 
+                                 #style='margin-bottom:30px;  border:1px solid; padding: 10px;'  
+                          ) 
                         ), 
-                        column(6,
-                               uiOutput(ns("diagnostic.IPRED.DVOR")) 
-                               #style='margin-bottom:30px;  border:1px solid; padding: 10px;'  
-                        ) 
-                      ), 
-                      
-                      fluidRow(
                         
-                        column(6,
-                               uiOutput(ns("diagnostic.PRED.DVOR.LOG"))  
-                               #style='margin-bottom:30px;  border:1px solid; padding: 10px;'   
-                        ), 
-                        column(6,
-                               uiOutput(ns("diagnostic.IPRED.DVOR.LOG")) 
-                               #style='margin-bottom:30px;  border:1px solid; padding: 10px;'  
-                        ) 
+                        fluidRow(
+                          
+                          column(6,
+                                 uiOutput(ns("diagnostic.PRED.DVOR.LOG"))  
+                                 #style='margin-bottom:30px;  border:1px solid; padding: 10px;'   
+                          ), 
+                          column(6,
+                                 uiOutput(ns("diagnostic.IPRED.DVOR.LOG")) 
+                                 #style='margin-bottom:30px;  border:1px solid; padding: 10px;'  
+                          ) 
+                        )
+                        
                       )
-                      
-                    )
                     )
            ),     
            
@@ -120,7 +120,7 @@ module_assess_model_basic_UI <- function(id, label = "") {
                     fluidRow(column(12, uiOutput(ns("diagnostic.ETAvsETA"))))   
            )
     ) 
-  )  # taglist
+             )  # taglist
 }
 
 
@@ -138,7 +138,7 @@ module_assess_model_basic_UI <- function(id, label = "") {
 #should pass the input value wrapped in a reactive expression (i.e. reactive(...)):
 
 module_assess_model_basic <- function(input, output, session, 
-                              ALL, xpdb, values4xpdb
+                                      ALL, xpdb, values4xpdb
 )  {
   
   ns <- session$ns
@@ -197,15 +197,15 @@ module_assess_model_basic <- function(input, output, session,
   ################################
   output$dataset_container <- renderUI({ 
     validate(need(globalVars$login$status, message=FALSE))
-     
+    
     #xpdb = xpdb_inputData()
     validate(need(xpdb, message=FALSE))
-      
+    
     callModule(module_table_output, "loaded_dataset", mytab=slot(xpdb, "Data"))
-     
+    
     fluidRow(column(12, 
                     module_table_output_UI(ns("loaded_dataset"), label = "loaded_dataset")
-            ) 
+    ) 
     )
   }) 
   
@@ -220,12 +220,12 @@ module_assess_model_basic <- function(input, output, session,
     
     fig = values4xpdb$diagnostic$PRED_DVOR   
     validate(need(fig, message=FALSE))
-     
+    
     
     callModule(module_ggplot_brush, "xpdb.diagnostic.PRED.DVOR", 
                fig=fig$fig, 
                mydata = fig$data
-               )
+    )
     
     module_ggplot_brush_UI(ns("xpdb.diagnostic.PRED.DVOR"), 
                            label = "xpdb.diagnostic.PRED.DVOR")
@@ -305,9 +305,9 @@ module_assess_model_basic <- function(input, output, session,
     
     
     callModule(module_ggplot_brush, "xpdb.diagnostic.CWRES.TIME", 
-               fig=fig, 
-               mydata = slot(xpdb, "Data") %>% mutate(xvar="CWRES", yvar="TIME"), 
-               xvar="xvar", yvar="yvar")
+               fig=fig$fig, 
+               mydata = fig$data
+    )
     
     module_ggplot_brush_UI(ns("xpdb.diagnostic.CWRES.TIME"), 
                            label = "xpdb.diagnostic.CWRES.TIME")
@@ -324,9 +324,9 @@ module_assess_model_basic <- function(input, output, session,
     
     
     callModule(module_ggplot_brush, "xpdb.diagnostic.CWRES.IPRED", 
-               fig=fig, 
-               mydata = slot(xpdb, "Data") %>% mutate(xvar="CWRES", yvar="IPRED"), 
-               xvar="xvar", yvar="yvar")
+               fig=fig$fig, 
+               mydata = fig$data
+    )
     
     module_ggplot_brush_UI(ns("xpdb.diagnostic.CWRES.IPRED"), 
                            label = "xpdb.diagnostic.CWRES.IPRED")
@@ -345,9 +345,9 @@ module_assess_model_basic <- function(input, output, session,
     
     
     callModule(module_ggplot_brush, "xpdb.diagnostic.CWRES.ID", 
-               fig=fig, 
-               mydata = slot(xpdb, "Data") %>% mutate(xvar="CWRES", yvar="ID"),  
-               xvar="xvar", yvar="yvar")
+               fig=fig$fig, 
+               mydata = fig$data
+    )
     
     module_ggplot_brush_UI(ns("xpdb.diagnostic.CWRES.ID"), 
                            label = "xpdb.diagnostic.CWRES.ID")
@@ -364,9 +364,9 @@ module_assess_model_basic <- function(input, output, session,
     
     
     callModule(module_ggplot_brush, "xpdb.diagnostic.CWRES.QUANTILE", 
-               fig=fig, 
-               mydata = slot(xpdb, "Data") %>% mutate(xvar="x", yvar="y"),  
-               xvar="x", yvar="y")
+               fig=fig$fig, 
+               mydata = fig$data
+    )
     
     module_ggplot_brush_UI(ns("xpdb.diagnostic.CWRES.QUANTILE"), 
                            label = "xpdb.diagnostic.CWRES.QUANTILE")
@@ -389,9 +389,9 @@ module_assess_model_basic <- function(input, output, session,
     
     
     callModule(module_ggplot_brush, "xpdb.diagnostic.INDIV_PLOT25", 
-               fig=fig, 
-               mydata = slot(xpdb, "Data") %>% mutate(xvar="TIME", yvar="DV"),  
-               xvar="xvar", yvar="yvar")
+               fig=fig$fig, 
+               mydata = fig$data
+    )
     
     module_ggplot_brush_UI(ns("xpdb.diagnostic.INDIV_PLOT25"), 
                            label = "xpdb.diagnostic.INDIV_PLOT25")
@@ -488,7 +488,7 @@ module_assess_model_basic <- function(input, output, session,
     #xpdb = xpdb_inputData() 
     validate(need(xpdb, message=FALSE) 
     )
-     
+    
     # all diagnostic model 
     #
     values4xpdb = xpdb_diagnostic_GOF1(xpdb, values4xpdb)

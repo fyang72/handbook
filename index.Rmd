@@ -34,9 +34,12 @@ pdf_document:
 ```{r, setup, include=FALSE}
 
 rm(list = ls())
-    
-# source("./global.R")
 
+if (1==2) {    
+  
+ source("./global.R")
+
+}
 ```
 
  

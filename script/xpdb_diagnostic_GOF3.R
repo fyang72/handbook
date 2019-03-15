@@ -25,7 +25,9 @@ xpdb_diagnostic_GOF3 <- function(xpdb, values4xpdb, n=25, ids=NA)  {
   n = min(n, length(unique(x$ID)))
   if(as.logical(sum(is.na(ids)))) ids = c(sample(unique(x$ID),n)) 
   
-  fig = ggplot(x[x$ID%in%ids,],aes(TIME,DV))+ 
+  tdata = x[x$ID%in%ids,] %>% mutate(xvar=TIME, yvar=DV)
+  
+  fig = ggplot(tdata,aes(x=xvar,y=yvar))+ 
     geom_point()+ 
     facet_wrap(~ID)+
     geom_line(aes(x=TIME,y=IPRED),color="darkorange",lwd=0.7) +
@@ -35,7 +37,8 @@ xpdb_diagnostic_GOF3 <- function(xpdb, values4xpdb, n=25, ids=NA)  {
     ylab("Observed & model prediction(mg/L)") +   theme_bw()+
     xlab(expression(Time~(days)))
   
-  values4xpdb$diagnostic$INDIV_PLOT25 = fig 
+  values4xpdb$diagnostic$INDIV_PLOT25$fig = fig 
+  values4xpdb$diagnostic$INDIV_PLOT25$data = tdata
   
   return(values4xpdb)
   

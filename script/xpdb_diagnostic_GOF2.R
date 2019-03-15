@@ -5,13 +5,18 @@ xpdb_diagnostic_GOF2 <- function(xpdb, values4xpdb)  {
   tdata = slot(xpdb, "Data")   #%>% mutate(DV=CP) # or xpdb@Data
   runno = slot(xpdb, "Runno")  # or xpdb@Runno
   
-   
+  
   require('ggplot2')
-  x = tdata %>% filter(MDV==0)
-   
+  tdata0 = tdata %>% filter(MDV==0)
+  
+  
+  #-------------------
+  # fig_CWRES_TIME
+  #-------------------
+  tdata = tdata0%>%mutate(xvar=TIME, yvar=CWRES)
   fig_CWRES_TIME <- 
     #ggplot(x[x$MDV==0,],aes(TIME,IWRES,label=ID))+
-    ggplot(x,aes(x=TIME,y=CWRES))+   #,label=ID
+    ggplot(tdata, aes(x=xvar,y=yvar))+   #,label=ID
     geom_point(size=2, alpha=0.5) + 
     geom_hline(yintercept=c(0),col="red") + 
     geom_hline(yintercept=c(-4,4),lwd=0.5,lty="dashed") + 
@@ -24,8 +29,15 @@ xpdb_diagnostic_GOF2 <- function(xpdb, values4xpdb)  {
     xlab(xpdb@Prefs@Labels$TIME) + 
     ylab( xpdb@Prefs@Labels$CWRES)
   
+  values4xpdb$diagnostic$CWRES.TIME$fig = fig_CWRES_TIME 
+  values4xpdb$diagnostic$CWRES.TIME$data = tdata
+  
+  #-------------------
+  # fig_CWRES_IPRED
+  #-------------------
+  tdata = tdata0%>%mutate(xvar=IPRED, yvar=CWRES)
   fig_CWRES_IPRED <- 
-    ggplot(x[x$MDV==0,],aes(IPRED,CWRES))+  #,label=ID
+    ggplot(tdata,aes(x=xvar,y=yvar))+  #,label=ID
     geom_point(size=2, alpha=0.5) + 
     geom_hline(yintercept=c(0),col="red") + 
     geom_hline(yintercept=c(-4,4),lwd=0.5,lty="dashed") + 
@@ -38,9 +50,16 @@ xpdb_diagnostic_GOF2 <- function(xpdb, values4xpdb)  {
     ylab( xpdb@Prefs@Labels$CWRES)+ 
     xlab(xpdb@Prefs@Labels$IPRED)
   
+  values4xpdb$diagnostic$CWRES.IPRED$fig = fig_CWRES_IPRED
+  values4xpdb$diagnostic$CWRES.IPRED$data = tdata
+  
+  #-------------------
+  # fig_CWRES_ID
+  #-------------------
+  tdata = tdata0%>%mutate(xvar=ID, yvar=CWRES)
   fig_CWRES_ID <-   
     #ggplot(x[x$MDV==0,],aes(TIME,IWRES,label=ID))+
-    ggplot(x,aes(ID,CWRES))+   #,label=ID
+    ggplot(tdata,aes(x=xvar,y=yvar))+   #,label=ID
     geom_point(size=2, alpha=0.5) + 
     geom_hline(yintercept=c(0),col="red") + 
     geom_hline(yintercept=c(-4,4),lwd=0.5,lty="dashed") + 
@@ -53,10 +72,19 @@ xpdb_diagnostic_GOF2 <- function(xpdb, values4xpdb)  {
     xlab(xpdb@Prefs@Labels$ID) + 
     ylab(xpdb@Prefs@Labels$CWRES)
   
-  qq <- qqnorm(x$CWRES[x$MDV==0],plot.it = F)
+  values4xpdb$diagnostic$CWRES.ID$fig = fig_CWRES_ID
+  values4xpdb$diagnostic$CWRES.ID$data = tdata
+  
+  #-------------------
+  # QQ plot
+  #-------------------
+  qq <- qqnorm(tdata0$CWRES,plot.it = F) 
+  qq <- data.frame(xvar=qq$x, 
+                   yvar=qq$y
+  )   
   
   fig_CWRES_QUANTILE <- 
-    ggplot(data.frame(x=qq$x,y=qq$y), aes(x, y)) + 
+    ggplot(qq, aes(x=xvar, y=yvar)) + 
     geom_point(size=2, alpha=0.5)+ 
     geom_abline(intercept=0,slope=1)+
     theme_bw() + base_theme(font.size = 12) + 
@@ -65,13 +93,16 @@ xpdb_diagnostic_GOF2 <- function(xpdb, values4xpdb)  {
     ylab(xpdb@Prefs@Labels$CWRES) + 
     xlab("Theoretical Quantiles")   
   
+  values4xpdb$diagnostic$CWRES.QUANTILE$fig = fig_CWRES_QUANTILE
+  values4xpdb$diagnostic$CWRES.QUANTILE$data = qq
+  
   #fig_CWRES_TIME   fig_CWRES_IPRED    fig_CWRES_ID   fig_CWRES_QUANTILE
   # Note: Solid red line represents CWRES = 0. Solid black lines represent CWRES = 4.  The dotted lines represent CWRES = 6.
-  values4xpdb$diagnostic$CWRES.TIME = fig_CWRES_TIME 
-  values4xpdb$diagnostic$CWRES.IPRED = fig_CWRES_IPRED
   
-  values4xpdb$diagnostic$CWRES.ID = fig_CWRES_ID
-  values4xpdb$diagnostic$CWRES.QUANTILE = fig_CWRES_QUANTILE
+  
+  
+  
+  
   
   add_legend = FALSE
   if (add_legend) {
