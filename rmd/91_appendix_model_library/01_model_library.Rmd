@@ -25,6 +25,11 @@ edges <- data.frame(from = trunc(runif(15)*(15-1))+1,
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 library("visNetwork") 
+library(igraph)
+library(shiny)
+library(dplyr)
+
+
 #HOME = "~/"
 # nodes <- read.csv(paste0(HOME, "/nodes.csv"), header=T, as.is=T)
 # links <- read.csv(paste0(HOME, "/links.csv"), header=T, as.is=T)
@@ -34,13 +39,7 @@ nodes <- read.csv(paste0("~/handbook/", "/Dataset1-Media-Example-NODES.csv"), he
 links <- read.csv(paste0("~/handbook/", "/Dataset1-Media-Example-EDGES.csv"), header=T, as.is=T)
 
 
-ba <-  sample_pa(n=100, power=1, m=1,  directed=F)
- #plot(ba, vertex.size=6, vertex.label=NA)
 
- # get.edgelist(ba)
-links = as_data_frame(ba, what="edges")  %>% mutate(group=1)
-nodes = data.frame(id=1:100) # as_data_frame(ba, what="vertices")%>% mutate(group=1)
-#net <- graph_from_data_frame(d=links, vertices=nodes, directed=T) 
 
 # library("visNetwork") 
 # visNetwork(nodes, links, width="100%", height="400px") %>% 
@@ -50,72 +49,22 @@ nodes = data.frame(id=1:100) # as_data_frame(ba, what="vertices")%>% mutate(grou
 
 
 # We'll start by adding new node and edge attributes to our dataframes. 
-vis.nodes <- nodes
-vis.links <- links
-vis.nodes$shape  <- "dot"  
-vis.nodes$shadow <- TRUE # Nodes will drop shadow
-vis.nodes$title  <- vis.nodes$id # Text on click
-vis.nodes$label  <- vis.nodes$id # Node label
-vis.nodes$size   <- vis.nodes$audience.size # Node size
-vis.nodes$borderWidth <- 2 # Node border width
-
-vis.nodes$color.background <- rep(c("slategrey", "tomato", "gold"), times=20)[1:nrow(nodes)]  # [nodes$media.type]
-vis.nodes$color.border <- "black"
-vis.nodes$color.highlight.background <- "orange"
-vis.nodes$color.highlight.border <- "darkred"
-
-
-# https://github.com/datastorm-open/visNetwork/issues/131
-# visGetSelectedNodes
-
-server <- function(input, output, session) {
-  output$network <- renderVisNetwork({
-    visNetwork(vis.nodes, vis.links, width="100%", height="800px", #background="#eeefff",
-           main="Network", submain="And what a great network it is!",
-           footer= "Hyperlinks and mentions among media sources") %>% 
-      visEdges(arrows = "to") %>%    
-      visHierarchicalLayout() %>%  # direction = "LR"
-       
-      #visEdges(color = list(color = "white",highlight ="red",hover = "blue")) %>%
-      #visInteraction(hover = T) %>% 
-      # visSetSelection((edgesId = edges_selection,nodesId=nodes_selection))
-  visInteraction(multiselect=T,selectable=T)  %>% 
-    
-      visEvents(click = "function(nodes){
-                  Shiny.onInputChange('click', nodes.nodes[0]);
-                  ;}"
-      )
-  })
-
-   observe({ 
-     #visNearestNodes(target = input$click, maxpoints =10)
-      #visGetSelectedNodes() #input = paste0(network$id, "_selectedNodes"))
-    visNetworkProxy("network") %>% visGetSelectedNodes()
-  })
-   
-  output$shiny_return <- renderPrint({
-     #print(input$network_selectedNodes)
-    #print(links)
-    visNetworkProxy("network") %>% visGetSelectedNodes()
-     # links %>% filter(from %in% input$network_selectedNodes )
-      
-      links %>% filter(from %in% input$click )
-    
-  })
-}
-
-ui <- fluidPage(
-  visNetworkOutput("network"), 
-  verbatimTextOutput("shiny_return")  
-)
-
-shiny::shinyApp(ui = ui, server = server)
 
 
 
 
+g <- graph.ring(10,directed=TRUE)               
+plot(g)
+ShortPth <- get.shortest.paths(g, 8, 2)    # List of path 8->2
+ShortPth
+E(g)$color <- "SkyBlue2"
+E(g)$width <- 1
+#E(g, path=ShortPth)$color <- "red" 
 
-
+E(g, path=ShortPth$vpath[[1]])$color <- "red"
+#E(g, path=unlist(ShortPth$vpath))$color <- "red"
+#E(g, path=unlist(ShortPth[[1]]))$color <- "red"
+plot(g)
 
 
 
