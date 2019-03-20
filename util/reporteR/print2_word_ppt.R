@@ -76,9 +76,6 @@ print2_word_ppt <- function(FIGURE_ALL, TABLE_ALL,
   fig.name.lst = names(FIGURE_ALL)
   #fig.name.lst <- intersect(fig.name.lst, doc.bookmark.lst)
   NumOfFig <- length(FIGURE_ALL)
-  
-  print("NumOfFig")
-  print(NumOfFig)
    
   if (NumOfFig>0) {
     cat(file=stderr(), "##############Step: begin writing all figure(s) to doc#################", "\n")
@@ -87,9 +84,7 @@ print2_word_ppt <- function(FIGURE_ALL, TABLE_ALL,
         
       fig.name = fig.name.lst[i]
       print(fig.name)
-      
-      
-      print("NumOfFig inside")
+       
       # make some room by adding an empty line   stylename: we need to use a valid style here
       #doc = addParagraph(doc,"\n", stylename = styles(doc)[1])
              
@@ -167,8 +162,8 @@ addPlot2pptx <- function(mydoc, x,   fun=print, pointsize=12, width = 6.4, heigh
   #  editable = TRUE, offx, offy, width, height, bg = "transparent", ...)
   #   
   
-  offx = ifelse(width==6.4 & height==4.8, 1.8, 
-             ifelse(width==8 & height==6, 1.15, 1.8))
+  offx = ifelse(width==6.4 & height==4.8, 3.5, 
+             ifelse(width==8 & height==6, 2.15, 3.5))
   
   offy = ifelse(width==6.4 & height==4.8, 1.8, 
                 ifelse(width==8 & height==6, 1.35, 1.8))

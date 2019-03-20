@@ -9,8 +9,11 @@ try_eval <-function(text="") {
 # create a folder locally if not exit
 # temporarily switch to the temp dir, in case you do not have write
 # permission to the current working directory
-#setwd(tempdir())
-owd <- tempdir()
+  
+  
+setwd(tempdir())
+#owd <- tempdir()
+
 on.exit(setwd(owd))  
 
 zz <- file("all.Rout", open="wt")

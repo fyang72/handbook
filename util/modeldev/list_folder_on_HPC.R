@@ -9,7 +9,9 @@ list_folder_on_HPC <- function(server_IP_address = "xx.xx.xx.xx.xx", directory_o
   system(command = paste0("ssh ", server_IP_address, " '", command, "'"), intern = T)
   
   # create a folder locally if not exit
-  setwd(tempdir())
+  owd <- setwd(tempdir())
+  on.exit(setwd(owd)) 
+  
   system(command = paste0("scp ", server_IP_address, ":", 
                           paste0(directory_on_server,  "list.of.dir.txt  ", 
                                  paste0(".")))

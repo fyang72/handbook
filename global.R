@@ -105,22 +105,24 @@ adpx.var.lst = nmdat.var.lst
 
 library(dplyr)
 library(readxl)
-std_nmdat <- read_excel(paste0(HOME, "/lib/pkmeta.xlsx"),sheet="nmdat",col_names = TRUE)  %>% 
+file_name <- "~/handbook/lib/pkmeta.xlsx" 
+
+std_nmdat <- read_excel(file_name,sheet="nmdat",col_names = TRUE)  %>% 
   as.data.frame() %>% filter(!is.na(standard.name))
 
-std_adsl <- read_excel(paste0(HOME, "/lib/pkmeta.xlsx"),sheet="adsl",col_names = TRUE)  %>% 
+std_adsl <- read_excel(file_name,sheet="adsl",col_names = TRUE)  %>% 
   as.data.frame() %>% filter(!is.na(standard.name))
 
-std_adex <- read_excel(paste0(HOME, "/lib/pkmeta.xlsx"),sheet="adex",col_names = TRUE)  %>% 
+std_adex <- read_excel(file_name,sheet="adex",col_names = TRUE)  %>% 
   as.data.frame() %>% filter(!is.na(standard.name))
 
-std_adpc <- read_excel(paste0(HOME, "/lib/pkmeta.xlsx"),sheet="adpc",col_names = TRUE)  %>% 
+std_adpc <- read_excel(file_name,sheet="adpc",col_names = TRUE)  %>% 
   as.data.frame() %>% filter(!is.na(standard.name))
 
-std_adpx <- read_excel(paste0(HOME, "/lib/pkmeta.xlsx"),sheet="adpx",col_names = TRUE)  %>% 
+std_adpx <- read_excel(file_name,sheet="adpx",col_names = TRUE)  %>% 
   as.data.frame() %>% filter(!is.na(standard.name))
 
-std_convention <- read_excel(paste0(HOME, "/lib/pkmeta.xlsx"),sheet="convention",col_names = TRUE)  %>% 
+std_convention <- read_excel(file_name,sheet="convention",col_names = TRUE)  %>% 
   as.data.frame() %>% filter(!is.na(domain))
 
 

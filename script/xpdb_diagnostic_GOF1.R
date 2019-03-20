@@ -9,10 +9,8 @@ xpdb_diagnostic_GOF1 <- function(xpdb, values4xpdb)  {
                 message="need PRED, IPRED and DV in the data")
   )
            
-
   tdata <- tdata0 %>% mutate(xvar=PRED, yvar=DV)
   limits = range(c(tdata$DV, tdata$PRED), na.rm=TRUE)
-  
   fig.PRED.DV = tdata   %>% 
     ##filter(WRES!=0) %>%
     ggplot(aes(x=xvar, y=yvar))+

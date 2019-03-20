@@ -7,6 +7,8 @@
 # https://rstudio-pubs-static.s3.amazonaws.com/337696_c6b008e0766e46bebf1401bea67f7b10.html
 # https://stackoverflow.com/questions/19827139/highlight-shortest-path-on-plot-of-graph/19996189
 
+# https://github.com/datastorm-open/visNetwork/issues/176
+
 library("visNetwork") 
 library(igraph)
 library(shiny)
@@ -297,6 +299,18 @@ module_visnetwork_model_library <- function(input, output, session)  {
   
   output$shiny_return <- renderPrint({
     values$edges %>% filter(from %in% input$click | to  %in% input$click)
+    
+    # question: is it possible to receive which nodes are click selected? #176
+    # visNetwork(nodes, edges) %>% visInteraction(multiselect = T)
+    # 
+    # observe({
+    #   input$gosel
+    #   visNetworkProxy("network") %>% visGetSelectedNodes()
+    # })
+    # 
+    # observe({
+    #   print(input$network_selectedNodes)
+    # })
   })
   
   

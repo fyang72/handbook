@@ -19,10 +19,10 @@ calc.half.life <- function(THETA) {
   parms$K32 = THETA[['TVQ']]/THETA[['TVV3']];  
   parms$K23 = THETA[['TVQ']]/THETA[['TVV2']]; 
   
-  parms=NULL
-  parms$KE  = 0.125676/2.67038   # THETA[['TVCL']]/THETA[['TVV2']]    # 1/day, 	Elimination rate constant     0.365
-  parms$K32 = 0.0753611 /1.12665  #  THETA[['TVQ']]/THETA[['TVV3']];  
-  parms$K23 = 0.0753611/2.67038  #    THETA[['TVQ']]/THETA[['TVV2']]; 
+  # parms=NULL
+  # parms$KE  = 0.125676/2.67038   # THETA[['TVCL']]/THETA[['TVV2']]    # 1/day, 	Elimination rate constant     0.365
+  # parms$K32 = 0.0753611 /1.12665  #  THETA[['TVQ']]/THETA[['TVV3']];  
+  # parms$K23 = 0.0753611/2.67038  #    THETA[['TVQ']]/THETA[['TVV2']]; 
   
   
   alpha.plus.beta  <- parms$KE + parms$K23 + parms$K32
