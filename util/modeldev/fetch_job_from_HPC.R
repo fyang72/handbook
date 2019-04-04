@@ -1,4 +1,33 @@
 
+#-------------------------------
+# fetch the result when done
+#-------------------------------
+batch_fetch_job_from_HPC <- function(server_IP_address, program_name, runno, local_home="./KRM") {
+  
+  runno_df = cbind(runno, str_split_fixed(runno, pattern="_", n=2)) %>% as.data.frame()
+  colnames(runno_df) <- c("runno", "ctl", "dat")
+  runno_df = runno_df %>% mutate(runno=as.character(runno))
+  
+  #
+  for (i in 1:nrow(runno_df)) {
+    runno = runno_df[i, "runno"]
+    print(paste0("fetching", runno))
+    
+    main_directory <- paste0("/home/", tolower(Sys.info()["user"]), "/", program_name, "/")
+    server_model_dir = paste0(main_directory, "ctl/", runno, "/")
+    local_result_dir = paste0(local_home, "/output/ctl/", runno, "/")
+    
+    fetch_job_from_HPC(  
+      server_IP_address = server_IP_address,
+      server_model_dir = server_model_dir, 
+      local_result_dir = local_result_dir  #,   #"./ctl/LN_BASE_WT/", 
+    )
+    
+  }
+  
+}
+
+
 fetch_job_from_HPC <- function(  
   server_IP_address = "xx.xx.xx.xx.xx",
   server_model_dir = NULL, 
@@ -7,6 +36,10 @@ fetch_job_from_HPC <- function(
   #server.data.full.path = NULL   
 )  {
   # derive model and data information
+  tt = strsplit(basename(server_model_dir), "_") %>% unlist()
+  model_name = tt[1]
+  data_name = tt[2]
+  
   server_model_dir = paste0(server_model_dir, "/")
   local_result_dir = paste0(local_result_dir, "/")
   
@@ -34,6 +67,28 @@ fetch_job_from_HPC <- function(
   system(command = paste0("scp ", server_IP_address, ":", paste0(server_model_dir,  "cotab*  ", local_result_dir)))
   system(command = paste0("scp ", server_IP_address, ":", paste0(server_model_dir,  "mytab*  ", local_result_dir))) 
  
+  
+  tt = list_folder_on_HPC(server_IP_address, server_model_dir)  
+  modelfit_directory <- sort(tt, decreasing=TRUE)[1]  # the most recent one
+  
+  for (i in 1:length(modelfit_directory)) {
+    modelfit_dir <- modelfit_directory[i]
+    file_full_path_name = paste0(
+        server_model_dir, modelfit_dir,
+        paste0("raw_results_", model_name, ".csv") ############################
+    )
+  
+    system(command = paste0("scp ", server_IP_address, ":", 
+                          file_full_path_name, " ",  local_result_dir))
+  
+    file.rename(paste0(local_result_dir, "raw_results_", model_name, ".csv"), 
+                paste0(local_result_dir, "fit", i, "_", model_name, ".csv")
+    )
+  
+  }
+  
+   
+  
   # 
   # # read the results  
   # # -------------------------------

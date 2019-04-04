@@ -3,17 +3,11 @@
 #################################################################
 # build_adpx
 #################################################################
-build_nmdat <-function(
-  dataset, 
-  date_time_format = c("Ymd HMS", "mdY HMS", "bdY HMS"), 
-  dosu.lst = c("mg", "mg/kg"), 
-  admin.route.lst = c("SUBCUTANEOUS", "INTRAVENOUS", "INTRAMUSCULAR", "IVT")
-  ) {
+build_nmdat <-function(dataset) {
  
   # must have these desired variables, if missing, fill with NA 
-  nmdat = dataset %>% fillUpCol_df(nmdat.var.lst) 
+  nmdat = dataset %>% fillUpCol_df(nmdat_var_lst) 
 
-  
   #---------------------------------------- 
   # Analysis identifiers
   #---------------------------------------- 
@@ -89,7 +83,7 @@ build_nmdat <-function(
   if ((!all(class(nmdat$SAMDTTM) %in% c("POSIXct", "POSIXt" )))) { 
     library(lubridate)
     nmdat$SAMDTTM_ORG = nmdat$SAMDTTM
-    nmdat$SAMDTTM = parse_date_time(nmdat$SAMDTTM, date_time_format, truncated = 3)  
+    nmdat$SAMDTTM = parse_date_time(nmdat$SAMDTTM, timefmt_var_lst, truncated = 3)  
   } 
   nmdat = nmdat %>% mutate(
     TIME = difftime(parse_date_time(SAMDTTM, orders="Ymd HMS", truncated = 3), 
@@ -102,10 +96,9 @@ build_nmdat <-function(
   # METHOD (SOP), TEST, 
   #---------------------- 
   nmdat <- nmdat %>%  mutate(
-   METHOD = METHOD, 
-   TESTCD = TESTCD,
+   METHOD = METHOD,  
    TEST = TEST, 
-   TESTCAT = ordered(TESTCAT, levels=testscat.lst), 
+   TESTCAT = ordered(TESTCAT, levels=testcat_var_lst), 
    
    DVOR = DVOR,    # keep those ADA results (which is character-based)
    DVORU = tolower(DVORU), 
@@ -123,11 +116,11 @@ build_nmdat <-function(
   #----------------------                  
   # dosing events
   #---------------------- 
-  col.lst = c("USUBJID", "WGTBL")
-  nmdat = nmdat %>% select(-WGTBL)  %>% 
-    left_join(adsl %>% distinct(USUBJID, .keep_all=TRUE) %>% 
-                select(one_of(col.lst)),
-              by="USUBJID")
+  # col.lst = c("USUBJID", "WGTBL")
+  # nmdat = nmdat %>% select(-WGTBL)  %>% 
+  #   left_join(adsl %>% distinct(USUBJID, .keep_all=TRUE) %>% 
+  #               select(one_of(col.lst)),
+  #             by="USUBJID")
   
   nmdat = nmdat %>% mutate(
     EXTDOSE = ifelse(EXDOSU=="mg/kg", as_numeric(EXDOSE)*as_numeric(WGTBL),  
@@ -150,8 +143,7 @@ build_nmdat <-function(
     ARMA  = ordered(ARMA, levels=unique(ARMA)), 
     ARMAN = as.integer(as.factor(ARMA)),
     TIME  = as_numeric(TIME),
-    NTIM  = as_numeric(NTIM), 
-    TAD   = as_numeric(TAD), 
+    NTIM  = as_numeric(NTIM),  
     
     AMT  = as_numeric(EXTDOSE), 
     EVID = ifelse(!is.na(AMT)&AMT>0, 1, 0),
@@ -163,12 +155,12 @@ build_nmdat <-function(
     CMT = ifelse(EXROUTE %in% c("IV", "INTRAVENOUS"), 2,
                  ifelse(EXROUTE %in% c("SC", "SUBCUTANEOUS"), 1, 0)),    
     
-    EXROUTE = ordered(EXROUTE, levels = c(admin.route.lst)),
+    EXROUTE = ordered(EXROUTE, levels = c(route_var_lst)),
     EXROUTN = ifelse(is.na(EXROUTE), -99, as.integer(as.factor(EXROUTE))),
     
-    TESTCD = ordered(TESTCD, levels= unique(TESTCD)),   
+    TEST = ordered(TEST, levels= unique(TEST)),   
     
-    TESTCAT = ordered(TESTCAT, levels= testcat.lst),  
+    TESTCAT = ordered(TESTCAT, levels= testcat_var_lst),  
     
     DV = DVOR,  # ifelse(TEST=="REGN1500" & as_numeric(DVOR)!=0, log(as_numeric(DVOR)), DVOR),
     BLQ = ifelse(as_numeric(DVOR)<as_numeric(LLOQ), 1, 0), 
@@ -183,7 +175,7 @@ build_nmdat <-function(
   #---------------------------------------------
   adpx = adpx %>% dplyr::arrange(ID, TIME, desc(EVID)) 
    
-  nmdat = nmdat[, c(nmdat.var.lst, setdiff(colnames(nmdat), nmdat.var.lst))]
+  nmdat = nmdat[, c(nmdat_var_lst, setdiff(colnames(nmdat), nmdat_var_lst))]
 
   return(nmdat)
 }
@@ -199,12 +191,12 @@ if (ihandbook) {
   table = NULL
   
   adpx <- build_adpx(dataset, 
-                     date_time_format = c("Ymd HMS", "mdY HMS", "bdY HMS"), 
-                     dosu.lst = c("mg", "mg/kg"), 
-                     admin.route.lst = c("SUBCUTANEOUS", "INTRAVENOUS", "INTRAMUSCULAR", "IVT")
+                     timefmt_var_lst = c("Ymd HMS", "mdY HMS", "bdY HMS"), 
+                     dosu_var_lst = c("mg", "mg/kg"), 
+                     route_var_lst = c("SUBCUTANEOUS", "INTRAVENOUS", "INTRAMUSCULAR", "IVT")
   )    
   
   data[["adpx"]] = adpx 
-  table <- check_adpx(adpx, topN=20)   # date_time_format = c("Ymd HMS")
+  table <- check_adpx(adpx, topN=20)   # timefmt_var_lst = c("Ymd HMS")
   output <- list(data=data, table=table)
 }

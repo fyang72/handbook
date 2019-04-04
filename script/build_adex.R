@@ -3,15 +3,10 @@
 #################################################################
 # build_adex
 #################################################################
-build_adex <-function(
-  dataset,  
-  date_time_format = c("Ymd HMS", "mdY HMS", "bdY HMS"), 
-  dosu.lst = c("mg", "mg/kg"), 
-  admin.route.lst = c("SUBCUTANEOUS", "INTRAVENOUS", "INTRAMUSCULAR", "IVT")
-  ) {
+build_adex <-function(dataset) {
   
   # must have these desired variables, if missing, fill with NA 
-  adex = dataset %>% fillUpCol_df(adex.var.lst) 
+  adex = dataset %>% fillUpCol_df(adex_var_lst) 
     
   
   #---------------------------------------- 
@@ -87,8 +82,8 @@ build_adex <-function(
   library(lubridate) 
  
   adex = adex %>% mutate( 
-    EXENDTC = parse_date_time(EXENDTC, date_time_format, truncated = 3),
-    EXSTDTC = parse_date_time(EXSTDTC, date_time_format, truncated = 3) 
+    EXENDTC = parse_date_time(EXENDTC, timefmt_var_lst, truncated = 3),
+    EXSTDTC = parse_date_time(EXSTDTC, timefmt_var_lst, truncated = 3) 
   ) %>% 
     group_by(USUBJID) %>% 
       mutate(TRTSDTM = min(EXSTDTC))  
@@ -110,13 +105,11 @@ build_adex <-function(
   #---------------------------------------------
   # "EXROUTE"    "SUBCUTANEOUS"  "INTRAVENOUS"   "INTRAMUSCULAR" "IVT"      
   #--------------------------------------------- 
-  adex = adex %>% mutate(EXROUTE = ordered(toupper(EXROUTE), levels = admin.route.lst),  
+  adex = adex %>% mutate(EXROUTE = ordered(toupper(EXROUTE), levels = route_var_lst),  
                          EXROUTN = ifelse(is.na(EXROUTE), -99, as.integer(EXROUTE)), 
                          
                          EXDOSE = as_numeric(EXDOSE), 
-                         
-                         EXDOSU_ORG = EXDOSU, 
-                         EXDOSU = ordered(EXDOSU, levels = dosu.lst)  
+                         EXDOSU = ordered(EXDOSU, levels = dosu_var_lst)  
   )
   
 
@@ -136,8 +129,8 @@ build_adex <-function(
   #---------------------------------------------
   # order columns, and final output
   #---------------------------------------------   
-  col.lst = c(adex.var.lst, setdiff(colnames(adex), adex.var.lst))
-  adex = adex[, col.lst]
+  col.lst = c(adex_var_lst, setdiff(colnames(adex), adex_var_lst))
+  adex = adex[, col.lst]  %>% arrange(STUDYID, USUBJID, TIME)
   
   return(adex) 
 }
@@ -147,10 +140,9 @@ build_adex <-function(
 # check_adex
 #################################################################
 
-check_adex <- function(dataset, adex, topN=20) {
-  adex = adex %>% ungroup()
+check_adex <- function(dataset, adex, topN=20) { 
   
-  dataset = dataset %>% 
+  dataset = dataset %>% ungroup()  %>% 
     rename_at(vars(colnames(dataset)),
               ~ paste0(colnames(dataset), "_ORG")
     )
@@ -193,14 +185,14 @@ check_adex <- function(dataset, adex, topN=20) {
     distinct(EXROUTE, .keep_all=TRUE) %>% 
     arrange(EXROUTE)
   
-  #tabl = tabl %>% mutate(SUGGEST=ordered(NA, levels=admin.route.lst))
+  #tabl = tabl %>% mutate(SUGGEST=ordered(NA, levels=route_var_lst))
   
   if (nrow(tabl)>topN) { tabl = tabl %>% slice(1:topN) }
   attr(tabl, "title") = "List of administration route (EXROUTE) and its order (EXROUTN)"  
   attr(tabl, "key") = "EXROUTE_ORG"  
   attr(tabl, "value") = "EXROUTN"
   
-  attr(tabl, "footnote") = paste0("Note, the standarad dose administration routes are ", paste0(admin.route.lst, collapse=", "), ". ")  
+  attr(tabl, "footnote") = paste0("Note, the standarad dose administration routes are ", paste0(route_var_lst, collapse=", "), ". ")  
   if (nrow(tabl)>topN) {attr(tabl, "footnote") = paste0(attr(tabl, "footnote"), "The default is to display top ", topN, " rows.")}
   table[["EXROUTE"]] = tabl
   
@@ -212,14 +204,14 @@ check_adex <- function(dataset, adex, topN=20) {
     distinct(EXDOSU, .keep_all=TRUE) %>% 
     arrange(EXDOSU)
   
-  #tabl = tabl %>% mutate(SUGGEST=ordered(NA, levels=dosu.lst))
+  #tabl = tabl %>% mutate(SUGGEST=ordered(NA, levels=dosu_var_lst))
   
   if (nrow(tabl)>topN) { tabl = tabl %>% slice(1:topN) }
   attr(tabl, "title") = "List of dose unit (EXDOSU)"  
   attr(tabl, "key") = "EXDOSU_ORG"  
   attr(tabl, "value") = "EXDOSU"
   
-  attr(tabl, "footnote") = paste0("Note, the standarad dose units are ", paste0(dosu.lst, collapse=", "), ". ")
+  attr(tabl, "footnote") = paste0("Note, the standarad dose units are ", paste0(dosu_var_lst, collapse=", "), ". ")
   if (nrow(tabl)>topN) {attr(tabl, "footnote") = paste0(attr(tabl, "footnote"), 
                                                         "The default is to display top ", topN, " rows.")}
   table[["EXDOSU"]] = tabl
@@ -236,9 +228,9 @@ if (ihandbook) {
   table = NULL
   
   adex <- build_adex(dataset, 
-                    date_time_format = date_time_format, 
-                    dosu.lst = dosu.lst, 
-                    admin.route.lst = admin.route.lst
+                    timefmt_var_lst = timefmt_var_lst, 
+                    dosu_var_lst = dosu_var_lst, 
+                    route_var_lst = route_var_lst
                     )    
   
   data[["adex"]] = adex 

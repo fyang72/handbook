@@ -3,12 +3,10 @@
 # build_adpc
 #################################################################
 
-build_adpc <-function(dataset, 
-                      date_time_format = c("Ymd HMS", "mdY HMS", "bdY HMS")
-                      ) {
+build_adpc <-function(dataset ) {
    
   # must have these desired variables, if missing, fill with NA 
-  adpc = dataset %>% fillUpCol_df(adpc.var.lst) 
+  adpc = dataset %>% fillUpCol_df(adpc_var_lst) 
   
   #---------------------------------------- 
   # Analysis identifiers
@@ -88,7 +86,7 @@ build_adpc <-function(dataset,
   
   if ((!all(class(adpc$SAMDTTM) %in% c("POSIXct", "POSIXt" )))) { 
     library(lubridate) 
-    adpc$SAMDTTM = parse_date_time(adpc$SAMDTTM, date_time_format, truncated = 3) %>% as.character()
+    adpc$SAMDTTM = parse_date_time(adpc$SAMDTTM, timefmt_var_lst, truncated = 3) %>% as.character()
   } 
     
   #----------------------                  
@@ -111,7 +109,7 @@ build_adpc <-function(dataset,
   #---------------------------------------------
   # order columns, and final output
   #---------------------------------------------   
-  adpc = adpc[, c(adpc.var.lst, setdiff(colnames(adpc), adpc.var.lst))]
+  adpc = adpc[, c(adpc_var_lst, setdiff(colnames(adpc), adpc_var_lst))]
   
   return(adpc) 
 }
@@ -201,10 +199,10 @@ if (ihandbook) {
   table = NULL
   
   adpc <- build_adpc(dataset, 
-                     date_time_format = date_time_format  # global variables. c("Ymd HMS", "mdY HMS", "bdY HMS") 
+                     timefmt_var_lst = timefmt_var_lst  # global variables. c("Ymd HMS", "mdY HMS", "bdY HMS") 
   )    
   
   data[["adpc"]] = adpc 
-  table <- check_adpc(dataset, adpc,  topN=topN)   # date_time_format = c("Ymd HMS")
+  table <- check_adpc(dataset, adpc,  topN=topN)   # timefmt_var_lst = c("Ymd HMS")
   output <- list(data=data, table=table)
 }

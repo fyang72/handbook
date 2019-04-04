@@ -68,12 +68,10 @@ runSim_by_dosing_regimen <-function(
                             select(ID, POP, ARMA, USUBJID),
                           by=c("ID")) %>% 
     mutate(ARMA = ordered(ARMA, levels = unique(ARMA)))
-  
-  # nominal time (NTIM)
-  #out = out %>% mutate(NTIM = TIME)
+
   
   # EXSEQ
-  out = out %>% #mutate(EVID=ifelse(TAD==0, 1, 0))   %>% 
+  out = out %>% mutate(EVID=ifelse(TAD==0, 1, 0))   %>% 
     group_by(POP, ARMA, USUBJID, ID) %>%  mutate(EXSEQ=cumsum(EVID))     # for calculat the last dose interval later
   
   # fill up II by  Last Observation Carried Forward

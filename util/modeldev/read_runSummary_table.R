@@ -1,20 +1,62 @@
 
+
+#runno = c("MM0025_nmdat_0226_2019", "MM0026_nmdat_0321_2019")
+
+batch_read_runSummary_table <- function(server_IP_address, program_name, runno, 
+                                         local_home = "./KRM/output/") {
+
+  library(readr)
+
+  runno_df = cbind(runno, str_split_fixed(runno, pattern="_", n=2)) %>% as.data.frame()
+  colnames(runno_df) <- c("runno", "ctl", "dat")
+  runno_df = runno_df %>% mutate(runno=as.character(runno))
+ 
+  PARAMS = NULL   # lapply(1:nrow(runno_df), function(i) {
+  for (i in 1:nrow(runno_df)) { 
+    irunno =   as.character(runno_df[i, "runno"])
+    #local_model_name = as.character(runno_df[i, "ctl"])
+          
+    folder.loc <- paste0(local_home, "ctl/", irunno)
+    file.lst <-list.files(path = folder.loc, all.files = FALSE,full.names = TRUE, 
+                         include.dirs = TRUE, recursive =TRUE)     
+    file.lst <- file.lst[which(substr(basename(file.lst), 1, 3)=="fit")]
+           
+    if (length(file.lst)>0) {
+      for (j in 1:length(file.lst)) { 
+        print(paste0("read ", irunno))
+        
+        file.name = file.lst[j]
+        base.name = tools::file_path_sans_ext(basename(file.name))
+        PARAMS[[paste0(irunno, "_", base.name)]] <- read_csv(file.name, 
+                                   col_names=TRUE,  
+                                   col_type=cols(.default=col_character())
+                              ) %>% as.data.frame()
+     }}
+  }
+  return(PARAMS)
+}
+
+     
+ 
+ 
 #-----------------------------------------------
 # generate_parmsTab
-#-----------------------------------------------
-generate_parmsTab <- function(PARAMS, runno.lst) {
+#----------------------------------------------- 
+generate_runSummary_table <- function(PARAMS) {
   
   # how to subset a list
   #runno.lst <- c("LN001", "LN002")
-  tdata= lapply(runno.lst, function(runno) PARAMS[[runno]])
-  names(tdata) = runno.lst
+  #tdata= lapply(runno, function(irunno) PARAMS[[irunno]])
+  #names(tdata) = runno 
+   
+  out = merge_all(PARAMS)
+  library(lubridate)
   
+  out$model_run_time =  lubridate::hms(as.character(out$model_run_time))   #as.character(out$model_run_time)
+ 
   
-  
-  out = merge_all(tdata)
-  out$model_run_time =  format(out$model_run_time, "%H:%M:%S") #as.character(out$model_run_time)
-  #out
   #out = out %>% select(model:ofv, starts_with("TV"), starts_with("RUV"), starts_with("WGT_ON"), starts_with("IIV"), starts_with("SIGMA"), starts_with("se"))
+  out$ofv = as_numeric(out$ofv)
   out$diff_ofv = as_numeric(out$ofv) - as_numeric(out$ofv[1])
   
   #col.lst = out %>% select(TVCL:seSIGMA_1) %>% colnames()
@@ -28,15 +70,20 @@ generate_parmsTab <- function(PARAMS, runno.lst) {
   #out = out %>% select(model:ofv, diff_ofv, starts_with("TV"), starts_with("IIV"), starts_with("SIGMA"))shrinkage
   #out = out %>%  select(ofv, diff_ofv, starts_with("TV"), starts_with("IIV"))# %>% select(ofv, diff_ofv, one_of(col.lst)))
   
-  out = out %>%  select(-TVF1, -TVKA,  -SIGMA_1,  -seTVF1,-seTVKA, -seSIGMA_1, -starts_with("se"), -starts_with("EI"), -starts_with("shrinkage")) 
+  out = out %>%  select(-starts_with("se"), -starts_with("EI"), -starts_with("shrinkage")) 
   
-  out = out %>% select(ofv, diff_ofv, minimization_successful,  covariance_step_successful, model_run_time, condition_number, 
-                       starts_with("TV"), starts_with("RUV"), EMAX,T50,HILL, starts_with("WGT_ON"), starts_with("IIV"), OMEGA.2.1.)
+  # out = out %>% select(ofv, diff_ofv, minimization_successful,  covariance_step_successful, 
+  #                      est_methods, model_run_time, condition_number, 
+  #                      starts_with("TV"), starts_with("RUV"), EMAX,T50,HILL, starts_with("WGT_ON"), starts_with("IIV") )
   
   out = t(out)
+  out = cbind(parms = rownames(out), out)
   out[is.na(out)]= "---"
-  out
+ 
+   out
   
+  return(out)
+   
   # 
   # runno.lst = names(parms)
   # # obj

@@ -1,4 +1,55 @@
 
+
+pkmerge <- function(adsl, adex, adpc, others) {
+
+adsl = fillUpCol_df(adsl, adsl_var_lst)
+adex = fillUpCol_df(adex, adpx_var_lst)
+adpc = fillUpCol_df(adpc, adpx_var_lst)
+others = fillUpCol_df(others, adpx_var_lst)
+adpc = bind_rows(adpc, others)
+
+#------------------
+# prepare for adpc
+#------------------ 
+#   adex  %>% .[[c("USUBJID")]] 
+adpc = adpc %>% select(-TRTSDTM) %>% left_join(
+  adex %>% select(USUBJID, TRTSDTM) %>% distinct(USUBJID, .keep_all=TRUE), 
+  by="USUBJID")
+
+adpc = adpc %>% mutate(
+  TIME = difftime(parse_date_time(SAMDTTM, orders="Ymd HMS", truncated = 3), 
+                  parse_date_time(TRTSDTM, orders="Ymd HMS", truncated = 3), 
+                  units = "days"
+  ) %>% as_numeric()
+)  
+
+#------------------
+# prepare for adex
+#------------------
+# only need USUBJID and other variables that adex do not have, from adsl
+col.lst = c("USUBJID", "WGTBL")
+adex = adex %>% select(-WGTBL)  %>% 
+  left_join(adsl %>% distinct(USUBJID, .keep_all=TRUE) %>% 
+              select(one_of(col.lst)),
+            by="USUBJID")
+
+adex = adex %>% mutate(
+  EXTDOSE = ifelse(EXDOSU=="mg/kg", as_numeric(EXDOSE)*as_numeric(WGTBL),  
+                   ifelse(EXDOSU=="mg",  as_numeric(EXDOSE), NA)))
+
+#------------------
+# merge to adpx
+#------------------
+# time variable must be character
+adpx = bind_rows(adex[, adpx_var_lst], adpc[, adpx_var_lst])  %>% 
+  arrange(STUDYID, ARMA, USUBJID, TIME, TEST)
+
+
+return(adpx)
+}
+
+
+
 #################################################################
 # build_adpx
 #################################################################
@@ -38,69 +89,19 @@ if (1==2) {
   )
     
 }  
-  adsl = fillUpCol_df(adsl, adsl.var.lst)
-  adex = fillUpCol_df(adex, adpx.var.lst)
-  adpc = fillUpCol_df(adpc, adpx.var.lst)
-  others = fillUpCol_df(others, adpx.var.lst)
-  adpc = bind_rows(adpc, others)
   
-  #------------------
-  # prepare for adpc
-  #------------------ 
-  #   adex  %>% .[[c("USUBJID")]] 
-  adpc = adpc %>% select(-TRTSDTM) %>% left_join(
-    adex %>% select(USUBJID, TRTSDTM) %>% distinct(USUBJID, .keep_all=TRUE), 
-    by="USUBJID")
+  adpx <- pkmerge(adsl, adex, adpc, others)
   
-  adpc = adpc %>% mutate(
-    TIME = difftime(parse_date_time(SAMDTTM, orders="Ymd HMS", truncated = 3), 
-                    parse_date_time(TRTSDTM, orders="Ymd HMS", truncated = 3), 
-                    units = "days"
-                    ) %>% as_numeric()
-    ) 
-  adpc = adpc %>% mutate(EVID = 0)
-  
-  #------------------
-  # prepare for adex
-  #------------------
-  # only need USUBJID and other variables that adex do not have, from adsl
-  col.lst = c("USUBJID", "WGTBL")
-  adex = adex %>% select(-WGTBL)  %>% 
-    left_join(adsl %>% distinct(USUBJID, .keep_all=TRUE) %>% 
-                select(one_of(col.lst)),
-              by="USUBJID")
-  
-  adex = adex %>% mutate(
-    EXTDOSE = ifelse(EXDOSU=="mg/kg", as_numeric(EXDOSE)*as_numeric(WGTBL),  
-                     ifelse(EXDOSU=="mg",  as_numeric(EXDOSE), NA)))
-  
-  adex = adex %>% mutate(EVID = 1)
-  #------------------
-  # merge to adpx
-  #------------------
-  # time variable must be character
-  adpx = bind_rows(adex[, adpx.var.lst], adpc[, adpx.var.lst])  %>% 
-    arrange(STUDYID, ARMA, USUBJID, TIME, TESTCD)
- 
   #---------------------
   # from adpx to adpx
   #---------------------
   adpx = adpx %>% mutate(
-    
-    # remove PRE-DOSE, default flag
-    CFLAG = ifelse(trim(toupper(ARMA)) %in% c("PLACEBO"), "Placebo", CFLAG), 
-    CFLAG = ifelse(as_numeric(TIME)<=0 & EVID==0, "Predose", CFLAG), 
-    CFLAG = ifelse(as_numeric(TIME)>0 & as.integer(BLQ)==1, "Postdose BLQ", CFLAG),  
-    
-    ID    = as.integer(as.factor(USUBJID)),
-    ARMA  = ordered(ARMA, levels=unique(ARMA)), 
-    ARMAN = as.integer(as.factor(ARMA)),
-    TIME  = as_numeric(TIME),
-    NTIM  = as_numeric(NTIM), 
-    
     AMT  = as_numeric(EXTDOSE), 
     EVID = ifelse(!is.na(AMT)&AMT>0, 1, 0),
     
+  
+ 
+     
     RATE = as_numeric(AMT)/as_numeric(EXDUR),      #    "."            "SUBCUTANEOUS" "INTRAVENOUS" 
                   #ifelse(EXROUTE %in% c("SC", "SUBCUTANEOUS"), NA,  NA)),
     RATE = ifelse(is.infinite(RATE)|is.na(RATE), NA, RATE), 
@@ -108,10 +109,10 @@ if (1==2) {
     CMT = ifelse(EXROUTE %in% c("IV", "INTRAVENOUS"), 2,
                  ifelse(EXROUTE %in% c("SC", "SUBCUTANEOUS"), 1, 0)),    
     
-    EXROUTE = ordered(EXROUTE, levels = c(admin.route.lst)),
+    EXROUTE = ordered(EXROUTE, levels = c(route_var_lst)),
     EXROUTN = ifelse(is.na(EXROUTE), -99, as.integer(as.factor(EXROUTE))),
      
-    TESTCD = ordered(TESTCD, levels= unique(TESTCD)),   
+    TEST = ordered(TEST, levels= unique(TEST)),   
     
     TESTCAT = ordered(TESTCAT, levels= testcat.lst),  
     
@@ -152,7 +153,7 @@ if (1==2) {
   adpx$C[which(!adpx$CFLAG %in% c(NA,""))] = "C"
   
   # re-order columns
-  adpx = adpx[, c(adpx.var.lst, setdiff(colnames(adpx), adpx.var.lst))]
+  adpx = adpx[, c(adpx_var_lst, setdiff(colnames(adpx), adpx_var_lst))]
   
   return(adpx)
 }
@@ -207,11 +208,7 @@ if (ihandbook) {
   data = NULL
   table = NULL
   
-  adpx <- build_adpx(dataset, 
-                     date_time_format = c("Ymd HMS", "mdY HMS", "bdY HMS"), 
-                     dosu.lst = c("mg", "mg/kg"), 
-                     admin.route.lst = c("SUBCUTANEOUS", "INTRAVENOUS", "INTRAMUSCULAR", "IVT")
-  )    
+  adpx <- build_adpx(dataset)    
   
   data[["adpx"]] = adpx 
   table <- check_adpx(adpx, topN=20)   # date_time_format = c("Ymd HMS")

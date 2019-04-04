@@ -3,6 +3,7 @@
 #-----------------------------------------------------------------------------
 # how to get the column attributes from a tibble object
 #-----------------------------------------------------------------------------  
+# https://stackoverflow.com/questions/39671621/extract-the-labels-attribute-from-labeled-tibble-columns-from-a-haven-import-f
 
 colAttr <- function(x, attrC, ifIsNull) {
   # Returns column attribute named in attrC, if present, else isNullC.

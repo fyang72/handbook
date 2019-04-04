@@ -2,33 +2,10 @@
 #################################################################
 # build_adsl
 #################################################################
-build_adsl <-function(
-  dataset,  
-  
-  adsl.var.lst = c("STUDYID", "USUBJID",  
-                   "WGTBL", 
-                   "HGTBL", 
-                   "AGE", "AGEU",  
-                   "SEX", "SEXN", 
-                   "RACE",  "RACEN", 
-                   "ETHNIC","ETHNICN" ), 
-  
-  sex.lst = c("MALE", "FEMALE", "UNKNOWN"),
-  
-  ethnic.lst =c("NOT HISPANIC OR LATINO",  "HISPANIC OR LATINO", "UNKNOWN"),
-  
-  race.lst =c(  "WHITE", 
-                "BLACK OR AFRICAN AMERICAN",
-                "ASIAN",
-                "AMERICAN INDIAN OR ALASKA NATIVE",
-                "NATIVE HAWAIIAN OR OTHER PACIFIC ISLANDER",    
-                "OTHER", 
-                "UNKNOWN",
-                "NOT REPORTED") 
-) { 
+build_adsl <-function(dataset) { 
 
   # must have these desired variables, if missing, fill with NA 
-  adsl = dataset %>% fillUpCol_df(adsl.var.lst) 
+  adsl = dataset %>% fillUpCol_df(adsl_var_lst) 
   
   #---------------------------------------- 
   # Analysis identifiers
@@ -144,7 +121,7 @@ build_adsl <-function(
   #---------------------------------------------
   # order columns, and final output
   #---------------------------------------------   
-  adsl= adsl[, c(adsl.var.lst, setdiff(colnames(adsl), adsl.var.lst))]
+  adsl= adsl[, c(adsl_var_lst, setdiff(colnames(adsl), adsl_var_lst))]
   
   return(adsl) 
   
@@ -156,9 +133,8 @@ build_adsl <-function(
 #################################################################
 
 check_adsl <- function(dataset, adsl, topN=20) {
-  adsl = adsl %>% ungroup()
-  
-  dataset = dataset %>% 
+ 
+  dataset = dataset %>% ungroup() %>% 
     rename_at(vars(colnames(dataset)),
               ~ paste0(colnames(dataset), "_ORG")
               ) 
@@ -241,7 +217,7 @@ if (ihandbook) {
   table = NULL
   
   adsl <-  build_adsl(dataset,  
-                      adsl.var.lst = adsl.var.lst, 
+                      adsl_var_lst = adsl_var_lst, 
                       sex.lst = sex.lst,
                       ethnic.lst = ethnic.lst,
                       race.lst = race.lst)   

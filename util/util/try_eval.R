@@ -11,9 +11,7 @@ try_eval <-function(text="") {
 # permission to the current working directory
   
   
-setwd(tempdir())
-#owd <- tempdir()
-
+owd <- setwd(tempdir())
 on.exit(setwd(owd))  
 
 zz <- file("all.Rout", open="wt")
