@@ -86,7 +86,7 @@ build_adex <-function(dataset) {
     EXSTDTC = parse_date_time(EXSTDTC, timefmt_var_lst, truncated = 3) 
   ) %>% 
     group_by(USUBJID) %>% 
-      mutate(TRTSDTM = min(EXSTDTC))  
+      mutate(TRTSDTM = min(EXSTDTC, na.rm=TRUE))  
   
   # "TRTSDT"   "TRTSTM"   "TRTSDTM"    date/time of start treatment 
   # "TRTEDT"   "TRTETM"   "TRTEDTM"    date/time of end of treatment   
