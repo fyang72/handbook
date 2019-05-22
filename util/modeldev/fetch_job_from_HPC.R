@@ -11,11 +11,11 @@ batch_fetch_job_from_HPC <- function(server_IP_address, program_name, runno, loc
   #
   for (i in 1:nrow(runno_df)) {
     runno = runno_df[i, "runno"]
-    print(paste0("fetching", runno))
+    print(paste0("fetching ", runno))
     
     main_directory <- paste0("/home/", tolower(Sys.info()["user"]), "/", program_name, "/")
-    server_model_dir = paste0(main_directory, "ctl/", runno, "/")
-    local_result_dir = paste0(local_home, "/output/ctl/", runno, "/")
+    server_model_dir = paste0(main_directory, "ctl/", runno)
+    local_result_dir = paste0(local_home, "/output/ctl/", runno)
     
     fetch_job_from_HPC(  
       server_IP_address = server_IP_address,
@@ -69,7 +69,7 @@ fetch_job_from_HPC <- function(
  
   
   tt = list_folder_on_HPC(server_IP_address, server_model_dir)  
-  modelfit_directory <- sort(tt, decreasing=TRUE)[1]  # the most recent one
+  modelfit_directory <- sort(tt, decreasing=TRUE) #[1]  # the most recent one
   
   for (i in 1:length(modelfit_directory)) {
     modelfit_dir <- modelfit_directory[i]

@@ -79,7 +79,7 @@ module_ggplot_brush <- function(input, output, session, fig, mydata, xvar="xvar"
   # ggplot_container
   output$ggplot_container <- renderUI({
     output$ggplot <-renderPlot({
-       fig + coord_cartesian(xlim = ranges$x, ylim = ranges$y, expand = FALSE)
+       fig + coord_cartesian(xlim = ranges$x, ylim = ranges$y, expand = TRUE)
     }#, deleteFile = TRUE 
     #outputArgs = list(brush = brushOpts(id = ns("plot_brush")),
     #                  click = clickOpts(id = ns("plot_click"))

@@ -78,6 +78,8 @@ generate_runSummary_table <- function(PARAMS) {
   
   out = t(out)
   out = cbind(parms = rownames(out), out)
+  
+  rownames(out) = NULL
   out[is.na(out)]= "---"
  
    out

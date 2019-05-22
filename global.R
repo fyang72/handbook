@@ -1,3 +1,4 @@
+
 library(shiny)
 library(dplyr)
  
@@ -119,18 +120,13 @@ std_adex <- read_excel(file_name,sheet="adex",col_names = TRUE)  %>%
 std_adpc <- read_excel(file_name,sheet="adpc",col_names = TRUE)  %>% 
   as.data.frame() %>% filter(!is.na(standard.name))
 
-std_adpx <- read_excel(file_name,sheet="adpx",col_names = TRUE)  %>% 
-  as.data.frame() %>% filter(!is.na(standard.name))
-
 std_convention <- read_excel(file_name,sheet="convention",col_names = TRUE)  %>% 
   as.data.frame() %>% filter(!is.na(domain))
-
-
-nmdat_var_lst <- std_nmdat %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
+ 
 adsl_var_lst <- std_adsl %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
 adex_var_lst <- std_adex %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
 adpc_var_lst <- std_adpc %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
-adpx_var_lst <- std_adpx %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
+nmdat_var_lst <- std_nmdat %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
 
 dvoru_var_lst <- std_convention %>% filter(domain=="DVORU") %>% pull(value)
 sex_var_lst <- std_convention %>% filter(domain=="SEX") %>% pull(value)
@@ -209,6 +205,8 @@ library(dmutate)
 #library(data.table)
 library(reshape2)   # not reshape
 #library(datasets)
+library(pryr)   # Partial function application allows you to modify a function by pre-filling some of the arguments. 
+                # It is particularly useful in conjunction with functionals and other function operators.
 
 #------------------------------------------------------------
 # plots
@@ -276,7 +274,7 @@ file.lst <-list.files(path = folder.loc, all.files = FALSE,full.names = TRUE, in
 file.lst = file.lst[which(substr(file.lst, nchar(file.lst)-1, nchar(file.lst)) %in% c(".r", ".R"))]
 
 for (ifile in 1:length(file.lst)) { 
-  print(file.lst[ifile]);  
+  #print(file.lst[ifile]);  
   source(file=file.lst[ifile])  
 }     #sys.source('file.R', envir=environment())
 
@@ -288,7 +286,7 @@ file.lst = file.lst[which(substr(file.lst, nchar(file.lst)-1, nchar(file.lst)) %
 file.lst = file.lst[which(!substr(gsub(folder.loc, "", file.lst, fix=TRUE), 1,1) %in% c("_"))]
 
 for (ifile in 1:length(file.lst)) { 
-  print(file.lst[ifile]);  
+  #print(file.lst[ifile]);  
   source(file=file.lst[ifile])  
 }     #sys.source('file.R', envir=environment())
 
@@ -299,7 +297,7 @@ file.lst = file.lst[which(substr(file.lst, nchar(file.lst)-1, nchar(file.lst)) %
 file.lst = file.lst[which(!substr(gsub(folder.loc, "", file.lst, fix=TRUE), 1,1) %in% c("_"))]
 
 for (ifile in 1:length(file.lst)) { 
-  print(file.lst[ifile]);  
+  #print(file.lst[ifile]);  
   source(file=file.lst[ifile])  
 }     #sys.source('file.R', envir=environment())
 
@@ -331,6 +329,7 @@ options(digits = 3)
 knitr::opts_chunk$set(fig.width=9, 
                       fig.height=6, 
                       fig.path='figures/', 
+                      fig.align='center',
                       comment = "#>",
                       collapse = TRUE,
                       warning=FALSE, 

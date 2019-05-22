@@ -3,7 +3,7 @@
 batch_submit_job_to_HPC <- function(server_IP_address,
                                     program_name, 
                                     runno, 
-                                    loal_home="./KRM/", 
+                                    local_home="./KRM/", 
                                     execute_option = " -clean=4 -nodes=50"
 ) {
   
@@ -13,8 +13,8 @@ batch_submit_job_to_HPC <- function(server_IP_address,
   runno_df = runno_df %>% mutate(runno=as.character(runno))
   
   for (i in 1:nrow(runno_df)) {
-    local_model_name = paste0(loal_home, "/ctl/", runno_df[i, "ctl"], ".ctl")
-    local_data_name = paste0(loal_home, "/data/", runno_df[i, "dat"], ".csv") # "./KRM/data/nmdat_0321_2019.csv"   #_0226_2019.csv"    # "./data/nmdat_0226_2019.csv" 
+    local_model_name = paste0(local_home, "/ctl/", runno_df[i, "ctl"], ".ctl")
+    local_data_name = paste0(local_home, "/data/", runno_df[i, "dat"], ".csv") # "./KRM/data/nmdat_0321_2019.csv"   #_0226_2019.csv"    # "./data/nmdat_0226_2019.csv" 
     
     runno = runno_df[i, "runno"]
     
@@ -75,7 +75,10 @@ submit_job_to_HPC <- function(
   command1 = paste0('cd ',  server_model_dir)         
   command2 = paste0('setsid ', run_command, ' > output.log 2>&1 & ') 
   command = paste(command1, command2, sep="; ")
-  system(command = paste0("ssh ", server_IP_address, " '", command, "'"), intern = T)
+  
+  # print(paste0("ssh ", server_IP_address, " \"", command, "\""))
+  # system(command = paste0("ssh ", server_IP_address, " '", command, "'"), intern = T)
+  system(command = paste0("ssh ", server_IP_address, " \"", command, "\""), intern = T)
     
 }
 

@@ -83,7 +83,7 @@
       adsl$WGTBL <- rnorm(nsample, meanWt, sdWt); 
         
       adsl = as.data.frame(adsl)        
-      adsl = adsl %>% filter(WGTBL>=lowerWt & WGTBL<=upperWt);   
+      adsl = adsl %>% dplyr::filter(WGTBL>=lowerWt & WGTBL<=upperWt);   
       adsl = adsl[1:nsubject, ] ; 
             
 

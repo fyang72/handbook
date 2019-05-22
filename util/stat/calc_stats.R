@@ -81,19 +81,19 @@ calc_stats  <- function(adsl, id="USUBJID",group_by="ARMA", value="DVOR") {
       PCT10 = fun.pct10(DVOR)
     ) %>%      # 80% confident interval
     
-    mutate(Range= paste0("(", u.signif(Min, digits=3), "-", u.signif(Max, digits=3), ")"),
+    mutate(Range= paste0("(", u_signif(Min, digits=3), "-", u_signif(Max, digits=3), ")"),
            CV = abs(SD/Mean)*100,     #### ? abs???  01/05/2018
            meanMinusSD = Mean - SD, 
            meanPlusSD  = Mean + SD, 
            meanMinusSE = Mean - SE, 
            meanPlusSE  = Mean + SE,
-           Median_Range = paste0(u.signif(Median,digits=3), "", Range),
-           Mean_CV=paste(u.signif(Mean,digits=3)," (", u.signif(CV,digits=3), "%)",sep=""),   # paste( expression(Mean %+-% SD~or~N~"(%)")  , sep="")                              
-           Mean_SD=paste(u.signif(Mean,digits=3), " (\u00b1", u.signif(SD,digits=3), ")",sep=""),   # paste( expression(Mean %+-% SD~or~N~"(%)")  , sep="")  
-           Mean_SE=paste(u.signif(Mean,digits=3)," (\u00b1", u.signif(SE,digits=3), ")",sep="") ,
+           Median_Range = paste0(u_signif(Median,digits=3), "", Range),
+           Mean_CV=paste(u_signif(Mean,digits=3)," (", u_signif(CV,digits=3), "%)",sep=""),   # paste( expression(Mean %+-% SD~or~N~"(%)")  , sep="")                              
+           Mean_SD=paste(u_signif(Mean,digits=3), " (\u00b1", u_signif(SD,digits=3), ")",sep=""),   # paste( expression(Mean %+-% SD~or~N~"(%)")  , sep="")  
+           Mean_SE=paste(u_signif(Mean,digits=3)," (\u00b1", u_signif(SE,digits=3), ")",sep="") ,
            
-           GEOmean_SD=paste(u.signif(GEOmean,digits=3), " (\u00b1", u.signif(GEOSD,digits=3), ")",sep="") , 
-           GEOmean_CV=paste(u.signif(GEOmean,digits=3)," (", u.signif(GEOSD/GEOmean*100,digits=3), "%)",sep="") 
+           GEOmean_SD=paste(u_signif(GEOmean,digits=3), " (\u00b1", u_signif(GEOSD,digits=3), ")",sep="") , 
+           GEOmean_CV=paste(u_signif(GEOmean,digits=3)," (", u_signif(GEOSD/GEOmean*100,digits=3), "%)",sep="") 
            
            
     )                                            #"(\u00b1"
@@ -108,26 +108,26 @@ calc_stats  <- function(adsl, id="USUBJID",group_by="ARMA", value="DVOR") {
   #   if (signif) {
   #   stats = as.data.frame(stats)
   #   stats = stats %>%  mutate(
-  #                  Mean=u.signif(Mean, digits=digits), 
-  #                  Median=u.signif(Median, digits=digits), 
+  #                  Mean=u_signif(Mean, digits=digits), 
+  #                  Median=u_signif(Median, digits=digits), 
   #                  Range=Range,
-  #                  SD=u.signif(SD, digits=digits), 
-  #                  SE=u.signif(SE, digits=digits), 
-  #                  CV=u.signif(CV, digits=digits), 
-  #                  meanMinusSD=u.signif(meanMinusSD, digits=digits), 
-  #                  meanPlusSD=u.signif(meanPlusSD, digits=digits), 
-  #                  meanMinusSE=u.signif(meanMinusSE, digits=digits), 
-  #                  meanPlusSE=u.signif(meanPlusSE, digits=digits), 
-  #                  Mean_CV=paste(Mean, "(",u.signif(CV,digits=digits),"%)",sep=""),   # paste( expression(Mean %+-% SD~or~N~"(%)")  , sep="")                   
-  #                  Mean_SD=paste(Mean, "(\u00b1",u.signif(SD,digits=digits),")",sep=""),   # paste( expression(Mean %+-% SD~or~N~"(%)")  , sep="")  
-  #                  Mean_SE=paste(Mean, "(\u00b1",u.signif(SE,digits=digits),")",sep=""),
+  #                  SD=u_signif(SD, digits=digits), 
+  #                  SE=u_signif(SE, digits=digits), 
+  #                  CV=u_signif(CV, digits=digits), 
+  #                  meanMinusSD=u_signif(meanMinusSD, digits=digits), 
+  #                  meanPlusSD=u_signif(meanPlusSD, digits=digits), 
+  #                  meanMinusSE=u_signif(meanMinusSE, digits=digits), 
+  #                  meanPlusSE=u_signif(meanPlusSE, digits=digits), 
+  #                  Mean_CV=paste(Mean, "(",u_signif(CV,digits=digits),"%)",sep=""),   # paste( expression(Mean %+-% SD~or~N~"(%)")  , sep="")                   
+  #                  Mean_SD=paste(Mean, "(\u00b1",u_signif(SD,digits=digits),")",sep=""),   # paste( expression(Mean %+-% SD~or~N~"(%)")  , sep="")  
+  #                  Mean_SE=paste(Mean, "(\u00b1",u_signif(SE,digits=digits),")",sep=""),
   #                                              
-  #                  PCT97P5=u.signif(PCT97P5, digits=digits), 
-  #                  PCT2P5=u.signif(PCT2P5, digits=digits), 
-  #                  PCT95=u.signif(PCT95, digits=digits), 
-  #                  PCT5=u.signif(PCT5, digits=digits), 
-  #                  PCT90=u.signif(PCT90, digits=digits), 
-  #                  PCT10=u.signif(PCT10, digits=digits))                   
+  #                  PCT97P5=u_signif(PCT97P5, digits=digits), 
+  #                  PCT2P5=u_signif(PCT2P5, digits=digits), 
+  #                  PCT95=u_signif(PCT95, digits=digits), 
+  #                  PCT5=u_signif(PCT5, digits=digits), 
+  #                  PCT90=u_signif(PCT90, digits=digits), 
+  #                  PCT10=u_signif(PCT10, digits=digits))                   
   #                }  
   # 
   return(stats)

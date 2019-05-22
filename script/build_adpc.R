@@ -49,18 +49,18 @@ build_adpc <-function(dataset ) {
  
   
   #----------------------------------------------------------------------------- 
-  # Analysis time variable: "VISIT"  "VISITNUM"  "PCTPT" "NTIM"  "TIME"
+  # Analysis time variable: "VISIT"  "VISITNUM"  "TIMEPT" "NTIM"  "TIME"
   #-----------------------------------------------------------------------------
 
   adpc$VISIT = toupper(adpc$VISIT)  # paste("Visit ", adpc$VISITNM, sep="") # u.add.prefix(adpc$VISITNM, prefix="", add.number.zero=3), sep="") 
   adpc$VISITNUM = extractExpr(adpc$VISIT, "([0-9]*\\.?[0-9]+)")  %>% as_numeric()
   adpc$VISIT = paste0("VISIT ", adpc$VISITNUM)
   
-  if (!all(is.na(adpc$PCTPT)))  {
-    adpc$PCTPT = toupper(adpc$PCTPT) 
+  if (!all(is.na(adpc$TIMEPT)))  {
+    adpc$TIMEPT = toupper(adpc$TIMEPT) 
     if (all(is.na(adpc$NTIM)))  {
       adpc = adpc %>% select(-NTIM) %>% 
-        left_join(parsePCTPT(adpc %>% pull(PCTPT) %>% unique()) %>% select(PCTPT, NTIM), by="PCTPT")
+        left_join(parseTIMEPT(adpc %>% pull(TIMEPT) %>% unique()) %>% select(TIMEPT, NTIM), by="TIMEPT")
     }
   }
   
@@ -86,7 +86,8 @@ build_adpc <-function(dataset ) {
   
   if ((!all(class(adpc$SAMDTTM) %in% c("POSIXct", "POSIXt" )))) { 
     library(lubridate) 
-    adpc$SAMDTTM = parse_date_time(adpc$SAMDTTM, timefmt_var_lst, truncated = 3) %>% as.character()
+    adpc$SAMDTTM = parse_date_time(adpc$SAMDTTM, timefmt_var_lst, truncated = 3) %>% 
+      as.character()
   } 
     
   #----------------------                  
@@ -145,24 +146,24 @@ check_adpc <- function(dataset, adpc, topN=20) {
   table[["ARMA"]] = tabl
   
   #----------------- 
-  # PCTPT
+  # TIMEPT
   #----------------- 
-  tabl = adpc %>% select(PCTPT, PCTPT_ORG, NTIM) %>% distinct(PCTPT, .keep_all=TRUE) %>% 
+  tabl = adpc %>% select(TIMEPT, TIMEPT_ORG, NTIM) %>% distinct(TIMEPT, .keep_all=TRUE) %>% 
     mutate(VISITNUM=as_numeric(VISITNUM), 
            NTIM=as_numeric(NTIM)
     ) %>% arrange(VISITNUM, NTIM)
   
   if (nrow(tabl)>topN) { tabl = tabl %>% slice(1:topN) }
-  attr(tabl, "title") = "List of nominal time point (PCTPT) and its corresponding numerical value (NTIM)" 
-  attr(tabl, "key") = "PCTPT_ORG"
+  attr(tabl, "title") = "List of nominal time point (TIMEPT) and its corresponding numerical value (NTIM)" 
+  attr(tabl, "key") = "TIMEPT_ORG"
   attr(tabl, "value") = "NTIM"
   if (nrow(tabl)>topN) {attr(tabl, "footnote") = paste0("Note, the default is to display top ", topN, " rows.")}
-  table[["PCTPT"]] = tabl
+  table[["TIMEPT"]] = tabl
   
   #----------------- 
   # SAMDTTM
   #----------------- 
-  tabl = adpc %>% select(SAMDTTM, SAMDTTM_ORG, USUBJID, VISIT, PCTPT) %>% 
+  tabl = adpc %>% select(SAMDTTM, SAMDTTM_ORG, USUBJID, VISIT, TIMEPT) %>% 
     filter(is.na(SAMDTTM))  %>% 
     mutate(SAMDTTM = as.character(SAMDTTM),
            SAMDTTM_ORG = as.character(SAMDTTM_ORG)

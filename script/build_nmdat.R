@@ -5,10 +5,11 @@
 #################################################################
 build_adpx <-function(adsl=NULL, adex=NULL, adpc=NULL, other=NULL) {
   
-  adsl = fillUpCol_df(adsl, adsl_var_lst)
-  adex = fillUpCol_df(adex, nmdat_var_lst)
-  adpc = fillUpCol_df(adpc, nmdat_var_lst)
-  other = fillUpCol_df(other, nmdat_var_lst)
+  # grouped variables cause lots of troubles
+  adsl = adsl %>% ungroup() %>% fillUpCol_df(adsl_var_lst)
+  adex = adex %>% ungroup() %>% fillUpCol_df(nmdat_var_lst)
+  adpc = adpc %>% ungroup() %>% fillUpCol_df(nmdat_var_lst)
+  other = other %>% fillUpCol_df(nmdat_var_lst)
   adpc = bind_rows(adpc, other)
   
   #------------------
@@ -27,7 +28,7 @@ build_adpx <-function(adsl=NULL, adex=NULL, adpc=NULL, other=NULL) {
                     parse_date_time(TRTSDTM, orders="Ymd HMS", truncated = 3), 
                     units = "days"
     ) %>% as_numeric()
-  )  
+  )   
   
   #------------------
   # prepare for adex
@@ -48,22 +49,41 @@ build_adpx <-function(adsl=NULL, adex=NULL, adpc=NULL, other=NULL) {
   # merge to adpx
   #------------------
   # time variable must be character
+  # convert all factors to characters
+  w <- which(sapply(adex, function(x) tail(class(x),1)) %in% c('factor', 'POSIXt'))
+  adex[w] <- lapply(adex[w], function(x) as.character(x) )
+  
+  w <- which(sapply(adpc, function(x) tail(class(x),1)) %in% c('factor', 'POSIXt'))
+  adpc[w] <- lapply(adpc[w], function(x) as.character(x) )
+  
   adpx = bind_rows(adex[, nmdat_var_lst], adpc[, nmdat_var_lst])  %>% 
     arrange(STUDYID, ARMA, USUBJID, TIME, TEST)
+  
+  # calcualte EXTDOSE 
+  #------------------
+  adpx = adpx %>% mutate(
+    EXTDOSE = ifelse(EXDOSU=="mg/kg", as_numeric(EXDOSE)*as_numeric(WGTBL),  
+                     ifelse(EXDOSU=="mg",  as_numeric(EXDOSE), NA)))
+  
   
   
   #------------------
   # merge to adsl
   #------------------
-  col_lst = setdiff(colnames(adsl), c("STUDYID", "USUBJID"))
-  adpx = adpx[, setdiff(colnames(adpx), col_lst)]
-  
-  adpx = adpx %>%  
-    left_join(adsl%>%distinct(USUBJID,.keep_all=TRUE), 
+  col_lst = unique(c(setdiff(adsl_var_lst,  "WGTBL"), 
+                     setdiff(colnames(adsl), colnames(adpx))))
+ 
+  # keep "STUDYID", "USUBJID", "WGTBL" in adpx, add anything else
+  adpx = adpx %>% select(-one_of(setdiff(adsl_var_lst, c("STUDYID", "USUBJID", "WGTBL") ))) %>%  
+    left_join(adsl%>%distinct(USUBJID,.keep_all=TRUE) %>% select(one_of(col_lst)), 
               by=c("STUDYID", "USUBJID")
     )
-  
-  adpx = adpx %>% dplyr::arrange(STUDYID, USUBJID, TIME) 
+   
+  #---------------------------------------------
+  # order columns, and final output
+  #---------------------------------------------   
+  col.lst = c(nmdat_var_lst, setdiff(colnames(adpx), nmdat_var_lst))
+  adpx = adpx[, col.lst]  %>% dplyr::arrange(STUDYID, USUBJID, TIME)
   
   return(adpx)
 }
@@ -74,8 +94,11 @@ build_adpx <-function(adsl=NULL, adex=NULL, adpc=NULL, other=NULL) {
 #################################################################
 build_nmdat0 <-function(dataset) {
   
-  # must have these desired variables, if missing, fill with NA 
-  nmdat = dataset %>% fillUpCol_df(nmdat_var_lst) 
+  # grouped variables cause lots of troubles
+  nmdat <- dataset %>% as.data.frame() %>% ungroup()    
+  
+  # must have these desired variables, if missing, fill with NA   
+  nmdat = nmdat %>% fillUpCol_df(nmdat_var_lst) 
   
   #---------------------------------------- 
   # Analysis identifiers
@@ -124,17 +147,17 @@ build_nmdat0 <-function(dataset) {
   nmdat$ARMAN = nmdat$ARMAN
   
   #----------------------------------------------------------------------------- 
-  # Analysis time variable: "VISIT"  "VISITNUM"  "PCTPT" "NTIM"  "TIME"
+  # Analysis time variable: "VISIT"  "VISITNUM"  "TIMEPT" "NTIM"  "TIME"
   #-----------------------------------------------------------------------------
   nmdat$VISIT = toupper(nmdat$VISIT)  # paste("Visit ", nmdat$VISITNM, sep="") # u.add.prefix(nmdat$VISITNM, prefix="", add.number.zero=3), sep="") 
   nmdat$VISITNUM = extractExpr(nmdat$VISIT, "([0-9]*\\.?[0-9]+)")  %>% as_numeric()
   nmdat$VISIT = paste0("VISIT ", nmdat$VISITNUM)
   
-  if (!all(is.na(nmdat$PCTPT)))  {
-    nmdat$PCTPT = toupper(nmdat$PCTPT) 
+  if (!all(is.na(nmdat$TIMEPT)))  {
+    nmdat$TIMEPT = toupper(nmdat$TIMEPT) 
     if (all(is.na(nmdat$NTIM)))  {
       nmdat = nmdat %>% select(-NTIM) %>% 
-        left_join(parsePCTPT(nmdat %>% pull(PCTPT) %>% unique()) %>% select(PCTPT, NTIM), by="PCTPT")
+        left_join(parseTIMEPT(nmdat %>% pull(TIMEPT) %>% unique()) %>% select(TIMEPT, NTIM), by="TIMEPT")
     }
   }
   
@@ -159,6 +182,12 @@ build_nmdat0 <-function(dataset) {
   nmdat = nmdat %>% mutate(
     TIME = difftime(SAMDTTM, TRTSDTM, units = "days") %>% as_numeric()
   ) 
+  
+  nmdat = nmdat %>% 
+    mutate(SAMDTTM = as.character(SAMDTTM), 
+           TRTSDTM = as.character(TRTSDTM) 
+    ) %>% ungroup()
+  
   
   #----------------------                  
   # METHOD (SOP), TEST, 
@@ -207,38 +236,54 @@ build_nmdat1 <- function(dataset) {
   #---------------------
   # nmdat format specific
   #---------------------
-  nmdat = dataset %>% mutate(
+  nmdat <- dataset 
+  
+  nmdat = nmdat %>% fillUpCol_df(nmdat_var_lst) %>% 
+    as.data.frame() %>% ungroup()    # grouped variables cause lots of troubles
+  
+  nmdat = nmdat %>% mutate(
+    
+    ID   = as.integer(as.factor(USUBJID)),
+    ARMA  = ordered(ARMA, levels=unique(ARMA)), 
+    ARMAN = as.integer(as.factor(ARMA)),
+    
+    TIME = as_numeric(TIME), 
+    NTIM  = as_numeric(NTIM),
+    DVOR = as_numeric(DVOR), 
+    AMT  = as_numeric(EXTDOSE), 
+    EVID = ifelse(!is.na(AMT) & AMT>0, 1, 0),
     
     # remove PRE-DOSE, default flag
     CFLAG = ifelse(toupper(ARMA) %in% c("PLACEBO"), "Placebo", 
-                   ifelse(as_numeric(TIME)<=0, "Predose",  
-                          ifelse(as_numeric(TIME)>0 & as.integer(BLQ)==1, "Postdose BLQ", 
-                                 as.character(CFLAG)))),
-    
-    ID    = as.integer(as.factor(USUBJID)),
-    ARMA  = ordered(ARMA, levels=unique(ARMA)), 
-    ARMAN = as.integer(as.factor(ARMA)),
-    TIME  = as_numeric(TIME),
-    NTIM  = as_numeric(NTIM),  
-    
-    AMT  = as_numeric(EXTDOSE), 
-    EVID = ifelse(!is.na(AMT)&AMT>0, 1, 0),
-    
+                   ifelse(TIME<=0 & EVID==0, "Predose",  
+                          ifelse(TIME<=0 & EVID==0 & DVOR > 0, "Pre-dose concentration > LLOQ", 
+                                 ifelse(is.na(TIME), "Missing Time", 
+                                      ifelse(TIME>0 & as.integer(BLQ)==1, "Postdose BLQ", 
+                                             as.character(CFLAG)))))),
+             
     RATE = as_numeric(AMT)/as_numeric(EXDUR),      #    "."            "SUBCUTANEOUS" "INTRAVENOUS" 
     #ifelse(EXROUTE %in% c("SC", "SUBCUTANEOUS"), NA,  NA)),
     RATE = ifelse(is.infinite(RATE)|is.na(RATE), NA, RATE), 
     
-    CMT = ifelse(EXROUTE %in% c("IV", "INTRAVENOUS"), 2,
-                 ifelse(EXROUTE %in% c("SC", "SUBCUTANEOUS"), 1, 0)),    
+    CMT = ifelse(EVID==0, 2, 
+                 ifelse(EXROUTE %in% c("IV", "INTRAVENOUS"), 2,
+                        ifelse(EXROUTE %in% c("SC", "SUBCUTANEOUS"), 1, NA)
+                        )
+                 ),
     
+    EXTRTN = ifelse(is.na(EXTRT), NA, as.integer(as.factor(EXTRT))),
+      
     EXROUTE = ordered(EXROUTE, levels = c(route_var_lst)),
-    EXROUTN = ifelse(is.na(EXROUTE), -99, as.integer(as.factor(EXROUTE))),
+    EXROUTN = ifelse(is.na(EXROUTE), NA, as.integer(as.factor(EXROUTE))),
     
     TEST = ordered(TEST, levels= unique(TEST)),   
+    TESTN = ifelse(is.na(TEST), NA, as.integer(as.factor(TEST))),
     
     TESTCAT = ordered(TESTCAT, levels= testcat_var_lst),  
     
-    DV = DVOR,  # ifelse(TEST=="REGN1500" & as_numeric(DVOR)!=0, log(as_numeric(DVOR)), DVOR),
+    DV = log(DVOR),  
+    DV = ifelse(!is.finite(DV), NA, DV),
+    
     BLQ = ifelse(as_numeric(DVOR)<as_numeric(LLOQ), 1, 0), 
     
     LLOQ = as_numeric(LLOQ), 
@@ -267,19 +312,26 @@ build_nmdat1 <- function(dataset) {
 build_nmdat2 <- function(dataset) {
   
   #remove NA, . and empty space
-  nmdat <- dataset
+  nmdat <- dataset %>% as.data.frame() %>% ungroup()    # grouped variables cause lots of troubles
+  #nmdat[] <- lapply(nmdat, as.character)
   
-  nmdat[] <- lapply(nmdat, as.character)
+  # convert all factors to characters
+  w <- which( sapply(nmdat, function(x) tail(class(x),1)) == 'factor' )
+  nmdat[w] <- lapply(nmdat[w], function(x) as.character(x) )
   
-  nmdat[is.na(nmdat)] = "." 
-  colnames(nmdat) <- gsub(".", "_", colnames(nmdat), fixed=TRUE)
-  colnames(nmdat) <- gsub(" ", "_", colnames(nmdat), fixed=TRUE)
-  
-  # remove "," and " " in some columns 
-  for (icol in 1:ncol(nmdat)) {
+  col_lst = names(which(sapply(nmdat, function(x) tail(class(x),1))=="character"))
+  for (i in 1:length(col_lst))  {
+    icol = col_lst[i]
     nmdat[, icol] = gsub(" ", "_", nmdat[, icol], fixed=TRUE)
-    nmdat[, icol] = gsub(",", "_", nmdat[, icol], fixed=TRUE)
-  } 
+    #nmdat[, icol] = gsub(",", "_", nmdat[, icol], fixed=TRUE)
+  }
+  nmdat[is.na(nmdat)] = "."
+  nmdat = nmdat %>% rename_at(vars(setdiff(col_lst, "C")), ~ paste0(setdiff(col_lst, "C"), "=", "DROP"))
+  
+  # save the nonmem data  
+  #--------------------------------------------------------
+  print(paste0(colnames(nmdat), sep=" ", collapse=""))
+  
   
   return(nmdat)
 }
@@ -299,7 +351,7 @@ check_nmdat <- function(dataset, topN=20) {
   #----------------- 
   # TIME
   #----------------- 
-  tabl = nmdat %>% select(USUBJID, ARMA, VISIT, PCTPT, TIME, SAMDTTM, TRTSDTM ) %>% 
+  tabl = nmdat %>% select(USUBJID, ARMA, VISIT, TIMEPT, TIME, SAMDTTM, TRTSDTM ) %>% 
     filter(is.na(TIME))  %>% 
     arrange(USUBJID)
   

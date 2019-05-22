@@ -224,6 +224,27 @@ observeEvent(input$run_script, {
   )
   
   ihandbook = 1
+  
+  environment(try_eval) <- environment()
+  env = try_eval(text=input$script_content)
+  
+  output=NULL; error_message=NULL
+  if ("output" %in% ls(env)) {output = get("output", env)}
+  if ("message" %in% ls(env)) {error_message = get("message", env)}
+  
+  if (length(error_message)>0) {showNotification(paste0(error_message, collapse="\n"), type="error")}
+  
+  if (length(error_message)==0 & !is.null(output)) {
+    if("data" %in% names(output)) {values$data = output$data}
+    if("figure" %in% names(output))   {values$figure = output$figure}
+    if("table" %in% names(output)) {values$table = output$table}
+    showNotification("run script sucessfully", type="message") 
+  }
+  
+  
+    
+    
+if (1==2) {     
   output= NULL
   
   owd <- tempdir()
@@ -255,6 +276,7 @@ observeEvent(input$run_script, {
     showNotification("run script sucessfully", type="message")   # "default, "message", "warning", "error"
   }
 
+}
 })
 
    

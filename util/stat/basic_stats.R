@@ -60,27 +60,27 @@ percent <- function(x, digits = 2, format = "f", ...) {
 #In case there is missing values in your data, this is not a rare case. you need to add one more argument. 
 
 # CI(95%) 
-q97p5 <- partial(quantile, probs = 0.975, type=2, na.rm=TRUE)  # consistent with SAS definition.
-q2p5  <- partial(quantile, probs = 0.025, type=2, na.rm=TRUE)  # consistent with SAS definition.
+q97p5 <- pryr::partial(quantile, probs = 0.975, type=2, na.rm=TRUE)  # consistent with SAS definition.
+q2p5  <- pryr::partial(quantile, probs = 0.025, type=2, na.rm=TRUE)  # consistent with SAS definition.
 
 # CI(90%) 
-q95 <- partial(quantile, probs = 0.95, type=2, na.rm=TRUE)  # consistent with SAS definition.
-q05 <- partial(quantile, probs = 0.05, type=2, na.rm=TRUE)  # consistent with SAS definition.
+q95 <- pryr::partial(quantile, probs = 0.95, type=2, na.rm=TRUE)  # consistent with SAS definition.
+q05 <- pryr::partial(quantile, probs = 0.05, type=2, na.rm=TRUE)  # consistent with SAS definition.
 
 # CI(80%) 
-q90 <- partial(quantile, probs = 0.9, type=2, na.rm=TRUE)  # consistent with SAS definition.
-q10 <- partial(quantile, probs = 0.1, type=2, na.rm=TRUE)  # consistent with SAS definition.
+q90 <- pryr::partial(quantile, probs = 0.9, type=2, na.rm=TRUE)  # consistent with SAS definition.
+q10 <- pryr::partial(quantile, probs = 0.1, type=2, na.rm=TRUE)  # consistent with SAS definition.
 
 # 0.25
-q25 <- partial(quantile, probs = 0.25, type=2, na.rm=TRUE)  # consistent with SAS definition.
+q25 <- pryr::partial(quantile, probs = 0.25, type=2, na.rm=TRUE)  # consistent with SAS definition.
 
 # 0.5
-q50 <- partial(quantile, probs = 0.50, type=2, na.rm=TRUE)  # consistent with SAS definition.
+q50 <- pryr::partial(quantile, probs = 0.50, type=2, na.rm=TRUE)  # consistent with SAS definition.
 
 # 0.75
-q75 <- partial(quantile, probs = 0.75, type=2, na.rm=TRUE)  # consistent with SAS definition.
+q75 <- pryr::partial(quantile, probs = 0.75, type=2, na.rm=TRUE)  # consistent with SAS definition.
 
-#sd <- partial(sd, na.rm=TRUE)
+#sd <- pryr::partial(sd, na.rm=TRUE)
 
 #sd <- function(x) sd(x,na.rm=TRUE)
 #se <- function(x) sd(x,na.rm=TRUE)/sqrt(length(x))
