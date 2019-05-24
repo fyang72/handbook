@@ -60,6 +60,7 @@ base_theme <- function (font.size = 10,
     panel.grid.major = element_line(colour = "gray97",size=0.75),  #ggplot2::element_blank()   # element_line(colour = "gray90",size=0.75))      
     
     panel.border = element_rect(colour = "black", fill=NA, size=1), 
+    panel.spacing = unit(0.2, "lines"),
     strip.background = element_rect(colour="transparent", fill="white")
   )
   

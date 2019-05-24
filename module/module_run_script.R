@@ -232,13 +232,18 @@ observeEvent(input$run_script, {
   if ("output" %in% ls(env)) {output = get("output", env)}
   if ("message" %in% ls(env)) {error_message = get("message", env)}
   
-  if (length(error_message)>0) {showNotification(paste0(error_message, collapse="\n"), type="error")}
+  # if (length(error_message)>0) {
+  #   if(error_message %in% c("Compiling cppModel ... done.")) showNotification(paste0(error_message, collapse="\n"), type="error")}
   
-  if (length(error_message)==0 & !is.null(output)) {
+  if ((length(error_message)==0 & !is.null(output)) |    
+      (length(error_message)>0 && error_message %in% c("Compiling cppModel ... done."))
+      ) {
     if("data" %in% names(output)) {values$data = output$data}
     if("figure" %in% names(output))   {values$figure = output$figure}
     if("table" %in% names(output)) {values$table = output$table}
     showNotification("run script sucessfully", type="message") 
+  }else{
+    showNotification(paste0(error_message, collapse="\n"), type="error")
   }
   
   

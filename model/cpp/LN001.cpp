@@ -4,7 +4,7 @@ $PROB
 - Based on xxxx dataset
 - Author: Feng Yang
 - Client: xxxx 
-- Date: `r Sys.Date()`
+- Date: 05/18/2019
 - NONMEM Run: 12345
 - Structure: two compartment, first order absorption
 - Implementation: ODE solutions
@@ -40,11 +40,10 @@ $PARAM @annotated
 // fixed parameter                                                             
 //##############################################################################
 $FIXED @annotated
-  m_WGT : 70 : Mean body weight at baseline in the specific population (kg)
-  m_AGE : 34 : Mean age in the specific population (year)
+  M_WGT : 70 : Mean body weight at baseline in the specific population (kg)
+  M_AGE : 34 : Mean age in the specific population (year)
   
-  
-//delta: step-size in numerical integration
+// delta: step-size in numerical integration
 // end: end of simulation period, for example of treatment + followup
 $SET delta=0.1, end=240          
 
@@ -69,11 +68,11 @@ $MAIN
   
   double F1   = TV_F1;    //exp(TV_F1)/(1+exp(TV_F1)); 
 
-  CL = CL * exp(WGT_ON_CLQ*(log(WGTBL)-log(m_WGT))); //CL*pow(WEIGHTBL/m_WGT, 0.75);  
-  Q  = Q  * exp(WGT_ON_CLQ*(log(WGTBL)-log(m_WGT)));
+  CL = CL * exp(WGT_ON_CLQ*(log(WGTBL)-log(M_WGT))); //CL*pow(WEIGHTBL/M_WGT, 0.75);  
+  Q  = Q  * exp(WGT_ON_CLQ*(log(WGTBL)-log(M_WGT)));
   
-  V2 = V2 * exp(WGT_ON_VSS*(log(WGTBL)-log(m_WGT)));
-  V3 = V3 * exp(WGT_ON_VSS*(log(WGTBL)-log(m_WGT)));
+  V2 = V2 * exp(WGT_ON_VSS*(log(WGTBL)-log(M_WGT)));
+  V3 = V3 * exp(WGT_ON_VSS*(log(WGTBL)-log(M_WGT)));
   
   // derived parameter
   _F(1) = F1;
@@ -91,9 +90,11 @@ $MAIN
 
 $ODE       
   // drug depot
-  dxdt_DEPOT  = -KA*DEPOT;   
+  dxdt_DEPOT  = -KA*DEPOT;
+
   // central compartment (amount)
   dxdt_CENTRAL = KA*DEPOT-(KE+K23)*CENTRAL+K32*PERIPH;  
+  
   // peripheral compartment (amount)
   dxdt_PERIPH  = K23*CENTRAL-K32*PERIPH;   
 
@@ -119,6 +120,7 @@ ADD : 0.1   : Additive residual error
 //##############################################################################
 
 $TABLE 
+  int STUDYID = 1111;
   double IPRED = CENTRAL/V2;  
   
   double PROP1=PROP*IPRED;   //  proportional part 
@@ -127,13 +129,15 @@ $TABLE
        
   double DV = IPRED + SD;
   
-  double IPRED_CONC = IPRED;
-  double DV_CONC = DV;
+  double IPRED_CONC = IPRED;     //IPRED_PD
+  double DV_CONC = DV;           //DV_PD
  
 //##############################################################################
 // CAPTURE (output from simulated result)
 //############################################################################## 
 $CAPTURE @annotated
+  STUDYID: Study ID
+
   CL : Individual clearance (L/day)
   V2 : Individual volume of central compartment (L)
   Q  : Individual inter-compartmental clearance between the central and peripheral compartments (L/day)  

@@ -166,11 +166,11 @@ adsl <- reactive({
 observeEvent(input$run_simulation, {
   
   # load  
-  mod = cppModel() 
+  cppModel = cppModel() 
   adsl = adsl();  
   adex = adex()  
   
-  validate(need(mod, message="no model loaded"), 
+  validate(need(cppModel, message="no model loaded"), 
            need(adsl, message="no adsl loaded"), 
            need(adex, message="no adex loaded"), 
            need(input$infusion_hrs_lst, message=FALSE)
@@ -180,109 +180,33 @@ observeEvent(input$run_simulation, {
   progress <- shiny::Progress$new()
   on.exit(progress$close())  # Make sure it closes when we exit this reactive, even if there's an error
   progress$set(message = "Running Simulation...Please Wait", value = 0)
-  
-  
-
    
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (1==2) { 
-  mod = mread(model='cppModel', project=paste0(HOME, '/model/cpp/'),file="LN001.cpp")
-  adsl = data.frame(ID=c(1,2), WGTBL=75)  # a data.frame
-  adex = parseARMA(c("3 mg/kg IV Q2W*12 ", "3 mg/kg IV QW*1 + 350 mg IV Q3W*8"))            # a data.frame or a event object
-     
-  seed = 1234
-  simulation_delta = 1
-  followup_period = 112
-  infusion_hrs_lst = 1 
+    cppModel = mread(model='cppModel', project=paste0(HOME, '/model/cpp/'),file="LN001.cpp")
+    adsl = data.frame(ID=c(1,2), WGTBL=75)  # a data.frame
+    adex = parseARMA(c("3 mg/kg IV Q2W*12 ", "3 mg/kg IV QW*1 + 350 mg IV Q3W*8"))            # a data.frame or a event object
+       
+    seed = 1234
+    simulation_delta = 1
+    followup_period = 112
+    infusion_hrs = 1 
   }
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # adex: expand.grid on DOSEID and ID
-  dose = adex %>% capitalize_names() %>% rename(DOSEID = ID)
-  adex = expand.grid(DOSEID = unique(dose$DOSEID), ID = unique(adsl$ID)) %>%   #, POP=unique(adsl$POP))
-    mutate(DOSEID = as.integer(DOSEID), 
-           ID = as.integer(ID)) %>% 
-    left_join(dose, by="DOSEID") %>% 
-    left_join(adsl %>% mutate(ID=as.integer(ID)), by="ID") %>% 
-    mutate(WGTBL = as_numeric(WGTBL)) %>% 
-    rename(USUBJID=ID)
   
-  adex = adex %>% 
-    mutate(ID = as.integer(as.factor(paste0(USUBJID,"_", DOSEID))))  # New ID , "_", POP
+  infusion_hrs_lst = input$infusion_hrs_lst
+  seed = input$seed
   
-  # POP + REP + ID + DOSEID(ARMA) + TIME
-  adex = adex %>% mutate(AMT = ifelse(UNIT=="mg/kg", AMT * as_numeric(WGTBL), AMT), 
-                         CMT = ifelse(ROUTE=="IV", 2, 
-                                      ifelse(ROUTE=="SC", 1, 0)), 
-                         RATE = ifelse(ROUTE=="IV", AMT/(input$infusion_hrs_lst/24), 0), 
-                         
-                         ROUTEN = ifelse(ROUTE=="IV", 1, 
-                                         ifelse(ROUTE=="SC", 2, 0))) 
-  
-  
-  # setup parameters for simulation
-  # -----------------------------------
-  # set seed to make reproducible simulation (if IIV=1)
-  set.seed(input$seed)
-  
-  # library("PKPDmisc")
-  treat_end1 = ifelse(all(c("ADDL", "II") %in% colnames(adex)), max((adex$ADDL+1)*adex$II), 0) 
-  treat_end2 = adex %>% pull(TIME) %>% as_numeric() %>% max(na.rm=TRUE) # 
-  treat_end = max(treat_end1, treat_end2)
-  
-  sim_end = treat_end + followup_period   # default 112 days  
-   
-  
-  # note dose by week only
-  tgrid = sim_timept(start=0, 
-                     end=treat_end, 
-                     delta=simulation_delta, 
-                     dtime=seq(0,treat_end, by=7))
- 
-  # run simulation
-  # -----------------------------------
-  col_lst = names(which(sapply(adex, typeof) == "character"))
-  
-  out = mod %>% data_set(adex %>% select(-one_of(col_lst))) %>% 
-    mrgsim(end=sim_end, delta=simulation_delta, add=tgrid, tad=TRUE, carry.out=c("ii", "evid")) %>% 
-    as.data.frame() %>% capitalize_names()  %>% slice(2:n())
-  
-  # add back ID, STUDYID, USUBJID, ARMA, and EXROUTE
-  add_col_lst = c("ARMA", "ROUTE", "WGTBL")
-  out = out[, setdiff(colnames(out), add_col_lst)]
-  out = out  %>% 
-    left_join(adex %>% as.data.frame() %>% 
-                distinct(ID, .keep_all=TRUE) %>% 
-                select(ID, ARMA, ROUTE, WGTBL),
-              by=c("ID"))  
-  
-  col.lst <- colnames(out)[which(substr(colnames(out), 1,6) == "IPRED_")]
-  out = out %>% gather(TEST, IPRED, -one_of(setdiff(colnames(out), col.lst))) %>% 
-    mutate(TEST=gsub("IPRED_", "", TEST, fixed=TRUE))
-  
-  # col.lst <- colnames(out)[which(substr(colnames(out), 1,3) == "DV_")]
-  # out = out %>% gather(TEST, DVOR, -one_of(setdiff(colnames(out), col.lst)))
-  # 
-  
-  # clean ARMA
-  #out = out %>% mutate(ARMA = gsub("_", " ", ARMA, fix=TRUE))
-  
-  # EXSEQ
-  out = out %>% #mutate(EVID=ifelse(TAD==0, 1, 0))   %>% 
-    group_by(ID) %>%  mutate(EXSEQ=cumsum(EVID))     # for calculat the last dose interval later
-  
-  # fill up II by  Last Observation Carried Forward
-  # na.locf https://stackoverflow.com/questions/48392015/r-carry-forward-last-observation-n-times-by-group?rq=1
-  out = out %>% mutate(II=ifelse(II==0, NA, II))  %>% 
-    group_by(ID) %>% fill(II) %>% 
-    ungroup()
-  
-  head(out) %>% as.data.frame()
-   
-  # simData is a data.frame of 
-  # c("STUDYID", "ARMA", "USUBJID", "ID", "TIME","NTIM", "TAD", "EVID", 
-  #    "II", "TEST","DVOR", "EXSEQ", "WGTBL")
-  values$simData = out
- 
+  values$simData <- runSim_by_dosing_regimen2(
+    cppModel,    # model file
+    adsl,   # population 
+    adex,   # dose regimen
+    simulation_delta = simulation_delta,  # integration step                  
+    tgrid = NULL,     # extra timepoint (other than delta)
+    infusion_hrs = infusion_hrs_lst,  # hour,  infusion hours
+    followup_period = followup_period,   # how long of the followup period after treatment
+    seed=seed)
+     
 }) 
 
 

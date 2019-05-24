@@ -84,3 +84,103 @@ runSim_by_dosing_regimen <-function(
 }
 
 
+
+# use in "handbook", adex is outside
+
+runSim_by_dosing_regimen2 <-function(
+  cppModel,    # model file
+  adsl,   # population 
+  adex,   # dose regimen
+  simulation_delta = 1,  # integration step                  
+  tgrid = NULL,     # extra timepoint (other than delta)
+  infusion_hrs = 1,  # hour,  infusion hours
+  followup_period = 84,   # how long of the followup period after treatment
+  seed=1234) {
+  
+  
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # adex: expand.grid on DOSEID and ID
+  dose = adex %>% capitalize_names() %>% rename(DOSEID = ID)
+  adex = expand.grid(DOSEID = unique(dose$DOSEID), ID = unique(adsl$ID)) %>%   #, POP=unique(adsl$POP))
+    mutate(DOSEID = as.integer(DOSEID), 
+           ID = as.integer(ID)) %>% 
+    left_join(dose, by="DOSEID") %>% 
+    left_join(adsl %>% mutate(ID=as.integer(ID)), by="ID") %>% 
+    mutate(WGTBL = as_numeric(WGTBL)) %>% 
+    rename(USUBJID=ID)
+  
+  adex = adex %>% 
+    mutate(ID = as.integer(as.factor(paste0(USUBJID,"_", DOSEID))))  # New ID , "_", POP
+  
+  # POP + REP + ID + DOSEID(ARMA) + TIME
+  adex = adex %>% mutate(AMT = ifelse(UNIT=="mg/kg", AMT * as_numeric(WGTBL), AMT), 
+                         CMT = ifelse(ROUTE=="IV", 2, 
+                                      ifelse(ROUTE=="SC", 1, 0)), 
+                         RATE = ifelse(ROUTE=="IV", AMT/(infusion_hrs/24), 0), 
+                         
+                         ROUTEN = ifelse(ROUTE=="IV", 1, 
+                                         ifelse(ROUTE=="SC", 2, 0))) 
+  
+  
+  # setup parameters for simulation
+  # -----------------------------------
+  # set seed to make reproducible simulation (if IIV=1)
+  set.seed(seed)
+  
+  # library("PKPDmisc")
+  treat_end1 = ifelse(all(c("ADDL", "II") %in% colnames(adex)), max((adex$ADDL+1)*adex$II), 0) 
+  treat_end2 = adex %>% pull(TIME) %>% as_numeric() %>% max(na.rm=TRUE) # 
+  treat_end = max(treat_end1, treat_end2)
+  
+  sim_end = treat_end + followup_period   # default 112 days  
+  
+  
+  # note dose by week only
+  tgrid = sim_timept(start=0, 
+                     end=treat_end, 
+                     delta=simulation_delta, 
+                     dtime=seq(0,treat_end, by=7))
+  
+  # run simulation
+  # -----------------------------------
+  col_lst = names(which(sapply(adex, typeof) == "character"))
+  
+  out = cppModel %>% data_set(adex %>% select(-one_of(col_lst))) %>% 
+    mrgsim(end=sim_end, delta=simulation_delta, add=tgrid, tad=TRUE, carry.out=c("II", "EVID")) %>% 
+    as.data.frame() %>% capitalize_names()  %>% slice(2:n())
+  
+  # add back ID, STUDYID, USUBJID, ARMA, and EXROUTE
+  add_col_lst = c("ARMA", "ROUTE", "WGTBL")
+  out = out[, setdiff(colnames(out), add_col_lst)]
+  out = out  %>% 
+    left_join(adex %>% as.data.frame() %>% 
+                distinct(ID, .keep_all=TRUE) %>% 
+                select(ID, ARMA, WGTBL),
+              by=c("ID"))  
+  
+  col.lst <- colnames(out)[which(substr(colnames(out), 1,6) == "IPRED_")]
+  out = out %>% gather(TEST, IPRED, -one_of(setdiff(colnames(out), col.lst))) %>% 
+    mutate(TEST=gsub("IPRED_", "", TEST, fixed=TRUE))
+  
+  # col.lst <- colnames(out)[which(substr(colnames(out), 1,3) == "DV_")]
+  # out = out %>% gather(TEST, DV, -one_of(setdiff(colnames(out), col.lst)))
+  # 
+  
+  # clean ARMA
+  #out = out %>% mutate(ARMA = gsub("_", " ", ARMA, fix=TRUE))
+  
+  # EXSEQ
+  out = out %>% mutate(EVID=ifelse(TAD==0, 1, 0))   %>% 
+    group_by(ID) %>%  mutate(EXSEQ=cumsum(EVID))     # for calculat the last dose interval later
+  
+  # fill up II by  Last Observation Carried Forward
+  # na.locf https://stackoverflow.com/questions/48392015/r-carry-forward-last-observation-n-times-by-group?rq=1
+  out = out %>% mutate(II=ifelse(II==0, NA, II))  %>% 
+    group_by(ID) %>% fill(II) %>% 
+    ungroup()
+  
+  head(out) %>% as.data.frame()
+  
+  return(out)
+}
+
