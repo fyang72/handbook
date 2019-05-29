@@ -1,0 +1,379 @@
+
+## Model diagnostic   <!-- {.tabset .tabset-pills}--> 
+
+back to [nonmem_dataset_integrity_check](#nonmem_dataset_integrity_check)
+ 
+```{r}
+HOME = "~/FYANG/Template/Handbook/"
+user.name = tolower(Sys.info()["user"])  # determineCurrentUser()
+
+ select_which_program_container <- renderUI({
+    #validate(need(globalVars$login$status, message=FALSE))
+     
+    dirs.list = list.files(path = paste0("./output/", user.name, "/"), full.names = FALSE, recursive = FALSE)
+    dirs.list = c("", dirs.list)
+    selectizeInput(("which_program"), 
+                   label    = "Select program:", 
+                   choices  = dirs.list, 
+                   multiple = FALSE,
+                   selected = dirs.list[1]) 
+    
+  })
+
+ select_which_run_container <- renderUI({
+    #validate(need(globalVars$login$status, message=FALSE))
+     
+    dirs.list = list.files(path = paste0("./output/", user.name, "/", input$which_program, "/"), 
+                           full.names = FALSE, recursive = FALSE)
+    dirs.list = c("", dirs.list)
+    selectizeInput(("which_run"), 
+                   label    = "Select runno:", 
+                   choices  = dirs.list, 
+                   multiple = FALSE,
+                   selected = dirs.list[1]) 
+    
+  })
+ 
+  fluidRow(
+    column(width=6, uiOutput(("select_which_program_container"))), 
+    
+    column(width=6, uiOutput(("select_which_run_container")))
+  ) 
+
+    
+    
+    
+
+   # nmdat_buildIn_model_check <- function(nmdat, cppModel, values4nmdat)  {
+   #   validate(need(nmdat, message=FALSE), 
+   #            need(cppModel, message=FALSE))
+   #        
+   #   values4nmdat = newuoa_parameter_estimation(nmdat, cppModel, values4nmdat)
+   #     
+   #   values4nmdat = newuoa_simulation(nmdat, cppModel, values4nmdat)
+   # 
+   #   values4nmdat = newuoa_diagnostic_PRED_DVOR(nmdat, cppModel, values4nmdat)
+   #     
+   #     
+   # return(values4nmdat)
+   # }
+   
+```
+
+
+### Load model 
+
+
+```{r}
+renderUI({
+  ALL = callModule(load_cppModel, "load_cppModel_for_integrity_check", ALL)
+  
+  load_cppModel_Input(id="load_cppModel_for_integrity_check", label="load_cppModel") 
+  })
+ 
+```
+
+```{r}
+cppModel_inputData <- reactive({
+ 
+  validate(need(ALL$cppModel, message=FALSE))
+  print("in cppModel_inputData  ")
+ 
+  cppModel = ALL$cppModel[['cppModel_nmdat_check']] 
+  cppModel
+})
+  
+   
+```
+
+
+
+
+ 
+
+newly estimated parameters
+
+```{r, tab.caption="newly estimated parameters", eval=TRUE}
+# theta <- mod %>% param()   %>% as.numeric()   # log(c(DENCL=6, DENVC=3000, DENVMAX=1000, DENVP=3000))
+# param.lst = c("TVCL" , "TVV2",  "TVQ",   "TVV3",  "TVKA" ,  "TVF1", "TVVMAX","TVKSS" )
+# theta = theta[param.lst]
+
+#renderUI({
+ #   validate(need(values4nmdat$newuoa$params, message=FALSE) )
+  
+    renderPrint({  
+      #print("values4nmdat$newuoa$params")
+      #print(values4nmdat$newuoa$params)
+      
+      validate(need(values4nmdat$newuoa$params, message=FALSE))
+      exp(values4nmdat$newuoa$params  )  
+      
+      })
+  # callModule(default_tabOutput, "newuoa.params",  
+  #              mytab = exp(values4nmdat$newuoa$params))
+  # 
+  # default_tabOutput_Input(id="newuoa.params", 
+  #                         label="newuoa.params" ) 
+#}) 
+ 
+
+```
+
+
+
+```{r}
+  # We can run observers in here if we want to
+  observe({
+    msg <- sprintf("File %s was uploaded", values4nmdat$newuoa$params)
+    cat(msg, "\n")
+  })
+```
+   
+  
+
+### Run simulation
+
+```{r}
+# with updated parameters, re-run the model
+# ----------------------------------------------
+
+newuoa_simulation <- function(nmdat, cppModel, values4nmdat)  {
+  validate(need(nmdat, message=FALSE), 
+           need(cppModel, message=FALSE),
+           need(values4nmdat$newuoa$params, message=FALSE)
+  )
+     print("simulation....     : ")
+   
+theta <- cppModel %>% param(values4nmdat$newuoa$params) %>% param()  %>% as.numeric()   # log(c(DENCL=6, DENVC=3000, DENVMAX=1000, DENVP=3000))
+param.lst = c("TVCL" , "TVV2",  "TVQ",   "TVV3",  "TVKA" ,  "TVF1", "TVVMAX","TVKSS" )
+theta = theta[param.lst] #%>% log()
+
+tdata <- nmdat %>% filter(TIME>=0, C!="C", TEST %in% c(".", "REGN3918"))
+simData <- ols(cppModel, theta=theta,  tdata, pred=TRUE) %>% 
+  mutate(PRED = CONC, 
+         DV = DVOR, 
+         WRES = (PRED-DV)^2#/DV^2
+  )
+ 
+values4nmdat$newuoa$simData =  simData 
+
+fig = ggplot(simData, aes(x=TIME, y=PRED, group=USUBJID)) + 
+  geom_point() + geom_line() +  
+  geom_point(data=simData, aes(x=TIME, y=DVOR, group=USUBJID)) + 
+  
+  geom_point(data=simData%>%arrange(-WRES)%>%top_n(50), aes(x=TIME, y=DVOR, group=USUBJID), col="red") + 
+  
+  facet_wrap(~ARMA, scales="free") + 
+  theme_bw() + base_theme(font.size = 12) + 
+  xlab("Time(day)") + 
+  ylab("Predicted/Observed Concentration (mg/L)")
+  
+values4nmdat$newuoa$timeProfile = fig
+
+return(values4nmdat)
+}
+ 
+ renderUI({ 
+    
+    validate(need(values4nmdat$newuoa$timeProfile, message=FALSE), 
+             need(values4nmdat$newuoa$simData, message=FALSE)
+    )
+    
+    callModule(ggplot_brush, "ggplot.newuoa.timeProfile", 
+              fig=  values4nmdat$newuoa$timeProfile , 
+              mydata = values4nmdat$newuoa$simData, 
+              xvar="TIME", yvar="PRED")
+     
+    ggplot_brush_Input(id="ggplot.newuoa.timeProfile", label = "ggplot.newuoa.timeProfile")
+  
+   })
+   
+```
+
+
+### Diagnostic plot
+
+```{r diagnostic_plot, anchor="figure", fig.cap="Diagnostic plot of PRED vs DV "}
+
+
+newuoa_diagnostic_PRED_DVOR <- function(nmdat, cppModel, values4nmdat)  {
+  # not used nmdat and cppModel
+   
+  validate(#need(nmdat, message=FALSE), 
+           #need(cppModel, message=FALSE),
+           need(values4nmdat$newuoa$simData, message=FALSE)
+  )
+  
+  
+  simData = values4nmdat$newuoa$simData 
+  
+limits = range(simData$DVOR, na.rm=TRUE)
+
+#population prediction PRED
+p1 <- ggplot(data=simData, aes(x=PRED,y=DVOR, col=ARMA)) +
+  ggtitle("Observed vs Predited (Linear)")+
+  xlab("Population Predictions") + ylab("Observed") +
+  geom_point()+   
+  
+  geom_point(data=simData%>%arrange(-WRES)%>%top_n(50), aes(x=PRED, y=DVOR), col="red") + 
+  
+  coord_fixed(ratio=1, xlim = limits, ylim = limits) +   
+  #geom_smooth(show.legend = FALSE,lwd=1,alpha=0.5)+ 
+  geom_abline(show.legend = FALSE,intercept=0,slope=1)+
+  theme_bw() +  base_theme(font.size = 12)  + 
+  guides(col=guide_legend(ncol=4,byrow=TRUE)) 
+#theme(legend.position="none") 
+
+tdata = simData %>% filter(!is.na(as_numeric(DVOR)), !is.na(as_numeric(PRED)))
+limits = ifelse(limits<0.078, 0.039, limits)
+p2 <- ggplot(data=tdata, aes(x=(PRED),y=(DVOR), col=ARMA)) +     #log(x$PRED[x$MDV==0]),log(x$DV[x$MDV==0]),xlab="Population Predictions (log)",ylab="Observed (log)",alpha=0.5)+
+  ggtitle("Observed vs Predited (Log)")+
+  xlab("Population Predictions (log)") + ylab("Observed (log)") +
+  geom_point()+ 
+  
+  geom_point(data=tdata%>%arrange(-WRES)%>%top_n(50), aes(x=(PRED), y=(DVOR)), col="red") + 
+  
+  scale_x_log10(breaks = 10^(seq(-1,3,by=1)),      #trans_breaks("log10", function(x) 10^x),
+                labels = 10^(seq(-1,3,by=1))) +      # trans_format("log10", math_format(10^.x))) +
+  
+  scale_y_log10(breaks = 10^(seq(-1,3,by=1)),      #trans_breaks("log10", function(x) 10^x),
+                labels = 10^(seq(-1,3,by=1))) +      # trans_format("log10", math_format(10^.x))) +
+  
+  annotation_logticks(sides ="l") + 
+  
+  coord_fixed(ratio=1, xlim = (limits), ylim = (limits)) +       
+  #geom_smooth(lwd=1,alpha=0.5)+ 
+  geom_abline(intercept=0,slope=1)+
+  theme_bw() +  base_theme(font.size = 12)  + 
+  guides(col=guide_legend(ncol=4,byrow=TRUE))  
+
+fig = p1 # multiplot(p1,p2,cols=2)
+
+#fig <- recordPlot()
+attr(fig, 'title') <- "Predicted vs Observed Concentration in Linear/Log Scale" 
+attr(fig, 'width') <- 8
+attr(fig, 'height') <- 8
+#FIGURE_ALL[["PK_GOF1"]] = fig 
+
+values4nmdat$newuoa$diagnostic_PRED_DVOR = fig
+
+return(values4nmdat)
+}
+
+
+# 
+# 
+#  
+  renderUI({ 
+    validate(need(values4nmdat$newuoa$diagnostic_PRED_DVOR, message=FALSE), 
+             need(values4nmdat$newuoa$simData, message=FALSE)
+    )
+    
+    callModule(ggplot_brush, "ggplot.newuoa.diagnostic.PRED.DVOR", 
+             fig=values4nmdat$newuoa$diagnostic_PRED_DVOR, 
+             mydata = values4nmdat$newuoa$simData, 
+             xvar="PRED", yvar="DV")
+    
+    ggplot_brush_Input(id="ggplot.newuoa.diagnostic.PRED.DVOR", 
+                       label = "ggplot.newuoa.diagnostic.PRED.DVOR")
+ 
+  })
+   
+   
+```
+
+
+
+
+
+```{r, eval=FALSE}
+ observeEvent({nmdat_inputData()}, {
+                
+   nmdat = nmdat_inputData()
+   validate(need(nmdat, message=FALSE)
+   )
+   
+   # all mandatory_check
+   values4nmdat = nmdat_mandatory_check(nmdat, values4nmdat)  
+  
+   # all quick_check
+   values4nmdat = nmdat_quick_check(nmdat, values4nmdat) 
+   
+   # all advanced check
+   values4nmdat = nmdat_advanced_check(nmdat, values4nmdat) 
+      
+ })
+
+
+```
+
+
+
+```{r, eval=FALSE}
+#nmdat_inputData()
+
+ observeEvent({cppModel_inputData()}, {
+                
+   nmdat = nmdat_inputData()
+   cppModel = cppModel_inputData() 
+   
+   validate(need(nmdat, message=FALSE), 
+            need(cppModel, message=FALSE)
+   )
+    
+   # all newuoa model 
+   values4nmdat = nmdat_buildIn_model_check(nmdat, cppModel, values4nmdat) 
+      
+ })
+
+```
+
+
+
+
+
+
+
+
+```{r}
+# http://pages.ucsd.edu/~tfeenstr/research/RMarkdownIntro.Rmd
+
+# Tables are also a useful way to show your results. There are some awesome R packages that help create pretty tables for you: stargazer and xtable. If you don't have these packages installed, you should install them by running the following R code: 
+# 
+# install.packages("stargazer") 
+# 
+# install.packages("xtable")
+# 
+# If you already have them installed, you'll just need to load them, which I've already done in our first code chunk up at the top. 
+# 
+# ## Tables with xtable
+# 
+# ```{r partyid_gender, echo=FALSE, eval=TRUE, results="asis"}
+# # Here I'm going to make a cross-tab table that shows the relationship between gender and party ID
+# # Each row will be a party ID (strong democrat to strong republican)
+# # Each column will be a gender (male, female)
+# # I want to know what percentage of men are strong democrats, what percentage of women are strong democrats, etc. So, each column will sum to 100%
+# 
+# partyid_gender <- prop.table(table(d$V36, d$V1)[2:8,2:3], 2)
+# 
+# # Now I want to set it up to be pretty in the report
+# 
+# options(xtable.comment=FALSE)
+# print(xtable(partyid_gender, type="latex", caption="Party ID by Gender"), caption.placement="top")
+# 
+# # In the code above, we've first told R to suppress a comment that otherwise appears above the latex table
+# # Then we're telling it to print a table that we create with the xtable package. The table is what we stored our table as before (partyid_gender). 
+# # type="latex" says that we want to use latex code for our formatting to generate the pretty table
+# # caption="..." tells us what we want our caption to be
+# # caption.placement="top" tells us that we want the caption on top of the table instead of underneath it
+```
+
+
+
+
+
+
+
+
+
+

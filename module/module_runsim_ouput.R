@@ -259,8 +259,7 @@ observeEvent(input$save_simdata, {
   #req(input$addToCart, FIGURE_ALL, input$fig_name)
   
   if(is.null(input$save_simdata))  {return()}
-  if(input$save_simdata == 0) {return() }
-  cat(file=stderr(), "##############Step: save_simdata #################", "\n")
+  if(input$save_simdata == 0) {return() } 
   
   newData <- values$simData 
   data_name <- input$data_name
@@ -269,6 +268,8 @@ observeEvent(input$save_simdata, {
   attr(newData, "data.name") = data_name
   ALL$DATA[[data_name]] <- newData
   
+  # "default, "message", "warning", "error"  
+  showNotification("Data saved", type="message")
 })
 
 return(ALL)

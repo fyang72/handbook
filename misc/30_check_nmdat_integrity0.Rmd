@@ -1,0 +1,901 @@
+---
+title: "NONMEM Data Integrity Check"
+author: "Feng Yang"
+date: "12/18/2018"
+runtime: shiny
+output:  
+ html_document:
+   toc: true
+   fig_caption: true
+   toc_float:
+       collapsed: true
+       smooth_scroll: true
+   toc_depth: 3
+   css: styles.css
+   code_folding: show
+   number_sections: true
+---
+
+
+```{r, setup1, include=FALSE}
+ 
+# rm(list=ls())
+
+library(mrgsolve)
+library(minqa)
+library(methods)
+library(magrittr) 
+library(dplyr)
+library(readr)
+library(ggplot2)
+
+require(knitr)
+require(kfigr) # devtools::install_github("github mkoohafkan/kfigr")
+ 
+HOME = "~/FYANG/Template/REGN_PMx_Handbook/"
+source(paste0(dirname(dirname(HOME)), "/global.R"))
+setwd(HOME)
+
+
+source("util.R")
+source("./module/load_data.R")
+ 
+
+
+
+ 
+
+
+######################################################################
+# Load local R functions
+######################################################################
+ 
+#folder.loc <- paste0(dirname(dirname(getwd())), "/regnR/R")
+#folder.loc <- "/data/BiCS_RDE_Development/shiny-server_development/pharmacometrics/regnR/R2"
+folder.loc <- "~/regnR/R2"
+
+file.lst <-list.files(path = folder.loc, all.files = FALSE,full.names = TRUE, include.dirs = TRUE, recursive =TRUE)     
+
+file.lst = file.lst[which(substr(file.lst, nchar(file.lst)-1, nchar(file.lst)) %in% c(".r", ".R"))]
+
+for (ifile in 1:length(file.lst)) { 
+  print(file.lst[ifile]);  
+  source(file=file.lst[ifile])  
+}     #sys.source('file.R', envir=environment())
+ 
+
+
+knitr::opts_chunk$set(echo = FALSE, cache=FALSE, message=FALSE, warning=FALSE, fig.align='center')  # results='asis', 
+  opts_knit$set(kfigr.prefix=TRUE, kfigr.link=TRUE)
+ 
+  
+  
+  
+  
+
+    
+# difference-between-global-variable-and-reactive-value
+  #https://stackoverflow.com/questions/45480860/difference-between-global-variable-and-reactive-value
+    ALL <- list(
+      DATA   = list(), 
+      FIGURE = list(), 
+      TABLE = list(), 
+      CPPMODEL = list(), 
+      NMMODEL = list()
+    ) 
+     
+   DATA <- reactiveValues(
+     mDATA   = list(),
+     mTITLES = list(), 
+     NumOfDataset = 0 
+   )
+ 
+  
+  FIGURE_ALL <- reactiveValues(
+    mFIGURES = list(),
+    mTITLES  = list(), 
+    mFOOTNOTES = list(), 
+    NumOfFig   = 0
+  )
+  
+  # maintain a list of FlexTable object such that we can print and modify them later
+  TABLE_ALL <- reactiveValues(
+    mTABLES    = list(),
+    mTITLES = list(), 
+    mFOOTNOTES = list(), 
+    NumOfTab = 0
+  )
+  
+
+```
+  
+
+
+# NONMEM dataset <a name="nonmem_dataset_integrity_check"></a>
+
+```{r}
+  callModule(load_data, "myinputData", ALL)
+
+  renderUI({
+    load_data_input(id="myinputData", label="Load data") 
+  })
+```
+ 
+ 
+
+
+<!-- Here we load the nonmem dataset.--> 
+
+```{r nmdat, include=FALSE}
+  
+file.name = "./data/nmdat_PKPD_1024_2018.csv"
+nmdat = read_csv(file.name, 
+                 col_type=cols(.default=col_character()))   # read as character as defualt
+
+
+#file.name = "./data/nm_HC.sas7bdat"
+#nmdat0 = read_sas(file.name) 
+#nmdat = nmdat0 %>% mutate(ARMA=TR01AG4, LLOQ = 0.078, TEST=PCTEST)
+
+nmdat <- nmdat %>% 
+  mutate(ARMA = gsub("_", " ", ARMA, fix=TRUE), 
+         ARMA = ordered(ARMA, levels=unique(as.character(ARMA))), # make ARMA as a ordered factor
+         ARMAN = as.integer(ARMA), 
+         TIME=as.numeric(TIME), 
+         DV   = as.numeric(DV),
+         DVOR = as.numeric(DVOR), 
+         ID = as.integer(ID), 
+         TIME = as.numeric(TIME), 
+         AMT = as.numeric(AMT),  ################
+         RATE = as.numeric(RATE), 
+         EVID = as.integer(EVID), 
+         CMT = as.integer(CMT), 
+         MDV = as.integer(MDV), 
+         NTIM = as.numeric(NTIM),
+         LLOQ = as.numeric(LLOQ)
+         
+         
+         #WGTBL = as.numeric(WGTBL),
+         #CH50HBL = as.numeric(CH50HBL), 
+         #C5BL = as.numeric(C5BL) 
+)
+
+
+#nmdat = nmdat %>%   
+  # filter(TIME>=0, 
+  #        CFLAG!="PRE-DOSE", 
+  #        TEST %in% c("." , "REGN3918"), 
+  #        DVOR>0.078|is.na(DVOR))
+
+nmdat = nmdat %>%  mutate(
+  SFSGSFSFSGSF = "656",
+  f3653fhf = "656" )
+   
+test.lst = nmdat$TEST %>% unique() 
+PK.TEST.NAME = test.lst[substr(test.lst, 1, 4) == "REGN"]
+
+
+ 
+library(Hmisc)
+
+var.labels = label(nmdat) # c(age="Age in Years", sex="Sex of the participant")
+
+label(nmdat) = as.list(var.labels[match(names(nmdat), names(var.labels))])
+nmdat.default = nmdat
+ 
+
+
+  #-----------------------------------------
+  #  inputData
+  #-----------------------------------------
+  inputData <- reactive({
+   
+    validate(need(OUT$DATA, message=FALSE))
+     
+    data = OUT$DATA[['adpx']] 
+    if(is.null(data)) {
+      nmdat = nmdat.default
+    }else{
+      nmdat = data
+    }
+  
+    nmdat
+  })
+
+```
+
+
+
+
+```{r}
+# renderUI({
+#     output$derivedPKTab <- DT::renderDataTable(
+#       DT::datatable(data = inputData(),
+#                     options = list(pageLength = 16, lengthChange = FALSE, width="100%", scrollX = TRUE) 
+#       ) 
+#     ) 
+#     
+#     DT::dataTableOutput(("derivedPKTab"))
+#     
+#   })
+
+    DT::renderDataTable(
+      DT::datatable(data = inputData(),
+                    options = list(pageLength = 16, lengthChange = FALSE, width="100%", scrollX = TRUE) 
+      ) 
+    )
+
+```
+
+## Quick check  
+
+This is a test for renderText `r renderText(paste0(colnames(inputData()), sep=","))`.   Successful!
+
+
+A NONMEM formatted data file is created by using the clinical and bioanalytical databases.   In general, the following rules will be applied.  In particular, a dataset not passing **quick check** will not be processed further.
+
+```{r}
+passed_quick_check = TRUE
+```
+
+<!-- 1. regular html comment --> 
+* To ensure the integrity and traceability of the data, no samples should be deleted, use 'C' and 'CFLAG' to flag samples if needed.
+
+***
+
+<!-- 2. NONMEM data set is preferred to be delivered as both "sas7bdat" format, or CSV file. --> 
+```{r, echo = FALSE}
+ library("tools")
+ boolean = tolower(file_ext(file.name)) %in% c("csv", "sas7bdat")
+ passed_quick_check = passed_quick_check & boolean
+```
+* `r ifelse(boolean, colFmt(asis_output("\U2714"),'green'), colFmt(asis_output("\U2718"),'red'))` NONMEM data set is in the format of **sas7bdat** or **CSV** file.
+
+***
+
+
+<!-- 3. The variable names can not exceed 8 characters,  should be in upper case, and can't start with numbers.  --> 
+```{r, echo = FALSE}
+ 
+ boolean.nchar.colnames.le8 = all(nchar(colnames(nmdat))<=8)
+ colnames.gt8 = paste0(colnames(nmdat)[which((nchar(colnames(nmdat))>8))], collapse=", ")
+ 
+ YN <- colnames(nmdat)==toupper(colnames(nmdat))
+ boolean.colnames.uppercase = all(YN)
+ colnames.not.uppercase = paste0(colnames(nmdat)[which(!YN)], collapse=", ")
+ 
+ YN <- is.na(substr(nmdat, 1,1) %>% as_numeric())
+ boolean.colnames.not.start.num = all(YN)
+ colnames.not.start.num = paste0(colnames(nmdat)[which(!YN)], collapse=", ")
+ 
+ passed_quick_check = passed_quick_check & 
+   boolean.nchar.colnames.le8 & 
+   boolean.colnames.uppercase & 
+   boolean.colnames.not.start.num
+ 
+```
+* `r ifelse(boolean.nchar.colnames.le8 & boolean.colnames.uppercase & boolean.colnames.not.start.num, colFmt(asis_output("\U2714"),'green'), colFmt(asis_output("\U2718"),'red'))` The variable names can not exceed 8 characters,  should be in upper case, and can't start with numbers. 
+    
+    + `r if(!boolean.nchar.colnames.le8)  colFmt(paste0("Length of colnames, ", colnames.gt8, ", greater than 8 characters."),'red')`
+    
+    + `r if(!boolean.colnames.uppercase) colFmt(paste0("Colnames not in upper case, ", colnames.not.uppercase, "."),'red')`
+ 
+*** 
+ 
+
+<!-- 4. The label for variables can not be exceeded 40 characters--> 
+```{r, echo = FALSE}
+ YN = nchar(label(nmdat))<=40
+ boolean <- all(YN)
+ label.colnames.gt40 = paste0(label(nmdat)[which(!YN)], collapse=", ")
+```
+* `r ifelse(boolean, colFmt(asis_output("\U2714"),'green'), colFmt(asis_output("\U2718"),'orange'))` The label of variables can not be exceeded 40 characters.
+    
+    + `r if(!boolean) colFmt(paste0("Label of variables, ", label.colnames.gt40, ", greater than 40 characters."),'orange')`
+
+***
+
+
+<!-- 5. A NONMEM dataset must contain mandatory variables indicated in below table.--> 
+```{r, echo = FALSE} 
+ YN = nmdat.col.lst %in% colnames(nmdat)  
+ boolean <- all(YN)
+ colnames.not.in.stdlist = paste0(setdiff(nmdat.col.lst, colnames(nmdat) ), collapse=", ")
+```
+* `r ifelse(boolean, colFmt(asis_output("\U2714"),'green'), colFmt(asis_output("\U2718"),'red'))` A NONMEM dataset must contain mandatory variables as shown in [Confluence](https://sandboxconfluence.regeneron.com/display/PMx/Data+format). 
+    
+    + `r if(!boolean) colFmt(paste0("Colnames, ", colnames.not.in.stdlist, ", missing in the dataset."),'red')`
+    
+***    
+    
+<!-- 6. All mandatory primary variables except C and CFLAG must be numeric value.-->     
+```{r, echo = FALSE}
+ col.lst <- setdiff(intersect(nmdat.col.lst, colnames(nmdat)), c("C", "CFLAG"))
+ YN = sapply(nmdat[, col.lst], typeof) %in% c("double", "integer")  # class
+ 
+ boolean <- all(YN)
+ colnames.not.col.in.numint = paste0(col.lst[which(!YN)], collapse=", ")
+ 
+ passed_quick_check = passed_quick_check & boolean
+```
+* `r ifelse(boolean, colFmt(asis_output("\U2714"),'green'), colFmt(asis_output("\U2718"),'red'))` All mandatory primary variables except C and CFLAG must be numeric, as shown in [Confluence](https://sandboxconfluence.regeneron.com/display/PMx/Data+format). 
+    
+    + `r if(!boolean) colFmt(paste0("Colnames, ", colnames.not.col.in.numint, ", is/are not numeric or integer in the dataset."),'red')`
+         
+***
+
+<!-- 7. All observations (PK, biomarker and PD) or events within a subject should be ordered by TIME.-->
+```{r, echo = FALSE} 
+ t1 = nmdat %>% group_by(TEST, ID) %>% dplyr::summarise(YN=all(TIME==sort(TIME))) 
+ boolean <- all(t1$YN)
+ passed_quick_check = passed_quick_check & boolean
+ 
+ tabl = t1[which(!t1$YN), c( "ID", "TEST")] 
+```
+* `r ifelse(boolean, colFmt(asis_output("\U2714"),'green'), colFmt(asis_output("\U2718"),'red'))` All observations (PK, biomarker and PD) or events within a subject should be ordered by TIME.
+    
+```{r, anchor="table", tab.cap="my table about cars", tab.align='right'}
+if (!boolean) {kable(tabl %>% arrange(ID, TEST)) }
+```
+
+***
+
+<!-- 1. No missing ID values, all ID must be integer -->
+```{r}
+ tabl = nmdat %>% filter(is.na(as.integer(ID))) %>% select(ROWID,USUBJID,ID,ARMA,VISIT,TIME,MDV,DVOR) 
+ boolean <- nrow(tabl)==0
+ passed_quick_check = passed_quick_check & boolean
+```
+*  `r ifelse(boolean, colFmt(asis_output("\U2714"),'green'), colFmt(asis_output("\U2718"),'red'))` No missing ID values, all MDV must be integer 
+    
+```{r, anchor="table", tab.cap="Top 10 rows of missing ID values", tab.align='right'}
+if (!boolean) {kable(tabl %>% arrange(ARMA, ID, TIME) %>% top_n(10)) }
+```
+ 
+***
+
+<!-- 1. No missing TIME values, all TIME must be numeric. -->
+```{r}
+ tabl = nmdat %>% filter(is.na(as_numeric(TIME))) %>% select(ROWID,USUBJID,ID,ARMA,VISIT,TIME,DVOR) 
+ boolean <- nrow(tabl)==0
+```
+*  `r ifelse(boolean, colFmt(asis_output("\U2714"),'green'), colFmt(asis_output("\U2718"),'red'))` No missing TIME values, all TIME must be numeric. 
+    
+```{r, anchor="table", tab.cap="Top 10 rows of missing TIME values", tab.align='right'}
+if (!boolean) {kable(tabl %>% arrange(ARMA, ID, TIME) %>% top_n(10)) }
+```
+
+***
+
+<!-- 1. No missing CMT values, all CMT must be numeric. -->
+```{r}
+ tabl = nmdat %>% filter(is.na(as.integer(CMT))) %>% select(ROWID,USUBJID,ID,ARMA,VISIT,TIME,CMT,DVOR) 
+ boolean <- nrow(tabl)==0
+ passed_quick_check = passed_quick_check & boolean
+```
+*  `r ifelse(boolean, colFmt(asis_output("\U2714"),'green'), colFmt(asis_output("\U2718"),'red'))` No missing CMT values, all CMT must be integer 
+    
+```{r, anchor="table", tab.cap="Top 10 rows of missing CMT values", tab.align='right'}
+if (!boolean) {kable(tabl %>% arrange(ARMA, ID, TIME) %>% top_n(10)) }
+```
+
+***
+<!-- 1. No missing MDV values, all MDV must be numeric. -->
+```{r}
+ tabl = nmdat %>% filter(is.na(as.integer(MDV))) %>% select(ROWID,USUBJID,ID,ARMA,VISIT,TIME,MDV,DVOR) 
+ boolean <- nrow(tabl)==0
+ passed_quick_check = passed_quick_check & boolean
+```
+*  `r ifelse(boolean, colFmt(asis_output("\U2714"),'green'), colFmt(asis_output("\U2718"),'red'))` No missing MDV values, all MDV must be integer 
+    
+```{r, anchor="table", tab.cap="Top 10 rows of missing MDV values", tab.align='right'}
+if (!boolean) {kable(tabl %>% arrange(ARMA, ID, TIME) %>% top_n(10)) }
+```
+
+***
+
+
+<!-- 1. when DV missing, should set MDV =1. -->
+```{r}
+tabl = nmdat %>% filter(is.na(as_numeric(DV)), as.integer(MDV)!=1)  %>% 
+   select(ROWID,USUBJID,ID,ARMA,VISIT,TIME,MDV,DV) 
+boolean <- nrow(tabl)==0
+passed_quick_check = passed_quick_check & boolean
+```
+*  `r ifelse(boolean, colFmt(asis_output("\U2714"),'green'), colFmt(asis_output("\U2718"),'red'))` When DV missing, should set MDV=1.
+    
+```{r anchor="table", tab.cap="Top 10 rows of inconsistent DV and MDV values", tab.align='right'}
+if (!boolean) {kable(tabl %>% arrange(ARMA, ID, TIME) %>% top_n(10)) }
+```
+
+***
+
+8. a sammple can be 'missing', can be 'na'(not available), can be BLQ. 
+ 
+ 
+ 
+ 
+ 
+## Advanced check  
+In this section, we mainly use a variety of visualization or table to check the integrity of the data.
+
+
+### Subject-related  
+
+0. `r colFmt("PK population",'green')`: a total of `r nmdat %>% filter(TIME>0, TEST==PK.TEST.NAME) %>% filter(as_numeric(DVOR)>LLOQ) %>% pull(ID) %>% unique() %>% length() %>% colFmt("green")` subjects who have at least 1 post-dose quantifiable (>LLOQ) sample in this dataset.
+
+
+<!-- 1. Venn Diagram of Population in adsl, adex, and adpc-->
+1. Venn Diagram of Population in adsl, adex, and adpc, as shown below.  This diagram can be used to check any subjects who have dosing records but no PK measurements, or any subject who have pk measurements, but the dosing information is missing.
+
+
+```{r, venn.diagram, anchor="figure", echo = FALSE, fig.width=4, fig.height=4,  fig.cap="Venn Diagram of Population in adsl, adex, and adpc Dataset", eval=TRUE}
+# in `r figr('venn.diagram', TRUE, TRUE, type="Figure")`.
+
+adex = nmdat %>% filter(EVID!=0, as_numeric(AMT)>=0)
+adsl = nmdat %>% distinct(ID, .keep_all=TRUE)
+adpc = nmdat %>% filter(EVID==0, TEST == PK.TEST.NAME)
+
+require(VennDiagram)
+a.list <- list(adsl=unique(as.character(adsl$ID)), 
+               adex=unique(as.character(adex$ID)), 
+               adpc=unique(as.character(adpc$ID)))
+
+#https://stackoverflow.com/questions/33393962/r-dont-write-log-file-for-venndiagram
+t1 = futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
+venn.plot <- venn.diagram(a.list,fill = c("red", "green", "blue"),
+                          alpha = c(0.5, 0.5, 0.5), cex = 2,cat.fontface = 4,lty =2, 
+                          euler.d = FALSE, scaled = FALSE, #fontfamily =3, 
+                          filename = NULL);
+fig = grid.draw(venn.plot)  
+fig = recordPlot()
+fig
+
+```
+where 'adsl' is the dataset containing patient's demographic information. Typically one row represent one patient. 'adex' is the dataset holding dosing records. 'adpc' is the dataset for all concentrations samples. 
+
+
+ 
+<!-- 2. No placebo subjects have quantifiable PK measurements.-->
+```{r,echo = FALSE}
+tabl = nmdat %>% filter(toupper(ARMA)=="PLACEBO", 
+                 TEST==PK.TEST.NAME) %>% group_by(ID, TEST) %>% dplyr::summarise(sumDVOR = sum(as_numeric(abs(DVOR)), na.rm=TRUE)) %>% 
+         filter(sumDVOR>0) %>% ungroup()
+
+YN = length(tabl$sumDVOR)==0 || tabl$sumDVOR==0
+```
+2. `r ifelse(YN, colFmt(asis_output("\U2714"),'green'), colFmt(asis_output("\U2718"),'red'))` No placebo subjects have quantifiable PK measurements. 
+    
+    
+```{r placebo.have.quantifiable.PK, anchor="table", tab.cap="The following placebo subjects have quantifiable PK measurements. ", tab.align='center'}
+if (!YN) {kable(nmdat %>% filter(ID %in% tabl$ID, as_numeric(DVOR)>0) %>% select(ID, TEST, NTIM, TIME, DVOR) %>% arrange(ID, TIME, TEST)) }
+```
+
+
+<!-- 3.  .-->
+3. 
+
+
+
+ 
+
+### Time-related:  
+
+<!-- 2. nominal time vs actual time -->
+
+2. Check the nominal time vs actual time, brush/click data point to view those outliers. 
+ 
+ 
+```{r, NTIM.vs.TIME, anchor="figure", cache=FALSE, fig.cap="Check the nominal time vs actual time, identify the potential outliers"}
+  generatePlot <- function(tdata) {
+  tdata = nmdat %>% mutate(NTIM=as_numeric(NTIM), 
+                           TIME=as_numeric(TIME), 
+                           DIFF=abs(NTIM-TIME)
+  )
+ 
+  time.lst = c(tdata$NTIM, tdata$TIME)
+  fig = ggplot(tdata, aes(x=NTIM, y=TIME)) + 
+    geom_point() + 
+    geom_point(data=tdata %>% filter(TIME>0) %>% top_n(20, DIFF) %>% 
+                 select(ID, NTIM, TIME, DIFF), color="red") + 
+    geom_abline(slope=1, lty="dashed" ) + 
+    coord_fixed(ratio = 1, xlim = range(time.lst, na.rm=TRUE), ylim = range(time.lst, na.rm=TRUE))  + 
+    xlab("Nominal Time (day)") + 
+    ylab("Actual Time (day)") + 
+    theme_bw() + base_theme(font.size=12)
+  
+return(fig)
+}
+
+  output$click_info <- renderPrint({
+    if (is.null(input$plot_click)) {return(NULL)}
+    nearPoints(nmdat, input$plot_click, "NTIM", "TIME", allRows=FALSE)  %>% 
+      filter(!is.na(ID)) %>%
+      select(USUBJID, ID, ARMA, VISIT, NTIM, TIME, TEST, DVOR) %>% 
+      as.data.frame()
+  })
+
+  output$brush_info <- renderPrint({
+    if (is.null(input$plot_brush)) {return(NULL)}
+    brushedPoints(nmdat, input$plot_brush, "NTIM", "TIME", allRows = FALSE) %>%  
+      filter(!is.na(ID)) %>%
+      select(USUBJID, ID, ARMA, VISIT, NTIM, TIME, TEST, DVOR) %>%    
+      as.data.frame()
+  })
+
+
+  renderUI({
+   fluidRow(
+        column(width = 6,
+               #h4("NTIM vs TIME"),
+               renderPlot({
+                  generatePlot(nmdat)
+                }, deleteFile = TRUE, 
+                   outputArgs = list(brush = brushOpts(id = "plot_brush"),
+                                     click = clickOpts(id = "plot_click")
+                                      # 
+                                      # dblclick = dblclickOpts(
+                                      #   id = "plot_dblclick",
+                                      #   delay = input$dblclick_delay
+                                      # ),
+                                      # hover = hoverOpts(
+                                      #   id = "plot_hover",
+                                      #   delay = input$hover_delay,
+                                      #   delayType = input$hover_policy,
+                                      #   nullOutside = input$hover_null_outside
+                                      # ),
+                                      # brush = brushOpts(
+                                      #   id = "plot_brush",
+                                      #   delay = input$brush_delay,
+                                      #   delayType = input$brush_policy,
+                                      #   direction = input$brush_dir,
+                                      #   resetOnNew = input$brush_reset
+                                      # )
+                                     #width = "500px",
+                                     #height = "500px"
+                                     ))
+        ),
+        column(width = 6,
+               fluidRow(
+                 h4("Points near click"),
+                 verbatimTextOutput("click_info"),
+               
+                 h4("Brushed points"),
+                 verbatimTextOutput("brush_info")
+               )
+               
+        )
+      )
+      
+  })
+```
+
+
+<!-- 2. nominal time vs actual time -->
+2. Check the nominal infusion time  vs. observed IV infusion time.
+
+
+<!-- 2. nominal time vs actual time -->
+3. Check TIME is in increasing order within a subject. 
+
+
+<!-- 2. nominal time vs actual time -->
+4. If TIME is negative, those records should be flagged and set CFALG as "Pre-dose". 
+    
+
+    
+
+
+
+
+
+
+### Concentration-related: 
+
+
+<!-- 1. missing dosing events or sample collections -->
+1. Using the following figure to check any missing sample collection or missing dosing event for any subjects, compared to planned dose and scheduled sample collection.
+```{r}
+tdata = nmdat %>% mutate(ID=ordered(ID, levels=sort(unique(as.numeric(ID)), decreasing =TRUE))) %>% arrange(ARMA, ID)
+
+  xpos=setup_axis(xscale='7_14', xlimits=c(0, max(tdata$TIME, na.rm=TRUE)))
+  xneg=setup_axis(xscale='7_14', xlimits=c(0, -min(tdata$TIME, na.rm=TRUE)))
+  x=NULL
+  x$breaks = c(-rev(xneg$breaks), 
+               xpos$breaks[2:length(xpos$breaks)])
+  
+  x$labels = c( ifelse(rev(xneg$labels)%in%c("","0"), 
+                       rev(xneg$labels), 
+                       paste0("-", rev(xneg$labels))), 
+                xpos$labels[2:length(xpos$labels)])
+  #y=setup_axis(xscale='100_200', xlimits=c(0, max(tdata$meanPlusSE, na.rm=TRUE)))
+  
+fig = ggplot(tdata%>%filter(EVID==0), aes(x=TIME, y=ID)) + 
+  geom_point(aes(col="black" )) + 
+  geom_point(data=tdata%>%filter(EVID==1), aes(col="red")) + 
+  
+  scale_x_continuous(breaks=x$breaks, label=x$labels) +
+    #scale_y_continuous(breaks=y$breaks, label=y$labels) +
+  
+  xlab("Actual Time(day)") + 
+  ylab("ID") + 
+  
+  theme_bw() + base_theme(font.size = 12)   + 
+  scale_color_manual( values = c("black", "red"),
+                      labels = c("concentration", "dose event"))
+ 
+
+fig
+
+```
+
+
+<!-- 1. missing dosing events or sample collections -->
+2. Check the unrealistic peak:trough ratios 
+
+
+
+
+### Dose-related:  
+1. Check for trailing doses
+2. Check for unusual Time Since Previous Dose
+3. Check the total dose amount and infusion rate
+4. Check planned dose(s)  vs.  actual dose
+5. Check for trailing doses
+
+
+
+### Covariate-related:  
+
+Report the percent of missing covariate values (body weight, etc.)
+Others:
+
+Check for missing records in NONMEM key variables, i.e., EVID, MDV, CMT, etc
+Compare if the number of subjects and observation records match to the numbers programmers provide
+
+
+
+
+Minor Check: 
+Summary statistics of demographics and covariates
+ 
+
+For subjects with missing observations, a null value '.' should be assigned.  Hong's comment: such record should not be included in the NM dataset, right? 
+
+
+Any variables with unit of Day (TIME, NTIM, TAD, etc) should have at least 6 significant digits. Hong's comments: is this necessary? usually 4 is good enough.
+ 
+All character values within the dataset is preferred in UPPER case  (???). Hong's comments: we should follow the SDTM or ADaM datasets value if retain the variables name, otherwise we can make is upper case or propecase,
+
+
+## Model-based check   <!-- {.tabset .tabset-pills}--> 
+
+back to [nonmem_dataset_integrity_check](#nonmem_dataset_integrity_check)
+ 
+
+### Load model
+You can also embed plots, for example: test 1
+
+```{r load_cppModel, include=FALSE}
+source("./cpp/mod_R3918_human_MM_final.cpp")
+mod <- mread("R3918", tempdir(), mymodel)     # ?mread , ?mcode
+param(mod)
+init(mod)
+see(mod)
+```
+
+
+### Define objective function
+
+```{r define_objective_function}
+##' Function returning the objective function
+ols <- function(mod, theta, nmdat, pred=FALSE) {
+  
+ theta <- setNames(lapply(theta, exp), names(theta))
+  
+  out<- 
+    mod %>% 
+    param(theta) %>%
+    data_set(nmdat) %>% 
+    Req(CONC) %>% 
+    drop.re %>%
+    mrgsim(obsonly=TRUE, tad=TRUE, carry.out=c("DVOR", "EVID")) %>%
+    filter(!is.na(CONC) & TIME!=0)
+  
+  out = out %>% left_join(nmdat %>% as.data.frame() %>% 
+                            distinct(ID, .keep_all=TRUE) %>% 
+                            select(ID, ARMA, USUBJID),
+                          by=c("ID")) %>% 
+    mutate(ARMA = ordered(ARMA, levels = unique(ARMA)))
+  
+  if(pred)  return(out)
+     
+  EPS = 1E-8
+  log.yhat <- log(as.numeric(out$CONC + EPS))
+  log.y    <- log(as.numeric(out$DVOR) + EPS)
+  obj = sum((log.y - log.yhat)^2)
+  #print(paste0("obj=", obj))
+   
+  return(obj)
+}
+
+```
+
+### Parameter estimation
+
+```{r model_parameter_estimation, include=FALSE, eval=FALSE}
+
+##########################################################################################
+##' Initial estimates
+theta <- mod %>% param(TVCL=1.125676) %>% param()   %>% as.numeric()   # log(c(DENCL=6, DENVC=3000, DENVMAX=1000, DENVP=3000))
+
+param.lst = c("TVCL" , "TVV2",  "TVQ",   "TVV3",  "TVKA" ,  "TVF1", "TVVMAX","TVKSS" )
+theta = theta[param.lst]
+ 
+theta = theta %>% log()
+theta
+
+ 
+# Fit with `minqa::newuoa`
+# ----------------------------
+#fit1 <- newuoa(theta=theta, fn=ols, d=d, n=names(theta), control=list(iprint=5))
+tdata <- nmdat %>% filter(TIME>=0, C!="C")
+fit1 <- newuoa(par=theta, fn=ols, mod=mod, nmdat=tdata, control=list(iprint=5))
+exp(fit1$par)
+as.numeric(param(mod))[names(theta)]
+
+est2 = fit1$par
+est2 <- setNames(est2, names(theta))
+est2 
+
+```
+
+```{r, tab.caption="newly estimated parameters"}
+theta <- mod %>% param()   %>% as.numeric()   # log(c(DENCL=6, DENVC=3000, DENVMAX=1000, DENVP=3000))
+param.lst = c("TVCL" , "TVV2",  "TVQ",   "TVV3",  "TVKA" ,  "TVF1", "TVVMAX","TVKSS" )
+theta = theta[param.lst]
+
+kable(theta)
+
+```
+
+
+### Run simulation
+
+```{r}
+# with updated parameters, re-run the model
+# ----------------------------------------------
+ 
+theta <- mod %>% param()   %>% as.numeric()   # log(c(DENCL=6, DENVC=3000, DENVMAX=1000, DENVP=3000))
+param.lst = c("TVCL" , "TVV2",  "TVQ",   "TVV3",  "TVKA" ,  "TVF1", "TVVMAX","TVKSS" )
+theta = theta[param.lst] %>% log()
+
+tdata <- nmdat %>% filter(TIME>=0, C!="C", TEST %in% c(".", "REGN3918"))
+simData <- ols(mod, theta=theta,  tdata, pred=TRUE) %>% 
+  mutate(PRED = CONC, 
+         DV = DVOR, 
+         WRES = (PRED-DV)^2#/DV^2
+  )
+
+ 
+ggplot(simData, aes(x=TIME, y=PRED, group=USUBJID)) + 
+  geom_point() + geom_line() +  
+  geom_point(data=tdata, aes(x=TIME, y=DVOR, group=USUBJID)) + 
+  
+  geom_point(data=simData%>%arrange(-WRES)%>%top_n(50), aes(x=TIME, y=DV, group=USUBJID), col="red") + 
+  
+  facet_wrap(~ARMA, scales="free") + 
+  theme_bw() + base_theme(font.size = 12) + 
+  xlab("Time(day)") + 
+  ylab("Predicted/Observed Concentration (mg/L)")
+
+```
+
+
+### Diagnostic plot
+
+```{r diagnostic_plot, anchor="figure", fig.cap="Diagnostic plot of PRED vs DV "}
+ 
+limits = range(simData$DV, na.rm=TRUE)
+
+#population prediction PRED
+p1 <- ggplot(data=simData, aes(x=PRED,y=DV, col=ARMA)) +
+  ggtitle("Observed vs Predited (Linear)")+
+  xlab("Population Predictions") + ylab("Observed") +
+  geom_point()+   
+  
+  geom_point(data=simData%>%arrange(-WRES)%>%top_n(50), aes(x=PRED, y=DV), col="red") + 
+  
+  coord_fixed(ratio=1, xlim = limits, ylim = limits) +   
+  #geom_smooth(show.legend = FALSE,lwd=1,alpha=0.5)+ 
+  geom_abline(show.legend = FALSE,intercept=0,slope=1)+
+  theme_bw() +  base_theme(font.size = 12)  + 
+  guides(col=guide_legend(ncol=4,byrow=TRUE)) 
+  #theme(legend.position="none") 
+ 
+tdata = simData %>% filter(!is.na(as_numeric(DV)), !is.na(as_numeric(PRED)))
+limits = ifelse(limits<0.078, 0.039, limits)
+p2 <- ggplot(data=tdata, aes(x=(PRED),y=(DV), col=ARMA)) +     #log(x$PRED[x$MDV==0]),log(x$DV[x$MDV==0]),xlab="Population Predictions (log)",ylab="Observed (log)",alpha=0.5)+
+  ggtitle("Observed vs Predited (Log)")+
+  xlab("Population Predictions (log)") + ylab("Observed (log)") +
+  geom_point()+ 
+  
+  geom_point(data=tdata%>%arrange(-WRES)%>%top_n(50), aes(x=(PRED), y=(DV)), col="red") + 
+  
+  scale_x_log10(breaks = 10^(seq(-1,3,by=1)),      #trans_breaks("log10", function(x) 10^x),
+                            labels = 10^(seq(-1,3,by=1))) +      # trans_format("log10", math_format(10^.x))) +
+
+  scale_y_log10(breaks = 10^(seq(-1,3,by=1)),      #trans_breaks("log10", function(x) 10^x),
+                            labels = 10^(seq(-1,3,by=1))) +      # trans_format("log10", math_format(10^.x))) +
+        
+  annotation_logticks(sides ="l") + 
+
+  coord_fixed(ratio=1, xlim = (limits), ylim = (limits)) +       
+  #geom_smooth(lwd=1,alpha=0.5)+ 
+  geom_abline(intercept=0,slope=1)+
+  theme_bw() +  base_theme(font.size = 12)  + 
+  guides(col=guide_legend(ncol=4,byrow=TRUE))  
+
+fig = multiplot(p1,p2,cols=2)
+
+fig <- recordPlot()
+attr(fig, 'title') <- "Predicted vs Observed Concentration in Linear/Log Scale" 
+attr(fig, 'width') <- 8
+attr(fig, 'height') <- 8
+FIGURE_ALL[["PK_GOF1"]] = fig 
+
+fig
+```
+
+
+
+
+
+
+```{r}
+# http://pages.ucsd.edu/~tfeenstr/research/RMarkdownIntro.Rmd
+
+# Tables are also a useful way to show your results. There are some awesome R packages that help create pretty tables for you: stargazer and xtable. If you don't have these packages installed, you should install them by running the following R code: 
+# 
+# install.packages("stargazer") 
+# 
+# install.packages("xtable")
+# 
+# If you already have them installed, you'll just need to load them, which I've already done in our first code chunk up at the top. 
+# 
+# ## Tables with xtable
+# 
+# ```{r partyid_gender, echo=FALSE, eval=TRUE, results="asis"}
+# # Here I'm going to make a cross-tab table that shows the relationship between gender and party ID
+# # Each row will be a party ID (strong democrat to strong republican)
+# # Each column will be a gender (male, female)
+# # I want to know what percentage of men are strong democrats, what percentage of women are strong democrats, etc. So, each column will sum to 100%
+# 
+# partyid_gender <- prop.table(table(d$V36, d$V1)[2:8,2:3], 2)
+# 
+# # Now I want to set it up to be pretty in the report
+# 
+# options(xtable.comment=FALSE)
+# print(xtable(partyid_gender, type="latex", caption="Party ID by Gender"), caption.placement="top")
+# 
+# # In the code above, we've first told R to suppress a comment that otherwise appears above the latex table
+# # Then we're telling it to print a table that we create with the xtable package. The table is what we stored our table as before (partyid_gender). 
+# # type="latex" says that we want to use latex code for our formatting to generate the pretty table
+# # caption="..." tells us what we want our caption to be
+# # caption.placement="top" tells us that we want the caption on top of the table instead of underneath it
+```
+
+
+
+
+
+
+
+
+
+
+## Test NONMEM Run 
+
+
+
+
