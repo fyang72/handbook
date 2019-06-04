@@ -7,7 +7,7 @@ library(dplyr)
 ######################################################################
  
 #HOME = "~/handbook/" 
-HOME = normalizePath(".")
+HOME = paste0(normalizePath("."), "/")
 
 server_IP_address = NULL  #"10.244.106.127"   # NULL  #
 server.IP.address = NULL  #"10.244.106.127"    # NULL  #

@@ -1,8 +1,8 @@
 ##########################################################################################
-# simdata_summary_exposure
+# simdata_summary_exposure_v2
 ##########################################################################################
 
-simdata_summary_exposure <-function(dataset, params=NULL) {
+simdata_summary_exposure_v2 <-function(dataset, params=NULL) {
   # dataset = read_csv("./data/nmdat_0226_2019.csv", col_names=TRUE,  
   #                  col_type=cols(.default=col_character()))  # read as character 
   

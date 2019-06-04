@@ -36,10 +36,8 @@ pdf_document:
 rm(list = ls())
 
 if (1==2) {    
-  
   setwd("~/handbook/")
- source("~/handbook/global.R")
-
+  source("~/handbook/global.R")
 }
 ```
 

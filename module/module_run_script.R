@@ -26,11 +26,10 @@ module_run_script_UI <- function(id, label = "") {
                 
        ),       
        
-       
        # script_container 
        tabPanel(width=12, title="script", value = "script", collapsible = TRUE, 
                 collapsed = TRUE, solidHeader = TRUE,
-                  fluidRow(column(12, uiOutput(ns("script_container"))))  
+                  fluidRow(column(12, uiOutput(ns("script_container"))))
        ),     
            
        # data_container
@@ -83,42 +82,59 @@ output$dataset_container <- renderUI({
 
 
 ################################
-# UI for script_container
+# UI for script_content_container
 ################################
 output$script_container <- renderUI({
   validate(need(globalVars$login$status, message=FALSE))
-   
+ 
+  
   tagList(
-    fluidRow(column(12, 
-                    HTML(colFmt("Note, by running/modifying the following script template, 
-                                you will be able to generate any derived dataset(s), table(s) and figure(s) 
-                                based on the input data (dataset) with the parameters (param). 
-                                Certain key words should not be changed; certain formatting should be followed. 
+    fluidRow(column(12,
+                    HTML(colFmt("Note, by running/modifying the following script template,
+                                you will be able to generate any derived dataset(s), table(s) and figure(s)
+                                based on the input data (dataset) with the parameters (param).
+                                Certain key words should not be changed; certain formatting should be followed.
                                 See instruction carefully.", color="gray"))
                     )
-             ), 
-    
+             ),
+
     fluidRow(
-      column(3, 
+      column(6,
+              selectizeInput(ns("script_selector"),
+                               label    = NULL, #"select script:" ,
+                               choices  = names(script),
+                               multiple = FALSE,
+                               selected = names(script)[1]
+                             )
+      ),
+      column(3,
              actionButton(ns("run_script"), label="Run script", style=actionButton_style )
-      ) 
-    ),
-    fluidRow(
-      column(12,
-             aceEditor(ns("script_content"), 
-                       mode="r", value=script, 
-                       theme = "crimson_editor",   # chrome
-                       autoComplete = "enabled",
-                       height = "1000px", 
-                       fontSize = 15 
-             )
       )
-    )
+    ),
+    
+    fluidRow(column(12, uiOutput(ns("script_content_container"))))
+   
   )
+
+
+
 })
   
 
-
+output$script_content_container <- renderUI({
+  validate(need(globalVars$login$status, message=FALSE))
+  
+  aceEditor(ns("script_content"), 
+            mode="r", 
+            value=if (is.null(names(script))) {script} else {script[input$script_selector]}, 
+            theme = "crimson_editor",   # chrome
+            autoComplete = "enabled",
+            height = "1000px", 
+            fontSize = 15 
+  )
+  
+})
+  
 ################################
 # figure_container
 ################################
@@ -234,6 +250,10 @@ observeEvent(input$run_script, {
   
   # if (length(error_message)>0) {
   #   if(error_message %in% c("Compiling cppModel ... done.")) showNotification(paste0(error_message, collapse="\n"), type="error")}
+  print("at run_script line 253......")
+  print(input$script_content)
+  print(output$table)
+  print(env)
   
   if ((length(error_message)==0 & !is.null(output)) |    
       (length(error_message)>0 && error_message %in% c("Compiling cppModel ... done."))
