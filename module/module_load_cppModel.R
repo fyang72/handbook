@@ -76,7 +76,10 @@ output$load_internal_cppModel_container <- renderUI({
            need(input$cppModel_source=="internal library", message=FALSE)) 
   
   dirs_list=list.files(path = paste0(HOME, "/model/cpp"), 
-                       full.names = FALSE, recursive = FALSE)  
+                       full.names = FALSE, 
+                       recursive = FALSE, 
+                       pattern=".cpp", 
+                       include.dirs=FALSE)  
   dirs_list = c("", dirs_list) 
   
   selectizeInput(ns("which_internal_cppModel"), 

@@ -1,0 +1,633 @@
+ 
+# Model development <a name="model_development"></a>
+
+## Run NONMEM model  <a name="run_nonmem_model"></a>
+This section is to load the nonmem dataset (nmdat tab) and control stream file (ctlModel tab), 
+submit the job (submit tab) and fetch the output after the run finish (output tab). 
+
+ 
+```{r}
+renderUI({
+tabBox(width=12, id = ("run_nonmem_model"), title =NULL, 
+      
+       # nmdat_container 
+       tabPanel(width=12, title="nmdat", value = "nmdat", collapsible = TRUE, 
+               collapsed = TRUE, solidHeader = TRUE,
+        fluidRow(  
+             column(12, 
+                    uiOutput(("load_nmdat_container")),
+                    uiOutput(("update_nmdat_container")), 
+                    style='margin-bottom:30px;  border:1px solid; padding: 10px;'
+                    )
+        )
+      ), 
+      
+      # ctlModel_container
+      tabPanel(width=12, title="ctlModel", value = "ctlModel", collapsible = TRUE, 
+               collapsed = TRUE, solidHeader = TRUE,
+        fluidRow(  
+             column(12, 
+                    uiOutput(("load_ctlModel_container")),
+                    uiOutput(("update_ctlModel_container")), 
+                    style='margin-bottom:30px;  border:1px solid; padding: 10px;'
+                    )
+        )
+      ),  
+      
+      # submit_container
+      tabPanel(width=12, title="submit", value = "submit", collapsible = TRUE, 
+               collapsed = TRUE, solidHeader = TRUE,
+        fluidRow(  
+             column(12, 
+                   uiOutput(("server_info_container")), 
+                   uiOutput(("local_info_container")),
+                   uiOutput(("main_control_container")),
+                   uiOutput(("log_container")), 
+                   style='margin-bottom:30px;  border:1px solid; padding: 10px;'
+                   )
+        )
+               
+      ), 
+       
+      # output_container
+      tabPanel(width=12, title="output", value = "output", collapsible = TRUE, 
+               collapsed = TRUE, solidHeader = TRUE,
+         fluidRow(  
+             column(12, 
+                   #uiOutput(("local_info_container")),
+                   uiOutput(("output_container")), # uiOutput   textOutput  htmlOutput
+                   style='margin-bottom:30px;  border:1px solid; padding: 10px;'
+                   )
+                )               
+      )
+)
+
+})
+
+#----------------------------------------------------
+# load_nmdat_container
+#----------------------------------------------------
+# load_nmdat_container 
+output$load_nmdat_container <-renderUI({
+   
+  # callModule 
+  ALL = callModule(module_load_data, "load_nmdat_for_test_nonmem_run", 
+                     ALL, data_name="mYtEsT_for_run_nonmem")
+   
+    # UI  
+  fluidRow(column(6, 
+                   module_load_data_UI(id="load_nmdat_for_test_nonmem_run", 
+                                      label="load_nmdat_for_test_nonmem_run")
+                   ), 
+            column(6, 
+                   HTML(colFmt("internal library: build-in dataset <br>
+                                within session: intermediate data derived from the source <br> 
+                                external file: external file", color="gray")
+                        )
+                   )
+            )  
+  })                             
+                                 
+# update_nmdat_container
+output$update_nmdat_container <- renderUI({ 
+  # Create a namespace function using the provided id
+  #ns <- NS(id)
+  
+  validate(need(nmdat_run_inputData(), message=FALSE))
+  
+    script_function = readLines("./script/script4_test.R")
+    script_function = paste0(script_function, sep="\n")   # sep="<br/>")
+    script_function = paste0(script_function, collapse="")
+  
+   isolate({ 
+      ALL = callModule(module_run_script, "update_nmdat_container", ALL, 
+                dataset= nmdat_run_inputData(),   
+                script=script_function#, 
+                #data_name="mYtEsT_for_run_nonmem"
+                )
+   }) 
+  
+
+   module_run_script_UI(("update_nmdat_container"), 
+                        label = "update_nmdat_container")  
+ 
+     
+})
+
+# update_nmdat_container
+ nmdat_run_inputData <- reactive({
+   
+    tdata = ALL$DATA[['mYtEsT_for_run_nonmem']]   # must match the previous assigned one in calling module
+    validate(need(tdata, message=FALSE))
+      
+    tdata
+     
+  })
+ 
+ 
+ 
+#----------------------------------------------------
+# ctlModel
+#----------------------------------------------------
+# load_ctlModel_container  
+output$load_ctlModel_container <- renderUI({
+  ALL = callModule(module_load_ctlModel, "load_ctlModel_for_nonmem_run", 
+                   ALL, ctlModel_name="mYtEsT_for_run_nonmem")
+  
+  fluidRow(column(6, 
+               module_load_ctlModel_UI(id="load_ctlModel_for_nonmem_run",
+                                       label="load_ctlModel_for_nonmem_run")
+               ), 
+           column(6, 
+                   HTML(colFmt("internal library: build-in dataset <br>
+                                within session: intermediate data derived from the source <br> 
+                                external file: external file", color="gray")
+                        )
+                   )
+        )
+   
+  })
+
+
+# update_ctlModel_container
+output$update_ctlModel_container <- renderUI({
+  
+  ALL = callModule(module_update_ctlModel, "module_update_ctlModel_for_nonmem_run", 
+                   ALL, ctlModel_name="mYtEsT_for_run_nonmem")
+   
+  fluidRow(
+    column(12, 
+            module_update_ctlModel_UI(id="module_update_ctlModel_for_nonmem_run",
+                                      label="module_update_ctlModel_for_nonmem_run")
+          )
+      )
+   
+  })
+
+
+# ctlModel_run_inputData
+ctlModel_run_inputData <- reactive({
+ 
+  ctlModel = ALL$ctlModel[['mYtEsT_for_run_nonmem']]
+  validate(need(ctlModel, message=FALSE))
+   
+  ctlModel
+})
+  
+
+ 
+#----------------------------------------------------
+# submit
+#----------------------------------------------------
+
+output$server_info_container <- renderUI({
+   
+  ctlModel = ctlModel_run_inputData()
+  nmdat = nmdat_run_inputData()
+  
+  if (!is.null(ctlModel) & !is.null(nmdat)) {
+    ctlModel.file.name = attributes(ctlModel)$file.name
+    ctlModel.locaton.source = attributes(ctlModel)$locaton.source
+     
+    nmdat.file.name = attributes(nmdat)$file.name
+    nmdat.locaton.source = attributes(nmdat)$locaton.source
+    
+    runno <- gsub(paste0(".", tools::file_ext(ctlModel.file.name)), "", basename(ctlModel.file.name))
+    data.name <- gsub(paste0(".", tools::file_ext(nmdat.file.name)),"",  basename(nmdat.file.name))
+  }else {
+    runno = NULL
+    data.name = NULL
+  }
+ 
+
+  fluidRow(
+    column(width = 6, #status = "primary",  #class = 'rightAlign', #background ="aqua",
+                  textInput("server.model.dir", 
+                            width = '100%',  
+                            value=paste0("/home/", 
+                                          tolower(Sys.info()["user"]), "/",
+                                         "TEST/ctl/",
+                                          paste(runno, data.name, sep="_" ), "/"), 
+                            label="Server directory of loaded model:")),
+ 
+    column(width = 6, #status = "primary",  #class = 'rightAlign', #background ="aqua",
+                  textInput("server.data.dir", 
+                            width = '100%',
+                            value=paste0("/home/", 
+                                          tolower(Sys.info()["user"]), "/",
+                                         "TEST/data/"),
+                            label="Server directory of loaded data:"))
+  )
+ 
+  
+})
+
+
+
+output$local_info_container <- renderUI({
+   
+  ctlModel = ctlModel_run_inputData()
+  nmdat = nmdat_run_inputData()
+  
+  if (!is.null(ctlModel) & !is.null(nmdat)) {
+    ctlModel.file.name = attributes(ctlModel)$file.name
+    ctlModel.locaton.source = attributes(ctlModel)$locaton.source
+     
+    nmdat.file.name = attributes(nmdat)$file.name
+    nmdat.locaton.source = attributes(nmdat)$locaton.source
+    
+    runno <- gsub(paste0(".", tools::file_ext(ctlModel.file.name)), "", basename(ctlModel.file.name))
+    data.name <- gsub(paste0(".", tools::file_ext(nmdat.file.name)),"",  basename(nmdat.file.name))
+  }else {
+    runno = NULL
+    data.name = NULL
+  }
+   
+  fluidRow(
+    column(width = 6, #status = "primary",  #class = 'rightAlign', #background ="aqua",
+                  textInput("local.result.dir", 
+                            width = '100%',  
+                            value=paste0("/output/", 
+                                          tolower(Sys.info()["user"]), "/",
+                                          "TEST/",
+                                          paste(runno, data.name, sep="_" ), "/"), 
+                            label="Local directory of fetched result:"))
+ 
+    # column(width = 6, #status = "primary",  #class = 'rightAlign', #background ="aqua",
+    #               textInput("server.data.dir", 
+    #                         width = '100%',
+    #                         value=paste0("/home/", 
+    #                                       tolower(Sys.info()["user"]), "/",
+    #                                      "TEST/data/"),
+    #                         label="Where to put data on server:"))
+  )
+  
+ 
+})
+
+output$main_control_container <- renderUI({
+   
+   fluidRow(
+      column(width=3, 
+             actionButton("runModel", label="run model", 
+             style="float:left;color: #fff; background-color: #328332; border-color: #328332") ) 
+   )
+      
+
+})
+
+
+# log_container
+output$log_container <-renderPrint({   
+      log =   values4nmdat$run.model$log
+      validate(need(log, message=FALSE))
+     
+      log  
+      })
+
+
+#----------------------------------------------------
+# output
+#----------------------------------------------------
+
+# output_container
+output$output_container <- renderUI({   #renderPrint  renderText  renderUI
+     
+      lst.content =  values4nmdat$run.model$lst.content  # pure text
+      lst = values4nmdat$run.model$lst   # after read.lst data object
+      validate(need(lst.content, message=FALSE), 
+               need(lst, message=FALSE)
+      )
+     
+     value = lst.content   # see(ctlModel,raw=TRUE)
+     value = paste0(value, sep="\n")   # sep="<br/>")
+     value = paste0(value, collapse="")
+     
+      fluidRow(
+            
+        column(width=3, 
+             actionButton("fetchResult", label="fetch result", 
+             style="float:left;color: #fff; background-color: #328332; border-color: #328332")
+             ),
+      
+        column(12,
+               textAreaInput(("lst_content"), label=NULL, value=value, rows=200,
+                             width = '800px', #   '800px',   #400px', or '100%'
+                             placeholder= "Your output here.") 
+        )
+      ) 
+      
+#https://stackoverflow.com/questions/23233497/outputting-multiple-lines-of-text-with-rendertext-in-r-shiny
+       # output = c(
+       #   paste0("ofv=", u.signif(lst$ofv, digits=8)), 
+       #   paste0("thetas[", 1:length(lst$thetas), "]=",  lst$thetas), 
+       #   lst$term) 
+       #  
+       #  HTML(paste(output, sep='<br/>'))
+       # 
+       #lst.content
+     
+      })
+
+```
+
+ 
+ 
+ 
+
+```{r}
+
+run.model.in.HPC <- function(
+         HOME = "~/FYANG/Template/Handbook/", 
+         local.model.name = "/ctl/LN_BASE_WT/LN_BASE_WT.ctl", 
+         local.data.name = "/data/nmdat_PK_1024_2018_test.csv", 
+         local.result.dir = NULL,   #"./ctl/LN_BASE_WT/", 
+         server.model.dir = "/home/feng.yang/R3918/ctl/LN_BASE_WT/", 
+         server.data.dir= "/home/feng.yang/R3918/data/"
+)  {
+  
+  # derive model and data information
+  model.name = basename(local.model.name)  # "/home/feng.yang/R3918/ctl/LN_BASE_WT/LN_BASE_WT.ctl"
+  model.runno = gsub(paste0(".", tools::file_ext(model.name)), "", model.name,  fix=TRUE)
+  data.name = basename(local.data.name)  # "/home/feng.yang/R3918/ctl/LN_BASE_WT/LN_BASE_WT.ctl"
+ 
+   # create a server directory to hold data and model
+  system(command = paste0("ssh ", "10.244.106.127 '", paste0("mkdir -p ", server.model.dir), "'"), intern = T)
+  system(command = paste0("ssh ", "10.244.106.127 '", paste0("mkdir -p ", server.data.dir), "'"), intern = T)
+      
+  # upload model and dataset to server
+  system(command = paste0("scp  ", paste0(HOME, local.model.name), "  ",  "10.244.106.127:", server.model.dir), intern = T)
+  system(command = paste0("scp  ", paste0(HOME, local.data.name),  "  ",  "10.244.106.127:", server.data.dir), intern = T)
+  
+  # run the commands
+  command1 = paste0('cd ',  server.model.dir)            #'cd /home/feng.yang/R3918/ctl/LN_BASE_WT/;'
+  command2 = paste0('setsid execute ',  model.name, ' -clean=4 ') 
+  command = paste(command1, command2, sep="; ")
+  system(command = paste0("ssh ", "10.244.106.127 '", command, "'"), intern = T)
+   
+  #return(lst)
+}
+
+fetch.result.from.HPC <- function(
+  HOME = "~/FYANG/Template/Handbook/", 
+  local.model.name = "/ctl/LN_BASE_WT/LN_BASE_WT.ctl", 
+  local.data.name = NULL, #"/data/nmdat_PK_1024_2018_test.csv", 
+  local.result.dir = NULL,   #"./ctl/LN_BASE_WT/", 
+  server.model.dir = "/home/feng.yang/R3918/ctl/LN_BASE_WT/", 
+  server.data.dir= "/home/feng.yang/R3918/data/"
+)  {
+  # derive model and data information
+  model.name = basename(local.model.name)  # "/home/feng.yang/R3918/ctl/LN_BASE_WT/LN_BASE_WT.ctl"
+  model.runno = gsub(paste0(".", tools::file_ext(model.name)), "", model.name,  fix=TRUE)
+  data.name = basename(local.data.name)  # "/home/feng.yang/R3918/ctl/LN_BASE_WT/LN_BASE_WT.ctl"
+  
+  #if (is.null(local.result.dir)) {local.result.dir = paste0(HOME, dirname(local.model.name), "/")}
+  
+  # fetch the results
+  #scp user@someRemoteHost.com:'/folder/*.{jpg,png}' .
+  #https://unix.stackexchange.com/questions/417428/copying-files-with-certain-extensions-with-scp
+  system(command = paste0("scp 10.244.106.127:", paste0(server.data.dir, data.name, "   ", local.result.dir)))
+  
+  # all .ext, .ctl, .phi, .coi files
+  system(command = paste0("scp 10.244.106.127:", paste0(server.model.dir, "/", model.runno, ".*  "), local.result.dir)) 
+  
+  system(command = paste0("scp 10.244.106.127:", paste0(server.model.dir,  "sdtab*  ", local.result.dir)))
+  system(command = paste0("scp 10.244.106.127:", paste0(server.model.dir,  "patab*  ", local.result.dir)))
+  system(command = paste0("scp 10.244.106.127:", paste0(server.model.dir,  "catab*  ", local.result.dir)))
+  system(command = paste0("scp 10.244.106.127:", paste0(server.model.dir,  "cotab*  ", local.result.dir)))
+  system(command = paste0("scp 10.244.106.127:", paste0(server.model.dir,  "mytab*  ", local.result.dir))) 
+  
+   
+  # read the results  
+  # -------------------------------
+  lst.file = paste0(local.result.dir, model.runno, ".lst")
+  
+  #lst = read.lst(lst.file)
+  lst <- tryCatch(#source("text.R", local=TRUE),    #eval(parse(text=txt ))  , 
+      read.lst(lst.file),
+      error=function(e) {
+        print("nonmem job not finish yet ..."); 
+        return("nonmem job not finish yet ...")
+      } #, finally = {
+      # eval(parse(text=txt)) %>% as.data.frame()
+      #}
+  )
+  
+  
+  lst.content = tryCatch(#source("text.R", local=TRUE),    #eval(parse(text=txt ))  , 
+      readLines(lst.file),
+      error=function(e) {
+        print("nonmem job not finish yet ..."); 
+        return("nonmem job not finish yet ...")
+      } #, finally = {
+      # eval(parse(text=txt)) %>% as.data.frame()
+      #}
+  ) 
+  
+  return(list(lst=lst, lst.content=lst.content))
+}
+ 
+
+ 
+
+
+
+```
+
+
+
+```{r}
+observeEvent({input$runModel}, {
+
+  ctlModel = ctlModel_run_inputData()
+  ctlModel.file.name = attributes(ctlModel)$file.name
+  ctlModel.locaton.source = attributes(ctlModel)$locaton.source
+  
+  nmdat = nmdat_run_inputData()
+  nmdat.file.name = attributes(nmdat)$file.name
+  nmdat.locaton.source = attributes(nmdat)$locaton.source
+  
+  validate(
+          need(input$server.model.dir, message =FALSE), 
+          need(input$server.data.dir, message =FALSE),
+          
+          need(nmdat, message=FALSE), 
+          need(ctlModel, message=FALSE), 
+          
+          need(ctlModel.locaton.source %in% c("internal", "external", "session"), message=FALSE), 
+          need(nmdat.locaton.source %in% c("internal", "external", "session"), message=FALSE)
+         ) 
+     
+   values4nmdat$run.model$log = "model submited..."
+  
+   if (nmdat.locaton.source %in% c("external", "session"))  {
+      owd = "./tmp/"
+      #owd <- tempdir()
+      #on.exit(setwd(owd))
+      write.csv(nmdat, file= paste0(owd,  basename(nmdat.file.name)), 
+                row.names = FALSE,
+                na = ".", quote=FALSE) 
+   }
+  
+  if (ctlModel.locaton.source %in% c("external", "session"))  {
+      owd = "./tmp/"
+      #owd <- tempdir()
+      #on.exit(setwd(owd)) 
+      writeLines(ctlModel, con = paste0(owd,  basename(ctlModel.file.name)))
+  }
+      
+   HOME = "~/FYANG/Template/Handbook/" 
+   local.model.name = ifelse(ctlModel.locaton.source=="internal", ctlModel.file.name, 
+                             ifelse(ctlModel.locaton.source%in% c("external", "session"), 
+                                    paste0(owd, basename(ctlModel.file.name)), NULL))   #/model/ctl/control5copy.ctl"  
+   local.data.name = ifelse(nmdat.locaton.source=="internal", nmdat.file.name, 
+                            ifelse(nmdat.locaton.source%in% c("external", "session"), 
+                                    paste0(owd, basename(nmdat.file.name)), NULL))  
+   local.result.dir = NULL    #"/ctl/LN_BASE_WT/"  
+   
+   server.model.dir = input$server.model.dir   #"/home/feng.yang/test_data/test_nm/"  
+   server.data.dir= input$server.data.dir   #"/home/feng.yang/test_data/test_nm/"
+    
+ 
+  run.model.in.HPC(HOME = "~/FYANG/Template/Handbook/",
+                   local.model.name = local.model.name, 
+                   local.data.name = local.data.name, 
+                   local.result.dir=NULL, 
+                   server.model.dir = server.model.dir,
+                   server.data.dir = server.data.dir)
+ 
+
+    
+ })
+
+  
+
+observeEvent({input$fetchResult}, {
+      
+  ctlModel = ctlModel_run_inputData()
+  ctlModel.file.name = attributes(ctlModel)$file.name
+  ctlModel.locaton.source = attributes(ctlModel)$locaton.source
+  
+  nmdat = nmdat_run_inputData()
+  nmdat.file.name = attributes(nmdat)$file.name
+  nmdat.locaton.source = attributes(nmdat)$locaton.source
+  
+  validate(
+    need(nmdat, message=FALSE), 
+    need(nmdat.locaton.source %in% c("internal", "external", "session"), message=FALSE),
+    
+    need(ctlModel, message=FALSE), 
+    need(ctlModel.locaton.source %in% c("internal", "external", "session"), message=FALSE) 
+   ) 
+   
+     server.model.dir = input$server.model.dir   #"/home/feng.yang/test_data/test_nm/"  
+   server.data.dir= input$server.data.dir   #"/home/feng.yang/test_data/test_nm/"
+    
+   
+   HOME = "~/FYANG/Template/Handbook/" 
+   local.model.name = ctlModel.file.name # ifelse(ctlModel.locaton.source=="internal", ctlModel.file.name, NULL)   
+   
+   local.data.name = nmdat.file.name # ifelse(nmdat.locaton.source=="internal", nmdat.file.name, NULL)   #"/data/THEOPP.csv"  
+   
+
+   # create a local directory to hold fetched data
+   # runno <- gsub(paste0(".", tools::file_ext(ctlModel.file.name)), "", basename(ctlModel.file.name))
+   # data.name <- gsub(paste0(".", tools::file_ext(nmdat.file.name)),"",  basename(nmdat.file.name))
+   # local.result.dir = paste0(HOME, "model/output/", 
+   #                    tolower(Sys.info()["user"]), "/",
+   #                    paste(runno, data.name, sep="_" ), "/")
+   
+   local.result.dir = paste0(HOME, input$local.result.dir)
+   system(command = paste0("mkdir -p ", local.result.dir))
+     
+  # 
+  tt= fetch.result.from.HPC(HOME = "~/FYANG/Template/Handbook/",
+                             local.model.name = local.model.name, 
+                             local.data.name = local.data.name, 
+                             local.result.dir=local.result.dir, 
+                             server.model.dir = server.model.dir,
+                             server.data.dir = server.data.dir)
+
+  if (!is.null(tt$lst)) { print("lst output has been returned. ")}
+  values4nmdat$run.model$lst = tt$lst
+  values4nmdat$run.model$lst.content = tt$lst.content 
+  
+})
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r, eval=FALSE}
+# If currently being run on the development server, replace the username with the name of the current developer.
+#  Sys.info()["user"]
+
+ 
+ 
+system(command = "mkdir -p /home/feng.yang/FYANG/Template/Handbook/model/output/feng.yang/test")
+         
+ 
+
+# processx 3.2.0
+# https://www.tidyverse.org/articles/2018/09/processx-3.2.0/
+#Running shell command and capturing the output   in R
+
+
+# system(command = "scp   ./model/ctl/control5.ctl    10.244.106.127:/home/feng.yang/test_data/test_nm/", intern = T)
+# system(command = "scp   ./data/THEOPP.csv     10.244.106.127:/home/feng.yang/test_data/test_nm/", intern = T)
+# 
+# txt = system(command = "ssh 10.244.106.127 'cd /home/feng.yang/test_data/test_nm/; execute control5.ctl  -clean=4'", intern = T)
+# system(command = "scp   10.244.106.127:/home/feng.yang/test_data/test_nm/control5.lst   ./model/ctl/")
+
+
+# ps -fs | grep 
+  
+  
+  
+  
+  
+  
+  
+  
+  local RESULTS
+RESULTS=$(ssh user@server /usr/local/scripts/test_ping.sh)
+echo $?
+  
+  
+ system(command = paste0("scp 10.244.106.127:", paste0(server.model.dir, model.runno, ".ext   ", local.result.dir)))
+  
+
+ system(command = "scp   ./ctl/LN_BASE_WT/LN_BASE_WT.ctl  10.244.106.127:/home/feng.yang/R3918/ctl/LN_BASE_WT/", intern = T)
+#
+
+ system(command = "  local RESULTS") 
+ 
+ bash shell - ssh remote script capture output and exit code?
+ #  https://unix.stackexchange.com/questions/66581/bash-shell-ssh-remote-script-capture-output-and-exit-code
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+

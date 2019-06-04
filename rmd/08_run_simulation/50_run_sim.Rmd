@@ -1,18 +1,27 @@
  
 
-# Simulation <a name="run_sim"></a>
+# Simulation <a name="chapter_simulation"></a>
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+This chapter is dedicated for simulation and post-process of the simulated data. 
+In particular, R package *mrgsolve* is used as the simulation engine. 
+For more details on using *mrgsolve* see <https://mrgsolve.github.io/>.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this: 
+1. For run simulations, see section [run simulation](#sec_run_sim); 
+2. For post-process simulated data, 
+    + to derive exposure matrices, see sections [summarise exposure metrices](#sec_summarise_exposure); 
+    + to calculate percent of population above certain threshold, 
+      see sections [calculate pct threshold](#sec_pct_threshold); 
+    + to plot VPC, see sections [plot VPC](#sec_plot_VPC); 
+  
+ 
 
-
-## Run simulation <a name="run_sim"></a>
+## Run simulation <a name="sec_run_sim"></a>
 
 Simulated results were generated at this section, including 
-1. single, population mean simulatin; 
-2. population simulation
-3. post-hoc simulation
+
+1. population mean simulation for a typical subject (without inter-subject variability); 
+2. population simulation (with inter-subject variability); 
+3. post-hoc simulation for a given population with their corresponding post-hoc parameters.
 
 ```{r}
 output$run_simulation <- renderUI({ 
@@ -28,7 +37,7 @@ fluidRow(column(12, uiOutput(("run_simulation"))))
 
  
  
-## Summarise exposure <a name="run_sim"></a>
+## Summarise exposure <a name="sec_summarise_exposure"></a>
 You can calculate the individual exposure, and summarise them based on the dose group. 
 generate summary tables and visualizations. 
 
@@ -101,7 +110,7 @@ fluidRow(column(12, uiOutput(("summarise_exposure"))))
   
 
 
-## Set threshold <a name="run_sim"></a>
+## Set threshold <a name="sec_pct_threshold"></a>
 In this section, you may calculate the percent of population above specified threshold concentration.  
 
 ```{r}
@@ -173,7 +182,7 @@ fluidRow(column(12, uiOutput(("pct_threshold"))))
 ```
   
 
-## Plot VPC <a name="run_sim"></a>
+## Plot VPC <a name="sec_plot_VPC"></a>
 In this section, you may overlay observed data on top of simulation data with 95% CI. 
 
 ```{r, eval = FALSE}
