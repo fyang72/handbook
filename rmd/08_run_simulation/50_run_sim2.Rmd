@@ -1,0 +1,243 @@
+ 
+
+# Simulation <a name="chapter_simulation"></a>
+
+This chapter is dedicated for simulation and post-process of the simulated data. 
+In particular, R package *mrgsolve* is used as the simulation engine. 
+For more details on using *mrgsolve* see <https://mrgsolve.github.io/>.
+
+1. For running simulations, see section [run simulation](#sec_run_sim); 
+2. For post-processing simulated data, 
+    + to derive exposure matrices, see section [summarise exposure metrices](#sec_summarise_exposure); 
+    + to calculate percent of population above certain threshold, 
+      see section [calculate pct threshold](#sec_pct_threshold); 
+    + to plot VPC, see section [plot VPC](#sec_plot_VPC); 
+  
+ 
+
+## Run simulation <a name="sec_run_sim"></a>
+
+To run simulation using R, you need to have a *mrgsolve* model specification file (called .cpp file). 
+Typically, a simulation is based on the following scenario including 
+
+1. population mean simulation for a typical subject (i.e. without inter-subject variability); 
+2. population simulation (with inter-subject variability); 
+3. post-hoc simulation for a given population with their corresponding post-hoc model parameters.
+
+```{r}
+output$run_simulation <- renderUI({ 
+   
+  ALL = callModule(module_runsim, "run_simulation", 
+                   ALL, cppModel_name = "mYtEsT_for_run_simulation")  
+  module_runsim_UI(id="run_simulation", label = NULL)
+
+})
+
+fluidRow(column(12, uiOutput("run_simulation")))
+```
+
+ 
+ 
+## Summarise exposure <a name="sec_summarise_exposure"></a>
+In this section, you can calculate the individual exposure metrics 
+based on the simulated data, and then summarise them, typically based on their dose groups, 
+to generate a variety of summary tables and appropriate visualizations. 
+
+```{r, eval=FALSE}
+# #-----------------------------------------
+# # data_selector
+# #-----------------------------------------
+# output$data_selector_for_summarise_exposure <- renderUI({
+# 
+#   validate(need(ALL$DATA, message=FALSE))
+#   
+#   data.lst = c("", unique(names(ALL$DATA)))
+#   selectizeInput(("data_name_for_summarise_exposure"), 
+#                  label    = "select dataset:" , 
+#                  choices  = data.lst,  #unique(inputData()%>%pull(TEST)),    
+#                  multiple = FALSE, 
+#                  
+#                  selected = data.lst[1])  #unique(inputData()%>%pull(TEST))[1])   
+# })
+#fluidRow(column(12, uiOutput(("data_selector_for_summarise_exposure"))))
+  
+```
+
+
+```{r}
+output$load_dataset_for_summarise_exposure_container <-renderUI({
+  # callModule  
+  ALL = callModule(module_load_dataset, "load_dataset_for_summarise_exposure", 
+                     ALL, dataset_name="mYtEsT_for_summarise_exposure")
+
+  # UI  
+  fluidRow(column(6, 
+                   module_load_dataset_UI(id="load_dataset_for_summarise_exposure", label=NULL)
+                 ), 
+           column(6, 
+                   HTML(colFmt("internal library: build-in dataset <br>
+                                within session: secondary data derived <br> 
+                                external file: external file", color="gray")
+                        )
+                   )
+           )  
+  })
+fluidRow(column(12, uiOutput(("load_dataset_for_summarise_exposure_container"))))
+```
+ 
+  
+```{r} 
+output$summarise_exposure<- renderUI({  
+  validate(need(ALL$DATA[["mYtEsT_for_summarise_exposure"]], message=FALSE))
+  
+  #script = readLines(paste0(HOME, "/script/simdata_summary_exposure.R"))
+  #script = paste0(script, collapse="\n")
+  
+  
+  file_lst <- list.files(path=paste0(HOME, "/script/"), pattern="simdata_summary_exposure")
+  script <- sapply(file_lst, function(i) paste0(readLines(paste0(HOME, "/script/", i)), collapse="\n") ) %>% unlist()
+
+  ALL =  callModule(module_run_script, "summarise_exposure", ALL, 
+                    dataset=ALL$DATA[["mYtEsT_for_summarise_exposure"]], 
+                    script)
+
+  module_run_script_UI(("summarise_exposure"), label = NULL) 
+     
+})
+
+fluidRow(column(12, uiOutput("summarise_exposure")))
+```
+  
+
+
+## Set threshold <a name="sec_pct_threshold"></a>
+In this section, you may calculate the percent of population above a specified threshold concentration.  
+
+ 
+```{r} 
+output$load_dataset_for_pct_threshold_container <-renderUI({
+  # callModule 
+  ALL = callModule(module_load_dataset, "load_dataset_for_pct_threshold", 
+                     ALL, dataset_name="mYtEsT_for_pct_threshold")
+  
+  # UI  
+  fluidRow(column(6, 
+                   module_load_dataset_UI(id="load_dataset_for_pct_threshold", label=NULL)
+                 ), 
+            column(6, 
+                   HTML(colFmt("internal library: build-in dataset <br>
+                                within session: secondary data derived <br> 
+                                external file: external file", color="gray")
+                        )
+                   )
+            )  
+  })
+fluidRow(column(12, uiOutput(("load_dataset_for_pct_threshold_container"))))
+```
+
+
+```{r}
+output$pct_threshold<- renderUI({  
+  validate(need(ALL$DATA[["mYtEsT_for_pct_threshold"]], message=FALSE))
+  
+  script = readLines(paste0(HOME, "/script/simdata_pct_threshold.R"))
+  script = paste0(script, collapse="\n")
+
+  ALL =  callModule(module_run_script, "pct_threshold", ALL, 
+                    dataset = ALL$DATA[["mYtEsT_for_pct_threshold"]], 
+                    script)
+
+  module_run_script_UI(("pct_threshold"), label = NULL) 
+})
+
+fluidRow(column(12, uiOutput("pct_threshold")))
+```
+  
+
+## Plot VPC <a name="sec_plot_VPC"></a>
+In this section, you may overlay the observed data on top of simulation data with 95% CI. 
+
+```{r, eval = FALSE}
+#-----------------------------------------
+# data_selector
+#-----------------------------------------
+tagList(
+fluidRow(column(12, uiOutput(("simdata_selector_for_VPC")))),
+  
+fluidRow(column(12, uiOutput(("obsdata_selector_for_VPC"))))
+)
+
+output$simdata_selector_for_VPC <- renderUI({
+
+  validate(need(ALL$DATA, message=FALSE))
+  
+  data.lst = c("", unique(names(ALL$DATA)))
+  selectizeInput(("simdata_name_for_VPC"), 
+                 label    = "select simulated dataset:" , 
+                 choices  = data.lst,  #unique(inputData()%>%pull(TEST)),    
+                 multiple = FALSE, 
+                 
+                 selected = data.lst[1])  #unique(inputData()%>%pull(TEST))[1])   
+})
+
+output$obsdata_selector_for_VPC <- renderUI({
+
+  validate(need(ALL$DATA, message=FALSE))
+  
+  data.lst = c("", unique(names(ALL$DATA)))
+  selectizeInput(("obsdata_name_for_VPC"), 
+                 label    = "select observed dataset:" , 
+                 choices  = data.lst,  #unique(inputData()%>%pull(TEST)),    
+                 multiple = FALSE, 
+                 
+                 selected = data.lst[1])  #unique(inputData()%>%pull(TEST))[1])   
+})
+
+  
+
+```
+ 
+  
+
+
+```{r} 
+output$load_dataset_for_plot_VPC_container <-renderUI({
+  # callModule 
+  ALL = callModule(module_load_dataset, "load_dataset_for_plot_VPC", 
+                     ALL, dataset_name="mYtEsT_for_plot_VPC")
+
+  # UI  
+  fluidRow(column(6, 
+                   module_load_dataset_UI(id="load_dataset_for_plot_VPC", label=NULL)
+                 ), 
+            column(6, 
+                   HTML(colFmt("internal library: build-in dataset <br>
+                                within session: secondary data derived <br> 
+                                external file: external file", color="gray")
+                        )
+                   )
+            )  
+  })
+fluidRow(column(12, uiOutput("load_dataset_for_plot_VPC_container")))
+```
+
+
+```{r}
+output$plot_VPC<- renderUI({  
+  validate(need(ALL$DATA[["mYtEsT_for_plot_VPC"]], message=FALSE))
+  
+  script= readLines(paste0(HOME, "/script/simdata_plot_VPC.R"))
+  script  = paste0(script, collapse="\n")
+
+  ALL =  callModule(module_run_script, "plot_VPC", ALL, 
+                    dataset=ALL$DATA[["mYtEsT_for_plot_VPC"]], 
+                    script)
+
+  module_run_script_UI(("plot_VPC"), label = NULL) 
+})
+
+fluidRow(column(12, uiOutput("plot_VPC")))
+```
+ 
+  
+ 
