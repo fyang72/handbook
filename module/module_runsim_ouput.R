@@ -50,7 +50,10 @@ tagList(
   ), 
   
   fluidRow(
-    column(width=12, uiOutput(ns("simulated_profile_container")))
+    column(width=12, uiOutput(ns("simulated_profile_linear_container")))
+  ), 
+  fluidRow(
+    column(width=12, uiOutput(ns("simulated_profile_log_container")))
   )
 )
 }
@@ -68,7 +71,53 @@ module_runsim_output <- function(input, output, session, ALL, values, cppModel_n
   ################################
   # UI for setting_container
   ################################
-  output$simulated_profile_container <- renderUI({ 
+  output$simulated_profile_linear_container <- renderUI({ 
+    
+    tdata = statsTab()
+    validate(need(tdata, message= "no data generated yet"))
+    
+    
+    x=setup_scale(myscale='1_2', mylimit=c(0, max(tdata$xvar/7, na.rm=TRUE)))
+    
+    # no pre-dose samples in plot
+    tdata = tdata%>%mutate(xvar=xvar/7)
+    fig = ggplot(tdata, aes(x=xvar, y=yvar, group=ID, col=ARMA)) + 
+      #ggtitle("Concentration Time Profile") + 
+      
+      geom_point() + geom_line() +   
+      #geom_errorbar(aes(ymin = meanMinusSE, ymax = meanPlusSE), width=0.2) + 
+      
+      scale_color_manual(values=colScheme()) +  
+      
+      scale_x_continuous(breaks=x$breaks, label=x$labels) +
+      #scale_y_continuous(breaks=y$breaks, label=y$labels) +
+      
+      #coord_cartesian(xlim = c(0, 85)) + 
+      coord_cartesian(ylim = c(0.001, 1000)) + 
+      
+      xlab("Time (week)") +  
+      ylab(paste0("Concentration(±SE) (mg/L)")) +   
+      
+      theme_bw() + base_theme(font.size = as.integer(12)) + 
+      guides(col=guide_legend(ncol=4,byrow=TRUE))    
+     
+   
+    attr(fig, "title") = "Predicted concentration (mg/L)" 
+    ALL = callModule(module_save_figure, "simulated_profile_linear", ALL, 
+                         figure=fig, 
+                         figure_index = 1, 
+                         figure_name="figln-", 
+                         figure_data = tdata
+                         )
+     
+     fluidRow(column(12, module_save_figure_UI(ns("simulated_profile_linear"), label = NULL)))
+  })
+  
+  
+  ################################
+  # UI for setting_container
+  ################################
+  output$simulated_profile_log_container <- renderUI({ 
     
     tdata = statsTab()
     validate(need(tdata, message= "no data generated yet"))
@@ -95,21 +144,36 @@ module_runsim_output <- function(input, output, session, ALL, values, cppModel_n
       ylab(paste0("Concentration(±SE) (mg/L)")) +   
       
       theme_bw() + base_theme(font.size = as.integer(12)) + 
-      guides(col=guide_legend(ncol=4,byrow=TRUE))    
-     
-   
+      guides(col=guide_legend(ncol=4,byrow=TRUE))  +   
+    
+      scale_y_log10(breaks = 10^(seq(-3,3,by=1)), #trans_breaks("log10", function(x) 10^x),
+                  labels = 10^(seq(-3,3,by=1))) + # trans_format("log10", math_format(10^.x))) +
+      
+      #coord_trans( y="log10") +   # possible values for x and y are “log2”, “log10”, “sqrt”, …
+      
+      #coord_cartesian(xlim = c(0, 85)) + 
+      
+      theme_bw() + base_theme(font.size = as.integer(12)) + 
+      guides(col=guide_legend(ncol=4,byrow=TRUE)) 
+    
+    # individual log scale 
+    fig = fig + annotation_logticks(sides ="l")  +   # "trbl", for top, right, bottom, and left.
+      geom_hline(yintercept=c(0.078), lty="dashed") + 
+      geom_text(y=log10(0.1 ), x=0.1, aes(label="BLQ=0.078 mg/L", hjust=0), size=3, color='black')  
+    
+    
     attr(fig, "title") = "Predicted concentration (mg/L)" 
-    ALL = callModule(module_save_figure, "simulated_profile", ALL, 
-                         figure=fig, 
-                         figure_index = 1, 
-                         figure_name="fig-", 
-                         figure_data = tdata
-                         )
-     
-     fluidRow(column(12, module_save_figure_UI(ns("simulated_profile"), label = NULL)))
+    ALL = callModule(module_save_figure, "simulated_profile_log", ALL, 
+                     figure=fig, 
+                     figure_index = 1, 
+                     figure_name="figlog-", 
+                     figure_data = tdata
+    )
+    
+    fluidRow(column(12, module_save_figure_UI(ns("simulated_profile_log"), label = NULL)))
   })
   
-   
+  
 #--------------------
 # cppModel 
 #--------------------  
