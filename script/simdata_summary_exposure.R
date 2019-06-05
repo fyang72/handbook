@@ -16,9 +16,9 @@ simdata_summary_exposure <-function(dataset, params=NULL) {
   library(dplyr)
   library("mrgsolve") 
   
-  
   if (1==2) { 
-    cppModel_file ="/home/feng.yang/handbook/model/cpp/LN001.cpp"
+    #cppModel_file = "/home/feng.yang/handbook/model/cpp/LN001.cpp"
+    cppModel_file = paste0(HOME, "/model/cpp/LN001.cpp")
     cppModel=mread(model='cppModel',project=dirname(cppModel_file),file=basename(cppModel_file))
     
     adsl = data.frame(ID=c(1,2), WGTBL=75)  # a data.frame
@@ -47,10 +47,7 @@ simdata_summary_exposure <-function(dataset, params=NULL) {
   key.column.lst<-c("ID","ARMA","TEST","IPRED","TAD","TIME","II","ROUTE","EXSEQ")
   missing.column.lst<-key.column.lst[which(!key.column.lst %in% colnames(dataset))]
   message<-paste0("missing variable(s) of ", paste0(missing.column.lst, sep=", ", collapse=""))
-  
-  validate(need(all(key.column.lst %in% colnames(dataset)), message=message)
-  )
-  
+  #validate(need(all(key.column.lst %in% colnames(dataset)), message=message))
   
   #------------------------------           
   # prepare the dataset 
@@ -61,7 +58,6 @@ simdata_summary_exposure <-function(dataset, params=NULL) {
            ARMA=ordered(ARMA, levels=unique(ARMA)) 
     ) %>% 
     filter(TIME>=0)  
-  
   
   group_lst = c("STUDYID", "ARMA", "TEST", "ID") #TEST:[PK,PD]
   
@@ -98,8 +94,11 @@ simdata_summary_exposure <-function(dataset, params=NULL) {
   # long format 
   #------------------
   attr(tabl, 'title') <-  paste0("Summary of Exposure by Dose Group")
-  table[["summary_exposure_long"]] = tabl 
+  attr(tabl, 'dataset') <- dataset
+  attr(tabl, 'script') <- input$script_content  
   attr(tabl, 'footnote') <-  paste0("QW: weekly, Q2W: bi-weekly")
+  
+  table[["summary_exposure_long"]] = tabl 
   
   #------------------
   # wide format 
@@ -107,8 +106,11 @@ simdata_summary_exposure <-function(dataset, params=NULL) {
   tabl = tabl %>% spread_n(TEST2, c(N, Mean, SE, SD, Median)) %>%
     order_cols(group_lst, param_lst, stats_lst) 
   attr(tabl, 'title') <-  paste0("Summary of Exposure by Dose Group")
-  table[["summary_exposure_wide"]] = tabl 
+  attr(tabl, 'dataset') <- dataset
+  attr(tabl, 'script') <- input$script_content 
   attr(tabl, 'footnote') <-  paste0("QW: weekly, Q2W: bi-weekly")
+  
+  table[["summary_exposure_wide"]] = tabl 
   
   return(list(figure=figure, table=table, message=message))
 }

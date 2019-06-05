@@ -181,7 +181,7 @@ observeEvent({input$which_internal_cppModel}, {
   
   # mread cppModel
   environment(try_eval) <- environment()
-  text="cppModel=mread(model='cppModel', project=paste0(HOME, '/model/cpp/'),file=input$which_internal_cppModel)"
+  text="cppModel=mread(model='cppModel', project=paste0(HOME, '/model/cpp/'), quiet=TRUE, file=input$which_internal_cppModel)"
   env = try_eval(text)
   
   if ("cppModel" %in% ls(env)) {
@@ -223,7 +223,7 @@ observeEvent({input$which_external_cppModel}, {
   
   # mread cppModel
   environment(try_eval) <- environment()
-  text="cppModel=mread(model='cppModel',project=dirname(inFile$datapath),file=basename(cppModel_file))"
+  text="cppModel=mread(model='cppModel',project=dirname(inFile$datapath),quiet=TRUE,file=basename(cppModel_file))"
   env = try_eval(text)
   
   if ("cppModel" %in% ls(env)) {
@@ -318,7 +318,7 @@ observeEvent({input$save_model}, {
   
   # mread cppModel
   environment(try_eval) <- environment()
-  text="cppModel=mread('cppModel', tempdir(), input$cppModel_content)"
+  text="cppModel=mread('cppModel', tempdir(), input$cppModel_content, quiet=TRUE)"
   env = try_eval(text)
     
   if ("cppModel" %in% ls(env)) {

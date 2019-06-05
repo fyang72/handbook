@@ -18,7 +18,8 @@ simdata_summary_exposure_v2 <-function(dataset, params=NULL) {
   
   
   if (1==2) { 
-    cppModel_file ="/home/feng.yang/handbook/model/cpp/LN001.cpp"
+    #cppModel_file = "/home/feng.yang/handbook/model/cpp/LN001.cpp"
+    cppModel_file = paste0(HOME, "/model/cpp/LN001.cpp")
     cppModel=mread(model='cppModel',project=dirname(cppModel_file),file=basename(cppModel_file))
     
     adsl = data.frame(ID=c(1,2), WGTBL=75)  # a data.frame
@@ -48,8 +49,7 @@ simdata_summary_exposure_v2 <-function(dataset, params=NULL) {
   missing.column.lst<-key.column.lst[which(!key.column.lst %in% colnames(dataset))]
   message<-paste0("missing variable(s) of ", paste0(missing.column.lst, sep=", ", collapse=""))
   
-  validate(need(all(key.column.lst %in% colnames(dataset)), message=message)
-  )
+  #validate(need(all(key.column.lst %in% colnames(dataset)), message=message) )
   
   
   #------------------------------           
@@ -117,6 +117,6 @@ simdata_summary_exposure_v2 <-function(dataset, params=NULL) {
 # final output
 #################################################################
 if (ihandbook) {
-  output = simdata_summary_exposure(dataset, params=NULL)
+  output = simdata_summary_exposure_v2(dataset, params=NULL)
   
 }

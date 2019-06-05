@@ -37,7 +37,6 @@ fluidRow(column(12, uiOutput("run_simulation")))
 ```
 
  
- 
 ## Summarise exposure <a name="sec_summarise_exposure"></a>
 In this section, you can calculate the individual exposure metrics 
 based on the simulated data, and then summarise them, typically based on their dose groups, 
@@ -76,7 +75,7 @@ output$load_dataset_for_summarise_exposure_container <-renderUI({
                  ), 
            column(6, 
                    HTML(colFmt("internal library: build-in dataset <br>
-                                within session: secondary data derived <br> 
+                                within session: derived data <br> 
                                 external file: external file", color="gray")
                         )
                    )
@@ -90,12 +89,10 @@ fluidRow(column(12, uiOutput(("load_dataset_for_summarise_exposure_container")))
 output$summarise_exposure<- renderUI({  
   validate(need(ALL$DATA[["mYtEsT_for_summarise_exposure"]], message=FALSE))
   
-  #script = readLines(paste0(HOME, "/script/simdata_summary_exposure.R"))
-  #script = paste0(script, collapse="\n")
-  
-  
-  file_lst <- list.files(path=paste0(HOME, "/script/"), pattern="simdata_summary_exposure")
-  script <- sapply(file_lst, function(i) paste0(readLines(paste0(HOME, "/script/", i)), collapse="\n") ) %>% unlist()
+  script <- list.files(path=paste0(HOME, "/script/"), 
+                         full.names = TRUE,
+                         pattern="simdata_summary_exposure")
+  names(script) = basename(script)
 
   ALL =  callModule(module_run_script, "summarise_exposure", ALL, 
                     dataset=ALL$DATA[["mYtEsT_for_summarise_exposure"]], 
@@ -111,8 +108,7 @@ fluidRow(column(12, uiOutput("summarise_exposure")))
 
 
 ## Set threshold <a name="sec_pct_threshold"></a>
-In this section, you may calculate the percent of population above a specified threshold concentration.  
-
+In this section, you may calculate the percent of population above a specified threshold concentration. 
  
 ```{r} 
 output$load_dataset_for_pct_threshold_container <-renderUI({
@@ -126,7 +122,7 @@ output$load_dataset_for_pct_threshold_container <-renderUI({
                  ), 
             column(6, 
                    HTML(colFmt("internal library: build-in dataset <br>
-                                within session: secondary data derived <br> 
+                                within session: derived data <br> 
                                 external file: external file", color="gray")
                         )
                    )
@@ -139,9 +135,11 @@ fluidRow(column(12, uiOutput(("load_dataset_for_pct_threshold_container"))))
 ```{r}
 output$pct_threshold<- renderUI({  
   validate(need(ALL$DATA[["mYtEsT_for_pct_threshold"]], message=FALSE))
-  
-  script = readLines(paste0(HOME, "/script/simdata_pct_threshold.R"))
-  script = paste0(script, collapse="\n")
+
+  script <- list.files(path=paste0(HOME, "/script/"), 
+                         full.names = TRUE,
+                         pattern="simdata_pct_threshold.R")
+  names(script) = basename(script)
 
   ALL =  callModule(module_run_script, "pct_threshold", ALL, 
                     dataset = ALL$DATA[["mYtEsT_for_pct_threshold"]], 
@@ -156,6 +154,51 @@ fluidRow(column(12, uiOutput("pct_threshold")))
 
 ## Plot VPC <a name="sec_plot_VPC"></a>
 In this section, you may overlay the observed data on top of simulation data with 95% CI. 
+
+```{r} 
+output$load_dataset_for_plot_VPC_container <-renderUI({
+  # callModule 
+  ALL = callModule(module_load_dataset, "load_dataset_for_plot_VPC", 
+                     ALL, dataset_name="mYtEsT_for_plot_VPC")
+
+  # UI  
+  fluidRow(column(6, 
+                   module_load_dataset_UI(id="load_dataset_for_plot_VPC", label=NULL)
+                 ), 
+            column(6, 
+                   HTML(colFmt("internal library: build-in dataset <br>
+                                within session: derived data <br> 
+                                external file: external file", color="gray")
+                        )
+                   )
+            )  
+  })
+fluidRow(column(12, uiOutput("load_dataset_for_plot_VPC_container")))
+```
+
+
+```{r}
+output$plot_VPC<- renderUI({  
+  validate(need(ALL$DATA[["mYtEsT_for_plot_VPC"]], message=FALSE))
+  
+  script <- list.files(path=paste0(HOME, "/script/"), 
+                         full.names = TRUE,
+                         pattern="simdata_plot_VPC.R")
+  names(script) = basename(script)
+  
+  ALL =  callModule(module_run_script, "plot_VPC", ALL, 
+                    dataset=ALL$DATA[["mYtEsT_for_plot_VPC"]], 
+                    script)
+
+  module_run_script_UI(("plot_VPC"), label = NULL) 
+})
+
+fluidRow(column(12, uiOutput("plot_VPC")))
+```
+ 
+  
+ 
+ 
 
 ```{r, eval = FALSE}
 #-----------------------------------------
@@ -193,51 +236,4 @@ output$obsdata_selector_for_VPC <- renderUI({
                  selected = data.lst[1])  #unique(inputData()%>%pull(TEST))[1])   
 })
 
-  
-
-```
- 
-  
-
-
-```{r} 
-output$load_dataset_for_plot_VPC_container <-renderUI({
-  # callModule 
-  ALL = callModule(module_load_dataset, "load_dataset_for_plot_VPC", 
-                     ALL, dataset_name="mYtEsT_for_plot_VPC")
-
-  # UI  
-  fluidRow(column(6, 
-                   module_load_dataset_UI(id="load_dataset_for_plot_VPC", label=NULL)
-                 ), 
-            column(6, 
-                   HTML(colFmt("internal library: build-in dataset <br>
-                                within session: secondary data derived <br> 
-                                external file: external file", color="gray")
-                        )
-                   )
-            )  
-  })
-fluidRow(column(12, uiOutput("load_dataset_for_plot_VPC_container")))
-```
-
-
-```{r}
-output$plot_VPC<- renderUI({  
-  validate(need(ALL$DATA[["mYtEsT_for_plot_VPC"]], message=FALSE))
-  
-  script= readLines(paste0(HOME, "/script/simdata_plot_VPC.R"))
-  script  = paste0(script, collapse="\n")
-
-  ALL =  callModule(module_run_script, "plot_VPC", ALL, 
-                    dataset=ALL$DATA[["mYtEsT_for_plot_VPC"]], 
-                    script)
-
-  module_run_script_UI(("plot_VPC"), label = NULL) 
-})
-
-fluidRow(column(12, uiOutput("plot_VPC")))
-```
- 
-  
- 
+``` 
