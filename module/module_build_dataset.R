@@ -42,7 +42,7 @@ module_build_dataset_UI <- function(id, label = "") {
        ),     
            
        # checkInRows_container
-       tabPanel(width=12, title="checkInRows", value = "checkIn_rows", collapsible = TRUE, 
+       tabPanel(width=12, title="curation", value = "checkIn_rows", collapsible = TRUE, 
                 collapsed = TRUE, solidHeader = TRUE,
                 fluidRow(column(width=12, uiOutput(ns("checkInRows_container"))))
        ), 

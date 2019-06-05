@@ -1,0 +1,49 @@
+ 
+
+# Handbook structure <a name="handbook_structure"></a>
+
+
+
+
+
+
+
+## Run simulation <a name="struct_run_sim"></a>
+
+Under run_sim.Rmd, 
+
+1. callModule(module_build_dataset_wrapper) for   
+    + module_load_dataset
+    + module_build_dataset 
+     
+    + module_build_dataset::module_save_data;
+    + module_build_dataset::module_checkInCols; 
+    + module_build_dataset::module_checkInRows; 
+  
+    + module_save_data::download; 
+    + module_save_table::download; 
+    + module_save_figure::module_ggplot_brush::download; 
+
+
+
+## Run simulation <a name="struct_run_sim"></a>
+
+Under run_sim.Rmd, 
+
+1. callModule(module_runsim) for   
+    + module_runsim::module_load_cppModel
+    + module_runsim::module_runsim_adsl;
+    + module_runsim::module_runsim_adex; 
+    + module_runsim::module_runsim_setting; [not used anymore]
+    + module_runsim::module_runsim_output; 
+    
+2. callModule(module_load_dataset) then callModule(module_run_script) for   
+    + module_run_script::summarise_exposure;
+    + module_run_script::pct_threshold; 
+    + module_run_script::plot_VPC; 
+  
+    + module_save_data::download; 
+    + module_save_table::download; 
+    + module_save_figure::module_ggplot_brush::download; 
+
+ 

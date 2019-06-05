@@ -3,32 +3,98 @@
 
 # Preface
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+This is an R **Markdown** plus **Shiny** document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>. 
+Shiny is an R package that makes it easy to build interactive web apps straight from R.
+For more details on using R Shiny see <https://shiny.rstudio.com/>. 
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
- 
-
-## Including Plots
-
-You can also embed plots, for example:
-
- 
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
-
-
+This handbook is for pharmacometrician to perform pharmacomatrics analysis, from data standardization to report generation. 
+Shiny app provides tremendous opportunities to facilitate the routine analysis which could easily occupy the workload for a pharmacometrician. This handbook presents a semi-automation approach to streamline the process using Shiny+Rmarkdown interactive applications, from data standardization, time-profile plot, pkpd analysis, submit jobs to HPC cluster, post-process the fetched result, run simulation, and generate preliminary word-based reports and powerpoint slides for reviewing.  Such a process not only greatly increased the productivity and reproducibility of the deliverables, also promoted the knowledge-sharing across the different shareholders. 
+  
 ## How to read this book
 
-You can also embed plots, for example:
+Each chapter is relatively independent. Typically, it will ask for an input dataset, a model or a set of parameters, then perform the corresponding analyses, with the output results presented in the last.
 
 
-## R packages and conventions   
+## Key R packages and conventions   
 
-You can also embed plots, for example:
+Here is a list of key packages used in the app. 
 
+1. for Reporting 
+    + library(knitr)
+    + library(rmarkdown)
+    + library(ReporteRs) 
+    + library(officer)
+
+ 
+2. for Shiny, Rmarkdown
+    + library(shiny)
+    + library(shinyAce)
+    + library(shinydashboard)
+    + library(rhandsontable)
+    + library(DT) 
+    + library("plotly")
+
+
+3. for load data
+    + library(readxl)
+    + library(readr)        
+    + library(haven)
+
+
+4. for data manipulation 
+    + library(dplyr)    
+    + library(tidyr)
+    + library(tidyverse)
+    + library(lazyeval)
+    + library(dmutate)
+    + library(xtable)
+    + library(data.table)
+    + library(reshape2)   # not reshape
+    + library(datasets)
+    + library(pryr)   # Partial function application allows you to modify a function by pre-filling some of the arguments. 
+                # It is particularly useful in conjunction with functionals and other function operators.
+
+ 
+5. for plots
+    + library(Cairo)   # to solve X11 server problem
+    + library("ggplot2")   
+    + library(gridExtra)
+    + library(ggpmisc)
+
+ 
+6. for Pk specific package 
+    + library("mrgsolve") 
+    + library("PKPDmisc")        
+    + library("xpose4")
+    + library(vpc)
+
+  
+
+
+```{r, eval=FALSE}
+ip = as.data.frame(installed.packages()[,c(1,3:4)])
+ip = ip[is.na(ip$Priority),1:2,drop=FALSE]
+ip
+```
 
 
 ## Acknowledgments
 
-You can also embed plots, for example:
+First and foremost, praises and thanks to the God, the Almighty, for His showers of blessings throughout this work to start and keep moving along its own way.  
+
+```{r, eval=FALSE}
+http://templatelab.com/acknowledgement-samples/
+  
+I would like to express my deep and sincere gratitude to my research supervisor, Dr. N. Krishnan M.Sc., M.Tech., Ph.D., SM IEEE, Professor and Head, Centre for Information Technology and Engineering, Manonmaniam Sundaranar University, Tirunelveli, for giving me the opportunity to do research and providing invaluable guidance throughout this research. His dynamism, vision, sincerity and motivation have deeply inspired me. He has taught me the methodology to carry out the research and to present the research works as clearly as possible. It was a great privilege and honor to work and study under his guidance. I am extremely grateful for what he has offered me. I would also like to thank him for his friendship, empathy, and great sense of humor. I am extending my heartfelt thanks to his wife, family for their acceptance and patience during the discussion I had with him on research work and thesis preparation.
+
+I am extremely grateful to my parents for their love, prayers, caring and sacrifices for educating and preparing me for my future. I am very much thankful to my wife and my daughters for their love, understanding, prayers and continuing support to complete this research work. Also I express my thanks to my sisters, brother, sister in law and brother in laws for their support and valuable prayers. My Special thanks goes to my friend and brother in law Prof. A.Lenin Fred for the keen interest shown to complete this thesis successfully.
+ 
+I would like to say thanks to my friends and research colleagues, Prof. S. S. Vinsley, Prof. R.K.Selvakumar, Prof. M.Karthekeyan, Prof. S.Ravi, Prof. C.Nelson Kenedy Babu, Prof. S.Saudia, Prof.Dr. Justin Varghese and Prof.K.Krishnaveni for their constant encouragement. I express my special thanks Mr.P.Kumar, Centre for Information Technology and Engineering, Manonmaniam Sundaranar University, for his genuine support throughout this research work.
+I am extending my thanks to the M.Tech. students of Centre for Information Technology and Engineering, Manonmaniam Sundranar University, Tirunelveli for their support during my research work. I also thank all the staff of Research section of Manonmaniam Sundranar University, Tirunelveli for their kindness.
+
+I thank the management of C.S.I Institute of Technology, Thovalai for their support to do this work. I thank Prof.J.Jayakumari, Prof.S.Wilfred Franklin and Prof.A.Minola Davids for their genuine support in C.S.I.I.T to complete this thesis successfully.
+Finally, my thanks go to all the people who have supported me to complete the research work directly or indirectly.
+```
+
+
+
