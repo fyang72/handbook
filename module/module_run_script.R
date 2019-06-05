@@ -94,7 +94,7 @@ output$script_container <- renderUI({
                     HTML(colFmt("Note, by running/modifying the following script template,
                                 you will be able to generate any derived data(s), table(s) and figure(s)
                                 based on the input data (dataset) with/withou the parameters (params).
-                                Certain key words should not be changed; certain formatting should be followed.
+                                Certain key words should be reserved; certain formatting should be followed.
                                 See instruction carefully.", color="gray"))
                     )
              ),
