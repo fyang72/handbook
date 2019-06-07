@@ -10,9 +10,9 @@ desp_mean_profile <-function(dataset, params=NULL) {
   table =NULL
   data = NULL
   
-  if (1==2) { 
-    HOME = "~/FYANG/R1979_CD20_CD3/"  
-    load(paste0(HOME, "/KRM/data/nmdat_160mg_320mg.RData"))
+  if (1==1) { 
+    #HOME = "~/FYANG/R1979_CD20_CD3/"  
+    load(paste0("~/FYANG/R1979_CD20_CD3/", "/KRM/data/nmdat_160mg_320mg.RData"))
     
     dataset = nmdat_upto320mg %>% 
       mutate(DOSEGRP=ARMA, 
@@ -33,8 +33,7 @@ desp_mean_profile <-function(dataset, params=NULL) {
   message <- paste0("missing variable(s) of ", 
                     paste0(missing.column.lst, collapse=", "))
   
-  validate(need(all(key.column.lst %in% colnames(dataset)), message=message)
-  )
+  #validate(need(all(key.column.lst %in% colnames(dataset)), message=message) )
   
   #----------------------------------
   # derived information fromd dataset

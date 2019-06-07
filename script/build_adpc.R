@@ -199,8 +199,8 @@ if (ihandbook) {
   data = NULL
   table = NULL
   
-  adpc <- build_adpc(dataset, 
-                     timefmt_var_lst = timefmt_var_lst  # global variables. c("Ymd HMS", "mdY HMS", "bdY HMS") 
+  adpc <- build_adpc(dataset
+           #timefmt_var_lst = timefmt_var_lst  # global variables. c("Ymd HMS", "mdY HMS", "bdY HMS") 
   )    
   
   data[["adpc"]] = adpc 

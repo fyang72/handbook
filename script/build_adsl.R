@@ -216,14 +216,7 @@ if (ihandbook) {
   data = NULL
   table = NULL
   
-  adsl <-  build_adsl(dataset,  
-                      adsl_var_lst = adsl_var_lst, 
-                      sex.lst = sex.lst,
-                      ethnic.lst = ethnic.lst,
-                      race.lst = race.lst)   
-   
-  # dataset: original one
-  # adsl: parsed one
-  table <- check_adsl(dataset, adsl, topN=topN)    
+  adsl <-  build_adsl(dataset)   
+  table <- check_adsl(dataset, adsl, topN=topN)     # dataset: original one, # adsl: parsed one
   output <- list(data=adsl, table=table)
 }

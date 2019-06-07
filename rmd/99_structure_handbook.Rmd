@@ -3,14 +3,9 @@
 # Handbook structure <a name="handbook_structure"></a>
 
 
+## Build dataset <a name="struct_run_sim"></a>
 
-
-
-
-
-## Run simulation <a name="struct_run_sim"></a>
-
-Under run_sim.Rmd, 
+Under 10_construct_dataset.Rmd, 
 
 1. callModule(module_build_dataset_wrapper) for   
     + module_load_dataset
@@ -20,9 +15,14 @@ Under run_sim.Rmd,
     + module_build_dataset::module_checkInCols; 
     + module_build_dataset::module_checkInRows; 
   
-    + module_save_data::download; 
-    + module_save_table::download; 
-    + module_save_figure::module_ggplot_brush::download; 
+
+## descriptive_analysis
+
+module_load_dataset
+module_run_script
+
+
+
 
 
 

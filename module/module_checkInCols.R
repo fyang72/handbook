@@ -151,7 +151,7 @@ module_checkInCols <- function(input, output, session, ALL, dataset_name, defaul
     ALL$DATA[[dataset_name]] <- adpx  
     
     # "default, "message", "warning", "error"
-    showNotification("check in columns sucessfully", type="message")   
+    showNotification("align columns sucessfully", type="message")   
   }) 
   
   return(ALL)

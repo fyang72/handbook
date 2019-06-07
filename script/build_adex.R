@@ -227,10 +227,10 @@ if (ihandbook) {
   data = NULL
   table = NULL
   
-  adex <- build_adex(dataset, 
-                    timefmt_var_lst = timefmt_var_lst, 
-                    dosu_var_lst = dosu_var_lst, 
-                    route_var_lst = route_var_lst
+  adex <- build_adex(dataset#, 
+                    #timefmt_var_lst = timefmt_var_lst, 
+                    #dosu_var_lst = dosu_var_lst, 
+                    #route_var_lst = route_var_lst
                     )    
   
   data[["adex"]] = adex 

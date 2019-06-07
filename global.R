@@ -273,6 +273,8 @@ file.lst <-list.files(path = folder.loc, all.files = FALSE,full.names = TRUE, in
 
 file.lst = file.lst[which(substr(file.lst, nchar(file.lst)-1, nchar(file.lst)) %in% c(".r", ".R"))]
 
+file.lst = file.lst[setdiff(1:length(file.lst), grep("_not_used", file.lst, fixed=TRUE))]
+
 for (ifile in 1:length(file.lst)) { 
   #print(file.lst[ifile]);  
   source(file=file.lst[ifile])  

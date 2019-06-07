@@ -14,11 +14,12 @@ module_build_dataset_UI <- function(id, label = "") {
     
     fluidRow(
       column(width=12,  
-             HTML(colFmt("Note, the following tabset is used to  <br>
-                          1) align the variable (column) against the standard one [column], <br> 
-                          2) standardize the input dataset using script [script], <br>
-                          3) semi-auto curation and confirmation [curation], <br>
-                          4) render the resulting data and save [output].", color="gray")))
+             HTML(colFmt("Note, the following tabsets are used to 
+                          0) display the loaded dataset [dataset],
+                          1) align the variable (column) against the standard one [checkInCols],
+                          2) standardize the input dataset using script [script], 
+                          3) semi-auto curation and confirmation [curation],
+                          4) render the resulting data and save [output].  <br> ", color="gray")))
       ),
       
     tabBox(width=12, id = ns("run_script_for_dataset_construction"), title =NULL, 
@@ -30,7 +31,7 @@ module_build_dataset_UI <- function(id, label = "") {
         ),
        
        # checkInCols_container 
-       tabPanel(width=12, title="checkInCols", value = "checkIn_columns", collapsible = TRUE, 
+       tabPanel(width=12, title="alignCols", value = "checkIn_columns", collapsible = TRUE, 
                 collapsed = TRUE, solidHeader = TRUE,
                   fluidRow(column(12, uiOutput(ns("checkInCols_container")))) 
        ),        
