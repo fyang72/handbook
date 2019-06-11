@@ -30,8 +30,8 @@ pdf_document:
 ```
 
 
-
 ```{r, setup, include=FALSE}
+# back to [nonmem_dataset_integrity_check](#nonmem_dataset_integrity_check)
 
 rm(list = ls())
 
@@ -164,6 +164,10 @@ cat(chunks, sep = '\n')
 
 ```{r child = 'rmd/07_run_nmmodel/02_model_diagnostic.Rmd'}
 ```
+
+```{r child = 'rmd/07_run_nmmodel/03_model_decision_tree.Rmd'}
+```
+
 
 ```{r child = 'rmd/08_run_simulation/50_run_sim.Rmd'}
 ```

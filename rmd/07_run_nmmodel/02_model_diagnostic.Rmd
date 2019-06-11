@@ -1,100 +1,72 @@
 
-## Model diagnostic   <!-- {.tabset .tabset-pills}--> 
+## Model diagnostic  <a name="model_diagnostic"></a>
 
-back to [nonmem_dataset_integrity_check](#nonmem_dataset_integrity_check)
- 
- 
+This section is to perform any diagnostic analysis of a given nonmem run. 
+
  
 ```{r}
 user.name = tolower(Sys.info()["user"])  # determineCurrentUser()
 values4xpdb = reactiveValues(diagnostic=NULL) 
+```
 
-tagList(
-fluidRow(
-column(width=4, uiOutput(("select_which_program_container"))), 
 
-column(width=4, uiOutput(("select_which_job_container"))) 
-
-#column(width=4, uiOutput(("select_which_runno_container")))
-
-), 
-uiOutput(("xpdb_container"))
+```{r}
+output$which_program_runno_UI <- renderUI({    
+ fluidRow(
+    column(width=4, uiOutput(("select_which_program_container"))), 
+    column(width=4, uiOutput(("select_which_runno_container")))  
 )
+}) 
+fluidRow(column(12, uiOutput(("which_program_runno_UI"))))
 ```
 
 
 ```{r}
-
 output$select_which_program_container <- renderUI({
-#validate(need(globalVars$login$status, message=FALSE))
+  dir_lst = list.files(path = paste0(HOME, "/output/", user.name, "/"), 
+                         full.names = FALSE, recursive = FALSE)
+  dir_lst = c("", dir_lst)
+  selectizeInput(("which_program"), 
+                 label    = "Select program:", 
+                 choices  = dir_lst, 
+                 multiple = FALSE,
+                 selected = dir_lst[1]) 
+
+})
+
+output$select_which_runno_container <- renderUI({
+  dir_lst = list.files(path = paste0(HOME, "/output/", 
+                                       user.name, "/", 
+                                       input$which_program, "/ctl/"), 
+                         full.names = FALSE, recursive = FALSE)
+  dir_lst = c("", dir_lst)
+  selectizeInput(("which_runno"), 
+                 label    = "Select run:", 
+                 choices  = dir_lst, 
+                 multiple = FALSE,
+                 selected = dir_lst[1]) 
+
+})
  
-dirs.list = list.files(path = paste0(HOME, "/output/", user.name, "/"), 
-                       full.names = FALSE, recursive = FALSE)
-dirs.list = c("", dirs.list)
-selectizeInput(("which_program"), 
-               label    = "Select program:", 
-               choices  = dirs.list, 
-               multiple = FALSE,
-               selected = dirs.list[1]) 
 
-})
-
-output$select_which_job_container <- renderUI({
-#validate(need(globalVars$login$status, message=FALSE))
- 
-dirs.list = list.files(path = paste0(HOME, "/output/", 
-                                     user.name, "/", 
-                                     input$which_program, "/ctl/"), 
-                       full.names = FALSE, recursive = FALSE)
-dirs.list = c("", dirs.list)
-selectizeInput(("which_job"), 
-               label    = "Select job:", 
-               choices  = dirs.list, 
-               multiple = FALSE,
-               selected = dirs.list[1]) 
-
-})
-
-# output$select_which_runno_container <- renderUI({
-# textInput("which_runno", value="001", label="Which runno:")
-# 
-# })
-
-output$xpdb_container <-  renderUI({
-xpdb = xpdb_inputData()
-validate(need(xpdb, message=FALSE))
-
-ALL$DATA[["MytEST"]] = slot(xpdb, "Data")
-callModule(module_save_data, "xpdb_inputData",
-          ALL, 
-          data = slot(xpdb, "Data"), 
-          data_name="MytEST"
-          )
-
-module_save_data_UI(id="xpdb_inputData", 
-                       label="xpdb_inputData" ) 
-
-
-
-})
-  
-  
 ```
 
 
 
 
 ```{r}
+# read xpdb using xpose.data
+
  xpdb_inputData <- reactive({
    validate(need(input$which_program, message=FALSE), 
-            need(input$which_job, message=FALSE) 
+            need(input$which_runno, message=FALSE) 
    )  
  
   file.dir = paste0(HOME, "/output/", 
              user.name, "/", 
              input$which_program, "/ctl/", 
-             input$which_job, "/")
-  text = "xpdb = xpose.data('001', directory = file.dir)"
+             input$which_runno, "/")
+  text = "xpdb = xpose.data('001', directory = file.dir)"  # default all "001"
   
   #error_message <- try_eval(text = text)
   output =  tryCatch(eval(parse(text=text))  , 
@@ -110,12 +82,10 @@ module_save_data_UI(id="xpdb_inputData",
    showNotification(paste0("failed to read in xpose.data"), type="error")
    xpdb = NULL
  }else { 
-   # # "default, "message", "warning", "error"
    showNotification(paste0("xpose.data read sucessfully"), type="message")   
    xpdb
  }
-  slot(xpdb, "Data") =  slot(xpdb, "Data") %>%  mutate(WRES=1)
-  
+  #slot(xpdb, "Data") =  slot(xpdb, "Data") %>%  mutate(WRES=1)
   
   #input$which_program = "TEST"
   # input$which_run = "control5_THEOPP"
@@ -137,54 +107,108 @@ module_save_data_UI(id="xpdb_inputData",
 ```
 
 
+### Predefined plots <a name="predefined_diagnostic_plot"></a>
 
- 
+This section is for predefined diagnostic plots. 
+If no data is found in this subsection, You may haven't loaded the **xpdb** yet or the loading failed.
+See section [model diagnostic](#model_diagnostic). 
+
+1. GOF1: basic goodness of fit, including diagonal plot of PRED/IPRED vs DV in both linear and log scale; <br>
+2. GOF2: CWRES residue-based diagnostic plots;  <br>
+3. GOF3: representive individual time-profile, overlaid with PRED and IPRED. <br>
+4. VPC: There two approaches to perform VPC <br>
+    + using **mrgsolve** to run the simulation, then VPC, 
+      see chapter [run simulation](#chapter_simulation);
+    + use **NONMEM** to run the simulation, then VPC, 
+      see chapter [model development](#chapter_model_development);
+5. ETAvsCOV: check any trend of ETA vs covariate (COV); <br>
+6. ETAvsETA:  <br>
 
 
 ```{r}
+# once have xpdb, generate all pre-defined plots
 
- observeEvent({xpdb_inputData()}, {
-                 
-   xpdb = xpdb_inputData() 
-   validate(need(xpdb, message=FALSE) 
+observeEvent({xpdb_inputData()}, {
+      
+  xpdb = xpdb_inputData() 
+  validate(need(xpdb, message=FALSE))
+   
+  if (1==2) { 
+   # tried to merge wit user_specified_diagnostic_plot
+      tdata = slot(xpdb, "Data")
+      output = diagnostic_GOF1(xpdb)
+  
+  #values4xpdb$diagnostic$PRED_DVOR$
+  #    figure[["PRED_DVOR_LN"]] = fig 
+  # figure[["PRED_DVOR_LN"]]$data =  tdata
+  # figure[["PRED_DVOR_LN"]]$dataset = slot(xpdb, "Data")  # or xpdb
+  #   
+  }
+  
+  # all diagnostic plots 
+  values4xpdb = xpdb_diagnostic_GOF1(xpdb, values4xpdb)
+   
+  values4xpdb = xpdb_diagnostic_GOF2(xpdb, values4xpdb) 
+
+  values4xpdb = xpdb_diagnostic_GOF3(
+   xpdb, values4xpdb, n=25, ids=NA)
+   
+  values4xpdb = xpdb_diagnostic_ETAvsETA(
+   xpdb, values4xpdb, eta_name_lst=paste("ETA", 1:3, sep=""))
+  
+  #$ranpar  "Xvardef"   Prefs
+  eta_name_lst = slot(slot(xpdb,"Prefs"), "Xvardef")$ranpar 
+  values4xpdb = xpdb_diagnostic_ETAvsCOV(
+   xpdb, values4xpdb, 
+   cov_name_lst=c("WGTBL" ), 
+   eta_name_lst=c("ETA1", "ETA2", "ETA3" )
    )
-    
-   # all diagnostic model 
-   #
-   values4xpdb = xpdb_diagnostic_GOF1(xpdb, values4xpdb)
-   
-   #
-   values4xpdb = xpdb_diagnostic_GOF2(xpdb, values4xpdb) 
-   
-   #
-   values4xpdb = xpdb_diagnostic_GOF3(xpdb, values4xpdb, 
-                                      n=25, ids=NA)
-      
-   #
-   values4xpdb = xpdb_diagnostic_ETAvsETA(xpdb, values4xpdb, 
-                                          eta_name_lst=paste("ETA", 1:3, sep=""))
-   
-   #$ranpar  "Xvardef"   Prefs
-   eta_name_lst = slot(slot(xpdb,"Prefs"), "Xvardef")$ranpar 
-   values4xpdb = xpdb_diagnostic_ETAvsCOV(xpdb, values4xpdb, 
-                                     cov_name_lst=c("WGTBL" ), 
-                                     eta_name_lst=c("ETA1", "ETA2", "ETA3" ))
-      
  })
-```
- 
- 
- 
- 
-```{r}
-ALL = callModule(module_assess_model_basic, "sfsloaded_dataset", 
+
+
+# now render all predefined diagnostic plots
+ALL = callModule(module_model_diagnostic_predefined, "assess_model", 
                  ALL, 
                  xpdb = xpdb_inputData(), 
                  values4xpdb)
 
-module_assess_model_basic_UI(("sfsloaded_dataset"), label = NULL)
+module_model_diagnostic_predefined_UI(("assess_model"), label = NULL)
      
 ```
  
  
 
+### User-specified plots <a name="user_specified_diagnostic_plot"></a>
+
+This section is for user-specified diagnostic plots. 
+If no data was found in this subsection, You may haven't loaded the **xpdb** yet or the loading failed.
+See section [model diagnostic](#model_diagnostic). 
+  
+
+```{r}  
+ 
+output$user_specified_diagnostic_plot <- renderUI({ 
+  
+  validate(need(xpdb_inputData(), message="no data found yet"))
+   
+  # script
+  script <- list.files(path=paste0(HOME, "/script/"), 
+                         full.names = TRUE,
+                         pattern="user_specified_diagnostic_plot")
+  names(script) = basename(script)
+  
+  # module_run_script
+  ALL = callModule(module_run_script, "user_specified_diagnostic_plot", 
+                   ALL, 
+                   dataset=xpdb_inputData(),
+                   script=script)
+
+  module_run_script_UI(("user_specified_diagnostic_plot"), label = NULL) 
+     
+})
+
+fluidRow(column(12, uiOutput(("user_specified_diagnostic_plot"))))
+
+```
+ 
+ 

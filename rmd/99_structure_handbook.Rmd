@@ -24,6 +24,32 @@ module_run_script
 
 
 
+## Model development <a name="struct_model_development"></a>
+
+Under model_development.Rmd (bookmark: model_diagnostic), 
+
+1. Under model_development.Rmd,    
+    + module_runsim::module_load_cppModel
+    + module_runsim::module_runsim_adsl;
+    
+    
+to do list: 
+    + check the status of cluster using qstat and qhost
+    + decision tree for model development  
+    
+    
+    
+2. Model diagnostics Under model__diagnostic.Rmd, 
+    + select program and job, then load the corresponding **xpdb**;   **may join with meta information **
+    **use TEST as program and use LN102_DAT1 as the job name**  
+    + generate all pre-defined diagnostic plots **[note to be redo]**, then 
+    + call module_model_diagnostic_predefined::GOF1, GOF2, GOF3, etc.
+    
+    + useing loaded **xpdb** then callModule(module_run_script) 
+    + module_run_script::GOF1, GOF2, GOF3; 
+  
+    
+        
 
 
 ## Run simulation <a name="struct_run_sim"></a>
@@ -46,4 +72,7 @@ Under run_sim.Rmd,
     + module_save_table::download; 
     + module_save_figure::module_ggplot_brush::download; 
 
- 
+ to do list: 
+    + auto-translate nonmem model to mrgsolve cpp model
+    + validate cpp model in both modes: with or without variability
+    

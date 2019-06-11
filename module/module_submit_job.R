@@ -9,11 +9,11 @@ module_submit_job_UI <- function(id, label = "") {
   fluidRow(
     column(12, 
            # which_program_container
-           fluidRow(
-             column(width = 12,
-                    uiOutput(ns("which_program_container"))    
-             ) 
-           ), 
+            fluidRow(
+              column(width = 12,
+                     uiOutput(ns("which_program_container"))    
+              ) 
+            ), 
            
            fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
     
@@ -64,7 +64,7 @@ module_submit_job_UI <- function(id, label = "") {
 }
 
 ################################################################################ 
-# main function: module_load_data
+# main function: module_submit_job
 ################################################################################
 
 module_submit_job <- function(input, output, session, ALL, ctlModel_name="ctlModel_name") {
@@ -107,6 +107,7 @@ data_name <- reactive({
     data_name = NULL
   }
 })
+
 #--------------------------------------  
 # which_program_container
 #-------------------------------------- 
@@ -127,7 +128,7 @@ output$which_program_container <- renderUI({
   }
 
   fluidRow(
-    column(3,
+    column(6,
            selectizeInput(ns("which_program"), 
                           label    =  "Select program:", 
                           choices  = list_of_program, 
@@ -178,13 +179,23 @@ output$server_info_container <- renderUI({
       ) 
    ), 
    
+   # a quick command library
+   fluidRow(
+     column(width=12,  
+            HTML(colFmt("Note, examples of PsN commands: <br>
+                        1) execute model2.ctl  -clean=4  -parafile=/apps/packages/nm741/run/mpilinux8.pnm   -sge_prepend='    -pe mpich 9'     -nodes=8 <br>
+                        2) execute model2.ctl  -clean=4  -parafile=/apps/packages/nm741/run/mpilinux8.pnm   -sge_prepend='    -pe mpich_high_  9'     -nodes=8  <br>
+                        ", 
+                        color="gray")))
+   ),
+  
    # run_command
    fluidRow(
-     column(width = 6, 
+     column(width = 12, 
             textInput(ns("run_command"), 
                       width = '100%',  
-                      value= paste0("execute ",  model_name(), ".ctl -clean=4 -node=10 "),  #,  # NULL
-                      placeholder = "execute LN001.ctl -clean=4 ", 
+                      value= paste0("execute ",  model_name(), ".ctl -clean=4; "),  #,  # NULL
+                      placeholder = "execute LN001.ctl -clean=4; ", 
                       label="Command to run"
             )
      )

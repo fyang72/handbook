@@ -122,6 +122,6 @@ simdata_pct_threshold <-function(dataset, params=NULL) {
 # final output
 #################################################################
 if (ihandbook) {
-  output = simdata_summary_exposure(dataset, params=NULL)
+  output = suppressWarnings(simdata_pct_threshold(dataset, params=NULL))
   
 }

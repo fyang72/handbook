@@ -5,6 +5,11 @@ xpdb_diagnostic_GOF1 <- function(xpdb, values4xpdb)  {
   tdata0 = slot(xpdb, "Data")    # or xpdb@Data
   runno = slot(xpdb, "Runno")  # or xpdb@Runno
   
+  if (!all(c("PRED", "IPRED", "DV") %in% colnames(tdata0))) {
+    # c("default", "message", "warning", "error"), 
+    showNotification("need PRED, IPRED and DV in the xpdb", type = "error")
+  }
+  
   validate(need(all(c("PRED", "IPRED", "DV") %in% colnames(tdata0)), 
                 message="need PRED, IPRED and DV in the data")
   )

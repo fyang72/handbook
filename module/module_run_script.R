@@ -75,7 +75,14 @@ module_run_script <- function(input, output, session,
 output$dataset_container <- renderUI({ 
   validate(need(globalVars$login$status, message=FALSE))
   
-  callModule(module_save_data, "loaded_dataset", ALL, data=dataset, data_name="")
+  if (class(dataset) == "xpose.data") {
+    tdata = dataset %>% slot("Data")
+  }else{
+    tdata = dataset
+  } 
+  callModule(module_save_data, "loaded_dataset", ALL, 
+             data=tdata, 
+             data_name="")
   
   fluidRow(
     column(12,module_save_data_UI(ns("loaded_dataset"), label = "loaded_dataset"))

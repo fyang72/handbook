@@ -127,6 +127,6 @@ simdata_plot_VPC <-function(dataset, params=NULL) {
 # final output
 #################################################################
 if (ihandbook) {
-  output = simdata_summary_exposure(dataset, params=NULL)
+  output = suppressWarnings(simdata_plot_VPC(dataset, params=NULL))
   
 }

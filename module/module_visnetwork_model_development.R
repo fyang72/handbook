@@ -370,16 +370,16 @@ module_visnetwork_model_development <- function(input, output, session)  {
 
 
 
-if (1==2 ) {
+if (1==1 ) {
 
 server <- shinyServer(function(input, output) {
-  callModule(module_visnetwork, "call_visnetwork")
+  callModule(module_visnetwork_model_development, "call_visnetwork")
 })
 
 ui <- shinyUI(
   fluidRow(
     column(12, 
-           module_visnetwork_UI("call_visnetwork", label = NULL)#,
+           module_visnetwork_model_development_UI("call_visnetwork", label = NULL)#,
            #style='margin-bottom:30px;  border:1px solid; padding: 10px;'
            )
 )

@@ -3,6 +3,12 @@
 
 ## Quick check  
 A NONMEM formatted data file is created by using the clinical and bioanalytical databases.   In general, the following rules will be applied.  In particular, a dataset not passing _quick check_ will not be processed further.  To ensure the integrity and traceability of the data, no samples should be deleted, use 'C' to flag samples if needed and specify the reasons in 'CFLAG'.
+
+1) first character of header in nmdat shouldn't be "'"  (write.table, quote=FALSE)
+2) EXDUR, RATE can't be negative (due to wrong time in dosing)
+3) WGTBL should be cascaded for all rows and subjects;
+4) ID shouldn't be too long
+
  
 ```{r}  
 values <- reactiveValues()

@@ -10,7 +10,8 @@ library(dplyr)
 HOME = paste0(normalizePath("."), "/")
 
 server_IP_address = NULL  #"10.244.106.127"   # NULL  #
-server.IP.address = NULL  #"10.244.106.127"    # NULL  #
+server_IP_address = NULL  #"10.244.106.127"    # NULL  #
+server_IP_address =  "10.244.64.97"    # NULL  #
 
 actionButton_style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
 actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332"

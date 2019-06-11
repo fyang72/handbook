@@ -1,0 +1,7 @@
+
+## Model decision tree  <a name="model_decision_tree"></a>
+
+This section is to perform any diagnostic analysis of a given nonmem run. 
+
+  
+ 

@@ -200,5 +200,4 @@ desp_mean_profile <-function(dataset, params=NULL) {
 #################################################################
 if (ihandbook) {
   output = desp_mean_profile(dataset, params=NULL)
-  
 }

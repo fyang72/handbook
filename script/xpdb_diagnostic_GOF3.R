@@ -40,7 +40,8 @@ xpdb_diagnostic_GOF3 <- function(xpdb, values4xpdb, n=25, ids=NA, font.size=12) 
   
     #geom_vline(data=x[!duplicated(x$ID) &x$ID%in%ids,],aes(xintercept=TTG),alpha=0.5,colour="grey",lwd=1)+
     #theme(legend.position="none") +
-    ylab("Observed & model prediction(mg/L)") +   theme_bw()+ base_theme(font.size=font.size) + 
+    ylab("Observed & model prediction(mg/L)") +   
+    theme_bw()+ base_theme(font.size=font.size) + 
     xlab(expression(Time~(days)))
   
   values4xpdb$diagnostic$INDIV_PLOT25$fig = fig 

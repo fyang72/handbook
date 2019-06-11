@@ -24,10 +24,16 @@ output$target_despcriptive_analysis_population_mean_plot <- renderUI({
   #ns <- NS(id)
   
   validate(need(target_despcriptive_analysis_inputData(), message="no data found yet"))
+    # 
+    # script = readLines(paste0(HOME, "/script/desp_mean_profile.R"))
+    # script = paste0(script, sep="\n")   # sep="<br/>")
+    # script = paste0(script, collapse="")
   
-    script = readLines(paste0(HOME, "/script/desp_mean_profile.R"))
-    script = paste0(script, sep="\n")   # sep="<br/>")
-    script = paste0(script, collapse="")
+    
+  script <- list.files(path=paste0(HOME, "/script/"), 
+                         full.names = TRUE,
+                         pattern="desp_mean_profile")
+  names(script) = basename(script)
   
    isolate({ 
       ALL = callModule(module_run_script, "target_despcriptive_analysis_population_mean_plot", 

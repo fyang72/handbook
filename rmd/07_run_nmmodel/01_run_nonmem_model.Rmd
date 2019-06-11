@@ -1,5 +1,5 @@
  
-# Model development <a name="model_development"></a>
+# Model development <a name="chapter_model_development"></a>
 
 ## Run NONMEM model  <a name="run_nonmem_model"></a>
 This section is to 1) load the nonmem dataset (nmdat tab), 2) load control stream file (ctlModel tab), 
@@ -92,8 +92,15 @@ output$update_nmdat_container <- renderUI({
  
   validate(need(ALL$DATA[['mYtEsT_for_run_nonmem']], message= "no data is loaded yet"))
   
-  script = readLines(paste0(HOME, "/script/desp_test.R"))
-  script = paste0(paste0(script, sep="\n"), collapse="")   # sep="<br/>")
+ 
+  #script = readLines(paste0(HOME, "/script/desp_test.R"))
+  #script = paste0(paste0(script, sep="\n"), collapse="")   # sep="<br/>")
+  
+  script <- list.files(path=paste0(HOME, "/script/"), 
+                         full.names = TRUE,
+                         pattern="desp_test")
+  names(script) = basename(script)
+  
   
   isolate({ 
       ALL = callModule(module_run_script, "update_nmdat_container", 

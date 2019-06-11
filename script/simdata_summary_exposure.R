@@ -119,6 +119,6 @@ simdata_summary_exposure <-function(dataset, params=NULL) {
 # final output
 #################################################################
 if (ihandbook) {
-  output = simdata_summary_exposure(dataset, params=NULL)
+  output = suppressWarnings(simdata_summary_exposure(dataset, params=NULL))
   
 }
