@@ -154,7 +154,7 @@ diagnostic_GOF2 <- function(dataset, params=NULL)  {
     
   }
   
-  return(list(figure=figure, table=table, message=message))
+  return(list(figure=figure, table=table))
 }
 
 

@@ -95,7 +95,11 @@ simdata_summary_exposure <-function(dataset, params=NULL) {
   #------------------
   attr(tabl, 'title') <-  paste0("Summary of Exposure by Dose Group")
   attr(tabl, 'dataset') <- dataset
-  attr(tabl, 'script') <- input$script_content  
+  if  (exists('input')) {
+    attr(tabl, 'script') <- input$script_content
+  }else{
+    attr(tabl, 'script') <- NULL
+    }
   attr(tabl, 'footnote') <-  paste0("QW: weekly, Q2W: bi-weekly")
   
   table[["summary_exposure_long"]] = tabl 
@@ -107,7 +111,11 @@ simdata_summary_exposure <-function(dataset, params=NULL) {
     order_cols(group_lst, param_lst, stats_lst) 
   attr(tabl, 'title') <-  paste0("Summary of Exposure by Dose Group")
   attr(tabl, 'dataset') <- dataset
-  attr(tabl, 'script') <- input$script_content 
+  if (exists('input')) {
+    attr(tabl, 'script') <- input$script_content
+  }else{
+    attr(tabl, 'script') <- NULL
+  }
   attr(tabl, 'footnote') <-  paste0("QW: weekly, Q2W: bi-weekly")
   
   table[["summary_exposure_wide"]] = tabl 

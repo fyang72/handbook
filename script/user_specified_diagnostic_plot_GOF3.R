@@ -1,5 +1,6 @@
 
-diagnostic_GOF3 <- function(dataset, params=NULL)  {
+diagnostic_GOF3 <- function(dataset, params=NULL, 
+                            n_subject_in_panel = 9)  {
   
   xpdb = dataset
   
@@ -29,7 +30,7 @@ diagnostic_GOF3 <- function(dataset, params=NULL)  {
   #-------------------
   # individual plots for all indiv
   #-------------------
-  n_subject_in_panel = 9   # global parameter, number of fig in each panel
+  #n_subject_in_panel = 9   # global parameter, number of fig in each panel
   ID <- unique(tdata0$ID)
   ID_lst <- split(ID, ceiling(seq_along(ID)/n_subject_in_panel))
   
@@ -63,12 +64,12 @@ diagnostic_GOF3 <- function(dataset, params=NULL)  {
     attr(fig, 'title') <- paste0("Model Fitting of Predicted/Observed Concentration-time Profiles")
     attr(fig, 'width') <- 9
     attr(fig, 'height') <- 6                             
-    figure[[paste0("indiv-fit-", i)]]  = fig 
-    figure[[paste0("indiv-fit-", i)]] $data =  tdata
-    figure[[paste0("indiv-fit-", i)]] $dataset = slot(xpdb, "Data")  # or xpdb
+    figure[[paste0("indivfit", i)]]  = fig 
+    figure[[paste0("indivfit", i)]] $data =  tdata
+    figure[[paste0("indivfit", i)]] $dataset = slot(xpdb, "Data")  # or xpdb
   }
   
-  return(list(figure=figure, table=table, message=message))
+  return(list(data=data, figure=figure, table=table))
 }
 
 

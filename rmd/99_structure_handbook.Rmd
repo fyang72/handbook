@@ -2,6 +2,7 @@
 
 # Handbook structure <a name="handbook_structure"></a>
 
+key words:  input, output, FIGURE, TABLE, 
 
 ## Build dataset <a name="struct_run_sim"></a>
 
