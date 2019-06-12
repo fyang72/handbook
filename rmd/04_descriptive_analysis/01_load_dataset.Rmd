@@ -5,7 +5,6 @@
 This chapter is dedicated for all data-driven pharmacokinetics/pharmacodynmaic analysis, with a minimum level
 of modeling.  Most often, the concentration-time profiles will be plotted, in both log- and linear-scale.  A variety of visualization are presented for PK-PD analyses. 
 
-## Time-profile 
 
 ```{r}
 

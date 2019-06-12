@@ -1,4 +1,16 @@
 
+# Appendix {-}
+ 
+
+## Model library
+
+This chapter is for a model library, in particular how to add, delete or retrieve a given model(s). 
+All modles will be included, with their meta information, i.e. who developed it (author), when developed (year), 
+key features of model (1/2 comparment, linear/nonlinear), which therapeutic area (area), which program, which study, etc.
+
+  
+```{r, eval=TRUE } 
+
 # https://datastorm-open.github.io/visNetwork/shiny.html
 # http://www.cse.unsw.edu.au/~mike/myrlibrary/visNetwork/NEWS
 #visNearestNodes(target = input$click, maxpoints =10)
@@ -183,22 +195,24 @@ module_visnetwork_model_library_UI <- function(id, label = "") {
                             choices = choices,
                             selected= default_level_lst, 
                             multiple = TRUE
-                            ),
+                            )
+      ),
+       column(4, uiOutput(ns("params_for_nonhierarchi_container"))), 
              
-             uiOutput(ns("params_for_nonhierarchi_container")), 
-             
-             selectizeInput(ns("highlight_lst"),
+       column(4,  selectizeInput(ns("highlight_lst"),
                             label="highlighted by", 
                             choices = choices,
                             selected= "author", 
                             multiple = TRUE
              )
              
-      ),  
-      column(8, 
-         visNetworkOutput(ns("network"))
+      ), 
+      
+      fluidRow(column(12, 
+         visNetworkOutput(ns("network"), width = "100%", height = "600px")
       ) 
     )
+  )
   )
    
 }
@@ -380,28 +394,224 @@ module_visnetwork_model_library <- function(input, output, session)  {
 }
 
 
+ 
 
-if (1==2) {
 
-server <- shinyServer(function(input, output) {
-  callModule(module_visnetwork_model_library, "call_visnetwork")
-})
+callModule(module_visnetwork_model_library, "call_visnetwork_library")
 
-ui <- shinyUI(
-  fluidRow(
+#renderUI({
+  module_visnetwork_model_library_UI("call_visnetwork_library", label = NULL)#,
+#})
+
+
+#server <- shinyServer(function(input, output) {
+#  callModule(module_visnetwork_model_library, "call_visnetwork")
+#})
+
+#ui <- shinyUI(
+
+
+  #fluidRow(
     
     #level_lst=c("company", "area", "program", "model")
-    column(12, 
-           module_visnetwork_model_library_UI("call_visnetwork", label = NULL)#,
+   # column(12, 
+      #     module_visnetwork_model_library_UI("call_visnetwork", label = NULL)#,
            #style='margin-bottom:30px;  border:1px solid; padding: 10px;'
-           )
-)
-)
+       #    )
+#)
+#)
   
-shiny::shinyApp(ui = ui, server = server)  # , options = list(display.mode="showcase"))
+#shiny::shinyApp(ui = ui, server = server)  # , options = list(display.mode="showcase"))
     
-}  
+ 
 
 
+```
+
+
+
+```{r, eval=FALSE }
+
+callModule(module_visnetwork_model_library, "call_visnetwork_library")
+
+renderUI({
+  module_visnetwork_model_library_UI("call_visnetwork_library", label = NULL)#,
+})
+
+
+```
+
+
+
+
+
+
+
+
+
+
+```{r, eval=FALSE}
+ # http://kateto.net/network-visualization
+# shiny::runApp(system.file("shiny", package = "visNetwork"))
+
+require(visNetwork)
+require(shiny)
+
+nodes <- data.frame(id = 1:15, label = paste("Label", 1:15),
+                    group = sample(LETTERS[1:3], 15, replace = TRUE))
+
+edges <- data.frame(from = trunc(runif(15)*(15-1))+1,
+                    to = trunc(runif(15)*(15-1))+1)
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+library("visNetwork") 
+library(igraph)
+library(shiny)
+library(dplyr)
+
+
+#HOME = "~/"
+# nodes <- read.csv(paste0(HOME, "/nodes.csv"), header=T, as.is=T)
+# links <- read.csv(paste0(HOME, "/links.csv"), header=T, as.is=T)
+# HOME = "C:/Users/feng.yang/Documents/Data files/"
+
+nodes <- read.csv(paste0("~/handbook/", "/Dataset1-Media-Example-NODES.csv"), header=T, as.is=T)
+links <- read.csv(paste0("~/handbook/", "/Dataset1-Media-Example-EDGES.csv"), header=T, as.is=T)
+
+
+
+
+# library("visNetwork") 
+# visNetwork(nodes, links, width="100%", height="400px") %>% 
+#   visEdges(arrows = "to")  %>% 
+#  visHierarchicalLayout()
+
+
+
+# We'll start by adding new node and edge attributes to our dataframes. 
+
+
+
+
+g <- graph.ring(10,directed=TRUE)               
+plot(g)
+ShortPth <- get.shortest.paths(g, 8, 2)    # List of path 8->2
+ShortPth
+E(g)$color <- "SkyBlue2"
+E(g)$width <- 1
+#E(g, path=ShortPth)$color <- "red" 
+
+E(g, path=ShortPth$vpath[[1]])$color <- "red"
+#E(g, path=unlist(ShortPth$vpath))$color <- "red"
+#E(g, path=unlist(ShortPth[[1]]))$color <- "red"
+plot(g)
+
+
+
+
+ba <-  sample_pa(n=100, power=1, m=1,  directed=F)
+ #plot(ba, vertex.size=6, vertex.label=NA)
+
+ # get.edgelist(ba)
+links = as_data_frame(ba, what="edges")  %>% mutate(group=1)
+nodes = data.frame(id=1:100) # as_data_frame(ba, what="vertices")%>% mutate(group=1)
+#net <- graph_from_data_frame(d=links, vertices=nodes, directed=T) 
+
+library("visNetwork") 
+visNetwork(nodes, links, width="100%", height="400px") %>% 
+  visEdges(arrows = "to")  %>% 
+ visHierarchicalLayout()
+
+
+#https://stackoverflow.com/questions/39916465/click-events-for-visnetwork-with-shiny
+
+library(igraph)
+HOME = "C:/Users/feng.yang/Documents/Data files/"
+
+nodes <- read.csv(paste0(HOME, "/Dataset1-Media-Example-NODES.csv"), header=T, as.is=T)
+links <- read.csv(paste0(HOME, "/Dataset1-Media-Example-EDGES.csv"), header=T, as.is=T)
+
+head(nodes)
+head(links)
+
+
+library("visNetwork") 
+visNetwork(nodes, links, width="100%", height="400px")
+
+ 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+library("visNetwork") 
+HOME = "~/"
+nodes <- read.csv(paste0(HOME, "/nodes.csv"), header=T, as.is=T)
+links <- read.csv(paste0(HOME, "/links.csv"), header=T, as.is=T)
+
+# We'll start by adding new node and edge attributes to our dataframes. 
+vis.nodes <- nodes
+vis.links <- links
+vis.nodes$shape  <- "dot"  
+vis.nodes$shadow <- TRUE # Nodes will drop shadow
+vis.nodes$title  <- vis.nodes$media # Text on click
+vis.nodes$label  <- vis.nodes$type.label # Node label
+vis.nodes$size   <- vis.nodes$audience.size # Node size
+vis.nodes$borderWidth <- 2 # Node border width
+
+vis.nodes$color.background <- rep(c("slategrey", "tomato", "gold"), times=20)[1:nrow(nodes)]  # [nodes$media.type]
+vis.nodes$color.border <- "black"
+vis.nodes$color.highlight.background <- "orange"
+vis.nodes$color.highlight.border <- "darkred"
+
+visNetwork(vis.nodes, vis.links, width="100%", height="400px", #background="#eeefff",
+           main="Network", submain="And what a great network it is!",
+           footer= "Hyperlinks and mentions among media sources") %>% 
+  visEdges(arrows = "to") #%>% 
+#visHierarchicalLayout()
+
+
+
+
+ 
+library(igraph)
+HOME = "C:/Users/feng.yang/Documents/Data files/"
+
+nodes <- read.csv(paste0(HOME, "/Dataset1-Media-Example-NODES.csv"), header=T, as.is=T)
+links <- read.csv(paste0(HOME, "/Dataset1-Media-Example-EDGES.csv"), header=T, as.is=T)
+
+head(nodes)
+head(links)
+
+
+library("visNetwork") 
+visNetwork(nodes, links, width="100%", height="400px")
+
+
+
+
+visNetwork(nodes, links, width="100%", height="400px", background="#eeefff",
+           main="Network", submain="And what a great network it is!",
+           footer= "Hyperlinks and mentions among media sources")
+
+
+
+# We'll start by adding new node and edge attributes to our dataframes. 
+vis.nodes <- nodes
+vis.links <- links
+
+vis.nodes$shape  <- "dot"  
+vis.nodes$shadow <- TRUE # Nodes will drop shadow
+vis.nodes$title  <- vis.nodes$media # Text on click
+vis.nodes$label  <- vis.nodes$type.label # Node label
+vis.nodes$size   <- vis.nodes$audience.size # Node size
+vis.nodes$borderWidth <- 2 # Node border width
+
+vis.nodes$color.background <- c("slategrey", "tomato", "gold")[nodes$media.type]
+vis.nodes$color.border <- "black"
+vis.nodes$color.highlight.background <- "orange"
+vis.nodes$color.highlight.border <- "darkred"
+
+visNetwork(vis.nodes, vis.links)
+
+
+```
 
 

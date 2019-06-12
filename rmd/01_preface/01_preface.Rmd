@@ -32,7 +32,7 @@ Here is a list of key packages used in the app.
     + library(shinydashboard)
     + library(rhandsontable)
     + library(DT) 
-    + library("plotly")
+    + library(plotly)
 
 
 3. for load data
@@ -57,15 +57,15 @@ Here is a list of key packages used in the app.
  
 5. for plots
     + library(Cairo)   # to solve X11 server problem
-    + library("ggplot2")   
+    + library(ggplot2)   
     + library(gridExtra)
     + library(ggpmisc)
 
  
 6. for Pk specific package 
-    + library("mrgsolve") 
-    + library("PKPDmisc")        
-    + library("xpose4")
+    + library(mrgsolve) 
+    + library(PKPDmisc)        
+    + library(xpose4)
     + library(vpc)
 
   

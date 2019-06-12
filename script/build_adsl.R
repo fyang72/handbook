@@ -165,7 +165,7 @@ check_adsl <- function(dataset, adsl, topN=20) {
     arrange(SEX)  
   
   if (nrow(tabl)>topN) { tabl = tabl %>% slice(1:topN) }
-  attr(tabl, "title") = "List of missing gender information (SEX)" 
+  attr(tabl, "title") = "List of gender information (SEX)" 
   attr(tabl, "key") = "SEX_ORG"
   attr(tabl, "value") = "SEX"
   
@@ -181,7 +181,7 @@ check_adsl <- function(dataset, adsl, topN=20) {
     arrange(ETHNIC)
   
   if (nrow(tabl)>topN) { tabl = tabl %>% slice(1:topN) }
-  attr(tabl, "title") = "List of missing ethnic information (ETHNIC)" 
+  attr(tabl, "title") = "List of ethnic information (ETHNIC)" 
   attr(tabl, "key") = "ETHNIC_ORG"
   attr(tabl, "value") = "ETHNIC"
 
@@ -197,7 +197,7 @@ check_adsl <- function(dataset, adsl, topN=20) {
     arrange(RACE)  
   
   if (nrow(tabl)>topN) { tabl = tabl %>% slice(1:topN) }
-  attr(tabl, "title") = "List of missing race information (RACE)" 
+  attr(tabl, "title") = "List of race information (RACE)" 
   attr(tabl, "key") = "RACE_ORG"
   attr(tabl, "value") = "RACE"
   

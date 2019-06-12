@@ -10,17 +10,6 @@ desp_mean_profile <-function(dataset, params=NULL) {
   table =NULL
   data = NULL
   
-  if (1==1) { 
-    #HOME = "~/FYANG/R1979_CD20_CD3/"  
-    load(paste0("~/FYANG/R1979_CD20_CD3/", "/KRM/data/nmdat_160mg_320mg.RData"))
-    
-    dataset = nmdat_upto320mg %>% 
-      mutate(DOSEGRP=ARMA, 
-             TESTCD=TEST, 
-             TESTLABL = "Concentration of REGN1979"
-      ) 
-  }
-  
   #------------------------------
   # these key varaibles needed
   #------------------------------

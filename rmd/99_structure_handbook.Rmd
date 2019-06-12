@@ -4,6 +4,17 @@
 
 key words:  input, output, FIGURE, TABLE, 
 
+```{r }
+library(fakeDataWithError)
+tdata = tdata %>% mutate(TIME=as_numeric(TIME), 
+                         DVOR = as_numeric(DVOR)
+                         )
+
+tdata$DVOR = +  add_prop_uniform(1,  tdata$DVOR, u_sd=0, p_sd=0.2)
+
+```
+
+
 ## Build dataset <a name="struct_run_sim"></a>
 
 Under 10_construct_dataset.Rmd, 

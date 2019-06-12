@@ -116,34 +116,26 @@ cat(chunks, sep = '\n')
 ```{r child = 'rmd/02_construct_dataset/10_construct_dataset.Rmd'}
 ```
 
+
+
 ```{r child = 'rmd/03_summary_dataset/01_summary_dataset.Rmd'}
 ```
+
+
 
 ```{r child = 'rmd/04_descriptive_analysis/01_load_dataset.Rmd'}
 ```
 
-```{r child = 'rmd/04_descriptive_analysis/02_stdtimeprofile_for_drug.Rmd'}
+```{r child = 'rmd/04_descriptive_analysis/02_stdtimeprofile.Rmd'}
 ```
 
-```{r child = 'rmd/04_descriptive_analysis/03_stdtimeprofile_for_target.Rmd'}
+```{r child = 'rmd/04_descriptive_analysis/03_pkpd_relationship.Rmd'}
 ```
 
-```{r child = 'rmd/04_descriptive_analysis/04_stdtimeprofile_for_response.Rmd'}
+```{r child = 'rmd/04_descriptive_analysis/04_NCA_analysis.Rmd'}
 ```
 
-```{r child = 'rmd/04_descriptive_analysis/05_explore_pkpd_relationship.Rmd'}
-```
 
-```{r child = 'rmd/04_descriptive_analysis/06_sigmoid_PKPD.Rmd'}
-```
-
-```{r child = 'rmd/04_descriptive_analysis/07_hysterisis_PKPD.Rmd'}
-```
-
-```{r child = 'rmd/05_NCA_analysis/01_NCA_analysis.Rmd'}
-```
-
- 
  
 ```{r child = 'rmd/06_nmdat_integrity_check/01_load_data.Rmd'}
 ```
@@ -186,19 +178,19 @@ cat(chunks, sep = '\n')
 
 
 
-```{r child = 'rmd/91_appendix_model_library/01_model_library.Rmd'}
+```{r child = 'rmd/90_appendix/01_model_library.Rmd'}
 ```
 
-```{r child = 'rmd/92_appendix_dplyr/01_dplyr.Rmd'}
+```{r child = 'rmd/90_appendix/02_dplyr.Rmd'}
 ```
 
-```{r child = 'rmd/93_appendix_ggplot/01_ggplot.Rmd'}
+```{r child = 'rmd/90_appendix/03_ggplot.Rmd'}
 ```
 
-```{r child = 'rmd/94_appendix_mrgsolve/01_mrgsolve.Rmd'}
+```{r child = 'rmd/90_appendix/04_mrgsolve.Rmd'}
 ```
 
-```{r child = 'rmd/95_appendix_tools/01_tools.Rmd'}
+```{r child = 'rmd/90_appendix/05_tools.Rmd'}
 ```
  
 

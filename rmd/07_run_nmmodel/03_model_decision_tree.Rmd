@@ -1,7 +1,235 @@
 
 ## Model decision tree  <a name="model_decision_tree"></a>
 
-This section is to perform any diagnostic analysis of a given nonmem run. 
+This section is to visualize the decision tree during the model development. 
 
   
+```{r, eval=TRUE } 
+
+# https://datastorm-open.github.io/visNetwork/shiny.html
+# http://www.cse.unsw.edu.au/~mike/myrlibrary/visNetwork/NEWS
+#visNearestNodes(target = input$click, maxpoints =10)
+#visGetSelectedNodes() #input = paste0(network$id, "_selectedNodes"))
+#visNetworkProxy("network") %>% visGetSelectedNodes(input="network_selectedNodes")
+# https://rstudio-pubs-static.s3.amazonaws.com/337696_c6b008e0766e46bebf1401bea67f7b10.html
+# https://stackoverflow.com/questions/19827139/highlight-shortest-path-on-plot-of-graph/19996189
+
+# https://github.com/datastorm-open/visNetwork/issues/176
+
+library("visNetwork") 
+library(igraph)
+library(shiny)
+library(dplyr)
+
  
+# https://github.com/datastorm-open/visNetwork/issues/131
+# visGetSelectedNodes
+
+# https://github.com/datastorm-open/visNetwork/issues/50 # GREAT EXAMPLE
+
+# https://stackoverflow.com/questions/41018899/get-selected-node-data-from-visnetwork-graph-without-actionbutton
+# http://datastorm-open.github.io/visNetwork/shiny.html
+#server <- function(input, output, session) {
+
+  n_nodes = 30
+  ba <-  sample_pa(n=n_nodes, power=1, m=1,  directed=F)
+  #plot(ba, vertex.size=6, vertex.label=NA)
+  
+  # get.edgelist(ba)
+  links = igraph::as_data_frame(ba, what="edges")  %>% mutate(group=1)
+  nodes = data.frame(id=1:n_nodes) # as_data_frame(ba, what="vertices")%>% mutate(group=1)
+  #net <- graph_from_data_frame(d=links, vertices=nodes, directed=T) 
+  values <- reactiveValues()
+  values$links = links
+  values$nodes = nodes
+  values$selected_nodes = NULL
+  
+  vis.nodes <- nodes
+  vis.links <- links
+  vis.nodes$shape  <- "dot"  
+  vis.nodes$shadow <- TRUE # Nodes will drop shadow
+  vis.nodes$title  <- vis.nodes$id # Text on click
+  vis.nodes$label  <- vis.nodes$id # Node label
+  vis.nodes$size   <- vis.nodes$audience.size # Node size
+  vis.nodes$borderWidth <- 2 # Node border width
+  
+  vis.nodes$color.background <- rep(c("slategrey", "tomato", "gold"), times=20)[1:nrow(nodes)]  # [nodes$media.type]
+  vis.nodes$color.border <- "black"
+  vis.nodes$color.highlight.background <- "orange"
+  vis.nodes$color.highlight.border <- "darkred"
+  
+  output$network <- renderVisNetwork({
+    
+    # withProgress(message = 'drawing the network...', value = 0.1, {
+    #   Sys.sleep(0.25)
+      
+      VisNetwork_graph <- visNetwork::visNetwork(vis.nodes, vis.links, width="100%", height="800px", #background="#eeefff",
+               main="Decision Tree For Model Development", submain="And what a great network it is!",
+               footer= "Meta information for the selected models (by doubleClick)") %>% 
+      visEdges(arrows = "to", 
+               color = list(color = "black",highlight ="red",hover = "blue")
+      ) %>%    
+      visHierarchicalLayout() %>%  # direction = "LR"
+
+      # visGroups(groupname = "A", shape = "icon", icon = list(code = "f0c0", size = 75)) %>%
+      # visGroups(groupname = "B", shape = "icon", icon = list(code = "f007", color = "red")) %>%
+      # addFontAwesome() %>%
+      # visLegend(addNodes = data.frame(label = c("A", "B"), shape = "icon", 
+      #                                 icon.code = c("f0c0", "f007"), 
+      #                                 icon.size = c(25,50), 
+      #                                 icon.color = c(NA, "red")),
+      #         addEdges = data.frame(label = "link"), useGroups = FALSE)
+      
+    
+    
+    #visEdges(color = list(color = "white",highlight ="red",hover = "blue")) %>%
+    #visInteraction(hover = T) %>% 
+    # visSetSelection((edgesId = edges_selection,nodesId=nodes_selection))
+    visInteraction(multiselect=T,selectable=T)  %>% 
+      
+      visEvents(doubleClick = "function(nodes){
+                Shiny.onInputChange('double_click', nodes.nodes[0]);
+                ;}"
+      )
+    
+    visNetwork::visOptions(graph= VisNetwork_graph, manipulation = TRUE,
+                           selectedBy = "group",
+                           highlightNearest = TRUE )
+    
+  #}) #end of draw
+})
+  
+  
+  
+  observe({
+    g <- visNetworkProxy("network")  
+    validate(need(g, message=FALSE), 
+             need(input$double_click, message=FALSE)
+    )
+    
+    # ShortPth <- get.shortest.paths(g, 
+    #                                values$selected_nodes[1], 
+    #                                values$selected_nodes[2]
+    #                                )    # List of path 8->2
+    # 
+    # E(g)$color <- "SkyBlue2"
+    # E(g)$width <- 1
+    #E(g, path=ShortPth)$color <- "red" 
+    
+    #E(g, path=ShortPth$vpath[[1]])$color <- "red"
+    
+    visNetworkProxy("network") %>% 
+      visUpdateNodes(nodes = data.frame(id=input$double_click, color.background =  "red"))
+    #E(g, path=unlist(ShortPth$vpath))$color <- "red"
+    #E(g, path=unlist(ShortPth[[1]]))$color <- "red"
+    #plot(g)
+    
+    #visUpdateNodes and visUpdateEdges. Related to #50
+    
+    
+    
+  })
+  
+  observe({
+    graph <- visNetwork::visNetworkProxy("network")
+    validate(need(input$Hierarchi_AttId, message=FALSE),
+             need(input$MethodHierarchiId, message=FALSE) 
+             )
+    
+    #if(input$enableHierarchiId){
+      #conditionalPanel("input.enableHierarchiId==true",
+      visHierarchicalLayout(graph, 
+                            enabled= TRUE, # input$enableHierarchiId,
+                            direction = input$Hierarchi_AttId,
+                            sortMethod= input$MethodHierarchiId
+      )
+      #)
+    #}else{
+      #conditionalPanel("input.enableHierarchiId==false",
+    #  visNetwork::visPhysics(graph, solver = input$PhysicLayoutId )
+      
+      #)
+    #}
+  })
+    
+    
+  observe({ 
+    #visNearestNodes(target = input$click, maxpoints =10)
+    #visGetSelectedNodes() #input = paste0(network$id, "_selectedNodes"))
+    #visNetworkProxy("network") %>% visGetSelectedNodes(input="network_selectedNodes")
+    # https://github.com/datastorm-open/visNetwork/issues/87
+    values$selected_nodes = unique(c(values$selected_nodes, input$double_click))
+    visNetworkProxy("network") %>%
+      visSelectNodes(id = values$selected_nodes)
+    #visSelectEdges(id = edges_selection)
+  })
+  
+  
+  output$shiny_return <- renderPrint({
+    values$links %>% filter(from %in% input$double_click | to  %in% input$double_click)
+  })
+ # }
+
+
+
+renderUI({
+      enableHierarchi <- c("FALSE","TRUE")
+      PhysicLayout <- c('barnesHut', 'repulsion', 'hierarchicalRepulsion', 'forceAtlas2Based')
+      MethodHierarchi <- c("hubsize", "directed")
+      Hierarchi_Att <- c("LR","RL","UD","DU")
+      
+  fluidPage(
+  fluidRow(
+    
+      #h4("Edges Attributes:"),
+      
+       #column(3, checkboxInput("enableHierarchiId",label="Hierarchi", value = TRUE)),
+        
+        
+        column(3, 
+               selectizeInput("MethodHierarchiId",label="Layout Method", choices = MethodHierarchi,
+                       selected= "hubsize", multiple = FALSE)),
+        
+        column(3, 
+               selectizeInput("Hierarchi_AttId", label = "Direction", choices = Hierarchi_Att, multiple = FALSE))
+        
+       # column(3, 
+        #       selectizeInput("PhysicLayoutId",label="Physics Options", choices = PhysicLayout,
+        #               selected= 'hierarchicalRepulsion', multiple = FALSE))
+      ), #,
+      
+      # checkboxInput("changeGroupId",label="add Gr2", value = FALSE),
+      # 
+      # h6("or (not working)"),
+      # selectizeInput("changeGroupIdbis",label="Select node for Gr2", choices = nodes <- (id = 1:12), selected= NULL, multiple = TRUE),
+      # 
+      # checkboxInput("RunId",label="Plot", value = FALSE)
+     
+    
+    fluidRow(
+      # conditionalPanel(condition ="input.RunId==true",
+      #                  visNetworkOutput("network")
+      # ),
+      visNetworkOutput("network", width = "100%", height = "400px"), 
+      verbatimTextOutput("shiny_return")
+      
+       # if(input$RunId){
+       #  visNetworkOutput("network")
+       # }else{}
+      
+    )
+    
+)
+
+})
+
+#shiny::shinyApp(ui = ui, server = server)
+
+
+
+ 
+
+
+```
+
+

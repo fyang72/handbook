@@ -12,9 +12,7 @@ library(dplyr)
 # http://datastorm-open.github.io/visNetwork/shiny.html
 server <- function(input, output, session) {
 
-
-  
-  n_nodes = 20
+  n_nodes = 30
   ba <-  sample_pa(n=n_nodes, power=1, m=1,  directed=F)
   #plot(ba, vertex.size=6, vertex.label=NA)
   
@@ -46,7 +44,7 @@ server <- function(input, output, session) {
     # withProgress(message = 'drawing the network...', value = 0.1, {
     #   Sys.sleep(0.25)
       
-      graph <- visNetwork::visNetwork(vis.nodes, vis.links, width="100%", height="800px", #background="#eeefff",
+      VisNetwork_graph <- visNetwork::visNetwork(vis.nodes, vis.links, width="100%", height="800px", #background="#eeefff",
                main="Network", submain="And what a great network it is!",
                footer= "Hyperlinks and mentions among media sources") %>% 
       visEdges(arrows = "to", 
@@ -75,7 +73,7 @@ server <- function(input, output, session) {
                 ;}"
       )
     
-    visNetwork::visOptions(graph= graph, manipulation = TRUE,
+    visNetwork::visOptions(graph= VisNetwork_graph, manipulation = TRUE,
                            selectedBy = "group",
                            highlightNearest = TRUE )
     
@@ -192,14 +190,15 @@ ui <- fluidPage(
     ),
     
     mainPanel(
-      conditionalPanel(condition ="input.RunId==true",
-                       visNetworkOutput("network")
-      ),
+      # conditionalPanel(condition ="input.RunId==true",
+      #                  visNetworkOutput("network")
+      # ),
       visNetworkOutput("network"), 
-      verbatimTextOutput("shiny_return") 
-      # if(input$RunId){
-      #  visNetworkOutput("network")
-      # }else{}
+      verbatimTextOutput("shiny_return")
+      
+       # if(input$RunId){
+       #  visNetworkOutput("network")
+       # }else{}
       
     )
   )   
