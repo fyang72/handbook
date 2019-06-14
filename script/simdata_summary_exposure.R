@@ -52,7 +52,7 @@ simdata_summary_exposure <-function(dataset, params=NULL) {
   #------------------------------           
   # prepare the dataset 
   #------------------------------
-  tdata = dataset  %>%  
+  tdata = dataset  %>%  ungroup() %>% 
     mutate(DVOR=as_numeric(IPRED),  
            TIME=as_numeric(TIME), 
            ARMA=ordered(ARMA, levels=unique(ARMA)) 
@@ -63,8 +63,8 @@ simdata_summary_exposure <-function(dataset, params=NULL) {
   
   # filter out the last dosing interval
   tdata = tdata  %>%  
-    group_by_(.dots =group_lst) %>%  
-    top_n(n=1, wt=EXSEQ) %>% filter(TAD<=II)
+    group_by_(.dots =group_lst)  #%>%  
+    #top_n(n=1, wt=EXSEQ) %>% filter(TAD<=II)    # do it outside
   
   tdata = tdata %>% group_by(.dots = group_lst) %>% 
     dplyr::summarise(

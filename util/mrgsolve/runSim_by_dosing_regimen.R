@@ -101,13 +101,10 @@ runSim_by_dosing_regimen2 <-function(
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # adex: expand.grid on DOSEID and ID
   dose = adex %>% capitalize_names() %>% rename(DOSEID = ID)
-  adex = expand.grid(DOSEID = unique(dose$DOSEID), ID = unique(adsl$ID)) %>%   #, POP=unique(adsl$POP))
-    mutate(DOSEID = as.integer(DOSEID), 
-           ID = as.integer(ID)) %>% 
+  adex = expand.grid(DOSEID = unique(dose$DOSEID), USUBJID = unique(adsl$USUBJID)) %>%   #, POP=unique(adsl$POP))
     left_join(dose, by="DOSEID") %>% 
-    left_join(adsl %>% mutate(ID=as.integer(ID)), by="ID") %>% 
-    mutate(WGTBL = as_numeric(WGTBL)) %>% 
-    rename(USUBJID=ID)
+    left_join(adsl, by="USUBJID") %>% 
+    mutate(WGTBL = as_numeric(WGTBL))  
   
   adex = adex %>% 
     mutate(ID = as.integer(as.factor(paste0(USUBJID,"_", DOSEID))))  # New ID , "_", POP
@@ -155,7 +152,7 @@ runSim_by_dosing_regimen2 <-function(
   out = out  %>% 
     left_join(adex %>% as.data.frame() %>% 
                 distinct(ID, .keep_all=TRUE) %>% 
-                select(ID, ARMA, WGTBL),
+                select(ID, USUBJID, ARMA, WGTBL),
               by=c("ID"))  
   
   col.lst <- colnames(out)[which(substr(colnames(out), 1,6) == "IPRED_")]
