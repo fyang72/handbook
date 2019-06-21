@@ -71,7 +71,7 @@ output$load_dataset_for_summarise_exposure_container <-renderUI({
 
   # UI  
   fluidRow(column(6, 
-                   module_load_dataset_UI(id="load_dataset_for_summarise_exposure", label=NULL)
+                   module_load_dataset_UI(("load_dataset_for_summarise_exposure"), label=NULL)
                  ), 
            column(6, 
                    HTML(colFmt("internal library: build-in dataset <br>

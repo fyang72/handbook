@@ -13,7 +13,7 @@ module_runsim_output_UI <- function(id, label = "") {
   
 tagList(
   fluidRow(
-  fluidRow(
+  #fluidRow(
     column(width=4, #offset = 1, 
          radioButtons(ns("YesNoIIV"), 
                       label = "Inter-Individual Variability (IIV)", 
@@ -21,43 +21,54 @@ tagList(
                       choices = list("Yes" = "Yes", 
                                      "No" = "No"), 
                       width = "100%",
-                      selected = "Yes")
+                      selected = "No")
          ),
     
-    column(width=4, numericInput(ns("seed"), label = "Random seed:",
+    column(width=2, numericInput(ns("seed"), label = "Random seed",
                                   value=1234, min=1, max=10000)
     ),
     
-    column(width=4, numericInput(ns("infusion_hrs_lst"), label = "Infusion Hour",
+    column(width=2, numericInput(ns("infusion_hrs_lst"), label = "Infusion Hrs",
                                  value=1, min=0, max=10)
-    )
-    
-    ), 
-  
-  fluidRow(
-    column(width=4,  
-           actionButton(ns("run_simulation"), label="Run simulation", style=actionButton.style ) 
     ),
     
-    column(width=4, #status = "primary",  #class = 'rightAlign', #background ="aqua",
-           textInput(ns("data_name"), value="simDat-", label=NULL)),
+    column(width=2, numericInput(ns("simulation_delta"), label = "Sim_delta(day)",
+                                 value=1, min=0.1, max=10)
+    ),
     
-    column(width=4, #status = "primary",  #class = 'rightAlign',#background ="aqua",
-           actionButton(ns("save_simdata"),label="Save data", style=actionButton.style))
-  ), 
-  style='margin-bottom:30px;  border:1px solid; padding: 10px;' 
+    column(width=2, numericInput(ns("followup_period"), label = "Followup(day)",
+                                 value=112, min=1, max=448)
+    )
+    # tgrid
+    
+    ), 
+  # 
+  # fluidRow(
+  #   column(width=4,  
+  #          actionButton(ns("run_simulation"), label="Run simulation", style=actionButton.style ) 
+  #   ),
+  #   
+  #   column(width=4, #status = "primary",  #class = 'rightAlign', #background ="aqua",
+  #          textInput(ns("data_name"), value="simDat-", label=NULL)),
+  #   
+  #   column(width=4, #status = "primary",  #class = 'rightAlign',#background ="aqua",
+  #          actionButton(ns("save_simdata"),label="Save data", style=actionButton.style))
+  # ), 
+  #style='margin-bottom:30px;  border:1px solid; padding: 10px;' 
   #fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
-  ), 
+  #), 
   
-  fluidRow(
-    column(width=12, uiOutput(ns("simulated_profile_linear_container")))
-  ), 
-  fluidRow(
-    column(width=12, uiOutput(ns("simulated_profile_log_container")))
-  )
+  uiOutput(ns("run_simulation_by_script_container"))
+  #fluidRow(column(12, uiOutput(ns("run_simulation_by_script_container"))))
+  
+  # fluidRow(
+  #   column(width=12, uiOutput(ns("simulated_profile_linear_container")))
+  # ), 
+  # fluidRow(
+  #   column(width=12, uiOutput(ns("simulated_profile_log_container")))
+  # )
 )
 }
-
 
 
 ########################################################################
@@ -68,132 +79,67 @@ module_runsim_output <- function(input, output, session, ALL, values, cppModel_n
   
   ns <- session$ns 
   
-  ################################
-  # UI for setting_container
-  ################################
-  output$simulated_profile_linear_container <- renderUI({ 
+  ################################################
+  # UI for run_simulation_by_script_container
+  ################################################  
+  output$run_simulation_by_script_container<- renderUI({  
     
-    tdata = statsTab()
-    validate(need(tdata, message= "no data generated yet"))
-    
-    
-    x=setup_scale(myscale='1_2', mylimit=c(0, max(tdata$xvar/7, na.rm=TRUE)))
-    
-    # no pre-dose samples in plot
-    tdata = tdata%>%mutate(xvar=xvar/7)
-    fig = ggplot(tdata, aes(x=xvar, y=yvar, group=ID, col=ARMA)) + 
-      #ggtitle("Concentration Time Profile") + 
-      
-      geom_point() + geom_line() +   
-      #geom_errorbar(aes(ymin = meanMinusSE, ymax = meanPlusSE), width=0.2) + 
-      
-      scale_color_manual(values=colScheme()) +  
-      
-      scale_x_continuous(breaks=x$breaks, label=x$labels) +
-      #scale_y_continuous(breaks=y$breaks, label=y$labels) +
-      
-      #coord_cartesian(xlim = c(0, 85)) + 
-      coord_cartesian(ylim = c(0.001, 1000)) + 
-      
-      xlab("Time (week)") +  
-      ylab(paste0("Concentration(±SE) (mg/L)")) +   
-      
-      theme_bw() + base_theme(font.size = as.integer(12)) + 
-      guides(col=guide_legend(ncol=4,byrow=TRUE))    
+    values$dataset <- ALL$DATA[["mYtEsT_for_runSim_dataset"]]
+    values$cppModel = cppModel()
+    #values$adex
+    #values$adsl
      
-   
-    attr(fig, "title") = "Predicted concentration (mg/L)" 
-    ALL = callModule(module_save_figure, "simulated_profile_linear", ALL, 
-                         figure=fig, 
-                         figure_index = 1, 
-                         figure_name="figln-", 
-                         figure_data = tdata
-                         )
-     
-     fluidRow(column(12, module_save_figure_UI(ns("simulated_profile_linear"), label = NULL)))
-  })
-  
-  
-  ################################
-  # UI for setting_container
-  ################################
-  output$simulated_profile_log_container <- renderUI({ 
+    values$YesNoIIV = input$YesNoIIV  
+    values$seed = input$seed  
+    values$infusion_hrs_lst = input$infusion_hrs_lst   
+    values$simulation_delta = input$simulation_delta
+    values$followup_period = input$followup_period
     
-    tdata = statsTab()
-    validate(need(tdata, message= "no data generated yet"))
-    
-    
-    x=setup_scale(myscale='1_2', mylimit=c(0, max(tdata$xvar/7, na.rm=TRUE)))
-    
-    # no pre-dose samples in plot
-    tdata = tdata%>%mutate(xvar=xvar/7)
-    fig = ggplot(tdata, aes(x=xvar, y=yvar, group=ID, col=ARMA)) + 
-      #ggtitle("Concentration Time Profile") + 
+    validate(
+      need(values$cppModel, message="No cppModel"), 
+      need(values$adsl, message="No population (adsl)"), 
+      need(values$adex, message="No dosing regimen (adex)"),
       
-      geom_point() + geom_line() +   
-      #geom_errorbar(aes(ymin = meanMinusSE, ymax = meanPlusSE), width=0.2) + 
-      
-      scale_color_manual(values=colScheme()) +  
-      
-      scale_x_continuous(breaks=x$breaks, label=x$labels) +
-      #scale_y_continuous(breaks=y$breaks, label=y$labels) +
-      
-      #coord_cartesian(xlim = c(0, 85)) + 
-      
-      xlab("Time (week)") +  
-      ylab(paste0("Concentration(±SE) (mg/L)")) +   
-      
-      theme_bw() + base_theme(font.size = as.integer(12)) + 
-      guides(col=guide_legend(ncol=4,byrow=TRUE))  +   
-    
-      scale_y_log10(breaks = 10^(seq(-3,3,by=1)), #trans_breaks("log10", function(x) 10^x),
-                  labels = 10^(seq(-3,3,by=1))) + # trans_format("log10", math_format(10^.x))) +
-      
-      #coord_trans( y="log10") +   # possible values for x and y are “log2”, “log10”, “sqrt”, …
-      
-      #coord_cartesian(xlim = c(0, 85)) + 
-      
-      theme_bw() + base_theme(font.size = as.integer(12)) + 
-      guides(col=guide_legend(ncol=4,byrow=TRUE)) 
-    
-    # individual log scale 
-    fig = fig + annotation_logticks(sides ="l")  +   # "trbl", for top, right, bottom, and left.
-      geom_hline(yintercept=c(0.078), lty="dashed") + 
-      geom_text(y=log10(0.1 ), x=0.1, aes(label="BLQ=0.078 mg/L", hjust=0), size=3, color='black')  
-    
-    
-    attr(fig, "title") = "Predicted concentration (mg/L)" 
-    ALL = callModule(module_save_figure, "simulated_profile_log", ALL, 
-                     figure=fig, 
-                     figure_index = 1, 
-                     figure_name="figlog-", 
-                     figure_data = tdata
+      need(values$infusion_hrs_lst, message="missing infusion hours"), 
+      need(values$seed, message="missing seed variable"), 
+      need(values$simulation_delta, message="missing simulation delta"), 
+      need(values$followup_period, message="missing followup_period")
     )
     
-    fluidRow(column(12, module_save_figure_UI(ns("simulated_profile_log"), label = NULL)))
+    script <- list.files(path=paste0(HOME, "/script/"), 
+                         full.names = TRUE,
+                         pattern="runSim_by_script")
+    names(script) = basename(script)
+    
+    ALL =  callModule(module_run_script, "mYtEsT_for_run_simulation_by_script", ALL, 
+                      dataset=values$dataset, 
+                      script = script, 
+                      params = values)
+    
+    module_run_script_UI(ns("mYtEsT_for_run_simulation_by_script"), label = NULL) 
+    
   })
   
   
+   
 #--------------------
 # cppModel 
 #--------------------  
 cppModel <- reactive({
   cppModel =  ALL$cppModel[[cppModel_name]]
   
-  if (is.null(cppModel)) {
-    # "default, "message", "warning", "error"  
-    showNotification("No valid cppModel found", type="error")  
-  }
+  # if (is.null(cppModel)) {
+  #   # "default, "message", "warning", "error"  
+  #   showNotification("No valid cppModel found", type="error")  
+  # }
   validate(need(cppModel, message="no cppModel found"))
   
-  if (input$YesNoIIV=="No") {
-     cppModel  =  cppModel  %>% zero_re  
-    #message = "Simulation with no inter-individual variability (IIV)"
-    # "default, "message", "warning", "error"  
-    #showNotification(message, type="message")  
-  }
+   if (input$YesNoIIV=="No") {
+      cppModel  =  cppModel  %>% zero_re  
+     message = "Simulation with no inter-individual variability (IIV)"
+     showNotification(message, type="message")  # "default, "message", "warning", "error"  
+   }
   
-   
   
   cppModel
 })
@@ -261,7 +207,7 @@ observeEvent(input$run_simulation, {
   infusion_hrs_lst = input$infusion_hrs_lst
   seed = input$seed
   
-  values$simData <- runSim_by_dosing_regimen2(
+  values$simData <- runSim_by_dosing_regimen(
     cppModel,    # model file
     adsl,   # population 
     adex,   # dose regimen

@@ -14,6 +14,7 @@ fluidRow(
           
          fluidRow(column(width=6, uiOutput(ns("load_manual_adsl_container")))), 
          fluidRow(column(width=12, uiOutput(ns("load_script_adsl_container")))), 
+         fluidRow(column(width=6, uiOutput(ns("load_internal_adsl_container")))), 
          fluidRow(column(width=6, uiOutput(ns("load_session_adsl_container")))),
          fluidRow(column(width=6, uiOutput(ns("load_external_adsl_container")))),
          
@@ -40,7 +41,7 @@ output$adsl_source_selector <- renderUI({
     column(12,  
            radioButtons(ns("adsl_source"), 
                         label="Construct adsl from:", 
-                        choices=c("manual input", "script", "within session","external file"), 
+                        choices=c("manual input", "script", "internal library", "within session","external file"), 
                         inline=TRUE, 
                         width="100%",
                         selected="manual input")
@@ -83,10 +84,10 @@ output$load_script_adsl_container <- renderUI({
 script =   
 "    
 #---------------------------------
-# Key variables:  ID, WGTBL
+# Key variables:  USUBJID, WGTBL
 #---------------------------------
 #Example-1
-adsl = expand.grid(ID=1:3, WGTBL=seq(60, 80, by=10))
+adsl = data.frame(USUBJID=1:3, WGTBL=seq(60, 80, by=10))
 
 #Example-2
 library(dmutate)
@@ -94,7 +95,7 @@ nsubject = 3
 seed = 1234
 
 adsl <- 
- data.frame(ID=1:nsubject) %>% 
+ data.frame(USUBJID=1:nsubject) %>% 
 
  # [lower,upper] ~ rnorm(mu,sd))
  mutate_random(WGTBL[50,110] ~ rnorm(75,30)) %>%   
@@ -120,6 +121,31 @@ fluidRow(
   
 }) 
  
+
+#--------------------------------------  
+# load_internal_adsl_container
+#-------------------------------------- 
+output$load_internal_adsl_container <- renderUI({
+  
+  validate(need(globalVars$login$status, message=FALSE), 
+           need(input$adsl_source=="internal library", message=FALSE)) 
+  
+  dirs_list=list.files(path = paste0(HOME, "/data/"), 
+                       full.names = FALSE, 
+                       recursive = FALSE, 
+                       #pattern=".cpp", 
+                       include.dirs=FALSE)  
+  dirs_list = c("", dirs_list) 
+  
+  selectizeInput(ns("which_internal_adsl"), 
+                 label    = "load internal adsl", 
+                 choices  = dirs_list, 
+                 multiple = FALSE,
+                 width = "100%", 
+                 selected = dirs_list[1]
+  ) 
+})
+
 
 #--------------------------------------  
 # load_session_adsl_container
@@ -174,14 +200,22 @@ output$adsl_table_container <- renderUI({
            need(adsl(), message=FALSE)
   )
  
-  output$my_adsl_table <- DT::renderDataTable(                                                                                                                                          
-    DT::datatable(data = adsl(),                                                                                                                                                     
-                  options = list(pageLength = 10, 
-                                 lengthChange = FALSE, 
-                                 width="100%", 
-                                 scrollX = TRUE)                                                                   
-    ))
-  DT::dataTableOutput(ns("my_adsl_table"))
+  # output$my_adsl_table <- DT::renderDataTable(                                                                                                                                          
+  #   DT::datatable(data = adsl(),                                                                                                                                                     
+  #                 options = list(pageLength = 10, 
+  #                                lengthChange = FALSE, 
+  #                                width="100%", 
+  #                                scrollX = TRUE)                                                                   
+  #   ))
+  # DT::dataTableOutput(ns("my_adsl_table"))
+  
+  ALL = callModule(module_save_data, "adsl_table", 
+                   ALL,
+                   data = adsl(),   
+                   data_name = "adsl"
+  )
+  
+  module_save_data_UI(ns("adsl_table"), label = NULL)
   
 }) 
 
@@ -214,7 +248,7 @@ load_manual_adsl <- reactive({
   
   pop_WT = unique(pop_WT)
   if (is.vector(pop_WT)) {
-    adsl = data.frame(ID=1:(input$n_subject * length(pop_WT)), 
+    adsl = data.frame(USUBJID=1:(input$n_subject * length(pop_WT)), 
                       WGTBL = rep(pop_WT, each=input$n_subject)
     )
   }else{
@@ -265,6 +299,38 @@ load_session_adsl <- reactive({
   adsl
 }) 
 
+
+#--------------------------------------  
+# reactive of load_internal_adsl
+#-------------------------------------- 
+load_internal_adsl <- reactive({
+  
+  validate(need(globalVars$login$status, message=FALSE), 
+           need(input$which_internal_adsl, message=FALSE))
+  
+  inFile = paste0(HOME, "/data/", input$which_internal_adsl)
+  ext <- tools::file_ext(inFile) 
+  
+  tdata = switch(ext,
+                 "csv" = read_csv(inFile, col_names=TRUE,  
+                                  col_type=cols(.default=col_character()))  %>% as.data.frame(),
+                 "xlsx"=read_excel(inFile, sheet = 1, col_names = TRUE)  %>% as.data.frame(),
+                 "xls" = read_excel(inFile)  %>% as.data.frame(),
+                 "sas7bdat" =  read_sas(inFile)  %>% as.data.frame(), 
+                 "RData" =  load(inFile),   # MUST NAMED AS "adpx"   need some work 
+                 NULL
+  )
+  message.info = "read data not sucessful. Only .csv, .xlsx, .xls, .sas7bdat, .RData can be read"
+  if (is.null(tdata)) {print(message.info)}
+  validate(need(tdata, message.info)) 
+  
+  attr(tdata, 'file_name') <- inFile  # with directory
+  attr(tdata, 'locaton_source') <- "internal"
+  tdata
+  
+})
+
+
 #--------------------------------------  
 # reactive of load_external_adsl
 #-------------------------------------- 
@@ -305,12 +371,13 @@ adsl <- reactive({
   adsl <- switch(input$adsl_source, 
                  "manual input" = load_manual_adsl(), 
                  "script" = load_script_adsl(), 
+                 "internal library" = load_internal_adsl(), 
                  "within session" = load_session_adsl(), 
                  "external file" = load_external_adsl(), 
                  NULL) %>% as.data.frame()
   
-  # must have ID and WGTBL
-  col_name_lst = c("ID", "WGTBL")
+  # must have USUBJID and WGTBL
+  col_name_lst = c("USUBJID", "WGTBL")
   all_yes = all(col_name_lst %in% colnames(adsl))
   if(all_yes==FALSE) {
     error_message = paste0("Missing column(s) of ", paste0(setdiff(col_name_lst, colnames(adsl)), collapse=", "), " in ", "adsl")

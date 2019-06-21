@@ -12,9 +12,11 @@ module_runsim_adex_UI <- function(id, label = "") {
   fluidRow(
     column(width=12,   
            uiOutput(ns("adex_source_selector")),
+           
            uiOutput(ns("load_external_adex_container")),
            uiOutput(ns("load_manual_adex_container")), 
            uiOutput(ns("load_script_adex_container")), 
+           uiOutput(ns("load_internal_adex_container")), 
            uiOutput(ns("load_session_adex_container")),
            uiOutput(ns("adex_tab_container"))
     )
@@ -39,7 +41,7 @@ module_runsim_adex <- function(input, output, session, ALL, values)  {
       column(12,  
              radioButtons(ns("adex_source"), 
                           label="Construct adex from:", 
-                          choices=c("manual input", "script", "within session","external file"), 
+                          choices=c("manual input", "script", "internal library", "within session","external file"), 
                           inline=TRUE, 
                           width="100%",
                           selected="manual input")
@@ -108,6 +110,31 @@ module_runsim_adex <- function(input, output, session, ALL, values)  {
   
   
   #--------------------------------------  
+  # load_internal_adex_container
+  #-------------------------------------- 
+  output$load_internal_adex_container <- renderUI({
+    
+    validate(need(globalVars$login$status, message=FALSE), 
+             need(input$adex_source=="internal library", message=FALSE)) 
+    
+    dirs_list=list.files(path = paste0(HOME, "/data/"), 
+                         full.names = FALSE, 
+                         recursive = FALSE, 
+                         #pattern=".cpp", 
+                         include.dirs=FALSE)  
+    dirs_list = c("", dirs_list) 
+    
+    selectizeInput(ns("which_internal_adex"), 
+                   label    = "load internal adex", 
+                   choices  = dirs_list, 
+                   multiple = FALSE,
+                   width = "100%", 
+                   selected = dirs_list[1]
+    ) 
+  })
+  
+  
+  #--------------------------------------  
   # load_session_adex_container
   #-------------------------------------- 
   output$load_session_adex_container <- renderUI({
@@ -159,41 +186,26 @@ module_runsim_adex <- function(input, output, session, ALL, values)  {
   output$adex_tab_container <- renderUI({
     
     validate(need(globalVars$login$status, message=FALSE), 
-             need(input$adex_source, message=FALSE)
+             need(adex(), message=FALSE)
     )
     
-    adex <- switch(input$adex_source, 
-                   "manual input" = load_manual_adex(), 
-                   "script" = load_script_adex(), 
-                   "within session" = load_session_adex(), 
-                   "external file" = load_external_adex(), 
-                   NULL)
-    # 
-    # adex = adex %>% mutate(
-    #   TIME = time, 
-    #   GROUPID = as.integer(GROUPID),
-    #   CMT  = as.integer(cmt),
-    #   RATE = rate, 
-    #   EVID = as.integer(evid), 
-    #   NDOSE= as.integer(addl+1), 
-    #   cmt  = as.integer(cmt), 
-    #   ii   = as.integer(ii), 
-    #   addl = as.integer(addl), 
-    #   evid = as.integer(evid)
-    # )
-    # adex = adex %>% select(STUDYID,ARMA,USUBJID,ID,GROUPID,TIME,AMT,UNIT,ROUTE,FREQ,NDOSE,CMT,RATE,WGTBL)
-    # # time,cmt,rate,infhr,ii,addl,evid)
-    # adex = head(adex, n=100)  # only the first 100 rows show
-    # 
-    values$adex = adex
+    # output$mydatatable <- DT::renderDataTable(                                                                                                                                          
+    #   DT::datatable(data = adex, #load_manual_adex(),  #ifelse(is.null(values$adex),load_manual_adex(), values$adex),                                                                                                                                                       
+    #                 options = list(pageLength = 10, 
+    #                                lengthChange = FALSE, width="100%", scrollX = TRUE)                                                                   
+    #   ))
+    # DT::dataTableOutput(ns("mydatatable"))
     
     
-    output$mydatatable <- DT::renderDataTable(                                                                                                                                          
-      DT::datatable(data = adex, #load_manual_adex(),  #ifelse(is.null(values$adex),load_manual_adex(), values$adex),                                                                                                                                                       
-                    options = list(pageLength = 10, 
-                                   lengthChange = FALSE, width="100%", scrollX = TRUE)                                                                   
-      ))
-    DT::dataTableOutput(ns("mydatatable"))
+    ALL = callModule(module_save_data, "adex_table", 
+                     ALL,
+                     data = adex(),   
+                     data_name = "adex"
+    )
+    
+    module_save_data_UI(ns("adex_table"), label = NULL) 
+    
+    
   }) 
   
   
@@ -280,6 +292,37 @@ module_runsim_adex <- function(input, output, session, ALL, values)  {
   
   
   #--------------------------------------  
+  # reactive of load_internal_adex
+  #-------------------------------------- 
+  load_internal_adex <- reactive({
+    
+    validate(need(globalVars$login$status, message=FALSE), 
+             need(input$which_internal_adex, message=FALSE))
+    
+    inFile = paste0(HOME, "/data/", input$which_internal_adex)
+    ext <- tools::file_ext(inFile) 
+    
+    tdata = switch(ext,
+                   "csv" = read_csv(inFile, col_names=TRUE,  
+                                    col_type=cols(.default=col_character()))  %>% as.data.frame(),
+                   "xlsx"=read_excel(inFile, sheet = 1, col_names = TRUE)  %>% as.data.frame(),
+                   "xls" = read_excel(inFile)  %>% as.data.frame(),
+                   "sas7bdat" =  read_sas(inFile)  %>% as.data.frame(), 
+                   "RData" =  load(inFile),   # MUST NAMED AS "adpx"   need some work 
+                   NULL
+    )
+    message.info = "read data not sucessful. Only .csv, .xlsx, .xls, .sas7bdat, .RData can be read"
+    if (is.null(tdata)) {print(message.info)}
+    validate(need(tdata, message.info)) 
+    
+    attr(tdata, 'file_name') <- inFile  # with directory
+    attr(tdata, 'locaton_source') <- "internal"
+    tdata
+    
+  })
+  
+  
+  #--------------------------------------  
   # reactive of load_session_dataset
   #-------------------------------------- 
   load_session_adex <- reactive({
@@ -331,6 +374,56 @@ module_runsim_adex <- function(input, output, session, ALL, values)  {
     attr(tdata, 'locaton.source') <- "external"
     tdata
   })
+  
+  #--------------------------------------  
+  # reactive of adex()
+  #--------------------------------------
+  adex <- reactive({
+    validate(need(input$adex_source, message=FALSE))
+    
+    adex <- switch(input$adex_source, 
+                   "manual input" = load_manual_adex(), 
+                   "script" = load_script_adex(), 
+                   "internal library" = load_internal_adex(), 
+                   "within session" = load_session_adex(), 
+                   "external file" = load_external_adex(), 
+                   NULL)
+    
+    # must have USUBJID and WGTBL
+    adex <- adex %>% capitalize_names()
+    
+    col_name_lst = c("ID", "TIME", "AMT")
+    all_yes = all(col_name_lst %in% colnames(adex))
+    if(all_yes==FALSE) {
+      error_message = paste0("Missing column(s) of ", paste0(setdiff(col_name_lst, colnames(adex)), collapse=", "), " in ", "adex")
+      showNotification(paste0(error_message, collapse="\n"), type="error")
+      adex = NULL
+    }
+    
+    # 
+    # adex = adex %>% mutate(
+    #   TIME = time, 
+    #   GROUPID = as.integer(GROUPID),
+    #   CMT  = as.integer(cmt),
+    #   RATE = rate, 
+    #   EVID = as.integer(evid), 
+    #   NDOSE= as.integer(addl+1), 
+    #   cmt  = as.integer(cmt), 
+    #   ii   = as.integer(ii), 
+    #   addl = as.integer(addl), 
+    #   evid = as.integer(evid)
+    # )
+    # adex = adex %>% select(STUDYID,ARMA,USUBJID,ID,GROUPID,TIME,AMT,UNIT,ROUTE,FREQ,NDOSE,CMT,RATE,WGTBL)
+    # # time,cmt,rate,infhr,ii,addl,evid)
+    # adex = head(adex, n=100)  # only the first 100 rows show
+    # 
+    values$adex = adex
+    
+    
+    
+  })
+  
+  
   
   return(values)
 }

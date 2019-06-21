@@ -60,7 +60,7 @@ module_run_script_UI <- function(id, label = "") {
 ################################################################################ 
 
 module_run_script <- function(input, output, session, 
-                              ALL, dataset, script
+                              ALL, dataset, script, params=NULL
                               )  {
 
   # script is a list of file names containing the "script"
@@ -73,7 +73,9 @@ module_run_script <- function(input, output, session,
 # UI for dataset_container
 ################################
 output$dataset_container <- renderUI({ 
-  validate(need(globalVars$login$status, message=FALSE))
+  validate(need(globalVars$login$status, message=FALSE)#, 
+           #need(dataset!="DUMMY", message=FALSE)
+  )
   
   if (class(dataset) == "xpose.data") {
     tdata = dataset %>% slot("Data")
@@ -245,6 +247,9 @@ observeEvent(input$run_script, {
   )
   
   ihandbook = 1
+  
+  print(params$adex) #############
+  print(params$cppModel %>% param() )
   
   environment(try_eval) <- environment()
   env = try_eval(text=input$script_content)
