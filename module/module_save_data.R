@@ -40,7 +40,10 @@ tagList(
 # log in and load data (sidebar)                                                                                                                                                        
 ################################################################################                                                                                                        
 
-module_save_data <- function(input, output, session, ALL, data, data_name) {                                                                                                                 
+module_save_data <- function(input, output, session, ALL, 
+                             data, 
+                             data_index = 1, 
+                             data_name="") {                                                                                                                 
   
 ns <- session$ns 
   

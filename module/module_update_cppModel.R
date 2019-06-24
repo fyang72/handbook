@@ -20,6 +20,10 @@ module_update_cppModel_UI <- function(id, label = "") {
       
       column(2, 
              actionButton(ns("save_model"), label="Save model", style=actionButton_style )
+      ),
+      
+      column(2, 
+             actionButton(ns("delete_model"),label="Delete model", style=actionButton_style)
       )
     ),
     fluidRow(
@@ -43,17 +47,20 @@ ns <- session$ns
 # cppModel_content_container
 #--------------------------------------
 output$cppModel_content_container <- renderUI({
-  cppModel =  ALL$cppModel[[cppModel_name]]
+  cppModel =  "  ####" # ALL$cppModel[[cppModel_name()]]
   
   validate(need(globalVars$login$status, message=FALSE), 
            need(cppModel, message=FALSE)
   )
     
+  print("in cppModel_content_container")
+  script_content <- "FFS" #capture.output(mrgsolve::see(cppModel))
+  
   fluidRow(
     column(12,
          aceEditor(ns("cppModel_content"), 
                    mode="c_cpp", 
-                   value=paste0(see(cppModel,raw=TRUE) , collapse="\n"), 
+                   value=paste0(script_content, collapse="\n"), 
                    theme = "crimson_editor",   # chrome
                    autoComplete = "enabled",
                    height = "1000px", 
@@ -71,34 +78,43 @@ observeEvent(input$save_model, {
   mymodel =input$cppModel_content
   validate(need(mymodel, message="Empty cppModel..."))
   
-  owd <- tempdir()
-  on.exit(setwd(owd)) 
+  # evaluate it
+  text="cppModel=mread('shiny', tempdir(), mymodel)"
+  #text="cppModel=mread(model='cppModel', project=paste0(HOME, '/cpp/'), quiet=TRUE, file=basename(input$which_internal_cppModel))"
+  environment(try_eval) <- environment()              # basename
+  env = try_eval(text)
   
-  ## capture messages and errors to a file.
-  zz <- file("all.Rout", open="wt")
-  sink(zz, type="message")
-  
-  # source the function
-  cppModel <- NULL
-  try(
-    eval(parse(text="cppModel=mread('shiny', tempdir(), mymodel")), silent = TRUE 
-  )  
-  
-  ## reset message sink and close the file connection
-  sink(type="message")
-  close(zz)
-  
-  ## Display the log file
-  error_message <- readLines("all.Rout")
-  
-  if (length(error_message)>0) {
-    showNotification(paste0(error_message, collapse="\n"), type="error")
-  }else {
+  if ("cppModel" %in% ls(env)) {
+    cppModel = get("cppModel", env)
     ALL$cppModel[[input$model_name]]  = cppModel
-    showNotification("cppModel saved", type="message")   # "default, "message", "warning", "error"
+    # "default, "message", "warning", "error" 
+    showNotification("mread cppModel...done and saved", type="message")  # "default, "message", "warning", "error"  
+  }else{
+    cppModel = NULL
+    error_message = get("message", env)
+    # "default, "message", "warning", "error" 
+    showNotification(paste0(error_message, collapse="\n"), type="error")
   }
- 
+   
+  
+})
+
+
+
+#--------------------
+# event for delete_model
+#--------------------
+observeEvent(input$delete_model, {
+  
+  #mymodel =input$cppModel_content
+  #validate(need(mymodel, message="Empty cppModel..."))
+   
+  print("in deleting:")
+
+  #ALL$cppModel[[cppModel_name()]]  = NULL 
+  showNotification("cppModel deleted", type="message")  # "default, "message", "warning", "error"  
+  
 })
   
-return(ALL)
+return(input)
 }

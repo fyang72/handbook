@@ -118,21 +118,21 @@ module_load_dataset <- function(input, output, session, ALL, dataset_name="datas
              need(input$which_external_dataset, message = FALSE))
      
     inFile = input$which_external_dataset
-    
+    tdata = read_datafile(inFile)
     # print(inFile)
     # name            size type  datapath
     # 1 cpp.model.cpp 6369      /tmp/RtmprQR1xU/1eb54214311d1970e61c917f/0.cpp
     # 
-    ext <- tools::file_ext(inFile$name) 
-    tdata = switch(ext,
-                  "csv" = read_csv(inFile$datapath, col_names=TRUE,  
-                                   col_type=cols(.default=col_character()))  %>% as.data.frame(),
-                  "xlsx"=read_excel(inFile$datapath, sheet = 1, col_names = TRUE)  %>% as.data.frame(),
-                  "xls" = read_excel(inFile$datapath)  %>% as.data.frame(),
-                  "sas7bdat" =  read_sas(inFile$datapath)  %>% as.data.frame(), 
-                  "RData" =  load(inFile$datapath), 
-                  NULL
-    )
+    # ext <- tools::file_ext(inFile$name) 
+    # tdata = switch(ext,
+    #               "csv" = read_csv(inFile$datapath, col_names=TRUE,  
+    #                                col_type=cols(.default=col_character()))  %>% as.data.frame(),
+    #               "xlsx"=read_excel(inFile$datapath, sheet = 1, col_names = TRUE)  %>% as.data.frame(),
+    #               "xls" = read_excel(inFile$datapath)  %>% as.data.frame(),
+    #               "sas7bdat" =  read_sas(inFile$datapath)  %>% as.data.frame(), 
+    #               "RData" =  load(inFile$datapath), 
+    #               NULL
+    # )
 
     
     message.info = "read data not sucessful. Only .csv, .xlsx, .xls, .sas7bdat, .RData can be read"

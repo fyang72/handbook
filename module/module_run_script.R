@@ -11,8 +11,8 @@ module_run_script_UI <- function(id, label = "") {
     fluidRow(
       column(width=12,  
              HTML(colFmt("Note, the following tabset is used to 
-                         1) render the source dataset (dataset tab), 
-                         2) apply script upon the source dataset (script tab), 
+                         1) render the source dataset if provided (dataset tab), 
+                         2) apply scripts upon the source dataset (script tab), 
                          3) render the derived data (data tab), final table (table tab) and figure (figure tab).", 
                          color="gray")))
       ),
@@ -248,9 +248,6 @@ observeEvent(input$run_script, {
   
   ihandbook = 1
   
-  print(params$adex) #############
-  print(params$cppModel %>% param() )
-  
   environment(try_eval) <- environment()
   env = try_eval(text=input$script_content)
   
@@ -270,41 +267,7 @@ observeEvent(input$run_script, {
   }else{
     showNotification(paste0(error_message, collapse="\n"), type="error")
   }
-  
-#     
-# if (1==2) {     
-#   output= NULL
-#   
-#   owd <- tempdir()
-#   on.exit(setwd(owd)) 
-#   
-#   ## capture messages and errors to a file.
-#   zz <- file("all.Rout", open="wt")
-#   sink(zz, type="message")
-#   
-#   # source the function
-#   try(
-#     eval(parse(text=(input$script_content))), silent = TRUE 
-#   )  
-#   
-#   ## reset message sink and close the file connection
-#   sink(type="message")
-#   close(zz)
-#   
-#   ## Display the log file
-#   error_message <- readLines("all.Rout")
-#    
-#   if (length(error_message)>0) {
-#     showNotification(paste0(error_message, collapse="\n"), type="error")
-#   }else {
-#     if("data" %in% names(output)) {values$data = output$data}
-#     if("figure" %in% names(output))   {values$figure = output$figure}
-#     if("table" %in% names(output)) {values$table = output$table}
-#     
-#     showNotification("run script sucessfully", type="message")   # "default, "message", "warning", "error"
-#   }
-# 
-# }
+   
  })
 
    
@@ -317,23 +280,20 @@ observeEvent(input$run_script, {
 observeEvent({input$save_all_table}, {
   validate(need(length(values$table), message="no table found") )
   
-    #lapply(1:length(values$table), function(i) ALL$TABLE[[names(values$table)[i]]] = values$table[[i]])
-  
-    ALL$TABLE = (c(ALL$TABLE, values$table))
-    showNotification("all tables saved", type="message") 
+  #lapply(1:length(values$table), function(i) ALL$TABLE[[names(values$table)[i]]] = values$table[[i]])
+  ALL$TABLE = (c(ALL$TABLE, values$table))
+  showNotification("all tables saved", type="message") 
  
 })
 
 
 observeEvent({input$save_all_data}, {
-  validate(need(length(values$data), message="no data found") )
-  #ALL$DATA[[data_name]]  = load_external_data()
-  isolate({ 
+  validate(need(length(values$data), message="no data found") ) 
+ 
   #lapply(1:length(values$data), function(i) ALL$DATA[[names(values$data)[i]]] = values$data[[i]])
-    ALL$DATA = (c(ALL$DATA, values$data))
-    
-    showNotification("all data saved", type="message") 
-  })
+  ALL$DATA = (c(ALL$DATA, values$data))
+  showNotification("all data saved", type="message") 
+ 
 })
 
 

@@ -10,12 +10,149 @@ When you click the **Knit** button a document will be generated that includes bo
 
  
 
-## Review Table
+## Review ALL
 
-You can also embed plots, for example:
+Review dataset, Figure, Table, cppModel, ctlModel, Script
 
+```{r }
+
+renderUI({ 
+  
+  
+figure = NULL
+tdata = data.frame(xvar=1:10, yvar=1:10)
+figLn <- ggplot(tdata, aes(x=xvar, y=yvar)) + geom_point() + geom_line()
+figLog <- figLn + scale_y_log10()
+
+fig <- figLn
+attr(fig, 'title') <- paste0(
+  "Mean(±SE) ", " in Serum vs Nominal Sampling Day Following Subcutaneous or Intravenous Dose(s) of ", ")")
+
+attr(fig, 'width') <- 9
+attr(fig, 'height') <- 6                                
+figure[["pk_mean_profile_ln"]] = fig 
+figure[["pk_mean_profile_ln"]]$data =  tdata
+
+
+fig <- figLog
+attr(fig, 'title') <- paste0(
+  "Semi-Log Mean(±SE) ", " in Serum vs Nominal Sampling Day Following Subcutaneous or Intravenous Dose(s) of ", ")")
+
+attr(fig, 'width') <- 9
+attr(fig, 'height') <- 6                                
+figure[["pk_mean_profile_log"]] = fig 
+figure[["pk_mean_profile_log"]]$data =  tdata
+
+
+ALL$FIGURE = figure
+
+
+tabl = data.frame(x=1, y=1)
+attr(tabl, 'title') <-  "tst1"
+ALL$TABLE[["TSET1"]] = tabl
+
+tabl = data.frame(x=10, y=10)
+attr(tabl, 'title') <-  "tst2"
+ALL$TABLE[["TSET2"]] = tabl
+
+tabl = data.frame(x=1, y=1)
+attr(tabl, 'title') <-  "tst1"
+ALL$DATA[["TSET1"]] = tabl
+
+tabl = data.frame(x=10, y=10)
+attr(tabl, 'title') <-  "tst2"
+ALL$DATA[["TSET2"]] = tabl
+
+isolate({ 
+
+ALL$cppModel= list()
+
+cppModel=mread(model='cppModel',
+              project=paste0(HOME, '/cpp/'),
+              quiet=TRUE,
+              file=basename("LN001.cpp"))
+
+ALL$cppModel[["LN0011.cpp"]] = cppModel
+
+# print("01")
+# print(see(cppModel))
+# print(see(ALL$cppModel[["LN0011.cpp"]]))
+
+cppModel=mread(model='cppModel',
+             project=paste0(HOME, '/cpp/'),
+             quiet=TRUE,
+             file=basename("LN001.cpp"))
+
+ALL$cppModel[["LN0022.cpp"]] = cppModel
+# print("02")
+# print(see(cppModel))
+# print(see(ALL$cppModel[["LN0022.cpp"]]))
+
+})
+
+  callModule(dataReview, "mydataReview", ALL)
+  
+  callModule(figReview, "myfigureReview",  ALL)
+  
+  callModule(tablReview, "mytableReview",  ALL)
+  
+  callModule(cppModelReview, "mycppModelReview", ALL)
+  
+  callModule(ctlModelReview, "myctlModelReview", ALL)  
+  
+  callModule(checkOut, "mycheckOut", ALL)  
+
+
+  
+tabBox(width=12, id = ("review_all"), title =NULL, 
+  
+  tabPanel(title="Data",  icon = icon("database", lib = "font-awesome"),
+          dataReviewUI(id="mydataReview", label="")
+  ), 
+  
+  tabPanel(title="Figure",  icon = icon("bar-chart-o", lib = "font-awesome"),
+           figReviewUI(id="myfigureReview", label="")
+  ), 
+   
+ tabPanel(title="Table", icon = icon("table", lib = "font-awesome"),
+          tablReviewUI(id="mytableReview", label="")
+ ),
+   
+  tabPanel(title="cppModel", icon = icon("motorcycle", lib = "font-awesome"),
+           cppModelReviewUI(id="mycppModelReview", label="")
+  ),
+
+  tabPanel(title="ctlModel", icon = icon("motorcycle", lib = "font-awesome"),
+          ctlModelReviewUI(id="myctlModelReview", label="")
+  ),
+
+   tabPanel(title="Checkout", 
+           checkOutUI(id="mycheckOut", label="") 
+   )
+)  
+   
+
+})
+
+   
+
+```
  
 
+
+
+```{r, eval=FALSE}
+   navbarMenu(title="Global option",  #"", 
+              #tabsetPanel(type = "tabs",   
+              tabPanel(title="ColorSetting"#,  #icon = icon("database", lib = "font-awesome"),
+                       #scriptTabUI(id="myscriptTab", label="")  
+              ), 
+              tabPanel(title="themeSetting"  #icon = icon("database", lib = "font-awesome"),
+                       #scriptTabUI(id="myscriptTab", label="")  
+              ) 
+   )
+
+```
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
 
 
@@ -29,3 +166,41 @@ You can also embed plots, for example:
 You can also embed plots, for example:
 
  
+```{r, eval=FALSE }
+
+             navbarMenu(title="Review",  #"", 
+                        #tabsetPanel(type = "tabs",   
+                        tabPanel(title="Dataset",  icon = icon("database", lib = "font-awesome"),
+                                 datasetReviewUI(id="mydatasetReview", label="")
+                        ), 
+                        
+                        tabPanel(title="Figure",  icon = icon("bar-chart-o", lib = "font-awesome"),
+                                 figReviewUI(id="myfigReview", label="")
+                        ), 
+                        
+                        tabPanel(title="Table", icon = icon("table", lib = "font-awesome"),
+                                 tabReviewUI(id="mytabReview", label="")
+                        ), 
+                        
+                        tabPanel(title="Model", icon = icon("motorcycle", lib = "font-awesome"),
+                                 modelReviewUI(id="mymodelReview", label="")
+                        )
+                        # )
+             ), 
+             
+             tabPanel(title="Checkout", 
+                      checkOutUI(id="mycheckOut", label="") 
+             ), 
+             
+             navbarMenu(title="Global option",  #"", 
+                        #tabsetPanel(type = "tabs",   
+                        tabPanel(title="ColorSetting"#,  #icon = icon("database", lib = "font-awesome"),
+                                 #scriptTabUI(id="myscriptTab", label="")  
+                        ), 
+                        tabPanel(title="themeSetting"  #icon = icon("database", lib = "font-awesome"),
+                                 #scriptTabUI(id="myscriptTab", label="")  
+                        ) 
+             ),
+             
+
+```

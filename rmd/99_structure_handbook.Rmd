@@ -69,13 +69,14 @@ to do list:
 Under run_sim.Rmd, 
 
 1. callModule(module_runsim) for   
-    + module_runsim::module_load_cppModel
+    + module_runsim::module_load_dataset::module_save_data;
+    + module_runsim::module_load_cppModel;
     + module_runsim::module_runsim_adsl;
     + module_runsim::module_runsim_adex; 
     + module_runsim::module_runsim_setting; [not used anymore]
-    + module_runsim::module_runsim_output; 
+    + module_runsim::module_runsim_output:module_run_script 
     
-2. callModule(module_load_dataset) then callModule(module_run_script) for   
+2. callModule(module_load_dataset) then  
     + module_run_script::summarise_exposure;
     + module_run_script::pct_threshold; 
     + module_run_script::plot_VPC; 
@@ -86,5 +87,4 @@ Under run_sim.Rmd,
 
  to do list: 
     + auto-translate nonmem model to mrgsolve cpp model
-    + validate cpp model in both modes: with or without variability
     

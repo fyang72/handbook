@@ -75,19 +75,19 @@ output$load_internal_cppModel_container <- renderUI({
   validate(need(globalVars$login$status, message=FALSE), 
            need(input$cppModel_source=="internal library", message=FALSE)) 
   
-  dirs_list=list.files(path = paste0(HOME, "/model/cpp"), 
+  dirs_lst=list.files(path = paste0(HOME, "/cpp"), 
                        full.names = FALSE, 
                        recursive = FALSE, 
                        pattern=".cpp", 
                        include.dirs=FALSE)  
-  dirs_list = c("", dirs_list) 
+  dirs_lst = c("", dirs_lst) 
   
   selectizeInput(ns("which_internal_cppModel"), 
                  label    = "load internal cppModel", 
-                 choices  = dirs_list, 
+                 choices  = dirs_lst, 
                  multiple = FALSE,
                  width = "100%", 
-                 selected = dirs_list[1]
+                 selected = dirs_lst[1]
   ) 
 })
 
@@ -102,14 +102,14 @@ output$load_session_cppModel_container <- renderUI({
    
   name_lst <- names(ALL$cppModel) 
   only_for_internal_use <- name_lst[which(substr(name_lst, 1, 6)=="mYtEsT")]
-  dirs_list = c("", setdiff(name_lst, only_for_internal_use))
+  dirs_lst = c("", setdiff(name_lst, only_for_internal_use))
   
   selectizeInput(ns("which_session_cppModel"), 
                  label    = "load session cppModel", 
-                 choices  = dirs_list, 
+                 choices  = dirs_lst, 
                  multiple = FALSE,
                  width = "100%", 
-                 selected = dirs_list[1]) 
+                 selected = dirs_lst[1]) 
 })
 
 
@@ -122,40 +122,41 @@ output$update_cppModel_container <- renderUI({
   ) 
   
   tagList(
-  fluidRow(
-    column(width=12, 
-           HTML(colFmt("You may modify the loaded model and then re-assign a name for it.", 
-                       color="gray")))
-  ), 
-  
-  fluidRow(
-    column(width=4,   #status = "primary",  #class = 'rightAlign', #background ="aqua",
-           textInput(ns("model_name"), 
-                     value=NULL, 
-                     placeholder ="cppModel-name", 
-                     label=NULL, 
-                     width="100%")
-    ),
     
-    column(2, 
-           actionButton(ns("save_model"), 
-                        label="Save model", 
-                        style=actionButton_style )
+    fluidRow(
+      column(width=12, 
+             HTML(colFmt("You may modify the loaded model and then re-assign a name for it.", 
+                         color="gray")))
+    ), 
+    
+    fluidRow(
+      column(width=4,   #status = "primary",  #class = 'rightAlign', #background ="aqua",
+             textInput(ns("model_name"), 
+                       value=NULL, 
+                       placeholder ="cppModel-name", 
+                       label=NULL, 
+                       width="100%")
+      ),
+      
+      column(2, 
+             actionButton(ns("save_model"), 
+                          label="Save model", 
+                          style=actionButton_style )
+      )
+    ), 
+    
+    fluidRow(
+      column(12,
+             aceEditor(ns("cppModel_content"), 
+                       mode="c_cpp", 
+                       value=paste0(values$cppModel_content, collapse="\n"), 
+                       theme = "crimson_editor",   # chrome
+                       autoComplete = "enabled",
+                       height = "1000px", 
+                       fontSize = 15 
+             )
+      )
     )
-  ), 
-  
-  fluidRow(
-    column(12,
-           aceEditor(ns("cppModel_content"), 
-                     mode="c_cpp", 
-                     value=paste0(values$cppModel_content, collapse="\n"), 
-                     theme = "crimson_editor",   # chrome
-                     autoComplete = "enabled",
-                     height = "1000px", 
-                     fontSize = 15 
-           )
-    )
-  )
   
   ) # tagList
 })
@@ -165,13 +166,15 @@ output$update_cppModel_container <- renderUI({
 #---------------------------------------------------  
 # observeEvent of input$which_internal_cppModel 
 #---------------------------------------------------  
-observeEvent({input$which_internal_cppModel}, {
+#observeEvent({input$which_internal_cppModel}, {
+load_internal_cppModel <- reactive({
+    
   validate(need(input$cppModel_source=="internal library", message=FALSE), 
            need(input$which_internal_cppModel, message=FALSE)
   ) 
   
   # readLines cppModel
-  cppModel_file <- paste0(HOME, '/model/cpp/', input$which_internal_cppModel)
+  cppModel_file <- paste0(HOME, '/cpp/', input$which_internal_cppModel)
   values$cppModel_content <- readLines(cppModel_file)
     
   # create a progress object
@@ -180,27 +183,30 @@ observeEvent({input$which_internal_cppModel}, {
   progress$set(message = "mread cppModel...please Wait", value = 0)
   
   # mread cppModel
-  environment(try_eval) <- environment()
-  text="cppModel=mread(model='cppModel', project=paste0(HOME, '/model/cpp/'), quiet=TRUE, file=input$which_internal_cppModel)"
+  environment(try_eval) <- environment()              # basename
+  text="cppModel=mread(model='cppModel', project=paste0(HOME, '/cpp/'), quiet=TRUE, file=basename(input$which_internal_cppModel))"
   env = try_eval(text)
   
   if ("cppModel" %in% ls(env)) {
-    values$cppModel = get("cppModel", env)
+    cppModel = get("cppModel", env)
     # "default, "message", "warning", "error" 
-    showNotification("Building cppModel ... done.", type="message")  # "default, "message", "warning", "error"  
+    showNotification("mread cppModel...done.", type="message")  # "default, "message", "warning", "error"  
   }else{
-    values$cppModel = NULL
+    cppModel = NULL
     error_message = get("message", env)
     # "default, "message", "warning", "error" 
     showNotification(paste0(error_message, collapse="\n"), type="error")
   }
   
+  cppModel
 })
 
 #---------------------------------------------------  
 # observeEvent of input$which_external_cppModel 
 #---------------------------------------------------  
-observeEvent({input$which_external_cppModel}, {
+#observeEvent({input$which_external_cppModel}, {
+load_external_cppModel <- reactive({
+  
   validate(need(input$cppModel_source=="external file", message=FALSE) )
   
   inFile = input$which_external_cppModel
@@ -227,22 +233,24 @@ observeEvent({input$which_external_cppModel}, {
   env = try_eval(text)
   
   if ("cppModel" %in% ls(env)) {
-    values$cppModel = get("cppModel", env)
+    cppModel = get("cppModel", env)
     # "default, "message", "warning", "error" 
-    showNotification("Building cppModel ... done.", type="message")  # "default, "message", "warning", "error"  
+    showNotification("mread cppModel...done.", type="message")  # "default, "message", "warning", "error"  
   }else{
-    values$cppModel = NULL
+    cppModel = NULL
     error_message = get("message", env)
     # "default, "message", "warning", "error" 
     showNotification(paste0(error_message, collapse="\n"), type="error")
   }
    
+  cppModel
 })
 
 #---------------------------------------------------  
 # observeEvent of input$which_session_cppModel 
 #---------------------------------------------------  
-observeEvent({input$which_session_cppModel}, {
+#observeEvent({input$which_session_cppModel}, {
+load_session_cppModel <- reactive({
   validate(need(input$cppModel_source=="within session", message=FALSE), 
            need(input$which_session_cppModel, message=FALSE) 
   )
@@ -250,12 +258,13 @@ observeEvent({input$which_session_cppModel}, {
   cppModel = ALL$cppModel[[input$which_session_cppModel]]
   validate(need(cppModel, message=FALSE))
             
-  values$cppModel_content = see(cppModel,raw=TRUE)   
-  values$cppModel = cppModel
+  values$cppModel_content = see(cppModel, raw=TRUE)  
+  
+  cppModel  
 })
 
 #---------------------------------------------------  
-# observeEvent of input$YesNoIIV 
+# observeEvent of input$YesNoIIV, not used
 #--------------------------------------------------- 
 observeEvent(input$YesNoIIV, {
   cppModel = values$cppModel
@@ -275,17 +284,38 @@ observeEvent(input$YesNoIIV, {
     showNotification(message, type="message")  
   }
 })
+ 
 
-
-#-----------------------------
-# event for values$cppModel
-#-----------------------------
+#--------------------------------------  
+# observeEvent  
+#-------------------------------------- 
+# https://groups.google.com/forum/#!topic/shiny-discuss/vd_nB-BH8sw
+ 
+# event for values$cppModel 
 # default, save the loaded cppModel to 
 # ALL$cppModel[[cppModel_name]]
-observeEvent({values$cppModel}, {
-  validate(need(values$cppModel, message=FALSE))
-  
-  ALL$cppModel[[cppModel_name]] = values$cppModel
+# observeEvent({values$cppModel}, {
+#   validate(need(values$cppModel, message=FALSE))
+#   
+#   ALL$cppModel[[cppModel_name]] = values$cppModel
+# })
+
+
+observeEvent({input$which_internal_cppModel}, {
+  validate(need(input$cppModel_source=="internal library", message=FALSE) )
+  ALL$cppModel[[cppModel_name]]  = load_internal_cppModel()
+})
+
+
+observeEvent({input$which_external_cppModel}, {
+  validate(need(input$cppModel_source=="external file", message=FALSE) )
+  ALL$cppModel[[cppModel_name]]  = load_external_cppModel()
+})
+
+
+observeEvent({input$which_session_cppModel}, {
+  validate(need(input$cppModel_source=="within session", message=FALSE) )
+  ALL$cppModel[[cppModel_name]]  = load_session_cppModel()
 })
 
 #-----------------------
@@ -307,7 +337,7 @@ observeEvent({input$save_model}, {
     showNotification(message, type="warning")    
   }
   
-  validate(need(input$cppModel_content, message="Empty cppModel..."), 
+  validate(need(input$cppModel_content, message="No cppModel loaded..."), 
            need(input$model_name, message="Please specify model name")
   ) 
   
@@ -326,7 +356,7 @@ observeEvent({input$save_model}, {
     values$cppModel = cppModel
     ALL$cppModel[[input$model_name]] = cppModel  # visible
     # "default, "message", "warning", "error"  
-    showNotification("Building cppModel ... done.", type="message")  
+    showNotification("mread cppModel...done.", type="message")  
   }else{
     values$cppModel = NULL
     error_message = get("message", env)

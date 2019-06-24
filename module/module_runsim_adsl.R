@@ -41,7 +41,11 @@ output$adsl_source_selector <- renderUI({
     column(12,  
            radioButtons(ns("adsl_source"), 
                         label="Construct adsl from:", 
-                        choices=c("manual input", "script", "internal library", "within session","external file"), 
+                        choices=c("manual input", 
+                                  "script", 
+                                  "internal library", 
+                                  "within session",
+                                  "external file"), 
                         inline=TRUE, 
                         width="100%",
                         selected="manual input")
@@ -81,13 +85,12 @@ output$load_script_adsl_container <- renderUI({
   validate(need(globalVars$login$status, message=FALSE), 
            need(input$adsl_source=="script", message=FALSE)) 
       
-script =   
-"    
+script = "
 #---------------------------------
 # Key variables:  USUBJID, WGTBL
 #---------------------------------
 #Example-1
-adsl = data.frame(USUBJID=1:3, WGTBL=seq(60, 80, by=10))
+#adsl = data.frame(USUBJID=1:3, WGTBL=seq(60, 80, by=10))
 
 #Example-2
 library(dmutate)
@@ -102,7 +105,7 @@ adsl <-
 
  # '1'=70%, '0'=30%
  mutate_random(SEX ~ rbinomial(0.7))
- "
+"
 script <- readLines(textConnection(script)) 
 script <- paste0(script, collapse="\n")
     
@@ -130,19 +133,19 @@ output$load_internal_adsl_container <- renderUI({
   validate(need(globalVars$login$status, message=FALSE), 
            need(input$adsl_source=="internal library", message=FALSE)) 
   
-  dirs_list=list.files(path = paste0(HOME, "/data/"), 
+  dirs_lst=list.files(path = paste0(HOME, "/data/"), 
                        full.names = FALSE, 
                        recursive = FALSE, 
                        #pattern=".cpp", 
                        include.dirs=FALSE)  
-  dirs_list = c("", dirs_list) 
+  dirs_lst = c("", dirs_lst) 
   
   selectizeInput(ns("which_internal_adsl"), 
                  label    = "load internal adsl", 
-                 choices  = dirs_list, 
+                 choices  = dirs_lst, 
                  multiple = FALSE,
                  width = "100%", 
-                 selected = dirs_list[1]
+                 selected = dirs_lst[1]
   ) 
 })
 
@@ -157,14 +160,14 @@ output$load_session_adsl_container <- renderUI({
   
   name_lst <- names(ALL$DATA)
   only_for_internal_use <- name_lst[which(substr(name_lst, 1, 6)=="mYtEsT")]
-  dirs_list = c("", setdiff(name_lst, only_for_internal_use))
+  dirs_lst = c("", setdiff(name_lst, only_for_internal_use))
   
   selectizeInput(ns("which_session_adsl"), 
                 label    = "load session adsl", 
-                choices  = dirs_list, 
+                choices  = dirs_lst, 
                 multiple = FALSE,
                 width="100%", 
-                selected = dirs_list[1]) 
+                selected = dirs_lst[1]) 
  
 }) 
 
@@ -200,15 +203,6 @@ output$adsl_table_container <- renderUI({
            need(adsl(), message=FALSE)
   )
  
-  # output$my_adsl_table <- DT::renderDataTable(                                                                                                                                          
-  #   DT::datatable(data = adsl(),                                                                                                                                                     
-  #                 options = list(pageLength = 10, 
-  #                                lengthChange = FALSE, 
-  #                                width="100%", 
-  #                                scrollX = TRUE)                                                                   
-  #   ))
-  # DT::dataTableOutput(ns("my_adsl_table"))
-  
   ALL = callModule(module_save_data, "adsl_table", 
                    ALL,
                    data = adsl(),   
@@ -232,10 +226,9 @@ load_manual_adsl <- reactive({
   ) 
       
   # mread cppModel
-  environment(try_eval) <- environment()
+  #environment(try_eval) <- environment()
   text=paste0("pop_WT=c(", input$pop_WT, ")")
   env = try_eval(text)
-  
   
   if ("pop_WT" %in% ls(env)) {
     pop_WT = get("pop_WT", env)
@@ -258,6 +251,7 @@ load_manual_adsl <- reactive({
   adsl 
 
 })
+
 #--------------------------------------  
 # reactive of load_script_adsl
 #-------------------------------------- 
@@ -309,24 +303,14 @@ load_internal_adsl <- reactive({
            need(input$which_internal_adsl, message=FALSE))
   
   inFile = paste0(HOME, "/data/", input$which_internal_adsl)
-  ext <- tools::file_ext(inFile) 
-  
-  tdata = switch(ext,
-                 "csv" = read_csv(inFile, col_names=TRUE,  
-                                  col_type=cols(.default=col_character()))  %>% as.data.frame(),
-                 "xlsx"=read_excel(inFile, sheet = 1, col_names = TRUE)  %>% as.data.frame(),
-                 "xls" = read_excel(inFile)  %>% as.data.frame(),
-                 "sas7bdat" =  read_sas(inFile)  %>% as.data.frame(), 
-                 "RData" =  load(inFile),   # MUST NAMED AS "adpx"   need some work 
-                 NULL
-  )
+  adsl = read_datafile(inFile)
   message.info = "read data not sucessful. Only .csv, .xlsx, .xls, .sas7bdat, .RData can be read"
-  if (is.null(tdata)) {print(message.info)}
-  validate(need(tdata, message.info)) 
+  if (is.null(adsl)) {print(message.info)}
+  validate(need(adsl, message.info)) 
   
-  attr(tdata, 'file_name') <- inFile  # with directory
-  attr(tdata, 'locaton_source') <- "internal"
-  tdata
+  attr(adsl, 'file_name') <- inFile  # with directory
+  attr(adsl, 'locaton_source') <- "internal"
+  adsl
   
 })
 
@@ -339,23 +323,12 @@ load_external_adsl <- reactive({
            need(input$which_external_adsl, message = FALSE))
   
   inFile = input$which_external_adsl
-  
+  adsl = read_datafile(inFile$datapath)
   # print(inFile)
   # name            size type  datapath
   # 1 cpp.model.cpp 6369      /tmp/RtmprQR1xU/1eb54214311d1970e61c917f/0.cpp
   # 
-  ext <- tools::file_ext(inFile$name) 
-  adsl = switch(ext,
-                 "csv" = read_csv(inFile$datapath, col_names=TRUE,  
-                                  col_type=cols(.default=col_character())),
-                 "xlsx"=read_excel(inFile$datapath, sheet = 1, col_names = TRUE),
-                 "xls" = read_excel(inFile$datapath, sheet = 1, col_names = TRUE),
-                 "sas7bdat" =  read_sas(inFile$datapath), 
-                 "RData" =  load(inFile$datapath), 
-                 NULL
-  )
-  
-  
+
   error_message = "read data not sucessful. Only .csv, .xlsx, .xls, .sas7bdat, .RData can be read"
   if (is.null(adsl)) {
     showNotification(paste0(error_message, collapse="\n"), type="error")
