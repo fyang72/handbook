@@ -16,7 +16,20 @@ linkedScatter <- function(input, output, session, data, left, right) {
   # Yields the data frame with an additional column "selected_"
   # that indicates whether that observation is brushed
   dataWithSelection <- reactive({
+    
+    print("sfsf")
+    #print(head(data()))
+    print(input$brush)
+    
+    #validate(need(input$brush, message=FALSE))
+    
+    if (!is.null(input$brush)) { 
+      
+      print(head( brushedPoints(data(), input$brush, allRows = TRUE)))
+      }
+    
     brushedPoints(data(), input$brush, allRows = TRUE)
+    
   })
   
   output$plot1 <- renderPlot({
@@ -52,7 +65,7 @@ server <- function(input, output, session) {
   )
   
   output$summary <- renderText({
-    sprintf("%d observation(s) selected", nrow(dplyr::filter(df(), selected_)))
+    #sprintf("%d observation(s) selected", nrow(dplyr::filter(df(), selected_)))
   })
 }
 
