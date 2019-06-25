@@ -24,112 +24,76 @@ linkedScatter <- function(input, output, session, data, left, right) {
     tdata = brushedPoints(data(), input$brush, allRows = TRUE)%>% 
       mutate(HIGHLIGHT_ID=FALSE, 
              HIGHLIGHT_ID_NTIM = FALSE
+      ) 
+    
+    if(!is.null(input$brush)) {
+      tdata = switch(
+        input$brush$outputId,
+        "scatters-plot1" = dataWithSelection_from_which_panel(tdata, which_var=left()),
+        "scatters-plot2"= dataWithSelection_from_which_panel(tdata, which_var=right()),
+        NULL
       )
+    }
+      
     tdata
   })
   
   # data frame with an additional columns "HIGHLIGHT_ID" and "HIGHLIGHT_ID_NTIM
   # that indicates whether that observation is brushed, USUBJID/NTIM highlighed
-  
-  # user brush the left panel
-  dataWithSelection_from_left <- reactive({
-    tdata = dataWithSelection()
-    dataWithSelection_from_which_panel(dataWithSelection(), which_var=left()) 
-    
-     subj_lst = tdata %>% filter(selected_, TESTCD==left()) %>%
-       pull(USUBJID) %>% unique()
-    
-    USUBJID_NTIM_lst = tdata %>% filter(selected_, TESTCD==left()) %>% 
-      mutate(USUBJID_NTIM = paste0(USUBJID, "-", NTIM))    %>% 
-      pull(USUBJID_NTIM) %>% unique()
-    
-    tdata = tdata %>% 
-      mutate(USUBJID_NTIM = paste0(USUBJID, "-", NTIM))    %>% 
-      mutate(
-         HIGHLIGHT_ID = ifelse(USUBJID %in% subj_lst, TRUE, FALSE), 
-         HIGHLIGHT_ID_NTIM = ifelse(USUBJID_NTIM %in% USUBJID_NTIM_lst, TRUE, FALSE)
-      )
-      
-    
-    tdata
-  })
-  
-  # user brush the right panel
-  dataWithSelection_from_right <- reactive({
-    tdata = dataWithSelection()
-    
-     subj_lst = tdata %>% filter(selected_, TESTCD==right()) %>%
-       pull(USUBJID) %>% unique()
-    
-    USUBJID_NTIM_lst = tdata %>% filter(selected_, TESTCD==right()) %>% 
-      mutate(USUBJID_NTIM = paste0(USUBJID, "-", NTIM))    %>% 
-      pull(USUBJID_NTIM) %>% unique()
-    
-    tdata = tdata %>% 
-      mutate(USUBJID_NTIM = paste0(USUBJID, "-", NTIM))    %>% 
-      mutate(
-        HIGHLIGHT_ID = ifelse(USUBJID %in% subj_lst, TRUE, FALSE), 
-        HIGHLIGHT_ID_NTIM = ifelse(USUBJID_NTIM %in% USUBJID_NTIM_lst, TRUE, FALSE)
-      )
-    tdata
-  })
+   
   
   output$plot1 <- renderPlot({
     # default
-    tdata = dataWithSelection()  %>% filter(TESTCD==left())
+    tdata = dataWithSelection() 
     
-    # if burshed from left
-    if(!is.null(input$brush)) {
-        tdata = switch(
-          input$brush$outputId,
-             "scatters-plot1" = dataWithSelection_from_which_panel(dataWithSelection(), which_var=left()),
-             "scatters-plot2"= dataWithSelection_from_which_panel(dataWithSelection(), which_var=right()),
-             NULL
-        )
-    }  
+    # # if burshed from left
+    # if(!is.null(input$brush)) {
+    #     tdata = switch(
+    #       input$brush$outputId,
+    #          "scatters-plot1" = dataWithSelection_from_which_panel(dataWithSelection(), which_var=left()),
+    #          "scatters-plot2"= dataWithSelection_from_which_panel(dataWithSelection(), which_var=right()),
+    #          NULL
+    #     )
+    # }  
     
     scatterPlot(tdata %>% filter(TESTCD==left()), cols=c("NTIM", "DVOR")) + scale_y_log10()
   })
   
+  # output$plot2 <- renderPlot({
+  #   # default
+  #   tdata = dataWithSelection()  %>% filter(TESTCD==right())
+  #   
+  #   # if burshed from left
+  #   if(!is.null(input$brush) &&  input$brush$outputId == "scatters-plot1") {
+  #     tdata = dataWithSelection_from_left()  %>% filter(TESTCD==right())
+  #   }
+  #   
+  #   # if burshed from right
+  #   if(!is.null(input$brush) &&  input$brush$outputId == "scatters-plot2") {
+  #     tdata = dataWithSelection_from_right()  %>% filter(TESTCD==right())
+  #   }
+  #   
+  #   scatterPlot(tdata%>% filter(TESTCD==right()), cols=c("NTIM", "DVOR"))
+  # })
+  # 
   output$plot2 <- renderPlot({
     # default
-    tdata = dataWithSelection()  %>% filter(TESTCD==right())
-    
-    # if burshed from left
-    if(!is.null(input$brush) &&  input$brush$outputId == "scatters-plot1") {
-      tdata = dataWithSelection_from_left()  %>% filter(TESTCD==right())
-    }
-    
-    # if burshed from right
-    if(!is.null(input$brush) &&  input$brush$outputId == "scatters-plot2") {
-      tdata = dataWithSelection_from_right()  %>% filter(TESTCD==right())
-    }
-    
-    scatterPlot(tdata%>% filter(TESTCD==right()), cols=c("NTIM", "DVOR"))
-  })
-  
-  output$plot2 <- renderPlot({
-    # default
-    tdata = dataWithSelection()  %>% filter(TESTCD==right())
-    
-    # if burshed from left
-    if(!is.null(input$brush)) {
-      tdata = switch(
-        input$brush$outputId,
-        "scatters-plot1" = dataWithSelection_from_which_panel(dataWithSelection(), which_var=left()),
-        "scatters-plot2"= dataWithSelection_from_which_panel(dataWithSelection(), which_var=right()),
-        NULL
-      )
-    }  
+    tdata = dataWithSelection() 
+    # 
+    # # if burshed from left
+    # if(!is.null(input$brush)) {
+    #   tdata = switch(
+    #     input$brush$outputId,
+    #     "scatters-plot1" = dataWithSelection_from_which_panel(dataWithSelection(), which_var=left()),
+    #     "scatters-plot2"= dataWithSelection_from_which_panel(dataWithSelection(), which_var=right()),
+    #     NULL
+    #   )
+    # }  
     
     scatterPlot(tdata %>% filter(TESTCD==right()), cols=c("NTIM", "DVOR")) + scale_y_log10()
   })
   
-  return(list(dataWithSelection_from_left, 
-              dataWithSelection_from_right, 
-              reactive(input$brush)
-              )
-         )
+  return(dataWithSelection)
 }
 
 
@@ -231,17 +195,20 @@ server <- function(input, output, session) {
     #sprintf("%d observation(s) selected", nrow(dplyr::filter(df(), selected_)))
     #renderTable(dplyr::filter(df(), selected_), na = "")
     
-    brush = df[[3]]()
-    
-    dff = df[[1]]
-    if(!is.null(brush) && brush$outputId == "scatters-plot2") {
-      dff = df[[2]]
-    } #else if (brush$outputId == "scatters-plot2") {
-      #dff = df[[2]]
-    #}
+    # brush = df[[3]]()
+    # 
+    # dff = df[[1]]
+    # if(!is.null(brush) && brush$outputId == "scatters-plot2") {
+    #   dff = df[[2]]
+    # } #else if (brush$outputId == "scatters-plot2") {
+    #   #dff = df[[2]]
+    # #}
     
     output$table_output1 <- renderTable(
-      dplyr::filter(dff(), HIGHLIGHT_ID_NTIM, HIGHLIGHT_ID, TESTCD== "total dupilumab")%>% 
+      dplyr::filter(df(), 
+                    HIGHLIGHT_ID_NTIM, 
+                    HIGHLIGHT_ID, 
+                    TESTCD== "total dupilumab")%>% 
       select(-selected_, -HIGHLIGHT_ID, -HIGHLIGHT_ID_NTIM), 
                                         na = "")
     tableOutput(('table_output1'))
@@ -251,19 +218,22 @@ server <- function(input, output, session) {
   output$summary2 <- renderUI({
     #sprintf("%d observation(s) selected", nrow(dplyr::filter(df(), selected_)))
     #renderTable(dplyr::filter(df(), selected_), na = "")
-    brush = df[[3]]()
-    
-    dff = df[[1]]
-    if(!is.null(brush) && brush$outputId == "scatters-plot2") {
-      dff = df[[2]]
-    } #else if (brush$outputId == "scatters-plot1") {
-    
-    #}
+    # brush = df[[3]]()
+    # 
+    # dff = df[[1]]
+    # if(!is.null(brush) && brush$outputId == "scatters-plot2") {
+    #   dff = df[[2]]
+    # } #else if (brush$outputId == "scatters-plot1") {
+    # 
+    # #}
   
     output$table_output2 <- renderTable(
-      dplyr::filter(dff(), HIGHLIGHT_ID_NTIM, HIGHLIGHT_ID, TESTCD== "EASI")%>% 
-                                        select(-selected_, -HIGHLIGHT_ID, -HIGHLIGHT_ID_NTIM), 
-                                        na = "")
+      dplyr::filter(df(), 
+                    HIGHLIGHT_ID_NTIM, 
+                    HIGHLIGHT_ID, TESTCD== "EASI")%>% 
+        select(-selected_, -HIGHLIGHT_ID, -HIGHLIGHT_ID_NTIM), 
+               na = "")
+    
     tableOutput(('table_output2'))
     
   })
