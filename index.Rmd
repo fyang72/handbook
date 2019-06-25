@@ -35,6 +35,7 @@ pdf_document:
 # http://www.pmxsolutions.com/2018/08/06/nonmem-model-fitting-as-a-gif-in-r-with-code/
 #https://www.pmxsolutions.com/2018/12/10/creating-a-simple-pharmacometric-shiny-application-with-mrgsolve-in-r-part-1/
 
+# Best practices for global/external variables used in a module 
 # https://community.rstudio.com/t/best-practices-for-global-external-variables-used-in-a-module/5820/11
 
 rm(list = ls())
