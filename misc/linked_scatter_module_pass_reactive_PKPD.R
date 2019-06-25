@@ -35,18 +35,31 @@ linkedScatter <- function(input, output, session, data, left, right) {
   dataWithSelection_from_left <- reactive({
     tdata = dataWithSelection()
     
-    subj_lst = tdata %>% filter(selected_, TESTCD==left()) %>%
-      pull(USUBJID) %>% unique()
+    # subj_lst = tdata %>% filter(selected_, TESTCD==left()) %>%
+    #   pull(USUBJID) %>% unique()
+    # 
+    # NTIM_lst = tdata %>% filter(selected_, TESTCD==left()) %>% 
+    #   pull(NTIM) %>% unique()
+    # 
     
-    NTIM_lst = tdata %>% filter(selected_, TESTCD==left()) %>% 
-      pull(NTIM) %>% unique()
+    USUBJID_NTIM_lst = tdata %>% filter(selected_, TESTCD==left()) %>% 
+      mutate(USUBJID_NTIM = paste0(USUBJID, "-", NTIM))    %>% 
+      pull(USUBJID_NTIM) %>% unique()
     
-    tdata = tdata %>% mutate(
-      HIGHLIGHT_ID = ifelse(USUBJID %in% subj_lst, TRUE, FALSE), 
-      HIGHLIGHT_ID_NTIM = ifelse( (USUBJID %in% subj_lst) & (NTIM %in% NTIM_lst), TRUE, FALSE)
-    )
+    tdata = tdata %>% 
+      mutate(USUBJID_NTIM = paste0(USUBJID, "-", NTIM))    %>% 
+      mutate(
+         HIGHLIGHT_ID = ifelse(USUBJID %in% subj_lst, TRUE, FALSE), 
+         HIGHLIGHT_ID_NTIM = ifelse(USUBJID_NTIM %in% USUBJID_NTIM_lst, TRUE, FALSE)
+      )
+      
+      
+      # mutate(
+      #   HIGHLIGHT_ID = ifelse(USUBJID %in% subj_lst, TRUE, FALSE), 
+      #   HIGHLIGHT_ID_NTIM = ifelse( (USUBJID %in% subj_lst) & (NTIM %in% NTIM_lst), TRUE, FALSE)
+      # )
     
-    print(tdata %>% filter(HIGHLIGHT_ID_NTIM))
+    #print(tdata %>% filter(HIGHLIGHT_ID_NTIM))
     
     tdata
   })
@@ -55,17 +68,28 @@ linkedScatter <- function(input, output, session, data, left, right) {
   dataWithSelection_from_right <- reactive({
     tdata = dataWithSelection()
     
-    subj_lst = tdata %>% filter(selected_, TESTCD==right()) %>%
-      pull(USUBJID) %>% unique()
+    # subj_lst = tdata %>% filter(selected_, TESTCD==right()) %>%
+    #   pull(USUBJID) %>% unique()
+    # 
+    # NTIM_lst = tdata %>% filter(selected_) %>% 
+    #   pull(NTIM) %>% unique()
+    # 
+    # tdata = tdata %>% mutate(
+    #   HIGHLIGHT_ID = ifelse(USUBJID %in% subj_lst, TRUE, FALSE), 
+    #   HIGHLIGHT_ID_NTIM = ifelse((USUBJID %in% subj_lst) & (NTIM %in% NTIM_lst), TRUE, FALSE)
+    # )
     
-    NTIM_lst = tdata %>% filter(selected_) %>% 
-      pull(NTIM) %>% unique()
     
-    tdata = tdata %>% mutate(
-      HIGHLIGHT_ID = ifelse(USUBJID %in% subj_lst, TRUE, FALSE), 
-      HIGHLIGHT_ID_NTIM = ifelse((USUBJID %in% subj_lst) & (NTIM %in% NTIM_lst), TRUE, FALSE)
-    )
+    USUBJID_NTIM_lst = tdata %>% filter(selected_, TESTCD==left()) %>% 
+      mutate(USUBJID_NTIM = paste0(USUBJID, "-", NTIM))    %>% 
+      pull(USUBJID_NTIM) %>% unique()
     
+    tdata = tdata %>% 
+      mutate(USUBJID_NTIM = paste0(USUBJID, "-", NTIM))    %>% 
+      mutate(
+        HIGHLIGHT_ID = ifelse(USUBJID %in% subj_lst, TRUE, FALSE), 
+        HIGHLIGHT_ID_NTIM = ifelse(USUBJID_NTIM %in% USUBJID_NTIM_lst, TRUE, FALSE)
+      )
     tdata
   })
   
