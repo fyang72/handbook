@@ -18,8 +18,11 @@ linkedScatterUI <- function(id) {
 }
 
 linkedScatter <- function(input, output, session, data, left, right) {
+  
   # data frame with an additional column "selected_"
   # that indicates whether that observation is brushed
+  # data frame with an additional columns "HIGHLIGHT_ID" and "HIGHLIGHT_ID_NTIM
+  # that indicates whether that observation is brushed, USUBJID/NTIM highlighed
   dataWithSelection <- reactive({
     tdata = brushedPoints(data(), input$brush, allRows = TRUE)%>% 
       mutate(HIGHLIGHT_ID=FALSE, 
@@ -29,8 +32,8 @@ linkedScatter <- function(input, output, session, data, left, right) {
     if(!is.null(input$brush)) {
       tdata = switch(
         input$brush$outputId,
-        "scatters-plot1" = dataWithSelection_from_which_panel(tdata, which_var=left()),
-        "scatters-plot2"= dataWithSelection_from_which_panel(tdata, which_var=right()),
+          "scatters-plot1" = dataWithSelection_from_which_panel(tdata, which_var=left()),
+          "scatters-plot2"= dataWithSelection_from_which_panel(tdata, which_var=right()),
         NULL
       )
     }
@@ -38,59 +41,18 @@ linkedScatter <- function(input, output, session, data, left, right) {
     tdata
   })
   
-  # data frame with an additional columns "HIGHLIGHT_ID" and "HIGHLIGHT_ID_NTIM
-  # that indicates whether that observation is brushed, USUBJID/NTIM highlighed
-   
-  
+
   output$plot1 <- renderPlot({
-    # default
-    tdata = dataWithSelection() 
-    
-    # # if burshed from left
-    # if(!is.null(input$brush)) {
-    #     tdata = switch(
-    #       input$brush$outputId,
-    #          "scatters-plot1" = dataWithSelection_from_which_panel(dataWithSelection(), which_var=left()),
-    #          "scatters-plot2"= dataWithSelection_from_which_panel(dataWithSelection(), which_var=right()),
-    #          NULL
-    #     )
-    # }  
-    
-    scatterPlot(tdata %>% filter(TESTCD==left()), cols=c("NTIM", "DVOR")) + scale_y_log10()
+    scatterPlot(dataWithSelection()  %>% 
+                  filter(TESTCD==left()), 
+                cols=c("NTIM", "DVOR")) + 
+      scale_y_log10()
   })
   
-  # output$plot2 <- renderPlot({
-  #   # default
-  #   tdata = dataWithSelection()  %>% filter(TESTCD==right())
-  #   
-  #   # if burshed from left
-  #   if(!is.null(input$brush) &&  input$brush$outputId == "scatters-plot1") {
-  #     tdata = dataWithSelection_from_left()  %>% filter(TESTCD==right())
-  #   }
-  #   
-  #   # if burshed from right
-  #   if(!is.null(input$brush) &&  input$brush$outputId == "scatters-plot2") {
-  #     tdata = dataWithSelection_from_right()  %>% filter(TESTCD==right())
-  #   }
-  #   
-  #   scatterPlot(tdata%>% filter(TESTCD==right()), cols=c("NTIM", "DVOR"))
-  # })
-  # 
-  output$plot2 <- renderPlot({
-    # default
-    tdata = dataWithSelection() 
-    # 
-    # # if burshed from left
-    # if(!is.null(input$brush)) {
-    #   tdata = switch(
-    #     input$brush$outputId,
-    #     "scatters-plot1" = dataWithSelection_from_which_panel(dataWithSelection(), which_var=left()),
-    #     "scatters-plot2"= dataWithSelection_from_which_panel(dataWithSelection(), which_var=right()),
-    #     NULL
-    #   )
-    # }  
-    
-    scatterPlot(tdata %>% filter(TESTCD==right()), cols=c("NTIM", "DVOR")) + scale_y_log10()
+  output$plot2 <- renderPlot({ 
+    scatterPlot(dataWithSelection()  %>% 
+                  filter(TESTCD==right()), 
+                cols=c("NTIM", "DVOR")) 
   })
   
   return(dataWithSelection)
