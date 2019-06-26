@@ -13,7 +13,7 @@ linkedScatterUI <- function(id) {
 
 
 linkedScatter <- function(input, output, session, 
-                          dataWithSelection, 
+                          dataset, 
                           xvar_name = "NTIM", 
                           yvar_name = "DVOR", 
                           test_name = "", 
@@ -27,7 +27,37 @@ linkedScatter <- function(input, output, session,
   
   ns <- session$ns
   
-  
+  dataWithSelection <- reactive({
+    
+    validate(need(dataset, message="no dataset found"))
+    
+    tdata = brushedPoints(dataset, input$brush, allRows = TRUE)%>% 
+      mutate(HIGHLIGHT_ID=FALSE, 
+             HIGHLIGHT_ID_NTIM = FALSE,
+             USUBJID_NTIM = ""
+      ) %>% 
+      mutate_(NTIM = xvar_name, 
+              DVOR = yvar_name
+      )
+    
+    if(!is.null(input$brush)) {
+      
+      print("input$brush output")
+      #print(input$brush)
+      
+      test_name_lst <- c("total dupilumab", "EASI", "NRS" , "IGA")
+      tdata = switch(
+        input$brush$outputId,
+        "scatters1-plot" = dataWithSelection_from_which_panel(tdata, which_var=test_name_lst[1]),
+        "scatters2-plot"= dataWithSelection_from_which_panel(tdata, which_var=test_name_lst[2]),
+        "scatters3-plot" = dataWithSelection_from_which_panel(tdata, which_var=test_name_lst[3]),
+        "scatters4-plot"= dataWithSelection_from_which_panel(tdata, which_var=test_name_lst[4]),
+        NULL
+      )
+    }
+    
+    tdata
+  })
   
   output$plot <- renderPlot({
     scatterPlot(dataWithSelection()  %>% 
@@ -51,7 +81,7 @@ linkedScatter <- function(input, output, session,
     tableOutput(ns('table_output'))
   })
    
-  return(reactive(input$brush))
+  return(list(reactive(input$brush), dataWithSelection))
 }
 
 
@@ -163,64 +193,34 @@ server <- function(input, output, session) {
 test_name_lst <- c("total dupilumab", "EASI", "NRS" , "IGA")
   
 output$ALL <- renderUI({
-
-  brush <- function() {return(NULL)}
-  
-  dataWithSelection <- reactive({
-    
-    validate(need(nmdat, message="no dataset found"))
-    
-    tdata =  nmdat
-    #mutate_(NTIM = xvar_name, 
-    #        DVOR = yvar_name
-    #)
-    
-
-    
-    if(!is.null(brush())) {
-      print("brush()")
-      print(brush())
-      
-      
-      tdata = brushedPoints(nmdat, brush(), allRows = TRUE) #%>%  
-      #if (brush()$outputId == paste0("scatters",  i, "-plot")) {
-        print("within brush: ")
-        #tdata = dataWithSelection_from_which_panel(tdata, which_var=test_name_lst[i])
-        
-        tdata = switch(
-          brush()$outputId,
-          "scatters1-plot" = dataWithSelection_from_which_panel(tdata, which_var=test_name_lst[1]),
-          "scatters2-plot"= dataWithSelection_from_which_panel(tdata, which_var=test_name_lst[2]),
-          "scatters3-plot" = dataWithSelection_from_which_panel(tdata, which_var=test_name_lst[3]),
-          "scatters4-plot"= dataWithSelection_from_which_panel(tdata, which_var=test_name_lst[4]),
-          NULL
-        )
-        #print(head(tdata))
-        
-     # }
-    }
-    
-    tdata
-  })
+ 
+  brush_lst <- NULL
+  dataWithSelection_lst <- NULL
   
   lapply(1:length(test_name_lst), function(i) {
     # validate(need(values$table[[i]], message="no table found"), 
     #          need(is.data.frame(values$table[[i]]), message="only data.frame allowed")
     # )
-    
-    
+      print(i)
     
     # save values$table into ALL$TABLE
-    brush <- callModule(linkedScatter, paste0("scatters", i), 
-                      dataWithSelection,
+    out <- callModule(linkedScatter, paste0("scatters", i), 
+                     dataset = nmdat,
                      xvar_name = "NTIM", 
                      yvar_name = "DVOR", 
                      test_name = test_name_lst[i], 
                      index = i 
     )
     
-    #print("after call module:")
-    #print(brush())
+    brush = out[[1]]
+    dataWithSelection = out[[2]]
+    
+    if (!is.null(brush())) {brush_lst = c(brush_lst, isolate({brush()})) }
+    if (!is.null(dataWithSelection())) {dataWithSelection_lst = c(dataWithSelection,  isolate({dataWithSelection()}))}
+    
+    print("after call module:")
+    print(length(brush_lst))
+    #print(head(dataWithSelection_lst))
     
     linkedScatterUI(paste0("scatters", i) ) 
     

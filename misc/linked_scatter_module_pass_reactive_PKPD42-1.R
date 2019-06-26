@@ -16,27 +16,16 @@ linkedScatterUI <- function(id) {
   tagList( 
     fluidRow(
       
-      #column(6, uiOutput(ns("panel1"))),
+      column(6, uiOutput(ns("panel1"))),
       
-      #column(6, uiOutput(ns("panel2")))
-      column(6,
-             plotOutput(ns("plot1"), brush = ns("brush")),
-             tableOutput(ns("summary1"))
-             ),
-      column(6,
-             plotOutput(ns("plot2"), brush = ns("brush")),
-             tableOutput(ns("summary2"))
-             )
+      column(6, uiOutput(ns("panel2")))
     ), 
     
     fluidRow(
       column(6, uiOutput(ns("panel3"))),
             
       column(6, uiOutput(ns("panel4")))
-      # column(6, 
-      #        plotOutput(ns("plot4"), brush = ns("brush")), 
-      #        tableOutput(ns("summary4"))
-      # )
+
     )
  ) 
 }
@@ -59,6 +48,8 @@ linkedScatter <- function(input, output, session,
   dataWithSelection <- reactive({
     
     validate(need(dataset, message="no dataset found"))
+    
+    print("dataWithSelection")
     
     tdata = brushedPoints(dataset, input$brush, allRows = TRUE)%>% 
       mutate(HIGHLIGHT_ID=FALSE, 
@@ -84,8 +75,7 @@ linkedScatter <- function(input, output, session,
   })
   
   output$panel1 <- renderUI({
-    validate(need(nrow(dataWithSelection()%>% 
-                         filter(TESTCD==test_name[1]))>0, message=FALSE))
+    #validate(need(nrow(dataWithSelection()%>%filter(TESTCD==test_name[1]))>0, message=FALSE))
     
     tagList(
       plotOutput(ns("plot1"), brush = ns("brush")), 
@@ -94,8 +84,7 @@ linkedScatter <- function(input, output, session,
   })
   
   output$panel2 <- renderUI({
-    validate(need(nrow(dataWithSelection()%>% 
-                         filter(TESTCD==test_name[2]))>0, message=FALSE))
+    #validate(need(nrow(dataWithSelection()%>%  filter(TESTCD==test_name[2]))>0, message=FALSE))
     
     tagList(
       plotOutput(ns("plot2"), brush = ns("brush")), 
@@ -105,8 +94,7 @@ linkedScatter <- function(input, output, session,
   
   
   output$panel3 <- renderUI({
-    validate(need(nrow(dataWithSelection()%>% 
-                         filter(TESTCD==test_name[3]))>0, message=FALSE))
+    #validate(need(nrow(dataWithSelection()%>%   filter(TESTCD==test_name[3]))>0, message=FALSE))
     
     tagList(
       plotOutput(ns("plot3"), brush = ns("brush")), 
@@ -115,8 +103,7 @@ linkedScatter <- function(input, output, session,
   })
 
   output$panel4 <- renderUI({
-    validate(need(nrow(dataWithSelection()%>% 
-                         filter(TESTCD==test_name[4]))>0, message=FALSE))
+    #validate(need(nrow(dataWithSelection()%>%  filter(TESTCD==test_name[4]))>0, message=FALSE))
     
     tagList(
       plotOutput(ns("plot4"), brush = ns("brush")), 
@@ -126,7 +113,8 @@ linkedScatter <- function(input, output, session,
   
   
   output$plot1 <- renderPlot({
-    validate(need(nrow(dataWithSelection() %>%filter(TESTCD==test_name[1]))>0, message=FALSE))
+    #validate(need(nrow(dataWithSelection() %>%filter(TESTCD==test_name[1]))>0, message=FALSE))
+    
     scatterPlot(dataWithSelection()  %>% 
                   filter(TESTCD==test_name[1]), 
                 cols=c("NTIM", "DVOR")) + 
@@ -134,16 +122,15 @@ linkedScatter <- function(input, output, session,
   })
   
   output$plot2 <- renderPlot({ 
-    validate(need(nrow(dataWithSelection()%>% 
-                    filter(TESTCD==test_name[2]))>0, message=FALSE))
+    #validate(need(nrow(dataWithSelection()%>%  filter(TESTCD==test_name[2]))>0, message=FALSE))
+    
     scatterPlot(dataWithSelection()  %>% 
                   filter(TESTCD==test_name[2]), 
                 cols=c("NTIM", "DVOR")) 
   })
   
   output$plot3 <- renderPlot({
-    validate(need(nrow(dataWithSelection()%>% 
-                    filter(TESTCD==test_name[3]))>0, message=FALSE))
+    #validate(need(nrow(dataWithSelection()%>%   filter(TESTCD==test_name[3]))>0, message=FALSE))
     
     scatterPlot(dataWithSelection()  %>% 
                   filter(TESTCD==test_name[3]), 
@@ -151,8 +138,8 @@ linkedScatter <- function(input, output, session,
   })
   
   output$plot4 <- renderPlot({ 
-    validate(need(nrow(dataWithSelection()%>% 
-                    filter(TESTCD==test_name[4]))>0, message=FALSE))
+    #validate(need(nrow(dataWithSelection()%>%  filter(TESTCD==test_name[4]))>0, message=FALSE))
+    
     scatterPlot(dataWithSelection()  %>% 
                   filter(TESTCD==test_name[4]), 
                 cols=c("NTIM", "DVOR")) 
@@ -161,8 +148,7 @@ linkedScatter <- function(input, output, session,
   output$summary1 <- renderUI({
     #sprintf("%d observation(s) selected", nrow(dplyr::filter(df(), selected_)))
     #renderTable(dplyr::filter(df(), selected_), na = "")
-    validate(need(nrow(dataWithSelection()%>% 
-                    filter(TESTCD==test_name[1]))>0, message=FALSE))
+    #validate(need(nrow(dataWithSelection()%>%   filter(TESTCD==test_name[1]))>0, message=FALSE))
     
     output$table_output1 <- renderTable(
       
@@ -328,7 +314,7 @@ server <- function(input, output, session) {
                    dataset = (nmdat),
                    xvar_name = "NTIM", 
                    yvar_name = "DVOR", 
-                   test_name = c("total dupilumab", "EASI")
+                   test_name = c("total dupilumab", "EASI", "NRS" , "IGA")
                    #left = reactive(c("total dupilumab")),
                    #right = reactive(c("EASI"))
   )
