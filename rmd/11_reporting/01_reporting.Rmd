@@ -63,42 +63,37 @@ tabl = data.frame(x=10, y=10)
 attr(tabl, 'title') <-  "tst2"
 ALL$DATA[["TSET2"]] = tabl
 
-isolate({ 
+cppModel1=mread(model='cppModel',
+               project=paste0(HOME, '/cpp/'),
+               quiet=TRUE,
+               file=basename("LN001.cpp"))
 
-ALL$cppModel= list()
+cppModel2=mread(model='cppModel',
+               project=paste0(HOME, '/cpp/'),
+               quiet=TRUE,
+               file=basename("LN001.cpp"))
 
-cppModel=mread(model='cppModel',
-              project=paste0(HOME, '/cpp/'),
-              quiet=TRUE,
-              file=basename("LN001.cpp"))
 
-ALL$cppModel[["LN0011.cpp"]] = cppModel
+ALL$cppModel = list(
+  "LN0011.cpp"=cppModel1, 
+  "LN0022.cpp"=cppModel2
+  ) 
+ 
+ALL$ctlModel = list(
+  "LN001.ctl"=readLines(paste0(HOME, "/ctl/", "LN001.ctl")), 
+  "LN002.ctl"=readLines(paste0(HOME, "/ctl/", "LN002.ctl"))
+  ) 
+ 
 
-# print("01")
-# print(see(cppModel))
-# print(see(ALL$cppModel[["LN0011.cpp"]]))
-
-cppModel=mread(model='cppModel',
-             project=paste0(HOME, '/cpp/'),
-             quiet=TRUE,
-             file=basename("LN001.cpp"))
-
-ALL$cppModel[["LN0022.cpp"]] = cppModel
-# print("02")
-# print(see(cppModel))
-# print(see(ALL$cppModel[["LN0022.cpp"]]))
-
-})
-
-  callModule(dataReview, "mydataReview", ALL)
+  callModule(module_review_data, "mydataReview", ALL)
   
-  callModule(figReview, "myfigureReview",  ALL)
+  callModule(module_review_figure, "myfigureReview",  ALL)
   
-  callModule(tablReview, "mytableReview",  ALL)
+  callModule(module_review_table, "mytableReview",  ALL)
   
-  callModule(cppModelReview, "mycppModelReview", ALL)
+  callModule(module_review_cppModel, "mycppModelReview", ALL)
   
-  callModule(ctlModelReview, "myctlModelReview", ALL)  
+  callModule(module_review_ctlModel, "myctlModelReview", ALL)  
   
   callModule(checkOut, "mycheckOut", ALL)  
 
@@ -107,23 +102,23 @@ ALL$cppModel[["LN0022.cpp"]] = cppModel
 tabBox(width=12, id = ("review_all"), title =NULL, 
   
   tabPanel(title="Data",  icon = icon("database", lib = "font-awesome"),
-          dataReviewUI(id="mydataReview", label="")
+          module_review_data_UI(id="mydataReview", label="")
   ), 
   
   tabPanel(title="Figure",  icon = icon("bar-chart-o", lib = "font-awesome"),
-           figReviewUI(id="myfigureReview", label="")
+           module_review_figure_UI(id="myfigureReview", label="")
   ), 
    
  tabPanel(title="Table", icon = icon("table", lib = "font-awesome"),
-          tablReviewUI(id="mytableReview", label="")
+          module_review_table_UI(id="mytableReview", label="")
  ),
    
   tabPanel(title="cppModel", icon = icon("motorcycle", lib = "font-awesome"),
-           cppModelReviewUI(id="mycppModelReview", label="")
+           module_review_cppModel_UI(id="mycppModelReview", label="")
   ),
 
   tabPanel(title="ctlModel", icon = icon("motorcycle", lib = "font-awesome"),
-          ctlModelReviewUI(id="myctlModelReview", label="")
+          module_review_ctlModel_UI(id="myctlModelReview", label="")
   ),
 
    tabPanel(title="Checkout", 
@@ -155,11 +150,7 @@ tabBox(width=12, id = ("review_all"), title =NULL,
 ```
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
 
-
-## Review figure
-
-You can also embed plots, for example:
-
+ 
 
 ## Reporting
 

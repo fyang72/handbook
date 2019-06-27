@@ -9,7 +9,7 @@
 #-----------------------------------------
 #  xxxInput, xxxOutput, xxxControl, xxxUI, xxx
 #-----------------------------------------
-figReviewUI <- function(id, label = "") {
+module_review_figure_UI <- function(id, label = "") {
   # Create a namespace function using the provided id
   ns <- NS(id)
   
@@ -22,7 +22,7 @@ figReviewUI <- function(id, label = "") {
 } 
 
 # Module server function
-figReview <- function(input, output, session,  ALL) {
+module_review_figure <- function(input, output, session,  ALL) {
   ns <- session$ns
   
   # fig_selector
@@ -65,7 +65,7 @@ figReview <- function(input, output, session,  ALL) {
 #-----------------------------------------
 #  xxxInput, xxxOutput, xxxControl, xxxUI, xxx
 #-----------------------------------------
-tablReviewUI <- function(id, label = "") {
+module_review_table_UI <- function(id, label = "") {
   # Create a namespace function using the provided id
   ns <- NS(id)
   
@@ -78,7 +78,7 @@ tablReviewUI <- function(id, label = "") {
 } 
 
 # Module server function
-tablReview <- function(input, output, session, ALL) {
+module_review_table <- function(input, output, session, ALL) {
   ns <- session$ns
   
   # fig_selector
@@ -119,15 +119,12 @@ tablReview <- function(input, output, session, ALL) {
 
 
 
-
-#-----------------------------------------
-#### dataset review ####
-#-----------------------------------------
+ 
 
 #-----------------------------------------
 #  xxxInput, xxxOutput, xxxControl, xxxUI, xxx
 #-----------------------------------------
-dataReviewUI <- function(id, label = "") {
+module_review_data_UI <- function(id, label = "") {
   # Create a namespace function using the provided id
   ns <- NS(id)
   
@@ -140,7 +137,7 @@ dataReviewUI <- function(id, label = "") {
 } 
 
 # Module server function
-dataReview <- function(input, output, session, ALL) {
+module_review_data <- function(input, output, session, ALL) {
   ns <- session$ns
   
   # data_selector
@@ -178,135 +175,5 @@ dataReview <- function(input, output, session, ALL) {
 }
 
  
-#-----------------------------------------
-#  xxxInput, xxxOutput, xxxControl, xxxUI, xxx
-#-----------------------------------------
-cppModelReviewUI <- function(id, label = "") {
-  # Create a namespace function using the provided id
-  ns <- NS(id)
-  
-  tagList( 
-    fluidRow(column(6, uiOutput(ns("cppModel_selector")))),
-    fluidRow(column(12, 
-                    #uiOutput(ns("update_cppModel_container"))
-                    module_update_cppModel_UI(ns("cppModel_review"), label = NULL)
-                    ))
-    
-    
-    
-    #column(6, tags$hr(style="border-color: black;"))  
-  )
-  
-} 
-
-# Module server function
-cppModelReview <- function(input, output, session, ALL) {
-  
-  ns <- session$ns
-  
-  # model_selector
-  output$cppModel_selector <- renderUI({   
-    
-    name_lst <- c("", names(ALL$cppModel)) %>% unique()
-    selectInput(ns("select_cppModel"), label = "Select cppModel:",                                                                                                        
-                width="100%",    
-                multiple = FALSE, 
-                choices = name_lst,                                                                                                                                   
-                selected = name_lst[1]
-                )
-  })
-
-  callModule(module_update_cppModel, "cppModel_review",
-             ALL,
-             cppModel_name = reactive(input$select_cppModel)
-  )
-  
-  ## use renderUI to display table
-  #output$update_cppModel_container <- renderUI({
-    
-   # validate(need(input$select_cppModel, message=FALSE))
-     
-    #script_content = readLines(paste0(HOME, "/cpp/", input$select_cppModel))
-    #script_content <- capture.output(
-    #  mrgsolve::see(ALL$cppModel[[input$select_cppModel]])
-    #)
-      
-    # aceEditor(ns("cppModel_content"),
-    #           mode="c_cpp",
-    #           value=paste0(script_content, collapse="\n"),
-    #           theme = "crimson_editor",   # chrome
-    #           autoComplete = "enabled",
-    #           height = "1000px",
-    #           fontSize = 15
-    # )
-    
-  #      callModule(module_update_cppModel, "cppModel_review",
-  #                      ALL,
-  #                      cppModel_name = reactive(input$select_cppModel)
-  #     )
-  # 
-  #     module_update_cppModel_UI(ns("cppModel_review"), label = NULL)
-  #     
-  # })
-
-}
 
 
-#-----------------------------------------
-#  xxxInput, xxxOutput, xxxControl, xxxUI, xxx
-#-----------------------------------------
-ctlModelReviewUI <- function(id, label = "") {
-  # Create a namespace function using the provided id
-  ns <- NS(id)
-  
-  fluidRow( 
-    fluidRow(column(12, uiOutput(ns("ctlModel_selector")))),
-    #column(6, tags$hr(style="border-color: black;"))  
-    fluidRow(column(12, uiOutput(ns("ctlModel_container"))))
-  )
-  
-} 
-
-# Module server function
-ctlModelReview <- function(input, output, session, ALL) {
-  
-  ns <- session$ns
-  
-  # ctlModel_selector
-  output$ctlModel_selector <- renderUI({  
-    name_lst=list.files(path = paste0(HOME, "/ctl"), 
-                        full.names = FALSE, 
-                        recursive = FALSE, 
-                        pattern=".ctl", 
-                        include.dirs=FALSE
-    )  
-    
-    
-    name_lst <- c("", name_lst, names(ALL$ctlModel)) %>% unique()
-    selectInput(ns("select_ctlModel"), label = "Select ctlModel(s):",                                                                                                        
-                width="100%",    
-                multiple = FALSE, 
-                choices = name_lst,                                                                                                                                   
-                selected = name_lst[1])
-  })
-  
-  
-  ## use renderUI to display table
-  output$ctlModel_container <- renderUI({
-    
-    validate(need(input$select_ctlModel, message=FALSE))
-    
-    script_content = readLines(paste0(HOME, "/ctl/", input$select_ctlModel))
-    # ALL$ctlModel[[input$select_ctlModel]]
-    
-    aceEditor(ns("ctlModel_content"), 
-              mode="fortran", 
-              value=paste0(script_content, collapse="\n"), 
-              theme = "crimson_editor",   # chrome
-              autoComplete = "enabled",
-              height = "1000px", 
-              fontSize = 15 
-    )
-  })
-  
-}

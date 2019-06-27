@@ -94,8 +94,8 @@ desp_indiv_profile <-function(dataset, params=NULL) {
   #------------------
   # log scale 
   #------------------
-  fig = fig + scale_y_log10(breaks = 10^(seq(-1,3,by=1)),      #trans_breaks("log10", function(x) 10^x),
-                            labels = 10^(seq(-1,3,by=1))) +      # trans_format("log10", math_format(10^.x))) +
+  fig = fig + scale_y_log10(breaks = 10^(seq(-3,3,by=1)),      #trans_breaks("log10", function(x) 10^x),
+                            labels = 10^(seq(-3,3,by=1))) +      # trans_format("log10", math_format(10^.x))) +
     annotation_logticks(sides ="l")  +  # "trbl", for top, right, bottom, and left.
     
     geom_hline(yintercept=c(0.078), lty="dashed") + 

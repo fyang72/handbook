@@ -105,19 +105,12 @@ server <- function(input, output, session) {
                  project=paste0(HOME, '/cpp/'),
                  quiet=TRUE,
                  file=basename("LN001.cpp"))
-  
-  #ALL$cppModel[["LN0011.cpp"]] = cppModel
-  
-  
+ 
   cppModel2=mread(model='cppModel',
                  project=paste0(HOME, '/cpp/'),
                  quiet=TRUE,
                  file=basename("LN001.cpp"))
-  
-  #ALL$cppModel[["LN0022.cpp"]] = cppModel
-  
-  #load_cppModel <- reactive({
-  #ALL <- list(
+ 
  ALL <- reactiveValues(
     DATA   = list(), 
     FIGURE = list(), 

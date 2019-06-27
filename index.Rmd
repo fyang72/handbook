@@ -38,6 +38,15 @@ pdf_document:
 # Best practices for global/external variables used in a module 
 # https://community.rstudio.com/t/best-practices-for-global-external-variables-used-in-a-module/5820/11
 
+# Communication between modules
+# https://shiny.rstudio.com/articles/communicate-bet-modules.html
+
+# https://stackoverflow.com/questions/36695577/shiny-module-that-calls-a-reactive-data-set-in-parent-shiny-server
+
+library(shiny)
+library(ggplot2)
+
+
 rm(list = ls())
 
 if (1==2) {    
