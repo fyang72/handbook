@@ -3,77 +3,79 @@
 #  xxxInput, xxxOutput, xxxControl, xxxUI, xxx
 #-----------------------------------------
 
-checkOutUI <- function(id, label = "") {
+module_check_out_UI <- function(id, label = "") {
   # Create a namespace function using the provided id
   ns <- NS(id)
   
   fluidRow(
   
-    column(6,              
-        
-         h5("Number of figures:"),
-         h2(textOutput(ns("finalFigCount"))),
-
-         h5("Number of tables:"),
-         h2(textOutput(ns("finalTabCount")))
-
-         # fluidRow(
-         #   column(width=12, valueBoxOutput(ns("finalFigCount")))),
-         # 
-         #   fluidRow(
-         #   column(width=12, valueBoxOutput(ns("finalTabCount")))
-         # )
-    ), 
        column(width=6,    
         
-              fluidRow(uiOutput(ns("loadTemplate_container"))),
+              uiOutput(ns("loadTemplate_container")),
            
               fluidRow(
-                column(width=4, offset=4, actionButton(ns("GenerateReport"),"Generate it", 
-                             style=actionButton_style)
-                )
-              ),   # "primary",
+                column(12, style='padding:0px;', 
+                       actionButton(ns("GenerateReport"),"Generate it", 
+                             style=actionButton_style
+                           )
+                )),  
               
               fluidRow(
-                column(width=6, 
+                column(width=6,  style='padding:0px;', 
                   downloadButton(ns("download_doc"), 
                                  label="Download docx", 
                                  icon=icon("download"), 
                                  style=actionButton_style )
                   ),   #, icon("download")
                 
-                column(width=6,
+                column(width=6, style='padding:0px;', 
                   downloadButton(ns("download_ppt"), 
                                  label="Download pptx", 
                                  icon=icon("download"), 
                                  style=actionButton_style )
                   )   # icon("paper-plane")
               )
+       ), 
+       
+       column(6,              
+              
+              #h5("Number of figures:"),
+              h5(textOutput(ns("finalFigCount"))),
+              
+              #h5("Number of tables:"),
+              h5(textOutput(ns("finalTabCount")))
+              
+              # fluidRow(
+              #   column(width=12, valueBoxOutput(ns("finalFigCount")))),
+              # 
+              #   fluidRow(
+              #   column(width=12, valueBoxOutput(ns("finalTabCount")))
+              # )
        )
     )
   
 }
 
 ###########################################
-# checkOut
+# module_check_out
 ###########################################
 # Module server function
-checkOut <- function(input, output, session, ALL) {
+module_check_out <- function(input, output, session, ALL) {
   
   ns <- session$ns
  
   output$loadTemplate_container <- renderUI({
     
     fluidRow(
-      column(6,
+      column(12, style='padding:0px;', 
              fileInput(ns("doc_template"), label = h5("load your docx template"), 
-                       accept=c('.docx'))),
-      
-      column(6,
+                       accept=c('.docx')),
+   
              fileInput(ns("ppt_template"), label = h5("load your pptx template"), 
-                       accept=c('.pptx')))   
+                       accept=c('.pptx'))   
     )
-    
+    )
+     
   })
   
   
@@ -81,11 +83,11 @@ checkOut <- function(input, output, session, ALL) {
   # server side [Checkout]
   #----------------------------------------------
   output$finalFigCount <- renderText(
-    length(ALL$FIGURE) 
+    paste0("Number of figures:", length(ALL$FIGURE))
   )
 
   output$finalTabCount <- renderText(
-    length(ALL$TABLE) 
+    paste0("Number of tables:", length(ALL$TABLE))
   )
  
    

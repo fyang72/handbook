@@ -1,89 +1,17 @@
 
+# Report generation 
 
- 
+This chapter is for reviewing all data, tables, figures and models that have been saved through 
+the journey of using this handbook, then output those tables and figures, along with their 
+titles and footnotes to the corresponding memo/report templates specified by the users. 
 
-# Reporting
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
- 
-
-## Review ALL
-
-Review dataset, Figure, Table, cppModel, ctlModel, Script
+## Review
+First, review all dataset, figure, table, cppModel, ctlModel and script, modify/delete/save them accordinlgy, then use "Checkout" tab to output them into specified template. 
 
 ```{r }
 
 renderUI({ 
-  
-  
-figure = NULL
-tdata = data.frame(xvar=1:10, yvar=1:10)
-figLn <- ggplot(tdata, aes(x=xvar, y=yvar)) + geom_point() + geom_line()
-figLog <- figLn + scale_y_log10()
-
-fig <- figLn
-attr(fig, 'title') <- paste0(
-  "Mean(±SE) ", " in Serum vs Nominal Sampling Day Following Subcutaneous or Intravenous Dose(s) of ", ")")
-
-attr(fig, 'width') <- 9
-attr(fig, 'height') <- 6                                
-figure[["pk_mean_profile_ln"]] = fig 
-figure[["pk_mean_profile_ln"]]$data =  tdata
-
-
-fig <- figLog
-attr(fig, 'title') <- paste0(
-  "Semi-Log Mean(±SE) ", " in Serum vs Nominal Sampling Day Following Subcutaneous or Intravenous Dose(s) of ", ")")
-
-attr(fig, 'width') <- 9
-attr(fig, 'height') <- 6                                
-figure[["pk_mean_profile_log"]] = fig 
-figure[["pk_mean_profile_log"]]$data =  tdata
-
-
-ALL$FIGURE = figure
-
-
-tabl = data.frame(x=1, y=1)
-attr(tabl, 'title') <-  "tst1"
-ALL$TABLE[["TSET1"]] = tabl
-
-tabl = data.frame(x=10, y=10)
-attr(tabl, 'title') <-  "tst2"
-ALL$TABLE[["TSET2"]] = tabl
-
-tabl = data.frame(x=1, y=1)
-attr(tabl, 'title') <-  "tst1"
-ALL$DATA[["TSET1"]] = tabl
-
-tabl = data.frame(x=10, y=10)
-attr(tabl, 'title') <-  "tst2"
-ALL$DATA[["TSET2"]] = tabl
-
-cppModel1=mread(model='cppModel',
-               project=paste0(HOME, '/cpp/'),
-               quiet=TRUE,
-               file=basename("LN001.cpp"))
-
-cppModel2=mread(model='cppModel',
-               project=paste0(HOME, '/cpp/'),
-               quiet=TRUE,
-               file=basename("LN001.cpp"))
-
-
-ALL$cppModel = list(
-  "LN0011.cpp"=cppModel1, 
-  "LN0022.cpp"=cppModel2
-  ) 
- 
-ALL$ctlModel = list(
-  "LN001.ctl"=readLines(paste0(HOME, "/ctl/", "LN001.ctl")), 
-  "LN002.ctl"=readLines(paste0(HOME, "/ctl/", "LN002.ctl"))
-  ) 
- 
+    
 
   callModule(module_review_data, "mydataReview", ALL)
   
@@ -95,7 +23,9 @@ ALL$ctlModel = list(
   
   callModule(module_review_ctlModel, "myctlModelReview", ALL)  
   
-  callModule(checkOut, "mycheckOut", ALL)  
+  callModule(module_review_script, "myscriptReview", ALL)  
+    
+  callModule(module_check_out, "mycheckOut", ALL)  
 
 
   
@@ -121,18 +51,27 @@ tabBox(width=12, id = ("review_all"), title =NULL,
           module_review_ctlModel_UI(id="myctlModelReview", label="")
   ),
 
+  tabPanel(title="script", icon = icon("motorcycle", lib = "font-awesome"),
+          module_review_script_UI(id="myscriptReview", label="")
+  ),
+ 
    tabPanel(title="Checkout", 
-           checkOutUI(id="mycheckOut", label="") 
+           module_check_out_UI(id="mycheckOut", label="") 
    )
 )  
    
 
 })
 
-   
-
 ```
- 
+  
+## Reporting
+
+use **ReporteRs** or **officer**
+
+
+
+
 
 
 
@@ -147,51 +86,4 @@ tabBox(width=12, id = ("review_all"), title =NULL,
               ) 
    )
 
-```
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
-
- 
-
-## Reporting
-
-You can also embed plots, for example:
-
- 
-```{r, eval=FALSE }
-
-             navbarMenu(title="Review",  #"", 
-                        #tabsetPanel(type = "tabs",   
-                        tabPanel(title="Dataset",  icon = icon("database", lib = "font-awesome"),
-                                 datasetReviewUI(id="mydatasetReview", label="")
-                        ), 
-                        
-                        tabPanel(title="Figure",  icon = icon("bar-chart-o", lib = "font-awesome"),
-                                 figReviewUI(id="myfigReview", label="")
-                        ), 
-                        
-                        tabPanel(title="Table", icon = icon("table", lib = "font-awesome"),
-                                 tabReviewUI(id="mytabReview", label="")
-                        ), 
-                        
-                        tabPanel(title="Model", icon = icon("motorcycle", lib = "font-awesome"),
-                                 modelReviewUI(id="mymodelReview", label="")
-                        )
-                        # )
-             ), 
-             
-             tabPanel(title="Checkout", 
-                      checkOutUI(id="mycheckOut", label="") 
-             ), 
-             
-             navbarMenu(title="Global option",  #"", 
-                        #tabsetPanel(type = "tabs",   
-                        tabPanel(title="ColorSetting"#,  #icon = icon("database", lib = "font-awesome"),
-                                 #scriptTabUI(id="myscriptTab", label="")  
-                        ), 
-                        tabPanel(title="themeSetting"  #icon = icon("database", lib = "font-awesome"),
-                                 #scriptTabUI(id="myscriptTab", label="")  
-                        ) 
-             ),
-             
-
-```
+``` 

@@ -67,9 +67,85 @@ ALL <- reactiveValues(
   ctlModel = list(), 
   script = list()
 )  
+```
 
 
+```{r }
+
+renderUI({ 
+figure = NULL
+tdata = data.frame(xvar=1:10, yvar=1:10)
+figLn <- ggplot(tdata, aes(x=xvar, y=yvar)) + geom_point() + geom_line()
+figLog <- figLn + scale_y_log10()
+
+fig <- figLn
+attr(fig, 'title') <- paste0(
+  "Mean(±SE) ", " in Serum vs Nominal Sampling Day Following Subcutaneous or Intravenous Dose(s) of ", ")")
+
+attr(fig, 'width') <- 9
+attr(fig, 'height') <- 6                                
+figure[["pk_mean_profile_ln"]] = fig 
+figure[["pk_mean_profile_ln"]]$data =  tdata
+
+
+fig <- figLog
+attr(fig, 'title') <- paste0(
+  "Semi-Log Mean(±SE) ", " in Serum vs Nominal Sampling Day Following Subcutaneous or Intravenous Dose(s) of ", ")")
+
+attr(fig, 'width') <- 9
+attr(fig, 'height') <- 6                                
+figure[["pk_mean_profile_log"]] = fig 
+figure[["pk_mean_profile_log"]]$data =  tdata
+
+
+ALL$FIGURE = figure
+
+
+tabl = data.frame(x=1, y=1)
+attr(tabl, 'title') <-  "tst1"
+ALL$TABLE[["TSET1"]] = tabl
+
+tabl = data.frame(x=10, y=10)
+attr(tabl, 'title') <-  "tst2"
+ALL$TABLE[["TSET2"]] = tabl
+
+tabl = data.frame(x=1, y=1)
+attr(tabl, 'title') <-  "tst1"
+ALL$DATA[["TSET1"]] = tabl
+
+tabl = data.frame(x=10, y=10)
+attr(tabl, 'title') <-  "tst2"
+ALL$DATA[["TSET2"]] = tabl
+
+cppModel1=mread(model='cppModel',
+               project=paste0(HOME, '/cpp/'),
+               quiet=TRUE,
+               file=basename("LN001.cpp"))
+
+cppModel2=mread(model='cppModel',
+               project=paste0(HOME, '/cpp/'),
+               quiet=TRUE,
+               file=basename("LN001.cpp"))
+
+
+ALL$cppModel = list(
+  "LN0011.cpp"=cppModel1, 
+  "LN0022.cpp"=cppModel2
+  ) 
+ 
+ALL$ctlModel = list(
+  "LN001.ctl"=readLines(paste0(HOME, "/ctl/", "LN001.ctl")), 
+  "LN002.ctl"=readLines(paste0(HOME, "/ctl/", "LN002.ctl"))
+  ) 
+
+
+ ALL$script = list(
+  "build_adsl.R"=readLines(paste0(HOME, "/script/", "build_adsl.R")), 
+  "build_adex.R"=readLines(paste0(HOME, "/script/", "build_adex.R"))
+  )
   
+})
+
 ```
  
 
@@ -121,6 +197,10 @@ rmd <- list.files(pattern = '*.Rmd', recursive = T)
 chunks <- paste0("```{r child = '", rmd, "'}\n```\n")
 cat(chunks, sep = '\n')
 ```
+
+```{r child = 'rmd/08_run_simulation/50_run_sim.Rmd'}
+```
+
 
 ```{r child = 'rmd/11_reporting/01_reporting.Rmd'}
 ```

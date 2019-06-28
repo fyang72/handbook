@@ -42,6 +42,8 @@ module_runsim_output_UI <- function(id, label = "") {
     ), 
     
   uiOutput(ns("run_simulation_by_script_container"))
+   
+  
   #fluidRow(column(12, uiOutput(ns("run_simulation_by_script_container"))))
 )
 }
