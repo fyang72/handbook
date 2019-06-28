@@ -37,9 +37,11 @@ module_review_cppModel <- function(input, output, session, ALL) {
   }) 
   
   # call module_update_cppModel
-  callModule(module_update_cppModel, "cppModel_review",
+  ALL = callModule(module_update_cppModel, "cppModel_review",
              ALL,
              cppModel_name = reactive(input$select_cppModel)
   )
+  
+  return(ALL)
   
 }
