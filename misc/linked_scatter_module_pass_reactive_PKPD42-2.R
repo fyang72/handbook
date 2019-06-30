@@ -239,7 +239,7 @@ linked_profiles <- function(input, output, session,
 
 ui <- fixedPage(
   h2("Module example"),
-  linked_profiles_UI("profiles")
+  module_linked_profiles_UI("profiles")
   
 )
 
@@ -262,7 +262,7 @@ server <- function(input, output, session) {
   #nmdat <- reactiveValues({
   #  nmdat = nmdat
   #})
-  df <- callModule(linked_profiles, "profiles", 
+  df <- callModule(module_linked_profiles, "profiles", 
                    dataset = (nmdat),
                    xvar_name = "NTIM", 
                    xvar_name_label = "Time (Week)",

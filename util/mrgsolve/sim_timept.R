@@ -8,8 +8,8 @@ sim_timept <- function(start=0, end=112, delta=1, dtime=seq(0,112, by=7), infusi
   #infusion_hrs_lst = c(5/60, 0.5, 1, 2)  # hours
   
   # a set of special time events after each dosing event
-  start.time <- unique(sort(c(infusion_hrs_lst/24,   # 0.5, 1, 2 hours after infusion, start.time2)))    #  in days
-                              seq(0, end, by=7)
+  start.time <- unique(sort(c(infusion_hrs_lst/24   # 0.5, 1, 2 hours after infusion, start.time2)))    #  in days
+                              #seq(0, end, by=7)
                               )
                             ))  # day  
   

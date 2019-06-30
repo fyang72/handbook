@@ -64,7 +64,7 @@ ns <- session$ns
 
 # figure_title_container
 output$figure_title_container <- renderUI(renderText({
-  paste0("Figure ", figure_index, " ", attributes(figure)$title)
+  paste0("<b>Figure ", figure_index, ": ", attributes(figure)$title, "</b>")
 })() %>% HTML()
 )
 

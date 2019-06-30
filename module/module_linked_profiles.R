@@ -30,7 +30,7 @@ module_linked_profiles <- function(input, output, session,
                             
                             id_name = "USUBJID", 
                             dosegrp_name = "ARMA",
-                            testvar_name = "TESTCD" 
+                            testvar_name = "TEST" 
                             
 ) {
   
@@ -40,12 +40,25 @@ module_linked_profiles <- function(input, output, session,
   # that indicates whether that observation is brushed, USUBJID/NTIM highlighed
   ns <- session$ns
   
+  xvar_name = xvar_name()
+  xvar_name_label = xvar_name_label()
+  yvar_name = yvar_name()
+  
+  test_name = test_name()
+  test_name_label = test_name_label()
+  log_scale = log_scale()
+  id_name = id_name()
+  
+  dosegrp_name = dosegrp_name()
+  testvar_name = testvar_name()
+  
   if (length(log_scale)==1) {
     log_scale = rep(log_scale, times=length(test_name))
   }
   
-  validate(need(length(log_scale)==length(test_name), 
-                message= "log_scale must have same length of test_name"))
+  log_scale = log_scale[1:length(test_name)]
+  #validate(need(length(log_scale)==length(test_name), 
+  #              message= "log_scale must have same length of test_name"))
   
   #
   output$multi_panel <- renderUI({
@@ -67,8 +80,10 @@ module_linked_profiles <- function(input, output, session,
     
     output[[paste0("plot", i)]] <- renderPlot({ 
       
+      validate(need(dataWithSelection(), message="no data found"))
+      
       fig <- linked_time_profile_plot(
-        dataWithSelection() %>% filter(TESTCD==test_name[i]),
+        dataWithSelection() %>% filter(TEST==test_name[i]),
         xvar_name_label = xvar_name_label[i], 
         test_name_label = test_name_label[i]
       )  
@@ -83,23 +98,46 @@ module_linked_profiles <- function(input, output, session,
       fig
     })
     
-    
+    # 
+    # output[[paste0("summary", i)]] <- renderUI({
+    #   
+    #   validate(need(dataWithSelection(), message="no data found"))
+    #    
+    #   output[[paste0("table_output", i)]] <- renderTable(
+    #     
+    #     dplyr::filter(dataWithSelection(), 
+    #                   HIGHLIGHT_ID_NTIM, 
+    #                   HIGHLIGHT_ID, 
+    #                   TEST== test_name[i] ###
+    #     )%>% 
+    #       select(-selected_, -HIGHLIGHT_ID, -HIGHLIGHT_ID_NTIM, -USUBJID_NTIM, -xvar, -yvar), 
+    #     na = "")
+    #   
+    #   tableOutput(ns(paste0("table_output", i)))
+    # })
+    # 
+      
     output[[paste0("summary", i)]] <- renderUI({
       
-      output[[paste0("table_output", i)]] <- renderTable(
-        
-        dplyr::filter(dataWithSelection(), 
-                      HIGHLIGHT_ID_NTIM, 
-                      HIGHLIGHT_ID, 
-                      TESTCD== test_name[i] ###
-        )%>% 
-          select(-selected_, -HIGHLIGHT_ID, -HIGHLIGHT_ID_NTIM, -USUBJID_NTIM, -xvar, -yvar), 
-        na = "")
+      validate(need(dataWithSelection(), message="no data found"))
       
-      tableOutput(ns(paste0("table_output", i)))
+      output[[paste0("table_output", i)]] <- DT::renderDataTable(                                                                                                                                          
+        DT::datatable(data = 
+                        dplyr::filter(dataWithSelection(), 
+                                     HIGHLIGHT_ID_NTIM, 
+                                     HIGHLIGHT_ID, 
+                                     TEST== test_name[i] ###
+        ),                                                                                                                                                       
+          options = list(pageLength = input$pageLength, 
+                         lengthChange = FALSE, width="100%", scrollX = TRUE)                                                                   
+        ))
+      
+      DT::dataTableOutput(ns(paste0("table_output", i)))
     })
     
+    
   })
+   
   
   
   #----------------------------------
@@ -107,12 +145,17 @@ module_linked_profiles <- function(input, output, session,
   #----------------------------------
   dataWithSelection <- reactive({
     
-    validate(need(dataset, message="no dataset found"))
+    validate(need(dataset, message="no dataset found"), 
+             need(test_name, message="no analyte variables found")
+             )
     
     tdata <- dataset %>% 
       mutate_(xvar = xvar_name, 
               yvar = yvar_name 
-      )
+      )  %>% 
+      mutate(xvar=as_numeric(xvar),
+             yvar=as_numeric(yvar)
+      ) 
     
     # add "selected_"
     tdata = brushedPoints(tdata, input$brush, allRows = TRUE) %>% 
@@ -121,9 +164,9 @@ module_linked_profiles <- function(input, output, session,
               DVOR = yvar_name, 
               USUBJID = id_name,
               ARMA = dosegrp_name,
-              TESTCD = testvar_name
+              TEST = testvar_name
       ) %>% 
-      
+
       mutate(
         HIGHLIGHT_ID=FALSE, 
         HIGHLIGHT_ID_NTIM = FALSE,
@@ -132,16 +175,15 @@ module_linked_profiles <- function(input, output, session,
     
     if(!is.null(input$brush)) {
       
-      print("input$brush$outputId")
-      print(input$brush$outputId)
-      
       which_panel_brushed <- str_split(input$brush$outputId, "-") %>% unlist() %>% last()
-      tdata <- sapply(1:length(test_name), function(i) {
+      tdata1 <- sapply(1:length(test_name), function(i) {
         if (which_panel_brushed == paste0("plot", i)) {
           dataWithSelection_from_which_panel(tdata, which_var=test_name[i])
         }
       })  %>% bind_cols()
       
+      colnames(tdata1) <- colnames(tdata)  # seems lost colnames 06/29/2019
+      tdata = tdata1
     }
     
     tdata
@@ -152,10 +194,12 @@ module_linked_profiles <- function(input, output, session,
   # util function of dataWithSelection_from_which_panel
   #------------------------------------------------------
   dataWithSelection_from_which_panel <- function(tdata, which_var=NULL) {
-    subj_lst = tdata %>% filter(selected_, TESTCD==which_var) %>%
+    validate(need(tdata, message="no data found"))
+    
+    subj_lst = tdata %>% filter(selected_, TEST==which_var) %>%
       pull(USUBJID) %>% unique()
     
-    USUBJID_NTIM_lst = tdata %>% filter(selected_, TESTCD==which_var) %>% 
+    USUBJID_NTIM_lst = tdata %>% filter(selected_, TEST==which_var) %>% 
       mutate(USUBJID_NTIM = paste0(USUBJID, "-", NTIM))    %>% 
       pull(USUBJID_NTIM) %>% unique()
     
@@ -177,13 +221,13 @@ module_linked_profiles <- function(input, output, session,
     
     # ------------------------------------------
     # key varaibles: 
-    # USUBJID, ARMA, NTIM, TESTCD, DVOR, WGTBL
+    # USUBJID, ARMA, NTIM, TEST, DVOR, WGTBL
     # ------------------------------------------
     
     tdata = data
     validate(need(tdata, message=FALSE))
     
-    x=setup_scale(myscale='1_4', mylimit=c(0, max(tdata$xvar, na.rm=TRUE)))
+    x=setup_scale(myscale='1_7', mylimit=c(0, max(tdata$xvar, na.rm=TRUE)))
     
     ggplot(tdata, aes_string(x = "xvar", y = "yvar", group="USUBJID")) +
       geom_point(aes(color = HIGHLIGHT_ID_NTIM)) +

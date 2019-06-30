@@ -43,6 +43,30 @@ pdf_document:
 
 # https://stackoverflow.com/questions/36695577/shiny-module-that-calls-a-reactive-data-set-in-parent-shiny-server
 
+# https://deanattali.com/blog/building-shiny-apps-tutorial/
+  
+
+# help from observeEvent()
+# shinyApp(
+#     ui = basicPage(actionButton("go", "Go")),
+#     server = function(input, output, session) {
+#       observeEvent(input$go, {
+#         insertUI("#go", "afterEnd",
+#                  actionButton("dynamic", "click to remove"))
+# 
+#         # set up an observer that depends on the dynamic
+#         # input, so that it doesn't run when the input is
+#         # created, and only runs once after that (since
+#         # the side effect is remove the input from the DOM)
+#         observeEvent(input$dynamic, {
+#           removeUI("#dynamic")
+#         }, ignoreInit = TRUE, once = TRUE)
+#       })
+#     }
+#   )
+# }
+
+
 library(shiny)
 library(ggplot2)
 
@@ -196,6 +220,12 @@ for (ifile in 1:length(file.lst)) {
 rmd <- list.files(pattern = '*.Rmd', recursive = T)
 chunks <- paste0("```{r child = '", rmd, "'}\n```\n")
 cat(chunks, sep = '\n')
+```
+
+```{r child = 'rmd/04_descriptive_analysis/01_load_dataset.Rmd'}
+```
+
+```{r child = 'rmd/04_descriptive_analysis/03_pkpd_relationship.Rmd'}
 ```
 
 ```{r child = 'rmd/08_run_simulation/50_run_sim.Rmd'}

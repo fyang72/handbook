@@ -74,7 +74,7 @@ module_save_table <- function(input, output, session, ALL, table,
   actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
   
   output$table_title_container <- renderUI(renderText({
-      paste0("Table ", table_index, " ", attributes(table)$title)
+      paste0("<b>Table ", table_index, ": ", attributes(table)$title,"</b>")
   })() %>% HTML()
   
   )

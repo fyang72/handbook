@@ -160,15 +160,15 @@ if (ihandbook) {
   # ---------------------------------------  
   if (which_mode==1) { 
     simData = suppressWarnings(runSim_by_dosing_regimen(
-      params$cppModel,    # model file
-      params$adsl,   # population 
-      params$adex,   # dose regimen
-      simulation_delta = params$simulation_delta, #simulation_delta,  # integration step                  
+      cppModel = params()[["cppModel"]],    # model file
+      adsl = params()[["adsl"]],   # population 
+      adex = params()[["adex"]],   # dose regimen
+      simulation_delta = params()[["simulation_delta"]], #simulation_delta,  # integration step                  
       tgrid = NULL,     # extra timepoint (other than delta)
-      infusion_hrs_lst = params$infusion_hrs_lst, #infusion_hrs_lst,  # hour,  infusion hours
-      followup_period = params$followup_period, #followup_period,   # how long of the followup period after treatment
-      seed=params$seed
-      ))  
+      infusion_hrs_lst =  params()[["infusion_hrs_lst"]], #infusion_hrs_lst,  # hour,  infusion hours
+      followup_period = params()[["followup_period"]], #followup_period,   # how long of the followup period after treatment
+      seed=params()[["seed"]]
+    )) 
     
     output = suppressWarnings(postProcess_simData(simData, params))
   }
@@ -176,10 +176,10 @@ if (ihandbook) {
   # use a nonmem dataset
   # ---------------------------------------   
   if (which_mode==2) {
-    if (!is.null(params$adsl)) {
-      col_lst <- c("USUBJID", setdiff(colnames(params$adsl), colnames(dataset)))
+    if (!is.null(params()[["adsl"]])) {
+      col_lst <- c("USUBJID", setdiff(colnames(params()[["adsl"]]), colnames(dataset)))
       nmdat = dataset %>%
-        left_join(params$adsl %>%  
+        left_join(params()[["adsl"]] %>%  
                     distinct(USUBJID, .keep_all=TRUE) %>% 
                     select(one_of(col_lst)),   
                   by=c("USUBJID")
@@ -188,19 +188,17 @@ if (ihandbook) {
     
     # 
     simData <- suppressWarnings(runSim_by_nmdat(
-      params$cppModel, 
+      params()[["cppModel"]],    # model file
       nmdat, 
-      simulation_delta = params$simulation_delta, #simulation_delta,  # integration step                  
+      simulation_delta = params()[["simulation_delta"]], #simulation_delta,  # integration step                  
       tgrid = NULL,     # extra timepoint (other than delta)
-      infusion_hrs_lst = params$infusion_hrs_lst, #infusion_hrs_lst,  # hour,  infusion hours
+      infusion_hrs_lst =  params()[["infusion_hrs_lst"]], #infusion_hrs_lst,  # hour,  infusion hours
       treat_end = max(dataset$TIME%>%as_numeric(), na.rm=TRUE), 
       sim_end = max(dataset$TIME%>%as_numeric(), na.rm=TRUE), 
-      seed=params$seed
+      seed=params()[["seed"]]
     )) 
     
     output = suppressWarnings(postProcess_simData(simData, params))
   }
-  
-  
   
 }
