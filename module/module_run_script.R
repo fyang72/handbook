@@ -159,7 +159,7 @@ output$data_container <- renderUI({
       validate(need(values$data[[i]], message="no data found"), 
                need(is.data.frame(values$data[[i]]), message="only data.frame allowed")
       )
-     
+      
       ALL = callModule(module_save_data, paste0("module_save_data_", i), 
                        ALL,
                        data = values$data[[i]],   
@@ -211,6 +211,8 @@ output$table_container <- renderUI({
 output$figure_container <- renderUI({  
   validate(need(is.list(values$figure), message="no figure found, or output$figure needs to be a list"))
   
+  
+  
   tagList(
     fluidRow(
       column(12,  offset=10,
@@ -245,7 +247,7 @@ output$figure_container <- renderUI({
 observeEvent(input$run_script, {
   validate(need(input$script_content, message="no script loaded yet")
   )
-  
+
   ihandbook = 1
   
   environment(try_eval) <- environment()
@@ -255,11 +257,7 @@ observeEvent(input$run_script, {
   if ("output" %in% ls(env)) {output = get("output", env)}
   if ("message" %in% ls(env)) {error_message = get("message", env)}
   
-  if ((length(error_message)==0 & !is.null(output)) |    
-      (length(error_message)>0 && 
-       error_message %in% c("Compiling cppModel ... done.",   # need to have library for these, 06/04/2019
-                            "Building cppModel ... done."))  # mread(quiet=TRUE)
-      ) {
+  if ((length(error_message)==0 & !is.null(output))) {
     if("data" %in% names(output)) {values$data = output$data}
     if("figure" %in% names(output))   {values$figure = output$figure}
     if("table" %in% names(output)) {values$table = output$table}

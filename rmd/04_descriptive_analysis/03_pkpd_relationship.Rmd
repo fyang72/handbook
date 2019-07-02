@@ -174,10 +174,9 @@ output$PKPD_linked_profiles_plot <- renderUI({
                         
    )
   
-  observeEvent(input$testvar_name, {
-    
-  })
-  
+  # observeEvent(input$testvar_name, {
+  #   
+  # })
   
    module_linked_profiles_UI(("module_PKPD_linked_profiles_plot")) 
      

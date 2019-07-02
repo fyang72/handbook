@@ -40,8 +40,8 @@ module_runsim_output_UI <- function(id, label = "") {
     # tgrid
     
     ), 
-     
-  module_run_script_UI(ns("mYtEsT_for_run_simulation_by_script"), label = NULL) 
+
+  uiOutput(ns("run_simulation_by_script_container"))
   
 )
 }
@@ -100,17 +100,17 @@ adsl <- reactive({
 ################################################
 # UI for run_simulation_by_script_container
 ################################################  
-#output$run_simulation_by_script_container<- renderUI({  
+output$run_simulation_by_script_container<- renderUI({  
   
 validate(
   need(cppModel(), message="No cppModel"), 
   need(values$adsl, message="No population (adsl)"), 
-  need(values$adex, message="No dosing regimen (adex)"),
+  need(values$adex, message="No dosing regimen (adex)")
   
-  need(input$infusion_hrs_lst, message="missing infusion hours"), 
-  need(input$seed, message="missing seed variable"), 
-  need(input$simulation_delta, message="missing simulation delta"), 
-  need(input$followup_period, message="missing followup_period")
+  #need(input$infusion_hrs_lst, message="missing infusion hours"), 
+  #need(input$seed, message="missing seed variable"), 
+  #need(input$simulation_delta, message="missing simulation delta"), 
+  #need(input$followup_period, message="missing followup_period")
 )
 
 # script
@@ -136,6 +136,10 @@ ALL =  callModule(module_run_script, "mYtEsT_for_run_simulation_by_script", ALL,
                       )
                     )
 )
+
+module_run_script_UI(ns("mYtEsT_for_run_simulation_by_script"), label = NULL) 
+
+})
 
 # addPercent <- function(x, mult = 100, ...){  06/28/2019, Friday, 08:45PM
 #   percent <- round(x * mult, ...)

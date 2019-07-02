@@ -66,8 +66,8 @@ module_linked_profiles <- function(input, output, session,
       
       tagList(
         #fluidRow(column(6, 
-        plotOutput(ns(paste0("plot", i)), brush = ns("brush")), 
-        tableOutput(ns(paste0("summary", i)))
+        uiOutput(ns(paste0("plot", i))), 
+        uiOutput(ns(paste0("summary", i)))
         #))
       )
       
@@ -75,12 +75,18 @@ module_linked_profiles <- function(input, output, session,
     
   })
   
-  
+
+    
   lapply(1:length(test_name), function(i) {
     
-    output[[paste0("plot", i)]] <- renderPlot({ 
+    output[[paste0("plot", i)]] <- renderUI({
+      
+    # loop for all the figures
+    output[[paste0("figure_output", i)]] <- renderPlot({ 
       
       validate(need(dataWithSelection(), message="no data found"))
+      
+      #print("render plots1")
       
       fig <- linked_time_profile_plot(
         dataWithSelection() %>% filter(TEST==test_name[i]),
@@ -98,6 +104,10 @@ module_linked_profiles <- function(input, output, session,
       fig
     })
     
+    plotOutput(ns(paste0("figure_output", i)), brush = ns("brush"))#, 
+    
+    
+  })
     # 
     # output[[paste0("summary", i)]] <- renderUI({
     #   
@@ -116,11 +126,13 @@ module_linked_profiles <- function(input, output, session,
     #   tableOutput(ns(paste0("table_output", i)))
     # })
     # 
-      
+    
+    # loop for all the tables
     output[[paste0("summary", i)]] <- renderUI({
       
       validate(need(dataWithSelection(), message="no data found"))
-      
+     
+      # or renderTable + tableOutput
       output[[paste0("table_output", i)]] <- DT::renderDataTable(                                                                                                                                          
         DT::datatable(data = 
                         dplyr::filter(dataWithSelection(), 
@@ -149,6 +161,7 @@ module_linked_profiles <- function(input, output, session,
              need(test_name, message="no analyte variables found")
              )
     
+    #print("in datawith selection1")
     tdata <- dataset %>% 
       mutate_(xvar = xvar_name, 
               yvar = yvar_name 
@@ -177,7 +190,7 @@ module_linked_profiles <- function(input, output, session,
       
       which_panel_brushed <- str_split(input$brush$outputId, "-") %>% unlist() %>% last()
       tdata1 <- sapply(1:length(test_name), function(i) {
-        if (which_panel_brushed == paste0("plot", i)) {
+        if (which_panel_brushed == paste0("figure_output", i)) {
           dataWithSelection_from_which_panel(tdata, which_var=test_name[i])
         }
       })  %>% bind_cols()
