@@ -2,150 +2,6 @@
 library(shiny)
 library(dplyr)
  
-######################################################################
-# initialization of key variables
-######################################################################
- 
-#HOME = "~/handbook/" 
-HOME = paste0(normalizePath("."), "/")
- 
-server_IP_address =  NULL  #"10.244.64.97"    # NULL  #
-
-actionButton_style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
-actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
-
-
-login = NULL
-login$status = TRUE
-login$user.name.lst = c("training",   "feng.yang"   )
-login$user.name = "feng.yang"   # determineCurrentUser(session=session)
-login$status = login$user.name %in% login$user.name.lst  
-globalVars <- reactiveValues(login=login)
-
-# placehold for all tables and figures  
-
-graphics.off() 
-
-FIGURE_ALL = NULL
-TABLE_ALL = NULL
-
-mg = 1
-mkg = 2
-
-SC = 1
-IV = 2
-
-
-######################################################################
-# convention 
-######################################################################
-topN = 20
-date_time_format = c("Ymd HMS", "mdY HMS", "bdY HMS", "dbY HMS")
-
-testcat.lst = c("PK1", "TARGET1", "SAF1", "EFF1", "BIOMKR1", "ADA1", "AE1")
-
-adsl.var.lst = c("STUDYID", "USUBJID",  
-               "AGE",  "AGEU",  "SEX",  "SEXN", "RACE",  "RACEN", "ETHNIC", "ETHNICN", 
-               "WGTBL", "HGTBL", "BMIBL", "BSABL","SITEID", 
-               "PKFL", "FASFL", "SAFFL", "ENRLFL", "RANDFL", "COMPLFL" )
-
-sex.lst = c( "MALE", "FEMALE", "UNKNOWN")
-
-ethnic.lst = c("NOT HISPANIC OR LATINO",  "HISPANIC OR LATINO")
-
-race.lst =c("WHITE", 
-          "BLACK OR AFRICAN AMERICAN",
-          "ASIAN",
-          "AMERICAN INDIAN OR ALASKA NATIVE",
-          "NATIVE HAWAIIAN OR OTHER PACIFIC ISLANDER",    
-          "OTHER", 
-          "UNKNOWN",
-          "NOT REPORTED"
-)
-
-
-
-adex.var.lst = c("STUDYID",  "USUBJID",  "ARMA", "ARMAN", "VISIT",    "VISITNUM",  "TIME",   
-               "EXTRT", "EXDOSE",   "EXDOSU",  "EXTDOSE",  "EXDUR", "EXROUTE", "EXROUTN",   
-               "EXSTDTC",  "EXENDTC", "TRTSDTM")
-
-
-
-dvoru.lst = c("mg/L")
-dosu.lst = c("mg", "mg/kg")
-admin.route.lst = c("SUBCUTANEOUS", "INTRAVENOUS", "INTRAMUSCULAR", "IVT")
-
-
-adpc.var.lst <- c(
-"STUDYID",   "USUBJID", "ARMA",  "ARMAN",
-"VISIT",   "VISITN",   "PCTPT", "TIME", "NTIM",  
-"TEST", "TESTN", "TESTCD", "TESTCAT",   "DVOR", "DVORU", "BLQ", "LLOQ",  "METHOD", "SAMDTTM"      
-)  
-
-
-nmdat.mandatory.var.lst = c("ROWID","ID","TIME","DV","CMT","MDV","AMT","RATE","EVID")
-nmdat.var.lst =  c(
-"C", "ROWID",  "ID", "ARMAN", "VISITNUM", "TIME", "NTIM",
-"TESTN", "DV", "DVOR", "BLQ", "LLOQ", "CMT",  "MDV",
-"EXTRTN", "AMT",  "RATE", "EXROUTN", "EVID",  
-"AGE",  "AGEU",  "SEX",  "SEXN", "RACE",  "RACEN", "ETHNIC", "ETHNICN", 
-"WGTBL", "HGTBL", "BMIBL", "BSABL","SITEID", 
-
-"STUDYID", "USUBJID", "ARMA",  "VISIT",  "PCTPT", 
-"TEST", "TESTCD", "TESTCAT",  "DVORU", "METHOD", "SAMDTTM",  
-"EXTRT", "EXDOSE",   "EXDOSU",  "EXTDOSE", "EXDUR", "EXROUTE", "EXSTDTC", "EXENDTC", "TRTSDTM",
-
-"PKFL", "FASFL", "SAFFL", "ENRLFL", "RANDFL", "COMPLFL",
-"CFLAG"             
-)
-adpx.var.lst = nmdat.var.lst
-
-
-
-
-library(dplyr)
-library(readxl)
-file_name <- "~/handbook/lib/pkmeta.xlsx" 
-
-std_nmdat <- read_excel(file_name,sheet="nmdat",col_names = TRUE)  %>% 
-  as.data.frame() %>% filter(!is.na(standard.name))
-
-std_adsl <- read_excel(file_name,sheet="adsl",col_names = TRUE)  %>% 
-  as.data.frame() %>% filter(!is.na(standard.name))
-
-std_adex <- read_excel(file_name,sheet="adex",col_names = TRUE)  %>% 
-  as.data.frame() %>% filter(!is.na(standard.name))
-
-std_adpc <- read_excel(file_name,sheet="adpc",col_names = TRUE)  %>% 
-  as.data.frame() %>% filter(!is.na(standard.name))
-
-std_convention <- read_excel(file_name,sheet="convention",col_names = TRUE)  %>% 
-  as.data.frame() %>% filter(!is.na(domain))
- 
-adsl_var_lst <- std_adsl %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
-adex_var_lst <- std_adex %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
-adpc_var_lst <- std_adpc %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
-nmdat_var_lst <- std_nmdat %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
-
-dvoru_var_lst <- std_convention %>% filter(domain=="DVORU") %>% pull(value)
-sex_var_lst <- std_convention %>% filter(domain=="SEX") %>% pull(value)
-race_var_lst <- std_convention %>% filter(domain=="RACE") %>% pull(value)
-ethnic_var_lst <- std_convention %>% filter(domain=="ETHNIC") %>% pull(value)
-dosu_var_lst <- std_convention %>% filter(domain=="DOSU") %>% pull(value)
-route_var_lst <- std_convention %>% filter(domain=="ROUTE") %>% pull(value)
-testcat_var_lst <- std_convention %>% filter(domain=="TESTCAT") %>% pull(value)
-timefmt_var_lst <- std_convention %>% filter(domain=="TIMEFMT") %>% pull(value)
-
-topN = 20
-fuzzy_match_method = "jw"
-fuzzy_match_threshold = 0.5
-
-n_subject_showing_in_simulation = 10
-nmdat.mandatory.var.lst = c("ROWID","ID","TIME","DV","CMT","MDV","AMT","RATE","EVID")
-
-infusion_hrs_lst = c(0.5, 1, 2)
-followup_period = 112   # days
-simulation_delta = 1  # days
 
 ######################################################################
 # Load packages
@@ -397,3 +253,175 @@ options(dplyr.print_min = 6, dplyr.print_max = 6)
 
 
 
+
+
+######################################################################
+# initialization of key variables
+######################################################################
+
+#HOME = "~/handbook/" 
+HOME = paste0(normalizePath("."), "/")
+
+server_IP_address =  NULL  #"10.244.64.97"    # NULL  #
+
+actionButton_style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
+actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
+
+
+login = NULL
+login$status = TRUE
+login$user.name.lst = c("training",   "feng.yang"   )
+login$user.name = "feng.yang"   # determineCurrentUser(session=session)
+login$status = login$user.name %in% login$user.name.lst  
+globalVars <- reactiveValues(login=login)
+
+# placehold for all tables and figures  
+
+graphics.off() 
+
+FIGURE_ALL = NULL
+TABLE_ALL = NULL
+
+mg = 1
+mkg = 2
+
+SC = 1
+IV = 2
+
+
+######################################################################
+# convention 
+######################################################################
+topN = 20
+date_time_format = c("Ymd HMS", "mdY HMS", "bdY HMS", "dbY HMS")
+
+testcat.lst = c("PK1", "TARGET1", "SAF1", "EFF1", "BIOMKR1", "ADA1", "AE1")
+
+adsl.var.lst = c("STUDYID", "USUBJID",  
+                 "AGE",  "AGEU",  "SEX",  "SEXN", "RACE",  "RACEN", "ETHNIC", "ETHNICN", 
+                 "WGTBL", "HGTBL", "BMIBL", "BSABL","SITEID", 
+                 "PKFL", "FASFL", "SAFFL", "ENRLFL", "RANDFL", "COMPLFL" )
+
+sex.lst = c( "MALE", "FEMALE", "UNKNOWN")
+
+ethnic.lst = c("NOT HISPANIC OR LATINO",  "HISPANIC OR LATINO")
+
+race.lst =c("WHITE", 
+            "BLACK OR AFRICAN AMERICAN",
+            "ASIAN",
+            "AMERICAN INDIAN OR ALASKA NATIVE",
+            "NATIVE HAWAIIAN OR OTHER PACIFIC ISLANDER",    
+            "OTHER", 
+            "UNKNOWN",
+            "NOT REPORTED"
+)
+
+
+
+adex.var.lst = c("STUDYID",  "USUBJID",  "ARMA", "ARMAN", "VISIT",    "VISITNUM",  "TIME",   
+                 "EXTRT", "EXDOSE",   "EXDOSU",  "EXTDOSE",  "EXDUR", "EXROUTE", "EXROUTN",   
+                 "EXSTDTC",  "EXENDTC", "TRTSDTM")
+
+
+
+dvoru.lst = c("mg/L")
+dosu.lst = c("mg", "mg/kg")
+admin.route.lst = c("SUBCUTANEOUS", "INTRAVENOUS", "INTRAMUSCULAR", "IVT")
+
+
+adpc.var.lst <- c(
+  "STUDYID",   "USUBJID", "ARMA",  "ARMAN",
+  "VISIT",   "VISITN",   "PCTPT", "TIME", "NTIM",  
+  "TEST", "TESTN", "TESTCD", "TESTCAT",   "DVOR", "DVORU", "BLQ", "LLOQ",  "METHOD", "SAMDTTM"      
+)  
+
+
+nmdat.mandatory.var.lst = c("ROWID","ID","TIME","DV","CMT","MDV","AMT","RATE","EVID")
+nmdat.var.lst =  c(
+  "C", "ROWID",  "ID", "ARMAN", "VISITNUM", "TIME", "NTIM",
+  "TESTN", "DV", "DVOR", "BLQ", "LLOQ", "CMT",  "MDV",
+  "EXTRTN", "AMT",  "RATE", "EXROUTN", "EVID",  
+  "AGE",  "AGEU",  "SEX",  "SEXN", "RACE",  "RACEN", "ETHNIC", "ETHNICN", 
+  "WGTBL", "HGTBL", "BMIBL", "BSABL","SITEID", 
+  
+  "STUDYID", "USUBJID", "ARMA",  "VISIT",  "PCTPT", 
+  "TEST", "TESTCD", "TESTCAT",  "DVORU", "METHOD", "SAMDTTM",  
+  "EXTRT", "EXDOSE",   "EXDOSU",  "EXTDOSE", "EXDUR", "EXROUTE", "EXSTDTC", "EXENDTC", "TRTSDTM",
+  
+  "PKFL", "FASFL", "SAFFL", "ENRLFL", "RANDFL", "COMPLFL",
+  "CFLAG"             
+)
+adpx.var.lst = nmdat.var.lst
+
+
+
+
+library(dplyr)
+library(readxl)
+file_name <- "~/handbook/lib/pkmeta.xlsx" 
+
+
+std_adsl <- read_excel(file_name,sheet="adsl",col_names = TRUE)  %>% 
+  as.data.frame() %>% filter(!is.na(standard.name))
+
+std_adex <- read_excel(file_name,sheet="adex",col_names = TRUE)  %>% 
+  as.data.frame() %>% filter(!is.na(standard.name))
+
+std_adpc <- read_excel(file_name,sheet="adpc",col_names = TRUE)  %>% 
+  as.data.frame() %>% filter(!is.na(standard.name))
+
+std_nmdat <- read_excel(file_name,sheet="nmdat",col_names = TRUE)  %>% 
+  as.data.frame() %>% filter(!is.na(standard.name))
+
+std_convention <- read_excel(file_name,sheet="convention",col_names = TRUE)  %>% 
+  as.data.frame() %>% filter(!is.na(domain))
+
+adsl_var_lst <- std_adsl %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
+adex_var_lst <- std_adex %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
+adpc_var_lst <- std_adpc %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
+nmdat_var_lst <- std_nmdat %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
+
+# adsl_data_type
+adsl_data_type <- fuzzy_match(std_adsl %>% pull(type), 
+                              c("character", "numeric", "integer"))
+names(adsl_data_type) = std_adsl %>% pull(standard.name)  #c("STUDYID", "SEXN", "WGTBL")
+
+# adex_data_type
+adex_data_type <- fuzzy_match(std_adex %>% pull(type), 
+                              c("character", "numeric", "integer"))
+names(adex_data_type) = std_adex %>% pull(standard.name)  #c("STUDYID", "SEXN", "WGTBL")
+
+# adpc_data_type
+adpc_data_type <- fuzzy_match(std_adpc %>% pull(type), 
+                              c("character", "numeric", "integer"))
+names(adpc_data_type) = std_adpc %>% pull(standard.name)  #c("STUDYID", "SEXN", "WGTBL")
+
+# nmdat
+nmdat_data_type <- fuzzy_match(std_nmdat %>% pull(type), 
+                               c("character", "numeric", "integer"))
+names(nmdat_data_type) = std_nmdat %>% pull(standard.name)  #c("STUDYID", "SEXN", "WGTBL")
+
+
+
+
+
+
+dvoru_var_lst <- std_convention %>% filter(domain=="DATA", name=="DVORU") %>% pull(value)
+sex_var_lst <- std_convention %>% filter(domain=="DATA", name=="SEX") %>% pull(value)
+race_var_lst <- std_convention %>% filter(domain=="DATA", name=="RACE") %>% pull(value)
+ethnic_var_lst <- std_convention %>% filter(domain=="DATA", name=="ETHNIC") %>% pull(value)
+dosu_var_lst <- std_convention %>% filter(domain=="DATA", name=="DOSU") %>% pull(value)
+route_var_lst <- std_convention %>% filter(domain=="DATA", name=="ROUTE") %>% pull(value)
+testcat_var_lst <- std_convention %>% filter(domain=="DATA", name=="TESTCAT") %>% pull(value)
+timefmt_var_lst <- std_convention %>% filter(domain=="DATA", name=="TIMEFMT") %>% pull(value)
+
+topN = 20
+fuzzy_match_method = "jw"
+fuzzy_match_threshold = 0.5
+
+n_subject_showing_in_simulation = 10
+nmdat.mandatory.var.lst = c("ROWID","ID","TIME","DV","CMT","MDV","AMT","RATE","EVID")
+
+infusion_hrs_lst = c(0.5, 1, 2)
+followup_period = 112   # days
+simulation_delta = 1  # days

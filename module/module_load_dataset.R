@@ -22,7 +22,10 @@ module_load_dataset_UI <- function(id, label = "") {
 # main function: module_load_dataset
 ################################################################################
 
-module_load_dataset <- function(input, output, session, ALL, dataset_name="dataset_name") {
+module_load_dataset <- function(input, output, session, 
+                                ALL, 
+                                dataset_name="dataset_name", 
+                                dataset_type = "data") {
   
   ns <- session$ns 
    
@@ -34,7 +37,7 @@ module_load_dataset <- function(input, output, session, ALL, dataset_name="datas
     fluidRow(
       column(12,  
              radioButtons(ns("dataset_source"), 
-                          label="Select data from:", 
+                          label=paste0("Select ", dataset_type, " from:"), 
                           choices=c("internal library", "within session", "external file"), 
                           inline=TRUE, 
                           width="100%",

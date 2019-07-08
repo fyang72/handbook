@@ -1,58 +1,45 @@
 
-#################################################################
+########################################################################
 # build_adsl
-#################################################################
+########################################################################
 build_adsl <-function(dataset) { 
 
   # must have these desired variables, if missing, fill with NA 
   adsl = dataset %>% fillUpCol_df(adsl_var_lst) 
   
-  #---------------------------------------- 
+  #--------------------------------------------------------------
   # Analysis identifiers
-  #---------------------------------------- 
+  #--------------------------------------------------------------
   # STUDYID
-  adsl$STUDYID = adsl$STUDYID 
+  adsl <- adsl %>% mutate(STUDYID = STUDYID %>% as.character())
   
   # USUBJID
-  if (all(is.na(adsl$USUBJID))) {print("error: all(is.na(USUBJID))=TRUE")}
-
-  # standardize USUBJID
-  adsl$CLID = adsl$USUBJID 
-  study.id = unique(adsl$STUDYID)
-  study.id = study.id[which(!is.na(study.id))]
-  for (i in 1:max(1,length(study.id))) { 
-    adsl$CLID = gsub(study.id[i], "", adsl$CLID, fix=TRUE)
-  }
-  adsl$CLID = gsub("-", "", adsl$CLID, fix=TRUE)   
+  if (all(is.na(adsl$USUBJID))) {
+    print("error: all(is.na(USUBJID))=TRUE")}
   
-  t1 = unique(nchar(adsl$CLID))
-  t1 = t1[which(!is.na(t1))]
-  if (length(t1)==0)  {print("warning: no USUBJID")
-  }else if (length(t1)>1)  {print("warning: the length of CLID in adsl are not the same.")
-      }else{ 
-          if (t1==9) { adsl = adsl %>% mutate(SUBJECT=paste(substr(CLID, 1, 3), substr(CLID, 4,6), substr(CLID, 7, 9), sep="-"))}
-          if (t1==6) { adsl = adsl %>% mutate(SUBJECT=paste(substr(CLID, 1, 3), substr(CLID, 4,6), sep="-"))}
-          if (t1==3) { adsl = adsl %>% mutate(SUBJECT=paste(substr(CLID, 1, 3), sep="-"))}
-          if (!t1 %in% c(3, 6, 9)) {print("nchar(CLID) in adsl !=3, 6 or 9")}
-          adsl$USUBJID <- paste(adsl$STUDYID,  adsl$SUBJECT, sep="-") 
-          adsl = adsl %>% select(-SUBJECT, -CLID)
-      }
+  adsl <- adsl %>% mutate(
+    USUBJID = standardise_USUBJID(STUDYID, USUBJID) %>% 
+      as.character()
+    )
+   
     
-  #----------------------------------------------------------------------------- 
+  #--------------------------------------------------------------
   # Analysis Treatment Variables 
-  #----------------------------------------------------------------------------- 
+  #--------------------------------------------------------------
   # "ARM"      "ARMN"      planned ARM
   # "TRT01P"   "TRT01PN"   planned treatment
   # "TRT01A"   "TRT01AN"   actual treatment  
   # 
-  # "TRTSDT"   "TRTSTM"   "TRTSDTM"    date/time of start treatment 
-  # "TRTEDT"   "TRTETM"   "TRTEDTM"    date/time of end of treatment 
+  # "TRTSDT"   "TRTSTM"   "TRTSDTM"  date/time of start treatment 
+  # "TRTEDT"   "TRTETM"   "TRTEDTM"  date/time of end of treatment 
   
+  # Treatment information will be included in adex dataset
   
-  #----------------------------------------------------------------------------- 
-  # Demographic continous variables:  "AGE"  "WGTBL" "HGTBL"  "BMIBL" "BSABL" 
-  #----------------------------------------------------------------------------- 
-  adsl = adsl %>% mutate(AGE=as_numeric(AGE), 
+  #--------------------------------------------------------------
+  # Demographic continous variables:  
+  # "AGE"  "WGTBL" "HGTBL"  "BMIBL" "BSABL" 
+  #--------------------------------------------------------------
+  adsl = adsl %>% mutate(AGE = as_numeric(AGE), 
                          WGTBL = as_numeric(WGTBL), 
                          HGTBL = as_numeric(HGTBL))    
    
@@ -61,38 +48,47 @@ build_adsl <-function(dataset) {
   #   normal weight: 18.5 to 25, 
   #   overweight:    25 to 30, 
   #   obese: over    30.
-  adsl$BMIBL =  signif(adsl$WGTBL/(adsl$HGTBL/100)^2, digits=3)     # in kg/m2
-  
+  adsl <- adsl %>% mutate(
+      BMIBL = signif(WGTBL/(HGTBL/100)^2, digits=3) %>% as_numeric()
+    )  # in kg/m2
+    
   
   # The most widely used is the Du Bois formula,[3][4] which been shown to be 
   # equally as effective in estimating body fat in obese and non-obese patients, 
   # something the Body mass index fails to do
-  adsl$BSABL = signif(0.007184*(adsl$WGTBL)^0.425 * (adsl$HGTBL)^0.725, digits=3)  # in M^2
-  adsl$BSABL = as_numeric(adsl$BSABL)
+  adsl <- adsl %>% mutate(
+    BSABL = signif(0.007184*(WGTBL)^0.425*(HGTBL)^0.725, digits=3) %>%  # in M^2
+    as_numeric()
+    )
   
-  #-----------------------------------------------------------------------------   
-  # Demographic categorical variables: "SEX" "SEXN" "ETHNIC" "ETHNICN" "RACE" "RACEN"  
-  #-----------------------------------------------------------------------------
-  # sex.lst = c("MALE", "FEMALE", "UNKNOWN")
-  adsl = adsl %>% mutate(#SEX_ORG = SEX, 
-                         SEX = fuzzy_match(toupper(SEX), sex_var_lst, 
-                                           fuzzy_match_method, fuzzy_match_threshold
-                                           ),  
-                         SEXN = ifelse(is.na(SEX), -99, as.integer(SEX))# MALE: 1, FEMALE: 2
+  #--------------------------------------------------------------  
+  # Demographic categorical variables: 
+  # "SEX" "SEXN" "ETHNIC" "ETHNICN" "RACE" "RACEN"  
+  #--------------------------------------------------------------
+  # sex_var_lst = c("MALE", "FEMALE", "UNKNOWN")
+  # # MALE: 1, FEMALE: 2
+  adsl = adsl %>% mutate(
+    #SEX = fuzzy_match(toupper(SEX), sex_var_lst, 
+    #         fuzzy_match_method, fuzzy_match_threshold
+    #        ),  
+    SEX = ordered(toupper(SEX), levels=sex_var_lst), 
+    SEXN = ifelse(is.na(SEX), -99, as.integer(SEX)), 
+    SEX = as.character(SEX)
                       
   )
-    
  
-  # ethnic.lst = c("NOT HISPANIC OR LATINO",  "HISPANIC OR LATINO")
-  adsl = adsl %>% mutate(#ETHNIC_ORG = ETHNIC, 
-                         ETHNIC = fuzzy_match(toupper(ETHNIC), ethnic_var_lst, 
-                                              fuzzy_match_method, fuzzy_match_threshold
-                         ),
-                         ETHNICN = ifelse(is.na(ETHNIC), -99, as.integer(ETHNIC))
+  # ethnic_var_lst = c("NOT HISPANIC OR LATINO",  "HISPANIC OR LATINO")
+  adsl = adsl %>% mutate(
+    #ETHNIC = fuzzy_match(toupper(ETHNIC), ethnic_var_lst, 
+    #                     fuzzy_match_method, fuzzy_match_threshold
+    #),
+    ETHNIC = ordered(toupper(ETHNIC), levels=ethnic_var_lst), 
+    ETHNICN = ifelse(is.na(ETHNIC), -99, as.integer(ETHNIC)), 
+    ETHNIC = as.character(ETHNIC)
   )
   
   
-  # race.lst =c(  "WHITE", 
+  # race_var_lst =c(  "WHITE", 
   #               "BLACK OR AFRICAN AMERICAN",
   #               "ASIAN",
   #               "AMERICAN INDIAN OR ALASKA NATIVE",
@@ -100,40 +96,45 @@ build_adsl <-function(dataset) {
   #               "OTHER", 
   #               "UNKNOWN",
   #               "NOT REPORTED")
-  adsl = adsl %>% mutate(#RACE_ORG = RACE, 
-                         RACE = fuzzy_match(toupper(RACE), race_var_lst, 
-                                            fuzzy_match_method, fuzzy_match_threshold
-                         ),
-                         RACEN = ifelse(is.na(RACE), -99,  as.integer(RACE)) 
+  adsl = adsl %>% mutate(
+    #RACE = fuzzy_match(toupper(RACE), race_var_lst, 
+    #                   fuzzy_match_method, fuzzy_match_threshold
+    #),
+  RACE = ordered(toupper(RACE), levels=race_var_lst), 
+  RACEN = ifelse(is.na(RACE), -99,  as.integer(RACE)), 
+  RACE = as.character(RACE)
   )
   
-  #-----------------------------------------------------------------------------
+  #--------------------------------------------------------------
   # population flag
-  #-----------------------------------------------------------------------------     
+  #--------------------------------------------------------------   
   # "SAFFL"    safety population flag   
   # "COMPLFL"  completers population flag
   # "RANDFL"   randomized population flag
   # "ENRLFL"   enrolled population flag
   # "PKFL"     PK population flag
-  
 
   
-  #---------------------------------------------
+  #--------------------------------------------------------------
   # order columns, and final output
-  #---------------------------------------------   
-  adsl= adsl[, c(adsl_var_lst, setdiff(colnames(adsl), adsl_var_lst))]
+  #--------------------------------------------------------------  
+  # put variables (tier=1 or 2 fisrt)
+  adsl <- adsl[, c(adsl_var_lst, setdiff(colnames(adsl), adsl_var_lst))]
+  adsl <- convert_vars_type(adsl, adsl_data_type)
+  adsl <- adsl %>% dplyr::arrange(STUDYID, USUBJID) 
+  adsl <- adsl %>% ungroup()
   
   return(adsl) 
-  
 }
 
 
-#################################################################
+########################################################################
 # check_adsl
-#################################################################
+########################################################################
 
 check_adsl <- function(dataset, adsl, topN=20) {
- 
+  adsl <- adsl %>% ungroup()
+  
   dataset = dataset %>% ungroup() %>% 
     rename_at(vars(colnames(dataset)),
               ~ paste0(colnames(dataset), "_ORG")
@@ -154,7 +155,7 @@ check_adsl <- function(dataset, adsl, topN=20) {
   attr(tabl, "title") = "List of subject (USUBJID) who do not have his/her baseline weight (WGTBL)" 
   attr(tabl, "key") = "USUBJID"
   attr(tabl, "value") = "WGTBL" 
-  if (nrow(tabl)==topN) {attr(tabl, "footnote") = paste0("Note, the default is to display top ", topN, " rows.")}
+  if (nrow(tabl)>topN) {attr(tabl, "footnote") = paste0("Note, the default is to display top ", topN, " rows.")}
   table[["WGTBL"]] = tabl
   
   #----------------- 
@@ -170,7 +171,7 @@ check_adsl <- function(dataset, adsl, topN=20) {
   attr(tabl, "value") = "SEX"
   
   attr(tabl, "footnote") = paste0("Note, the standarad names for gender are ", paste0(sex.lst, collapse=", "), ". ")  
-  if (nrow(tabl)==topN) {attr(tabl, "footnote") = paste0(attr(tabl, "footnote"), "The default is to display top ", topN, " rows.")}
+  if (nrow(tabl)>topN) {attr(tabl, "footnote") = paste0(attr(tabl, "footnote"), "The default is to display top ", topN, " rows.")}
   table[["SEX"]] = tabl
   
   #----------------- 
@@ -186,7 +187,7 @@ check_adsl <- function(dataset, adsl, topN=20) {
   attr(tabl, "value") = "ETHNIC"
 
   attr(tabl, "footnote") = paste0("Note, the standarad names for ethnic are ", paste0(ethnic.lst, collapse=", "), ". ")  
-  if (nrow(tabl)==topN) {attr(tabl, "footnote") = paste0(attr(tabl, "footnote"), "The default is to display top ", topN, " rows.")}
+  if (nrow(tabl)>topN) {attr(tabl, "footnote") = paste0(attr(tabl, "footnote"), "The default is to display top ", topN, " rows.")}
   table[["ETHNIC"]] = tabl
   
   #----------------- 
@@ -202,16 +203,16 @@ check_adsl <- function(dataset, adsl, topN=20) {
   attr(tabl, "value") = "RACE"
   
   attr(tabl, "footnote") = paste0("Note, the standarad names for race are ", paste0(race.lst, collapse=", "), ". ")  
-  if (nrow(tabl)==topN) {attr(tabl, "footnote") = paste0(attr(tabl, "footnote"), "The default is to display top ", topN, " rows.")}
+  if (nrow(tabl)>topN) {attr(tabl, "footnote") = paste0(attr(tabl, "footnote"), "The default is to display top ", topN, " rows.")}
   table[["RACE"]] = tabl
   
   return(table)
 }
 
 
-#################################################################
+########################################################################
 # final output
-#################################################################
+########################################################################
 if (ihandbook) {
   data = NULL
   table = NULL

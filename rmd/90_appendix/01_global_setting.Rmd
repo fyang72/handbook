@@ -1,0 +1,298 @@
+
+# Appendix {-}
+ 
+
+## Global setting
+
+This chapter is for a model library, in particular how to add, delete or retrieve a given model(s). 
+All modles will be included, with their meta information, i.e. who developed it (author), when developed (year), 
+key features of model (1/2 comparment, linear/nonlinear), which therapeutic area (area), which program, which study, etc.
+
+
+
+### Standard naming convention  <a name="global_setting_standard_naming_convention"></a>
+
+Standard naming convention for adsl, adex, adpc, and nmdat. 
+
+```{r, eval=TRUE } 
+ 
+table = NULL
+file_name <- "~/handbook/lib/pkmeta.xlsx" 
+  
+# adsl
+tabl = read_excel(file_name,sheet="adsl",col_names = TRUE)  %>% 
+  as.data.frame() %>% filter(!is.na(standard.name)) %>% select(-which.column)
+attr(tabl, "title") = "List of standard varaibles for adsl" 
+attr(tabl, "footnote") = paste0("Note, variable labeled as tier=1 are key variables, tier=2 are secondary variables, tier=3 are optional variables.")
+table[["adsl"]] = tabl
+
+# adex
+tabl = read_excel(file_name,sheet="adex",col_names = TRUE)  %>% 
+  as.data.frame() %>% filter(!is.na(standard.name)) %>% select(-which.column)
+attr(tabl, "title") = "List of standard varaibles for adex" 
+attr(tabl, "footnote") = paste0("Note, variable labeled as tier=1 are key variables, tier=2 are secondary variables, tier=3 are optional variables.")
+table[["adex"]] = tabl 
+
+# adpc
+tabl = read_excel(file_name,sheet="adpc",col_names = TRUE)  %>% 
+  as.data.frame() %>% filter(!is.na(standard.name)) %>% select(-which.column)
+attr(tabl, "title") = "List of standard varaibles for adpc" 
+attr(tabl, "footnote") = paste0("Note, variable labeled as tier=1 are key variables, tier=2 are secondary variables, tier=3 are optional variables.")
+table[["adpc"]] = tabl 
+
+# nmdat
+tabl = read_excel(file_name,sheet="nmdat",col_names = TRUE)  %>% 
+  as.data.frame() %>% filter(!is.na(standard.name)) %>% select(-which.column)
+attr(tabl, "title") = "List of standard varaibles for nonmem dataset(nmdat)" 
+attr(tabl, "footnote") = paste0("Note, variable labeled as tier=1 are key variables, tier=2 are secondary variables, tier=3 are optional variables.")
+table[["nmdat"]] = tabl 
+  
+values = reactiveValues(figure=NULL, table=NULL, data=NULL)
+values$table = table
+
+################################
+# checkInRows_container
+ #fluidRow(column(12, uiOutput(("standard_dataset_container")))) 
+ 
+################################
+tabBox(width=12, id = ("standard_dataset"), title =NULL, 
+       
+        # adsl_container 
+        tabPanel(width=12, title="adsl", value = "adsl", collapsible = TRUE, 
+                 collapsed = TRUE, solidHeader = TRUE,
+                 fluidRow(column(12, uiOutput(("adsl_container")))) 
+        ),
+       
+       # adex_container 
+       tabPanel(width=12, title="adex", value = "adex", collapsible = TRUE, 
+                collapsed = TRUE, solidHeader = TRUE,
+                  fluidRow(column(12, uiOutput(("adex_container")))) 
+       ),        
+       
+       # adpc_container 
+       tabPanel(width=12, title="adpc", value = "adpc", collapsible = TRUE, 
+                collapsed = TRUE, solidHeader = TRUE,
+                  fluidRow(column(12, uiOutput(("adpc_container"))))  
+       ),     
+           
+       # nmdat_container
+       tabPanel(width=12, title="nmdat", value = "nmdat", collapsible = TRUE, 
+                collapsed = TRUE, solidHeader = TRUE,
+                fluidRow(column(width=12, uiOutput(("nmdat_container"))))
+       ) 
+    ) # tabBox
+
+
+output$adsl_container <- renderUI({  
+  validate(need(is.list(values$table), message="No table found, or values$table needs to be a list"), 
+           need(values$table[["adsl"]], message="no table found"), 
+           need(is.data.frame(values$table[["adsl"]]), message="only data.frame allowed")
+      )
+    
+  # module
+   callModule(module_checkInRows, paste0("module_adsl_table"),  
+                      values0 = values,
+                      table_index = 1
+  )   
+  
+  # UI
+  module_checkInRows_UI((paste0("module_adsl_table")), label = NULL) 
+ 
+})
+   
+output$adex_container <- renderUI({  
+  validate(need(is.list(values$table), message="No table found, or values$table needs to be a list"), 
+           need(values$table[["adex"]], message="no table found"), 
+           need(is.data.frame(values$table[["adex"]]), message="only data.frame allowed")
+      )
+    
+  # module
+   callModule(module_checkInRows, paste0("module_adex_table"),  
+                      values0 = values,
+                      table_index = 2
+  )   
+  
+  # UI
+  module_checkInRows_UI((paste0("module_adex_table")), label = NULL) 
+ 
+})
+ 
+ 
+output$adpc_container <- renderUI({  
+  validate(need(is.list(values$table), message="No table found, or values$table needs to be a list"), 
+           need(values$table[["adpc"]], message="no table found"), 
+           need(is.data.frame(values$table[["adpc"]]), message="only data.frame allowed")
+      )
+    
+  # module
+   callModule(module_checkInRows, paste0("module_adpc_table"),  
+                      values0 = values,
+                      table_index = 3
+  )   
+  
+  # UI
+  module_checkInRows_UI((paste0("module_adpc_table")), label = NULL) 
+ 
+})
+
+output$nmdat_container <- renderUI({  
+  validate(need(is.list(values$table), message="No table found, or values$table needs to be a list"), 
+           need(values$table[["nmdat"]], message="no table found"), 
+           need(is.data.frame(values$table[["nmdat"]]), message="only data.frame allowed")
+      )
+    
+  # module
+   callModule(module_checkInRows, paste0("module_nmdat_table"),  
+                      values0 = values,
+                      table_index = 4
+  )   
+  
+  # UI
+  module_checkInRows_UI((paste0("module_nmdat_table")), label = NULL) 
+ 
+})
+
+
+```
+
+
+### Naming convention
+
+List of naming conventions and parameters for this handbook
+
+```{r }
+table = NULL
+file_name <- "~/handbook/lib/pkmeta.xlsx"# naming convention and parameters for this handbook 
+
+convention_all_table =  read_excel(file_name,sheet="convention",col_names = TRUE)  %>% 
+  as.data.frame() %>% filter(!is.na(domain))
+
+# DATA
+tabl <- convention_all_table %>% filter(domain=="DATA") %>% select(-domain)
+attr(tabl, "title") = "List of naming conventions for data variables " 
+attr(tabl, "footnote") = ""
+table[["DATA"]] = tabl 
+
+# SIMULATION
+tabl <- convention_all_table %>% filter(domain=="SIMULATION") %>% select(-domain)
+attr(tabl, "title") = "List of default parameters for simulation " 
+attr(tabl, "footnote") = ""
+table[["SIMULATION"]] = tabl 
+ 
+# RUN_NONMEM
+tabl <- convention_all_table %>% filter(domain=="NONMEM") %>% select(-domain)
+attr(tabl, "title") = "List of default parameters for running nonmem jobs " 
+attr(tabl, "footnote") = ""
+table[["NONMEM"]] = tabl 
+
+# GGPLOT
+tabl <- convention_all_table %>% filter(domain=="GGPLOT") %>% select(-domain)
+attr(tabl, "title") = "List of default parameters for ggplot visualization " 
+attr(tabl, "footnote") = ""
+table[["GGPLOT"]] = tabl 
+
+
+values2 = reactiveValues(figure=NULL, table=NULL, data=NULL)
+values2$table = table
+ 
+
+
+################################
+tabBox(width=12, id = ("naming_convention_params_app"), title =NULL, 
+       
+        # adsl_container 
+        tabPanel(width=12, title="data", value = "data", collapsible = TRUE, 
+                 collapsed = TRUE, solidHeader = TRUE,
+                 fluidRow(column(12, uiOutput(("global_params_data_container")))) 
+        ),
+       
+       # adex_container 
+       tabPanel(width=12, title="simulation", value = "simulation", collapsible = TRUE, 
+                collapsed = TRUE, solidHeader = TRUE,
+                  fluidRow(column(12, uiOutput(("global_params_simulation_container")))) 
+       ),        
+       
+       # adpc_container 
+       tabPanel(width=12, title="NONMEM", value = "NONMEM", collapsible = TRUE, 
+                collapsed = TRUE, solidHeader = TRUE,
+                  fluidRow(column(12, uiOutput(("global_params_nonmem_container"))))  
+       ),     
+           
+       # nmdat_container
+       tabPanel(width=12, title="ggplot", value = "ggplot", collapsible = TRUE, 
+                collapsed = TRUE, solidHeader = TRUE,
+                fluidRow(column(width=12, uiOutput(("global_params_ggplot_container"))))
+       ) 
+ ) # tabBox
+
+
+output$global_params_data_container <- renderUI({  
+  validate(need(is.list(values2$table), message="No table found, or values$table needs to be a list"), 
+           need(values2$table[["DATA"]], message="no table found"), 
+           need(is.data.frame(values2$table[["DATA"]]), message="only data.frame allowed")
+      )
+    
+  # module
+   callModule(module_checkInRows, paste0("global_params_data"),  
+                      values0 = values2,
+                      table_index = 1
+  )   
+  
+  # UI
+  module_checkInRows_UI((paste0("global_params_data")), label = NULL) 
+ 
+})
+   
+output$global_params_simulation_container <- renderUI({  
+  validate(need(is.list(values2$table), message="No table found, or values$table needs to be a list"), 
+           need(values2$table[["SIMULATION"]], message="no table found"), 
+           need(is.data.frame(values2$table[["SIMULATION"]]), message="only data.frame allowed")
+      )
+    
+  # module
+   callModule(module_checkInRows, paste0("global_params_simulation"),  
+                      values0 = values2,
+                      table_index = 2
+  )   
+  
+  # UI
+  module_checkInRows_UI((paste0("global_params_simulation")), label = NULL) 
+ 
+})
+
+output$global_params_nonmem_container <- renderUI({  
+  validate(need(is.list(values2$table), message="No table found, or values$table needs to be a list"), 
+           need(values2$table[["NONMEM"]], message="no table found"), 
+           need(is.data.frame(values2$table[["NONMEM"]]), message="only data.frame allowed")
+      )
+    
+  # module
+   callModule(module_checkInRows, paste0("global_params_nonmem"),  
+                      values0 = values2,
+                      table_index = 3
+  )   
+  
+  # UI
+  module_checkInRows_UI((paste0("global_params_nonmem")), label = NULL) 
+ 
+})
+
+output$global_params_ggplot_container <- renderUI({  
+  validate(need(is.list(values2$table), message="No table found, or values$table needs to be a list"), 
+           need(values2$table[["GGPLOT"]], message="no table found"), 
+           need(is.data.frame(values2$table[["GGPLOT"]]), message="only data.frame allowed")
+      )
+    
+  # module
+   callModule(module_checkInRows, paste0("global_params_ggplot"),  
+                      values0 = values2,
+                      table_index = 4
+  )   
+  
+  # UI
+  module_checkInRows_UI((paste0("global_params_ggplot")), label = NULL) 
+ 
+})
+
+
+```

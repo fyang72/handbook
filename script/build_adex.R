@@ -1,44 +1,26 @@
 
-
-#################################################################
+########################################################################
 # build_adex
-#################################################################
+########################################################################
 build_adex <-function(dataset) {
   
   # must have these desired variables, if missing, fill with NA 
   adex = dataset %>% fillUpCol_df(adex_var_lst) 
     
-  
-  #---------------------------------------- 
+  #--------------------------------------------------------------
   # Analysis identifiers
-  #---------------------------------------- 
+  #--------------------------------------------------------------
   # STUDYID
-  adex$STUDYID = adex$STUDYID 
+  adex <- adex %>% mutate(STUDYID = STUDYID %>% as.character())
   
   # USUBJID
-  if (all(is.na(adex$USUBJID))) {print("error: all(is.na(USUBJID))=TRUE")}
+  if (all(is.na(adex$USUBJID))) {
+    print("error: all(is.na(USUBJID))=TRUE")}
   
-  # standardize USUBJID
-  adex$CLID = adex$USUBJID 
-  study.id = unique(adex$STUDYID)
-  study.id = study.id[which(!is.na(study.id))]
-  for (i in 1:max(1,length(study.id))) { 
-    adex$CLID = gsub(study.id[i], "", adex$CLID, fix=TRUE)
-  }
-  adex$CLID = gsub("-", "", adex$CLID, fix=TRUE)   
-  
-  t1 = unique(nchar(adex$CLID))
-  t1 = t1[which(!is.na(t1))]
-  if (length(t1)==0)  {print("warning: no USUBJID")
-  }else if (length(t1)>1)  {print("warning: the length of CLID in adex are not the same.")
-  }else{ 
-    if (t1==9) { adex = adex %>% mutate(SUBJECT=paste(substr(CLID, 1, 3), substr(CLID, 4,6), substr(CLID, 7, 9), sep="-"))}
-    if (t1==6) { adex = adex %>% mutate(SUBJECT=paste(substr(CLID, 1, 3), substr(CLID, 4,6), sep="-"))}
-    if (t1==3) { adex = adex %>% mutate(SUBJECT=paste(substr(CLID, 1, 3), sep="-"))}
-    if (!t1 %in% c(3, 6, 9)) {print("nchar(CLID) in adex !=3, 6 or 9")}
-    adex$USUBJID <- paste(adex$STUDYID,  adex$SUBJECT, sep="-") 
-    adex = adex %>% select(-SUBJECT, -CLID)
-  }
+  adex <- adex %>% mutate(
+    USUBJID = standardise_USUBJID(STUDYID, USUBJID) %>% 
+      as.character()
+  )
   
   
   #----------------------------------------------------------------------------- 
@@ -52,9 +34,29 @@ build_adex <-function(dataset) {
   #  t.i.d   three times a day
   #  q.i.d   four times a day  
    
-  adex$ARMA = adex$ARMA
-  adex$ARMAN = adex$ARMAN
+  adex <- adex %>% mutate(
+    ARMA = ordered(ARMA, levels=unique(ARMA)), 
+    ARMAN = as.integer(ARMA), 
+    ARMA = as.character(ARMA)
+  )
   
+  #----------------------------------------------------------------------------- 
+  # VISIT LEVEL:   VISIT VISITNUM
+  #----------------------------------------------------------------------------- 
+  adex <- adex %>% mutate(
+    VISIT = toupper(as.character(VISIT)),    
+    VISITNUM = extractExpr(VISIT, "([0-9]+)") %>% as.integer(), 
+    VISIT = paste0("VISIT ", VISITNUM)
+  )
+   
+  #----------------------------------------------------------------------------- 
+  #  EXTRT EXTRTN
+  #----------------------------------------------------------------------------- 
+  adex <- adex %>% mutate(
+    EXTRT = ordered(EXTRT, levels=unique(EXTRT)), 
+    EXTRTN = as.integer(EXTRT), 
+    EXTRT = as.character(EXTRT)
+  ) 
   
   #---------------------------------------------
   # dosing variable: "EXSTDTC",  "EXENDTC", "EXDUR", "TRTSDTM", "TIME"
@@ -80,39 +82,48 @@ build_adex <-function(dataset) {
   # parse_date_time(x, "Ymd HMS", truncated = 3)
   
   library(lubridate) 
- 
   adex = adex %>% mutate( 
-    EXENDTC = parse_date_time(EXENDTC, timefmt_var_lst, truncated = 3),
-    EXSTDTC = parse_date_time(EXSTDTC, timefmt_var_lst, truncated = 3) 
-  ) %>% 
-    group_by(USUBJID) %>% 
-      mutate(TRTSDTM = min(EXSTDTC, na.rm=TRUE))  
+    EXENDTC = as.character(EXENDTC),
+    EXSTDTC = as.character(EXSTDTC)
+  ) 
   
-  # "TRTSDT"   "TRTSTM"   "TRTSDTM"    date/time of start treatment 
-  # "TRTEDT"   "TRTETM"   "TRTEDTM"    date/time of end of treatment   
-  adex = adex %>% mutate( 
-    EXDUR = difftime(EXENDTC, EXSTDTC, units = "days") %>% as_numeric(), 
-    TIME = difftime(EXSTDTC, TRTSDTM, units = "days") %>% as_numeric()
-  )
   
-  adex = adex %>% 
-    mutate(EXENDTC = as.character(EXENDTC), 
-           EXSTDTC = as.character(EXSTDTC), 
-           TRTSDTM = as.character(TRTSDTM) 
-    ) %>% ungroup()
-    
+  # 
+  # adex = adex %>% mutate( 
+  #   EXENDTC = parse_date_time(EXENDTC, orders=timefmt_var_lst, truncated = 3),
+  #   EXSTDTC = parse_date_time(EXSTDTC, orders=timefmt_var_lst, truncated = 3) 
+  # ) %>% 
+  #   group_by(USUBJID) %>% 
+  #     mutate(TRTSDTM = min(EXSTDTC, na.rm=TRUE)) %>% 
+  #   ungroup()
+  # 
+  # # "TRTSDT"   "TRTSTM"   "TRTSDTM"    date/time of start treatment 
+  # # "TRTEDT"   "TRTETM"   "TRTEDTM"    date/time of end of treatment   
+  # adex = adex %>% mutate( 
+  #   EXDUR = difftime(EXENDTC, EXSTDTC, units = "days") %>% as_numeric(), 
+  #   TIME = difftime(EXSTDTC, TRTSDTM, units = "days") %>% as_numeric()
+  # )
+  # 
+  # # as character
+  # adex = adex %>% 
+  #   mutate(EXENDTC = as.character(EXENDTC), 
+  #          EXSTDTC = as.character(EXSTDTC), 
+  #          TRTSDTM = as.character(TRTSDTM) 
+  #   ) 
+  #   
   
   #---------------------------------------------
   # "EXROUTE"    "SUBCUTANEOUS"  "INTRAVENOUS"   "INTRAMUSCULAR" "IVT"      
   #--------------------------------------------- 
-  adex = adex %>% mutate(EXROUTE = ordered(toupper(EXROUTE), levels = route_var_lst),  
-                         EXROUTN = ifelse(is.na(EXROUTE), -99, as.integer(EXROUTE)), 
-                         
-                         EXDOSE = as_numeric(EXDOSE), 
-                         EXDOSU = ordered(EXDOSU, levels = dosu_var_lst)  
+  adex = adex %>% mutate(
+    EXROUTE = ordered(toupper(EXROUTE), levels = route_var_lst),  
+    EXROUTN = ifelse(is.na(EXROUTE), -99, as.integer(EXROUTE)), 
+    EXROUTE = as.character(EXROUTE),
+    
+    EXDOSE = as_numeric(EXDOSE), 
+    EXDOSU = ordered(EXDOSU, levels = dosu_var_lst),  
+    EXDOSU = as.character(EXDOSU)
   )
-  
-
   
   #---------------------------------------------
   # EXSEQ
@@ -120,27 +131,27 @@ build_adex <-function(dataset) {
   adex = adex %>% group_by(USUBJID) %>% 
     mutate(EVID = ifelse(as_numeric(EXDOSE)>0, 1, 0), 
            EXSEQ = cumsum(EVID)
-           ) %>% 
-    select(-EVID)
-  
-  # adex %>% select(USUBJID, EXSTDTC, EXENDTC, EXDUR, TRTSDTM, TIME, EXSEQ)
-  
-  
+           ) %>%  
+    ungroup()
+   
   #---------------------------------------------
   # order columns, and final output
   #---------------------------------------------   
-  col.lst = c(adex_var_lst, setdiff(colnames(adex), adex_var_lst))
-  adex = adex[, col.lst]  %>% arrange(STUDYID, USUBJID, TIME)
+  adex <- adex[, c(adex_var_lst, setdiff(colnames(adex), adex_var_lst))]  
+  adex <- convert_vars_type(adex, adex_data_type)
+  adex <- adex %>% dplyr::arrange(STUDYID, USUBJID, TIME)  
+  adex <- adex %>% ungroup()
   
   return(adex) 
 }
 
 
-#################################################################
+########################################################################
 # check_adex
-#################################################################
+########################################################################
 
 check_adex <- function(dataset, adex, topN=20) { 
+  adex <- adex %>% ungroup()
   
   dataset = dataset %>% ungroup()  %>% 
     rename_at(vars(colnames(dataset)),

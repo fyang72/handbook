@@ -8,8 +8,6 @@
 module_build_dataset_wrapper_UI <- function(id, label = "") {
   # Create a namespace function using the provided id
   ns <- NS(id)
-  
-  actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
    
   fluidRow(
     column(12, 

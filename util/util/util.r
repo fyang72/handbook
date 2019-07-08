@@ -1,5 +1,65 @@
+################################################################################
+################################################################################
+# common functions used
+################################################################################
+################################################################################
+#' Extracts the time matched concntration vs effect data
+
+#' @param data A data frame.  The data frame must conform to Regeneron standards and contain the variables: `week`, `ndy`, `concn`, `concni`, `pchg`, `actarmcd`, `ada`
+#' @return A dataframe with columns `ndy`, `concn`, `effect`.
+#' @export
+#' @importFrom dplyr left_join group_by summarise
+#' @examples
+#'   inFile <- system.file("extdata/pk_pd_hysteresis.xls", package = "pkGraph")
+#'   library(readxl)
+#'   theData <-read_excel(inFile)
+#'   timeMatchedPK(data = theData)
+lstAppend <- function(lstptr, label, obj) {lstptr[[deparse(substitute(label))]] <- obj; lstptr }
 
 
+
+#' Extracts the time matched concntration vs effect data
+
+#' @param data A data frame.  The data frame must conform to Regeneron standards and contain the variables: `week`, `ndy`, `concn`, `concni`, `pchg`, `actarmcd`, `ada`
+#' @return A dataframe with columns `ndy`, `concn`, `effect`.
+#' @export
+#' @importFrom dplyr left_join group_by summarise
+#' @examples
+#'   inFile <- system.file("extdata/pk_pd_hysteresis.xls", package = "pkGraph")
+#'   library(readxl)
+#'   theData <-read_excel(inFile)
+#'   timeMatchedPK(data = theData)
+pull <- function(x,y) {x[,if(is.name(substitute(y))) deparse(substitute(y)) else y, drop = FALSE][[1]]}
+
+##############################################################################
+#  functions 
+##############################################################################  
+#--------------------------------------------- 
+#  nacols,  allna
+#--------------------------------------------- 
+nacols <- function(df) { 
+  colnames(df)[unlist(lapply(df, function(x) any(is.na(x)|is.nan(x)|x=="NA"|x=="NAN"|x=="NaN")))] }
+anyna <- function(df) {
+  df = data.frame(df, check.names = FALSE)      
+  t.df = data.frame(t(df), check.names = FALSE)
+  return(df[nacols(t.df), nacols(df)])  }
+###############################################################
+# How to convert all INT to numeric apply to all columns
+###############################################################
+
+#Suppose you want to transform all your int columns to numeric, you can do so using one pipe:
+#myDf %>%  mutate_each_( funs(as.numeric(.)), names( .[,sapply(., is.integer)] ))
+
+# head(  pkpd %>% mutate_each(funs(replace(., .=="." , "BLOQ"))  ))
+replace_NA <- function(df, value=0.078, by="BLQ") {
+  df  %>% mutate_each(funs(replace(., .==0.078, by))  )  }
+
+
+############################################################################## 
+## a useful function: rev() for strings
+strReverse <- function(x)
+  sapply(lapply(strsplit(x, NULL), rev), paste, collapse="")
+############################################################################## 
 
 
 

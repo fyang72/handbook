@@ -9,6 +9,10 @@
 fuzzy_match <- function(str_vec="", std_name="", 
                         method = "jw", threshold = 0.50) {
     
+  validate(need(std_name, message="std_name in fuzzy_match is empty."),
+           need(str_vec, message="str_vec in fuzzy_match is empty.")
+           )
+  
  tt = fuzzy_match0(str_vec, std_name, method = method)
  tt = cbind(str_vec, tt[match(str_vec, tt$s1name), ])
  tt %>% rename(score = one_of(method)) %>% 

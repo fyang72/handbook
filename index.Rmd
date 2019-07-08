@@ -223,21 +223,82 @@ chunks <- paste0("```{r child = '", rmd, "'}\n```\n")
 cat(chunks, sep = '\n')
 ```
 
+  
+
+```{r child = 'rmd/01_preface/01_preface.Rmd'}
+```
+
+```{r child = 'rmd/02_construct_dataset/01_construct_dataset.Rmd'}
+```
+
+```{r child = 'rmd/03_summary_dataset/01_summary_dataset.Rmd'}
+```
+
 ```{r child = 'rmd/04_descriptive_analysis/01_load_dataset.Rmd'}
+```
+
+```{r child = 'rmd/04_descriptive_analysis/02_stdtimeprofile.Rmd'}
 ```
 
 ```{r child = 'rmd/04_descriptive_analysis/03_pkpd_relationship.Rmd'}
 ```
 
-```{r child = 'rmd/08_run_simulation/50_run_sim.Rmd'}
+```{r child = 'rmd/04_descriptive_analysis/04_NCA_analysis.Rmd'}
 ```
 
+```{r child = 'rmd/06_nmdat_integrity_check/01_load_data.Rmd'}
+```
+
+```{r child = 'rmd/06_nmdat_integrity_check/02_quick_check.Rmd'}
+```
+
+```{r child = 'rmd/06_nmdat_integrity_check/03_advanced_check.Rmd'}
+```
+
+```{r child = 'rmd/06_nmdat_integrity_check/04_buildIn_model.Rmd'}
+```
+
+```{r child = 'rmd/07_run_nmmodel/01_run_nonmem_model.Rmd'}
+```
+
+```{r child = 'rmd/07_run_nmmodel/02_model_diagnostic.Rmd'}
+```
+
+```{r child = 'rmd/07_run_nmmodel/03_model_decision_tree.Rmd'}
+```
+
+```{r child = 'rmd/08_run_simulation/01_run_sim.Rmd'}
+```
+
+```{r child = 'rmd/09_exposure_response/01_exposure_response.Rmd'}
+```
+
+```{r child = 'rmd/10_advanced_model/01_advanced_model.Rmd'}
+```
 
 ```{r child = 'rmd/11_reporting/01_reporting.Rmd'}
 ```
- 
- 
 
+```{r child = 'rmd/90_appendix/01_global_setting.Rmd'}
+```
+
+```{r child = 'rmd/90_appendix/01_model_library.Rmd'}
+```
+
+```{r child = 'rmd/90_appendix/02_dplyr.Rmd'}
+```
+
+```{r child = 'rmd/90_appendix/03_ggplot.Rmd'}
+```
+
+```{r child = 'rmd/90_appendix/04_mrgsolve.Rmd'}
+```
+
+```{r child = 'rmd/90_appendix/05_tools.Rmd'}
+```
+
+```{r child = 'rmd/references.Rmd'}
+```
 
 
 

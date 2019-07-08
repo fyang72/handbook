@@ -1,72 +1,58 @@
 
-#################################################################
+########################################################################
 # build_adpc
-#################################################################
+########################################################################
 
 build_adpc <-function(dataset ) {
-   
+  
   # must have these desired variables, if missing, fill with NA 
   adpc = dataset %>% fillUpCol_df(adpc_var_lst) 
   
-  #---------------------------------------- 
+  #--------------------------------------------------------------
   # Analysis identifiers
-  #---------------------------------------- 
+  #--------------------------------------------------------------
   # STUDYID
-  adpc$STUDYID = adpc$STUDYID 
+  adpc <- adpc %>% mutate(STUDYID = STUDYID %>% as.character())
   
   # USUBJID
-  if (all(is.na(adpc$USUBJID))) {print("error: all(is.na(USUBJID))=TRUE")}
+  if (all(is.na(adpc$USUBJID))) {
+    print("error: all(is.na(USUBJID))=TRUE")}
   
-  # standardize USUBJID
-  adpc$CLID = adpc$USUBJID 
-  study.id = unique(adpc$STUDYID)
-  study.id = study.id[which(!is.na(study.id))]
-  for (i in 1:max(1,length(study.id))) { 
-    adpc$CLID = gsub(study.id[i], "", adpc$CLID, fix=TRUE)
-  }
-  adpc$CLID = gsub("-", "", adpc$CLID, fix=TRUE)   
-  
-  t1 = unique(nchar(adpc$CLID))
-  t1 = t1[which(!is.na(t1))]
-  if (length(t1)==0)  {print("warning: no USUBJID")
-  }else if (length(t1)>1)  {print("warning: the length of CLID in adpc are not the same.")
-  }else{ 
-    if (t1==9) { adpc = adpc %>% mutate(SUBJECT=paste(substr(CLID, 1, 3), substr(CLID, 4,6), substr(CLID, 7, 9), sep="-"))}
-    if (t1==6) { adpc = adpc %>% mutate(SUBJECT=paste(substr(CLID, 1, 3), substr(CLID, 4,6), sep="-"))}
-    if (t1==3) { adpc = adpc %>% mutate(SUBJECT=paste(substr(CLID, 1, 3), sep="-"))}
-    if (!t1 %in% c(3, 6, 9)) {print("nchar(CLID) in adpc !=3, 6 or 9")}
-    adpc$USUBJID <- paste(adpc$STUDYID,  adpc$SUBJECT, sep="-") 
-    adpc = adpc %>% select(-SUBJECT, -CLID)
-  }
-
-   
-  
-  #----------------------------------------------------------------------------- 
-  # Analysis Treatment Variables:   "ARMA" "ARMAN"  
-  #----------------------------------------------------------------------------- 
-  adpc$ARMA = adpc$ARMA
-  
+  adpc <- adpc %>% mutate(
+    USUBJID = standardise_USUBJID(STUDYID, USUBJID) %>% as.character()
+  )
  
-  
-  #----------------------------------------------------------------------------- 
+  #--------------------------------------------------------------
+  # Analysis Treatment Variables:   "ARMA" "ARMAN"  
+  #--------------------------------------------------------------
+  adpc <- adpc %>% mutate(
+    ARMA = ordered(ARMA, levels=unique(ARMA)), 
+    ARMAN = as.integer(ARMA), 
+    ARMA = as.character(ARMA)
+  )
+ 
+  #--------------------------------------------------------------
   # Analysis time variable: "VISIT"  "VISITNUM"  "TIMEPT" "NTIM"  "TIME"
-  #-----------------------------------------------------------------------------
-
-  adpc$VISIT = toupper(adpc$VISIT)  # paste("Visit ", adpc$VISITNM, sep="") # u.add.prefix(adpc$VISITNM, prefix="", add.number.zero=3), sep="") 
-  adpc$VISITNUM = extractExpr(adpc$VISIT, "([0-9]*\\.?[0-9]+)")  %>% as_numeric()
-  adpc$VISIT = paste0("VISIT ", adpc$VISITNUM)
+  #--------------------------------------------------------------
+  adpc <- adpc %>% mutate(
+    VISIT = toupper(as.character(VISIT)),    
+    VISITNUM = extractExpr(VISIT, "([0-9]+)") %>% as.integer(), 
+    VISIT = paste0("VISIT ", VISITNUM)
+  )
   
-  if (!all(is.na(adpc$TIMEPT)))  {
-    adpc$TIMEPT = toupper(adpc$TIMEPT) 
-    if (all(is.na(adpc$NTIM)))  {
-      adpc = adpc %>% select(-NTIM) %>% 
-        left_join(parseTIMEPT(adpc %>% pull(TIMEPT) %>% unique()) %>% select(TIMEPT, NTIM), by="TIMEPT")
-    }
+  # TIMEPT and NTIM
+  adpc$TIMEPT = toupper(adpc$TIMEPT) 
+  if (all(is.na(adpc$NTIM)))  {
+    adpc = adpc %>% select(-NTIM) %>% 
+      left_join(
+        parseTIMEPT(adpc %>% pull(TIMEPT) %>% unique()) %>% 
+          select(TIMEPT, NTIM), 
+        by="TIMEPT")
   }
   
-  
+  #--------------------------------------------------------------  
   # TIME
-  # -----------------------------------------------  
+  #-------------------------------------------------------------- 
   #UTC is not a time zone, but a time standard that is the basis for civil time and time zones worldwide. This means 
   # that no country or territory officially uses UTC as a local time.
   
@@ -86,43 +72,57 @@ build_adpc <-function(dataset ) {
   
   if ((!all(class(adpc$SAMDTTM) %in% c("POSIXct", "POSIXt" )))) { 
     library(lubridate) 
-    adpc$SAMDTTM = parse_date_time(adpc$SAMDTTM, timefmt_var_lst, truncated = 3) %>% 
-      as.character()
+    adpc <- adpc %>% mutate(
+      SAMDTTM = parse_date_time(
+        SAMDTTM, orders=timefmt_var_lst, truncated = 3
+        ) %>% as.character()
+    )
   } 
     
-  #----------------------                  
+  #--------------------------------------------------------------                 
   # METHOD (SOP), TEST, 
-  #---------------------- 
-  adpc <- adpc %>%  mutate(METHOD = METHOD, 
-                           TEST = TEST,
-                           DVOR = DVOR,    # keep those ADA results (which is character-based)
-                          
-                           DVOR = ifelse(tolower(DVORU)=="ng/ml", as_numeric(DVOR)/1000, DVOR), 
-                           DVORU = ifelse(tolower(DVORU)=="ng/ml", "mg/L", DVORU), 
-                           
-                           DVORU = ifelse(tolower(DVORU)=="ug/ml", "mg/L", DVORU), 
-                           
-                           LLOQ = ifelse(is.na(as_numeric(LLOQ)), NA, as_numeric(LLOQ)),
-                           BLQ = ifelse(as_numeric(DVOR)<LLOQ, 1, 0) 
-                         )   
+  #--------------------------------------------------------------
+  adpc <- adpc %>%  mutate(
+    METHOD = as.character(METHOD), 
+    
+    TEST = ordered(TEST, levels=unique(TEST)), 
+    TESTN = as.integer(TEST), 
+    TEST = as.character(TEST),
+    
+    TESTCD = as.character(TESTCD),
+    TESTCAT = as.character(TESTCAT),
+    
+    DVOR = as_numeric(DVOR), # keep those ADA results (which is character-based)
+    
+    DVOR = ifelse(tolower(DVORU)=="ng/ml", as_numeric(DVOR)/1000, DVOR), 
+    DVORU = ifelse(tolower(DVORU)=="ng/ml", "mg/L", as.character(DVORU)), 
+    
+    DVORU = ifelse(tolower(DVORU)=="ug/ml", "mg/L", as.character(DVORU)), 
+    
+    LLOQ = ifelse(is.na(as_numeric(LLOQ)), NA, as_numeric(LLOQ)),
+    BLQ = ifelse(as_numeric(DVOR)<LLOQ, 1, 0) 
+  )   
   
  
-  #---------------------------------------------
+  #--------------------------------------------------------------
   # order columns, and final output
-  #---------------------------------------------   
+  #--------------------------------------------------------------  
   adpc = adpc[, c(adpc_var_lst, setdiff(colnames(adpc), adpc_var_lst))]
+  adpc <- convert_vars_type(adpc, adpc_data_type)
+  adpc <- adpc %>% dplyr::arrange(STUDYID, USUBJID, TIME, TESTN) 
+  adpc <- adpc %>% ungroup()
   
   return(adpc) 
 }
 
 
 
-#################################################################
+########################################################################
 # check_adpc
-#################################################################
+########################################################################
 
 check_adpc <- function(dataset, adpc, topN=20) {
-  adpc = adpc%>% ungroup()
+  adpc = adpc %>% ungroup()
  
   dataset = dataset %>% 
     rename_at(vars(colnames(dataset)),
@@ -148,10 +148,11 @@ check_adpc <- function(dataset, adpc, topN=20) {
   #----------------- 
   # TIMEPT
   #----------------- 
-  tabl = adpc %>% select(TIMEPT, TIMEPT_ORG, NTIM) %>% distinct(TIMEPT, .keep_all=TRUE) %>% 
+  tabl = adpc %>% select(VISITNUM, TIMEPT, TIMEPT_ORG, NTIM) %>% distinct(TIMEPT, .keep_all=TRUE) %>% 
     mutate(VISITNUM=as_numeric(VISITNUM), 
            NTIM=as_numeric(NTIM)
-    ) %>% arrange(VISITNUM, NTIM)
+    ) %>% arrange(VISITNUM, NTIM) %>% 
+    select(-VISITNUM)
   
   if (nrow(tabl)>topN) { tabl = tabl %>% slice(1:topN) }
   attr(tabl, "title") = "List of nominal time point (TIMEPT) and its corresponding numerical value (NTIM)" 
@@ -192,9 +193,9 @@ check_adpc <- function(dataset, adpc, topN=20) {
   return(table)
 }
 
-#################################################################
+########################################################################
 # final output
-#################################################################
+########################################################################
 if (ihandbook) {
   data = NULL
   table = NULL

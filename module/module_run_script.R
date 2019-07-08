@@ -79,9 +79,12 @@ output$dataset_container <- renderUI({
   
   if (class(dataset) == "xpose.data") {
     tdata = dataset %>% slot("Data")
-  }else{
+  }else if (class(dataset) == "list"  & all(c("adsl", "adex", "adpc") %in% names(dataset))) {
+    tdata = dataset[["adsl"]]
+  }else {
     tdata = dataset
   } 
+  
   callModule(module_save_data, "loaded_dataset", ALL, 
              data=tdata, 
              data_name="")

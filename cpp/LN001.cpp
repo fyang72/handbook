@@ -19,16 +19,16 @@ $PROB
 //##############################################################################
    
 $PARAM @annotated
-  TV_CL :  0.117973  : Typical clearance (L/day)
-  TV_V2 :  2.730460  : Typical volume of central compartment (L)
-  TV_Q  :  0.368698  : Typical inter-compartmental clearance between the central and peripheral compartments (L/day)  
-  TV_V3 :  2.107400  : Typical volume of peripheral compartment (L)   
+  TV_CL :  0.12  : Typical clearance (L/day)
+  TV_V2 :  2.75  : Typical volume of central compartment (L)
+  TV_Q  :  0.36  : Typical inter-compartmental clearance between the central and peripheral compartments (L/day)  
+  TV_V3 :  2.15  : Typical volume of peripheral compartment (L)   
   
-  TV_KA :  0.248344  : Typical absorption rate constant (1/day)
-  TV_F1 :  0.716160  : Typical bioavailability (unitless)
+  TV_KA :  0.25  : Typical absorption rate constant (1/day)
+  TV_F1 :  0.72  : Typical bioavailability (unitless)
 
-  TV_VMAX : 0        : Typical maximum elimination clearance in Michael-Menten clerance (mg/day)     
-  TV_KSS  : 6.509510 : Typical concentration at half of VMAX (mg/L)     
+  TV_VMAX : 0    : Typical maximum elimination clearance in Michael-Menten clerance (mg/day)     
+  TV_KSS  : 6.5  : Typical concentration at half of VMAX (mg/L)     
 
   WGT_ON_CLQ : 0.75  : WGTBL as covariate on CL/Q (Exponent)
   WGT_ON_VSS : 1.0   : WGTBL as covariate on V2/V3 (Exponent)    
@@ -40,8 +40,8 @@ $PARAM @annotated
 // fixed parameter                                                             
 //##############################################################################
 $FIXED @annotated
-  M_WGT : 70 : Mean body weight at baseline in the specific population (kg)
-  M_AGE : 34 : Mean age in the specific population (year)
+  M_WGT : 75 : Mean body weight at baseline in the specific population (kg)
+  M_AGE : 25 : Mean age in the specific population (year)
   
 // delta: step-size in numerical integration
 // end: end of simulation period, for example of treatment + followup
@@ -104,11 +104,11 @@ $ODE
 //##############################################################################
 
 $OMEGA @annotated @name ETA_ON_KA
-ETA_KA: 0.174704 : ETA ON KA
+ETA_KA: 0.10 : ETA ON KA
 
 $OMEGA @annotated @block @name ETA_CL_VSS
-ETA_CLQ: 0.0863948 : ETA on CL
-ETA_VSS: 0.0214711 0.0362998 : ETA on VSS
+ETA_CLQ: 0.05 : ETA on CL
+ETA_VSS: 0.02 0.04 : ETA on VSS
 
 $SIGMA @annotated @name SGMA 
 PROP: 0.01  : Proportional residual error

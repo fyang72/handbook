@@ -7,17 +7,21 @@ This is an R **Markdown** plus **Shiny** document. Markdown is a simple formatti
 Shiny is an R package that makes it easy to build interactive web apps straight from R.
 For more details on using R Shiny see <https://shiny.rstudio.com/>. 
 
-This handbook is for pharmacometrician to perform pharmacomatrics analysis, from data standardization to report generation. 
-Shiny app provides tremendous opportunities to facilitate the routine analysis which could easily occupy the workload for a pharmacometrician. This handbook presents a semi-automation approach to streamline the process using Shiny+Rmarkdown interactive applications, from data standardization, time-profile plot, pkpd analysis, submit jobs to HPC cluster, post-process the fetched result, run simulation, and generate preliminary word-based reports and powerpoint slides for reviewing.  Such a process not only greatly increased the productivity and reproducibility of the deliverables, also promoted the knowledge-sharing across the different shareholders. 
+This handbook is for pharmacokineticist to perform pharmacomatrics analysis, from data standardization to report generation. Shiny app provides tremendous opportunities to facilitate the routine analysis which could easily occupy their workload. This handbook presents a semi-automation approach to streamline the process using **Shiny+Rmarkdown** interactive applications, including standardize data, plot time-profile, pkpd visualization, submit jobs to HPC cluster, post-process the fetched result, run simulation, and generate preliminary word-based reports and powerpoint slides for reviewing.  Such a process not only greatly increased the productivity and reproducibility of the deliverables, also promoted the knowledge-sharing across the different shareholders. 
+  
+  Analysis Data Model (ADaM) datasets are much more flexible than SDTM (Study Data ... The structure of subject-level analysis dataset (ADSL) contains one record per subject .... ADPC (PK Concentrations Analysis Dataset) .... The most common OCCDS datasets are ADAE, ADCM, ADMH, ADEX, ADCE, and ADDS. Most of ...
+  https://www.quanticate.com/blog/adam-datasets-for-pharmacokinetic-pk-analysis
   
 ## How to read this book
 
-Each chapter is relatively independent. Typically, it will ask for an input dataset, a model or a set of parameters, then perform the corresponding analyses, with the output results presented in the last.
+Each chapter is relatively independent. Typically, it will ask for an input dataset, a model or a set of parameters, then perform the corresponding analyses based on the specified R scripts, with the output results presented in the last.
+
+The readers of this handbook could be amateur scientists or experienced ones. People who are not experiened in R langulage may accept the default scripts and are still able to run them to generate the corresponding tables, figures, datasets and reports. The experienced scientists may modify the default scripts, even debug through this handbook, to generate what is expected. 
 
 
 ## Key R packages and conventions   
 
-Here is a list of key packages used in the app. 
+Here is a list of key packages used in the handbook. 
 
 1. for Reporting 
     + library(knitr)
@@ -81,6 +85,11 @@ ip
 ## Acknowledgments
 
 First and foremost, praises and thanks to the God, the Almighty, for His showers of blessings throughout this work to start and keep moving along its own way.  
+
+Secondly, thanks to my wife and my dear kids; they have sacrificed a lot through the journey of this handbook development, since it was deveoped using leisure time by accumulating tons of nights, weekends and holidays. It is not easy. 
+
+
+
 
 ```{r, eval=FALSE}
 http://templatelab.com/acknowledgement-samples/

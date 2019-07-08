@@ -23,7 +23,7 @@ module_checkInRows_UI <- function(id, label = "") {
     
     fluidRow(  
       column(2,  
-             actionButton(ns("confirm"),label="Confirm", style=actionButton.style)
+             actionButton(ns("confirm"),label="Confirm", style=actionButton_style)
        ) 
      ),  
     
@@ -58,7 +58,7 @@ module_checkInRows <- function(input, output, session,
   # table_title_container
   output$table_title_container <- renderUI(renderText({
     table = inputTab()
-    paste0("Table ", table_index, " ", attributes(table)$title)
+    paste0("<b>Table ", table_index, ": ", attributes(table)$title, "</b>")
     })() %>% HTML()
   )
   

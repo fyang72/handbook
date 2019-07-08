@@ -129,7 +129,7 @@ output$runScript_container <- renderUI({
     
     fluidRow(
       column(3, 
-             actionButton(ns("run_script"), label="Run script", style=actionButton.style )
+             actionButton(ns("run_script"), label="Run script", style=actionButton_style )
       )
     ),
     
@@ -156,7 +156,7 @@ output$checkInRows_container <- renderUI({
   tagList(
     fluidRow(  
       column(2, offset=10,
-             actionButton(ns("saveAll"),label="Save all", style=actionButton.style)
+             actionButton(ns("saveAll"),label="Save all", style=actionButton_style)
       ) 
     ),
 
@@ -164,8 +164,8 @@ output$checkInRows_container <- renderUI({
     lapply(1:length(names(values$table)), function(i) {
       
       validate(need(values$table[[i]], message="no table found"), 
-               need(is.data.frame(values$table[[i]]), message="only data.frame allowed"),
-               need(values$data, message="no data found")
+               need(is.data.frame(values$table[[i]]), message="only data.frame allowed")  #,
+               #need(values$data, message="no data found")
       )
 
       values = callModule(module_checkInRows, paste0("module_save_table_", i),  
