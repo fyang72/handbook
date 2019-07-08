@@ -107,9 +107,9 @@ build_adpx <-function(adsl=NULL, adex=NULL, adpc=NULL, other=NULL) {
   # parse_date_time(x, "Ymd HMS", truncated = 3)
   
   adpx = adpx %>% mutate( 
-    SAMDTTM = parse_date_time(SAMDTTM, orders=timefmt_var_lst, truncated = 3),  
-    EXENDTC = parse_date_time(EXENDTC, orders=timefmt_var_lst, truncated = 3),
-    EXSTDTC = parse_date_time(EXSTDTC, orders=timefmt_var_lst, truncated = 3) 
+    SAMDTTM = parse_date_time(SAMDTTM, orders=timefmt_var_lst, truncated = 3, tz = "America/New_York"),  
+    EXENDTC = parse_date_time(EXENDTC, orders=timefmt_var_lst, truncated = 3, tz = "America/New_York"),
+    EXSTDTC = parse_date_time(EXSTDTC, orders=timefmt_var_lst, truncated = 3, tz = "America/New_York") 
   ) %>% 
     group_by(USUBJID) %>%  mutate(TRTSDTM = min(EXSTDTC, na.rm=TRUE)) %>% 
     ungroup()
@@ -164,7 +164,7 @@ build_adpx <-function(adsl=NULL, adex=NULL, adpc=NULL, other=NULL) {
   #---------------------------------------------   
   adpx = adpx[, c(nmdat_var_lst, setdiff(colnames(adpx), nmdat_var_lst))]
   adpx <- adpx %>% convert_vars_type(nmdat_data_type)
-  adpx <- adpx %>% dplyr::arrange(STUDYID, USUBJID, TIME, TESTN) 
+  #adpx <- adpx %>% dplyr::arrange(STUDYID, USUBJID, TIME, TESTN) 
   adpx <- adpx %>% ungroup()
   
   return(adpx)

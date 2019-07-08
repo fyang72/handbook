@@ -80,8 +80,7 @@ build_nmdat <- function(dataset) {
     mutate( EXSEQ = cumsum(EVID)
     ) %>% ungroup()
   
-  #ROWID 
-  if (nrow(nmdat)>0) {nmdat$ROWID=1:nrow(nmdat) }
+  #CFLAG 
   nmdat$C[which(!nmdat$CFLAG %in% c(NA,""))] = "C"
   
   #---------------------------------------------
@@ -89,7 +88,11 @@ build_nmdat <- function(dataset) {
   #---------------------------------------------     
   nmdat = nmdat[, c(nmdat_var_lst, setdiff(colnames(nmdat), nmdat_var_lst))]
   nmdat <- convert_vars_type(nmdat, nmdat_data_type)
+  
+  if (nrow(nmdat)>0) {nmdat$ROWID0=1:nrow(nmdat) } #ROWID0 # in case be used later
   nmdat <- nmdat %>% dplyr::arrange(STUDYID, USUBJID, TIME, -desc(EVID), TESTN) 
+  if (nrow(nmdat)>0) {nmdat$ROWID=1:nrow(nmdat) } #ROWID 
+  
   nmdat <- nmdat %>% ungroup()
   
   return(nmdat)

@@ -41,12 +41,12 @@ build_adpc <-function(dataset ) {
   )
   
   # TIMEPT and NTIM
-  adpc$TIMEPT = toupper(adpc$TIMEPT) 
+  adpc <- adpc %>% mutate(TIMEPT = toupper(adpc$TIMEPT))
   if (all(is.na(adpc$NTIM)))  {
-    adpc = adpc %>% select(-NTIM) %>% 
+    adpc = adpc %>% select(-NTIM) %>% mutate(TIMEPT=as.character(TIMEPT)) %>% 
       left_join(
         parseTIMEPT(adpc %>% pull(TIMEPT) %>% unique()) %>% 
-          select(TIMEPT, NTIM), 
+          select(TIMEPT, NTIM) %>% mutate(TIMEPT=as.character(TIMEPT)) , 
         by="TIMEPT")
   }
   
@@ -70,14 +70,19 @@ build_adpc <-function(dataset ) {
   
   # c("Ymd HMS",  "db!Y HMS")  "mdY HMS"
   
-  if ((!all(class(adpc$SAMDTTM) %in% c("POSIXct", "POSIXt" )))) { 
-    library(lubridate) 
-    adpc <- adpc %>% mutate(
-      SAMDTTM = parse_date_time(
-        SAMDTTM, orders=timefmt_var_lst, truncated = 3
-        ) %>% as.character()
-    )
+  if("format.sas" %in% names(attributes(adpc$SAMDTTM)) &&  attr(adpc$SAMDTTM, "format.sas") == "IS8601DT") {
+    adpc$SAMDTTM = as.POSIXct(adpc$SAMDTTM, origin="1960-01-01", tz="America/New_York") %>% as.character()
   } 
+  
+  
+  # if ((!all(class(adpc$SAMDTTM) %in% c("POSIXct", "POSIXt" )))) { 
+  #   library(lubridate) 
+  #   adpc <- adpc %>% mutate(
+  #     SAMDTTM = parse_date_time(
+  #       SAMDTTM, orders=timefmt_var_lst, truncated = 3
+  #       ) %>% as.character()
+  #   )
+  # } 
     
   #--------------------------------------------------------------                 
   # METHOD (SOP), TEST, 
@@ -109,7 +114,7 @@ build_adpc <-function(dataset ) {
   #--------------------------------------------------------------  
   adpc = adpc[, c(adpc_var_lst, setdiff(colnames(adpc), adpc_var_lst))]
   adpc <- convert_vars_type(adpc, adpc_data_type)
-  adpc <- adpc %>% dplyr::arrange(STUDYID, USUBJID, TIME, TESTN) 
+  #adpc <- adpc %>% dplyr::arrange(STUDYID, USUBJID, TIME, TESTN) # DO NOT RE-ARRANGE
   adpc <- adpc %>% ungroup()
   
   return(adpc) 

@@ -81,13 +81,19 @@ build_adex <-function(dataset) {
   # x <- c("2011-12-31 12:59:59", "2010-01-01 12:11", "2010-01-01 12", "2010-01-01")
   # parse_date_time(x, "Ymd HMS", truncated = 3)
   
+  if("format.sas" %in% names(attributes(adex$EXSTDTC)) &&  attr(adex$EXSTDTC, "format.sas") == "IS8601DT") {
+    adex$EXSTDTC = as.POSIXct(adex$EXSTDTC, origin="1960-01-01", tz="America/New_York") %>% as.character()
+  } 
+  
+  if("format.sas" %in% names(attributes(adex$EXENDTC)) &&  attr(adex$EXENDTC, "format.sas") == "IS8601DT") {
+    adex$EXENDTC = as.POSIXct(adex$EXENDTC, origin="1960-01-01", tz="America/New_York") %>% as.character()
+  } 
+  
   library(lubridate) 
   adex = adex %>% mutate( 
     EXENDTC = as.character(EXENDTC),
     EXSTDTC = as.character(EXSTDTC)
-  ) 
-  
-  
+  )  
   # 
   # adex = adex %>% mutate( 
   #   EXENDTC = parse_date_time(EXENDTC, orders=timefmt_var_lst, truncated = 3),
@@ -116,6 +122,10 @@ build_adex <-function(dataset) {
   # "EXROUTE"    "SUBCUTANEOUS"  "INTRAVENOUS"   "INTRAMUSCULAR" "IVT"      
   #--------------------------------------------- 
   adex = adex %>% mutate(
+    EXROUTE = toupper(EXROUTE), 
+    EXROUTE = gsub("IV", "INTRAVENOUS", EXROUTE, fix=TRUE),
+    EXROUTE = gsub("SC", "SUBCUTANEOUS", EXROUTE, fix=TRUE), 
+    EXROUTE = gsub("IM", "INTRAMUSCULAR", EXROUTE, fix=TRUE), 
     EXROUTE = ordered(toupper(EXROUTE), levels = route_var_lst),  
     EXROUTN = ifelse(is.na(EXROUTE), -99, as.integer(EXROUTE)), 
     EXROUTE = as.character(EXROUTE),
@@ -139,7 +149,7 @@ build_adex <-function(dataset) {
   #---------------------------------------------   
   adex <- adex[, c(adex_var_lst, setdiff(colnames(adex), adex_var_lst))]  
   adex <- convert_vars_type(adex, adex_data_type)
-  adex <- adex %>% dplyr::arrange(STUDYID, USUBJID, TIME)  
+  #adex <- adex %>% dplyr::arrange(STUDYID, USUBJID, TIME)  
   adex <- adex %>% ungroup()
   
   return(adex) 

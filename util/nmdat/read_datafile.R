@@ -17,10 +17,10 @@ read_datafile <- function(inFile=NULL) {
   )
   
   error_message = "read data not sucessful. Only .csv, .xlsx, .xls, .sas7bdat, .RData can be read"
-  if (is.null(tdata)) {print(error_message)}
-  showNotification(paste0(error_message, collapse="\n"), type="error")
+  #if (is.null(tdata)) {print(error_message)}
+  #showNotification(paste0(error_message, collapse="\n"), type="error")
   
-  #validate(need(tdata, error_message)) 
+  validate(need(tdata, error_message)) 
   
   tdata
 }

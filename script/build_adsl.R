@@ -121,7 +121,7 @@ build_adsl <-function(dataset) {
   # put variables (tier=1 or 2 fisrt)
   adsl <- adsl[, c(adsl_var_lst, setdiff(colnames(adsl), adsl_var_lst))]
   adsl <- convert_vars_type(adsl, adsl_data_type)
-  adsl <- adsl %>% dplyr::arrange(STUDYID, USUBJID) 
+  #adsl <- adsl %>% dplyr::arrange(STUDYID, USUBJID) 
   adsl <- adsl %>% ungroup()
   
   return(adsl) 
