@@ -69,32 +69,33 @@ adsl <- adsl %>% mutate(
 adsl0[["R1908-ALG-1325"]] = adsl
 
 adexFile_name <- "~/FYANG/R1908_Feld1/DATA/R1908-ALG-1325-adex.sas7bdat"
-adex0 <- read_datafile(inFile=adexFile_name) 
-adex0 <- adex0 %>% 
-  mutate(STUDYID = "R1908-ALG-1325", 
-         USUBJID = SUBJECT, 
-         EXSTDTC = RFSTDTC, 
-         EXENDTC = EXENDTC, 
-         EXDOSE = DOSE, 
-         EXDOSU = "mg", 
+adex <- read_datafile(inFile=adexFile_name) 
+adex <- adex %>% 
+  mutate(STUDYID = STUDYID, 
+         USUBJID = USUBJID, 
+         EXSTDTC = EXSTDTMC, 
+         EXENDTC = EXSTDTMC, 
+         EXDOSE = EXDOSE , 
+         EXDOSU = EXDOSU , 
          EXROUTE = "SC",
-         ARMA = DOSECH  #####
+         ARMA = paste0(EXDOSE, " ", EXDOSU, " Single SC")  #####
   ) 
-adex0[["R1908-ALG-1325"]] = adex0
+adex0[["R1908-ALG-1325"]] = adex
 
-adpcFile_name <- "~/FYANG/R1908_Feld1/DATA/R1908-ALG-1325-adpc.sas7bdat"
-adpc0 <- read_datafile(inFile=adpcFile_name) 
-adpc0 <- adpc0 %>%  
-  mutate(STUDYID = "R1908-ALG-1325", 
-         USUBJID = SUBJECT, 
+adpcFile_name <- "~/FYANG/R1908_Feld1/DATA/R1908-ALG-1325-adpc.csv"
+adpc <- read_datafile(inFile=adpcFile_name) 
+adpc <- adpc %>%  
+  mutate(STUDYID = STUDYID, 
+         USUBJID = USUBJID, 
          SAMDTTM = SAMDTTM, 
-         DVOR = CONCN, 
+         DVOR = DVOR, 
          DVORU = STDUNIT,
          TEST = TEST,
          
-         ARMA = DOSECH  #####
+         ARMA = ARMA,  #####
+         METHOD = SOP
   )
-adpc0[["R1908-ALG-1325"]] = adpc0
+adpc0[["R1908-ALG-1325"]] = adpc
 
 
 #-------------------------------
@@ -106,9 +107,11 @@ study_lst <- c("R1908-HV-1240" )
 
 nmdat <- NULL
 for (istudy in study_lst) { 
+  print(istudy)
+  
   # adsl
   adsl <- adsl0[[istudy]] %>% build_adsl() 
-  check_adsl(adsl0[[istudy]], adsl)
+  check_adsl(adsl)
   
   # adex
   adex <- adex0[[istudy]] %>% build_adex()
@@ -127,7 +130,7 @@ for (istudy in study_lst) {
 
 }
 
-nmdat[[istudy]]
+nmdat[[istudy]] %>% select(ends_with("_ORG"))
 
 # finally, nmdat
 sapply(nmdat, class)

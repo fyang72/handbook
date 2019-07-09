@@ -61,71 +61,22 @@ build_adex <-function(dataset) {
   #---------------------------------------------
   # dosing variable: "EXSTDTC",  "EXENDTC", "EXDUR", "TRTSDTM", "TIME"
   #--------------------------------------------- 
-  # https://www.rdocumentation.org/packages/lubridate/versions/1.7.4/topics/parse_date_time
-  # "ymd"   "09-01-03 12:02"  "09-01-01", "090102", "09-01 03"
-  # "ymd HM"  "09-01-03 12:02"  
-  # x <- c("2011-12-31 12:59:59", "2010-01-01 12:11", "2010-01-01 12", "2010-01-01")
-  # parse_date_time(x, "Ymd HMS", truncated = 3)
-  #UTC is n ot a time zone, but a time standard that is the basis for civil time and time zones worldwide. This means 
-  # that no country or territory officially uses UTC as a local time.
-  
-  # SAMDTTM:  start Date/time of sampling   TRTSTDTM    TRTSDTM
-  #adex$SAMDTTM = as.POSIXct(adex$EXSTDT*60*60*24 + adex$EXSTTM, origin="1960-01-01", tz="GMT")
-  #adex$SAMDTTM = as.POSIXct(adex$TRTSDTM, origin="1960-01-01", tz="GMT")
-  #adex$SAMDTTM = as.POSIXlt(paste(DATE, "T", TIME1, sep=""), format = "%Y-%m-%dT%H:%M", tz="GMT")
-  #strptime("Tue, 23 Mar 2010 14:36:38 -0400",  "%a, %d %b %Y %H:%M:%S %z")  
-  
-  # https://www.rdocumentation.org/packages/lubridate/versions/1.7.4/topics/parse_date_time
-  # "ymd"   "09-01-03 12:02"  "09-01-01", "090102", "09-01 03"
-  # "ymd HM"  "09-01-03 12:02"  
-  # x <- c("2011-12-31 12:59:59", "2010-01-01 12:11", "2010-01-01 12", "2010-01-01")
-  # parse_date_time(x, "Ymd HMS", truncated = 3)
-  
-  if("format.sas" %in% names(attributes(adex$EXSTDTC)) &&  attr(adex$EXSTDTC, "format.sas") == "IS8601DT") {
-    adex$EXSTDTC = as.POSIXct(adex$EXSTDTC, origin="1960-01-01", tz="America/New_York") %>% as.character()
-  } 
-  
-  if("format.sas" %in% names(attributes(adex$EXENDTC)) &&  attr(adex$EXENDTC, "format.sas") == "IS8601DT") {
-    adex$EXENDTC = as.POSIXct(adex$EXENDTC, origin="1960-01-01", tz="America/New_York") %>% as.character()
-  } 
-  
+   
   library(lubridate) 
   adex = adex %>% mutate( 
     EXENDTC = as.character(EXENDTC),
     EXSTDTC = as.character(EXSTDTC)
   )  
-  # 
-  # adex = adex %>% mutate( 
-  #   EXENDTC = parse_date_time(EXENDTC, orders=timefmt_var_lst, truncated = 3),
-  #   EXSTDTC = parse_date_time(EXSTDTC, orders=timefmt_var_lst, truncated = 3) 
-  # ) %>% 
-  #   group_by(USUBJID) %>% 
-  #     mutate(TRTSDTM = min(EXSTDTC, na.rm=TRUE)) %>% 
-  #   ungroup()
-  # 
-  # # "TRTSDT"   "TRTSTM"   "TRTSDTM"    date/time of start treatment 
-  # # "TRTEDT"   "TRTETM"   "TRTEDTM"    date/time of end of treatment   
-  # adex = adex %>% mutate( 
-  #   EXDUR = difftime(EXENDTC, EXSTDTC, units = "days") %>% as_numeric(), 
-  #   TIME = difftime(EXSTDTC, TRTSDTM, units = "days") %>% as_numeric()
-  # )
-  # 
-  # # as character
-  # adex = adex %>% 
-  #   mutate(EXENDTC = as.character(EXENDTC), 
-  #          EXSTDTC = as.character(EXSTDTC), 
-  #          TRTSDTM = as.character(TRTSDTM) 
-  #   ) 
-  #   
+ 
   
   #---------------------------------------------
   # "EXROUTE"    "SUBCUTANEOUS"  "INTRAVENOUS"   "INTRAMUSCULAR" "IVT"      
   #--------------------------------------------- 
   adex = adex %>% mutate(
     EXROUTE = toupper(EXROUTE), 
-    EXROUTE = gsub("IV", "INTRAVENOUS", EXROUTE, fix=TRUE),
-    EXROUTE = gsub("SC", "SUBCUTANEOUS", EXROUTE, fix=TRUE), 
-    EXROUTE = gsub("IM", "INTRAMUSCULAR", EXROUTE, fix=TRUE), 
+    EXROUTE = str_replace(EXROUTE, "^IV$", "INTRAVENOUS"),     
+    EXROUTE = str_replace(EXROUTE, "^SC$", "SUBCUTANEOUS"), 
+    EXROUTE = str_replace(EXROUTE, "^IM$", "INTRAMUSCULAR"), 
     EXROUTE = ordered(toupper(EXROUTE), levels = route_var_lst),  
     EXROUTN = ifelse(is.na(EXROUTE), -99, as.integer(EXROUTE)), 
     EXROUTE = as.character(EXROUTE),
@@ -144,12 +95,21 @@ build_adex <-function(dataset) {
            ) %>%  
     ungroup()
    
+  #--------------------------------------------------------------
+  # combine dataset and adex
+  #-------------------------------------------------------------- 
+  dataset = dataset %>% ungroup() %>% 
+    rename_at(
+      vars(colnames(dataset)), ~ paste0(colnames(dataset), "_ORG")
+    ) 
+  adex = bind_cols(adex, dataset)
+  
   #---------------------------------------------
   # order columns, and final output
   #---------------------------------------------   
   adex <- adex[, c(adex_var_lst, setdiff(colnames(adex), adex_var_lst))]  
   adex <- convert_vars_type(adex, adex_data_type)
-  #adex <- adex %>% dplyr::arrange(STUDYID, USUBJID, TIME)  
+  adex <- adex %>% dplyr::arrange(STUDYID, USUBJID, TIME)  
   adex <- adex %>% ungroup()
   
   return(adex) 
@@ -160,14 +120,8 @@ build_adex <-function(dataset) {
 # check_adex
 ########################################################################
 
-check_adex <- function(dataset, adex, topN=20) { 
+check_adex <- function(adex, topN=20) { 
   adex <- adex %>% ungroup()
-  
-  dataset = dataset %>% ungroup()  %>% 
-    rename_at(vars(colnames(dataset)),
-              ~ paste0(colnames(dataset), "_ORG")
-    )
-  adex = bind_cols(adex, dataset)
   
   table = NULL
   
@@ -255,6 +209,6 @@ if (ihandbook) {
                     )    
   
   data[["adex"]] = adex 
-  table <- check_adex(dataset, adex, topN=topN)    
+  table <- check_adex(adex, topN=topN)    
   output <- list(data=data, table=table)
 }

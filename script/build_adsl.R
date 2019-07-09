@@ -71,7 +71,10 @@ build_adsl <-function(dataset) {
     #SEX = fuzzy_match(toupper(SEX), sex_var_lst, 
     #         fuzzy_match_method, fuzzy_match_threshold
     #        ),  
-    SEX = ordered(toupper(SEX), levels=sex_var_lst), 
+    SEX = toupper(SEX), 
+    SEX = str_replace(SEX, "^M$", "MALE"),
+    SEX = str_replace(SEX, "^F$", "FEMALE"),
+    SEX = ordered(SEX, levels=sex_var_lst), 
     SEXN = ifelse(is.na(SEX), -99, as.integer(SEX)), 
     SEX = as.character(SEX)
                       
@@ -82,7 +85,8 @@ build_adsl <-function(dataset) {
     #ETHNIC = fuzzy_match(toupper(ETHNIC), ethnic_var_lst, 
     #                     fuzzy_match_method, fuzzy_match_threshold
     #),
-    ETHNIC = ordered(toupper(ETHNIC), levels=ethnic_var_lst), 
+    ETHNIC = toupper(ETHNIC),
+    ETHNIC = ordered(ETHNIC, levels=ethnic_var_lst), 
     ETHNICN = ifelse(is.na(ETHNIC), -99, as.integer(ETHNIC)), 
     ETHNIC = as.character(ETHNIC)
   )
@@ -114,6 +118,14 @@ build_adsl <-function(dataset) {
   # "ENRLFL"   enrolled population flag
   # "PKFL"     PK population flag
 
+  #--------------------------------------------------------------
+  # combine dataset and adsl
+  #-------------------------------------------------------------- 
+  dataset = dataset %>% ungroup() %>% 
+    rename_at(
+      vars(colnames(dataset)), ~ paste0(colnames(dataset), "_ORG")
+    ) 
+  adsl = bind_cols(adsl, dataset)
   
   #--------------------------------------------------------------
   # order columns, and final output
@@ -121,7 +133,7 @@ build_adsl <-function(dataset) {
   # put variables (tier=1 or 2 fisrt)
   adsl <- adsl[, c(adsl_var_lst, setdiff(colnames(adsl), adsl_var_lst))]
   adsl <- convert_vars_type(adsl, adsl_data_type)
-  #adsl <- adsl %>% dplyr::arrange(STUDYID, USUBJID) 
+  adsl <- adsl %>% dplyr::arrange(STUDYID, USUBJID) 
   adsl <- adsl %>% ungroup()
   
   return(adsl) 
@@ -132,14 +144,8 @@ build_adsl <-function(dataset) {
 # check_adsl
 ########################################################################
 
-check_adsl <- function(dataset, adsl, topN=20) {
+check_adsl <- function(adsl, topN=20) {
   adsl <- adsl %>% ungroup()
-  
-  dataset = dataset %>% ungroup() %>% 
-    rename_at(vars(colnames(dataset)),
-              ~ paste0(colnames(dataset), "_ORG")
-              ) 
-  adsl = bind_cols(adsl, dataset)
   
   table = NULL
   
@@ -218,6 +224,7 @@ if (ihandbook) {
   table = NULL
   
   adsl <-  build_adsl(dataset)   
-  table <- check_adsl(dataset, adsl, topN=topN)     # dataset: original one, # adsl: parsed one
+  table <- check_adsl(adsl, topN=topN)  
+  
   output <- list(data=adsl, table=table)
 }

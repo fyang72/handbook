@@ -83,13 +83,22 @@ build_nmdat <- function(dataset) {
   #CFLAG 
   nmdat$C[which(!nmdat$CFLAG %in% c(NA,""))] = "C"
   
+  #--------------------------------------------------------------
+  # combine dataset and nmdat
+  #-------------------------------------------------------------- 
+  dataset = dataset %>% 
+    rename_at(vars(colnames(dataset)),
+              ~ paste0(colnames(dataset), "_ORG")
+    ) 
+  nmdat = bind_cols(nmdat, dataset)
+  
+  
   #---------------------------------------------
   # order columns, and final output
   #---------------------------------------------     
   nmdat = nmdat[, c(nmdat_var_lst, setdiff(colnames(nmdat), nmdat_var_lst))]
   nmdat <- convert_vars_type(nmdat, nmdat_data_type)
   
-  if (nrow(nmdat)>0) {nmdat$ROWID0=1:nrow(nmdat) } #ROWID0 # in case be used later
   nmdat <- nmdat %>% dplyr::arrange(STUDYID, USUBJID, TIME, -desc(EVID), TESTN) 
   if (nrow(nmdat)>0) {nmdat$ROWID=1:nrow(nmdat) } #ROWID 
   
@@ -139,14 +148,8 @@ build_nmdat2 <- function(dataset) {
 # check_adex
 #################################################################
 
-check_nmdat <- function(dataset, nmdat, topN=20) {
+check_nmdat <- function(nmdat, topN=20) {
   nmdat = nmdat %>% ungroup()
-  
-  dataset = dataset %>% 
-    rename_at(vars(colnames(dataset)),
-              ~ paste0(colnames(dataset), "_ORG")
-    ) 
-  nmdat = bind_cols(nmdat, dataset)
   
   table = NULL
   #----------------- 

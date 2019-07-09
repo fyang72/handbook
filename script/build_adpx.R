@@ -8,11 +8,16 @@ build_adpx <-function(adsl=NULL, adex=NULL, adpc=NULL, other=NULL) {
            need(adex, message="no adsl in build_adex"), 
            need(adpc, message="no adsl in build_adpc")
            )
+  
   # toupper
   colnames(adsl) <- toupper(colnames(adsl))
   colnames(adex) <- toupper(colnames(adex))
   colnames(adpc) <- toupper(colnames(adpc))
  
+  #
+  adsl <- adsl %>% select(-ends_with("_ORG"))
+  adex <- adex %>% select(-ends_with("_ORG"))
+  adpc <- adpc %>% select(-ends_with("_ORG")) 
   
   # adsl
   adsl = adsl %>% ungroup() %>% fillUpCol_df(adsl_var_lst)
@@ -31,6 +36,7 @@ build_adpx <-function(adsl=NULL, adex=NULL, adpc=NULL, other=NULL) {
   # adpc = adpc + other (convert to characters)
   if (!is.null(other)) {
     colnames(other) <- toupper(colnames(other))
+    other <- other %>% select(-ends_with("_ORG"))
     other = other %>% ungroup() %>% fillUpCol_df(col_lst) 
     
     #w <- which(sapply(other, function(x)  tail(class(x),1)) %in% c('factor', 'POSIXt', 'POSIXlt'))
@@ -107,22 +113,22 @@ build_adpx <-function(adsl=NULL, adex=NULL, adpc=NULL, other=NULL) {
   # parse_date_time(x, "Ymd HMS", truncated = 3)
   
   adpx = adpx %>% mutate( 
-    SAMDTTM = parse_date_time(SAMDTTM, orders=timefmt_var_lst, truncated = 3, tz = "America/New_York"),  
-    EXENDTC = parse_date_time(EXENDTC, orders=timefmt_var_lst, truncated = 3, tz = "America/New_York"),
-    EXSTDTC = parse_date_time(EXSTDTC, orders=timefmt_var_lst, truncated = 3, tz = "America/New_York") 
+    SAMDTTM = standardise_SAMDTTM(SAMDTTM),  
+    EXENDTC = standardise_SAMDTTM(EXENDTC),
+    EXSTDTC = standardise_SAMDTTM(EXSTDTC) 
   ) %>% 
     group_by(USUBJID) %>%  mutate(TRTSDTM = min(EXSTDTC, na.rm=TRUE)) %>% 
     ungroup()
   
+  # SAMDTTM
   ids <- which(is.na(as_numeric(adpx$TIME)))
   adpx$TIME[ids] = difftime(
-    adpx$SAMDTTM[ids], adpx$TRTSDTM[ids], units = "days") %>% 
-    as_numeric()  
+    adpx$SAMDTTM[ids], adpx$TRTSDTM[ids], units = "days") %>% as_numeric()  
   
+  # EXSTDTC
   ids <- which(is.na(as_numeric(adpx$TIME)))
   adpx$TIME[ids] = difftime(
-    adpx$EXSTDTC[ids], adpx$TRTSDTM[ids], units = "days") %>% 
-    as_numeric()  
+    adpx$EXSTDTC[ids], adpx$TRTSDTM[ids], units = "days") %>% as_numeric()  
   
   # EXDUR
   adpx = adpx %>% mutate( 
@@ -164,7 +170,7 @@ build_adpx <-function(adsl=NULL, adex=NULL, adpc=NULL, other=NULL) {
   #---------------------------------------------   
   adpx = adpx[, c(nmdat_var_lst, setdiff(colnames(adpx), nmdat_var_lst))]
   adpx <- adpx %>% convert_vars_type(nmdat_data_type)
-  #adpx <- adpx %>% dplyr::arrange(STUDYID, USUBJID, TIME, TESTN) 
+  adpx <- adpx %>% dplyr::arrange(STUDYID, USUBJID, TIME, TESTN) 
   adpx <- adpx %>% ungroup()
   
   return(adpx)
