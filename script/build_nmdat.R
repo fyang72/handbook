@@ -139,9 +139,32 @@ build_nmdat2 <- function(dataset) {
 # check_adex
 #################################################################
 
-check_nmdat <- function(dataset, topN=20) {
-  nmdat = dataset %>% ungroup()
+check_nmdat <- function(dataset, nmdat, topN=20) {
+  nmdat = nmdat %>% ungroup()
+  
+  dataset = dataset %>% 
+    rename_at(vars(colnames(dataset)),
+              ~ paste0(colnames(dataset), "_ORG")
+    ) 
+  nmdat = bind_cols(nmdat, dataset)
+  
   table = NULL
+  #----------------- 
+  # TIMEPT
+  #----------------- 
+  tabl = nmdat %>% select(VISITNUM, TIMEPT, TIMEPT_ORG, NTIM) %>% distinct(TIMEPT, .keep_all=TRUE) %>% 
+    mutate(VISITNUM=as_numeric(VISITNUM), 
+           NTIM=as_numeric(NTIM)
+    ) %>% arrange(VISITNUM, NTIM) %>% 
+    select(-VISITNUM)
+  
+  if (nrow(tabl)>topN) { tabl = tabl %>% slice(1:topN) }
+  attr(tabl, "title") = "List of nominal time point (TIMEPT) and its corresponding numerical value (NTIM)" 
+  attr(tabl, "key") = "TIMEPT_ORG"
+  attr(tabl, "value") = "NTIM"
+  if (nrow(tabl)>topN) {attr(tabl, "footnote") = paste0("Note, the default is to display top ", topN, " rows.")}
+  table[["TIMEPT"]] = tabl
+  
   
   #----------------- 
   # TIME
@@ -187,6 +210,6 @@ if (ihandbook) {
   nmdat <- build_nmdat(dataset)  
   
   data[["nmdat"]] = nmdat 
-  table <- check_nmdat(nmdat, topN=20)   # date_time_format = c("Ymd HMS")
+  table <- check_nmdat(dataset, nmdat, topN=20)   # date_time_format = c("Ymd HMS")
   output <- list(data=data, table=table)
 }

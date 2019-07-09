@@ -108,9 +108,14 @@ default_adsl_checkin <- reactive({
 
 output$standardize_adsl <-renderUI({
   validate(need(globalVars$login$status, message=FALSE))
+  # 
+  # script = readLines(paste0(HOME, "/script/build_adsl.R")) 
+  # script = paste0(script, collapse="\n")
   
-  script = readLines(paste0(HOME, "/script/build_adsl.R")) 
-  script = paste0(script, collapse="\n")
+  script <- list.files(path=paste0(HOME, "/script/"), 
+                         full.names = TRUE,
+                         pattern="build_adsl")
+  names(script) = basename(script)
   
   # callModule 
   ALL = callModule(module_build_dataset_wrapper, "standardize_adsl", 
@@ -163,8 +168,10 @@ default_adex_checkin <- reactive({
 output$standardize_adex <-renderUI({
   validate(need(globalVars$login$status, message=FALSE))
   
-  script = readLines(paste0(HOME, "/script/build_adex.R")) 
-  script = paste0(script, collapse="\n")
+  script <- list.files(path=paste0(HOME, "/script/"), 
+                         full.names = TRUE,
+                         pattern="build_adex")
+  names(script) = basename(script)
   
   # callModule 
   ALL = callModule(module_build_dataset_wrapper, "standardize_adex", 
@@ -211,8 +218,10 @@ default_adpc_checkin <- reactive({
 output$standardize_adpc <-renderUI({
   validate(need(globalVars$login$status, message=FALSE))
   
-  script = readLines(paste0(HOME, "/script/build_adpc.R")) 
-  script = paste0(script, collapse="\n")
+  script <- list.files(path=paste0(HOME, "/script/"), 
+                         full.names = TRUE,
+                         pattern="build_adpc")
+  names(script) = basename(script)
     
   # callModule 
   ALL = callModule(module_build_dataset_wrapper, "standardize_adpc", 
@@ -265,8 +274,10 @@ default_adpd_checkin <- reactive({
 output$standardize_adpd <-renderUI({
   validate(need(globalVars$login$status, message=FALSE))
   
-  script = readLines(paste0(HOME, "/script/build_adpc.R")) 
-  script = paste0(script, collapse="\n")
+  script <- list.files(path=paste0(HOME, "/script/"), 
+                         full.names = TRUE,
+                         pattern="build_adpc")
+  names(script) = basename(script)
   
   # callModule 
   ALL = callModule(module_build_dataset_wrapper, "standardize_adpd", 
@@ -473,8 +484,10 @@ default_nmdat_checkin <- reactive({
 output$standardize_nmdat <-renderUI({
   validate(need(globalVars$login$status, message=FALSE))
   
-  script = readLines(paste0(HOME, "/script/build_nmdat.R")) 
-  script = paste0(script, collapse="\n")
+  script <- list.files(path=paste0(HOME, "/script/"), 
+                         full.names = TRUE,
+                         pattern="build_nmdat")
+  names(script) = basename(script)
   
   # callModule 
   ALL = callModule(module_build_dataset_wrapper, "standardize_nmdat", 
@@ -495,56 +508,4 @@ output$standardize_nmdat <-renderUI({
 fluidRow(column(12, uiOutput(("standardize_nmdat"))))
 ```
 
-
-
-
-
-
-
-
-
-
-
-```{r, eval=FALSE}
-
-setwd("~/handbook/")
-source("~/handbook/global.R")
  
-adsl0 <- read_csv("~/handbook/data/adsl.csv", col_names=TRUE,  
-         col_type=cols(.default=col_character()))  # read as character  )
-
-adsl <- adsl0 %>% build_adsl() 
-check_adsl(adsl0, adsl)
-   
-adex0 <- read_csv("~/handbook/data/adex.csv", col_names=TRUE,  
-               col_type=cols(.default=col_character()))  # read as character  )
-
-adex <- adex0 %>% build_adex()
-check_adex(adex0, adex)
- 
-
-
-adpc0 <- read_csv("~/handbook/data/adpc.csv", col_names=TRUE,  
-                 col_type=cols(.default=col_character()))  # read as character  )
-
-adpc <- adpc0 %>% build_adpc()
-check_adpc(adpc0, adpc)
-
-
-adsl$dgddg = 9
-adex$adex646 = 45
-adpc$adpc65356 = 43643
-adpx <- build_adpx(adsl, adex, adpc, other=NULL)
-
-nmdat <- adpx %>% build_nmdat()
-
-nmdat
-
-
-sapply(nmdat, class)
-  
-  
-  
- 
-
-```

@@ -68,8 +68,8 @@ module_build_dataset <- function(input, output, session,
 ns <- session$ns
 values <- reactiveValues(data=NULL,figure=NULL,table = NULL)
 
- 
-
+# script is a list of file names containing the "script"
+script <- sapply(script, function(i) paste0(readLines(i), collapse="\n")) %>% unlist()
 
 ################################
 # UI for dataset_container
@@ -128,24 +128,53 @@ output$runScript_container <- renderUI({
              ), 
     
     fluidRow(
+      column(9,
+             selectizeInput(ns("script_selector"),
+                            label    = NULL, #"select script:" ,
+                            choices  = names(script),
+                            multiple = FALSE,
+                            selected = names(script)[1]
+             )
+      ),
+      
       column(3, 
              actionButton(ns("run_script"), label="Run script", style=actionButton_style )
       )
     ),
     
-    fluidRow(
-      column(12,
-             aceEditor(ns("script_content"), 
-                       mode="r", value=script, 
-                       theme = "crimson_editor",   # chrome
-                       autoComplete = "enabled",
-                       height = "1000px", 
-                       fontSize = 15 
-             )
-      )
-    )
+    fluidRow(column(12, uiOutput(ns("script_content_container"))))
+    
+    # fluidRow(
+    #   column(12,
+    #          aceEditor(ns("script_content"), 
+    #                    mode="r", 
+    #                    value=script, 
+    #                    theme = "crimson_editor",   # chrome
+    #                    autoComplete = "enabled",
+    #                    height = "1000px", 
+    #                    fontSize = 15 
+    #          )
+    #   )
+    # )
   )
 })
+
+
+
+output$script_content_container <- renderUI({
+  validate(need(globalVars$login$status, message=FALSE))
+  
+  aceEditor(ns("script_content"), 
+            mode="r", 
+            value=if (is.null(names(script))) {script} else {script[input$script_selector]}, 
+            theme = "crimson_editor",   # chrome
+            autoComplete = "enabled",
+            height = "1000px", 
+            fontSize = 15 
+  )
+  
+})
+
 
 ################################
 # checkInRows_container
