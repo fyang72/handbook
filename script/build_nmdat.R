@@ -90,14 +90,15 @@ build_nmdat <- function(dataset) {
     rename_at(vars(colnames(dataset)),
               ~ paste0(colnames(dataset), "_ORG")
     ) 
-  nmdat = bind_cols(nmdat, dataset)
-  
-  
+   
   #---------------------------------------------
   # order columns, and final output
   #---------------------------------------------     
   nmdat = nmdat[, c(nmdat_var_lst, setdiff(colnames(nmdat), nmdat_var_lst))]
   nmdat <- convert_vars_type(nmdat, nmdat_data_type)
+  
+  # assume nmdat hasn't been filtered or arranged
+  nmdat = bind_cols(nmdat, dataset)
   
   nmdat <- nmdat %>% dplyr::arrange(STUDYID, USUBJID, TIME, -desc(EVID), TESTN) 
   if (nrow(nmdat)>0) {nmdat$ROWID=1:nrow(nmdat) } #ROWID 
@@ -152,34 +153,21 @@ check_nmdat <- function(nmdat, topN=20) {
   nmdat = nmdat %>% ungroup()
   
   table = NULL
-  #----------------- 
-  # TIMEPT
-  #----------------- 
-  tabl = nmdat %>% select(VISITNUM, TIMEPT, TIMEPT_ORG, NTIM) %>% distinct(TIMEPT, .keep_all=TRUE) %>% 
-    mutate(VISITNUM=as_numeric(VISITNUM), 
-           NTIM=as_numeric(NTIM)
-    ) %>% arrange(VISITNUM, NTIM) %>% 
-    select(-VISITNUM)
   
-  if (nrow(tabl)>topN) { tabl = tabl %>% slice(1:topN) }
-  attr(tabl, "title") = "List of nominal time point (TIMEPT) and its corresponding numerical value (NTIM)" 
-  attr(tabl, "key") = "TIMEPT_ORG"
-  attr(tabl, "value") = "NTIM"
-  if (nrow(tabl)>topN) {attr(tabl, "footnote") = paste0("Note, the default is to display top ", topN, " rows.")}
-  table[["TIMEPT"]] = tabl
-  
-  
+  table <- c(table, check_adsl(nmdat %>% distinct(USUBJID, .keep_all=TRUE), topN=topN))
+  table <- c(table, check_adex(nmdat %>% filter(EVID==1), topN=topN))
+  table <- c(table, check_adpc(nmdat %>% filter(EVID==0), topN=topN))
+    
   #----------------- 
   # TIME
   #----------------- 
-  tabl = nmdat %>% select(USUBJID, ARMA, VISIT, TIMEPT, TIME, SAMDTTM, TRTSDTM ) %>% 
-    filter(is.na(TIME))  %>% 
-    arrange(USUBJID)
+  tabl = nmdat %>% select(USUBJID, TIME, VISIT, SAMDTTM, TRTSDTM, DVOR, AMT, EVID) %>%  
+    filter(is.na(TIME))
   
   if (nrow(tabl)>topN) { tabl = tabl %>% slice(1:topN) }
-  attr(tabl, "title") = "List of elapse time (TIME) that are not avaible. "  
-  attr(tabl, "key") = "TIME"  
-  attr(tabl, "value") = "TIME"
+  attr(tabl, "title") = "List of rows have its missing TIME" 
+  #attr(tabl, "key") = "TIME"
+  #attr(tabl, "value") = "TIME"
   if (nrow(tabl)>topN) {attr(tabl, "footnote") = paste0("Note, the default is to display top ", topN, " rows.")}
   table[["TIME"]] = tabl
   
@@ -192,8 +180,8 @@ check_nmdat <- function(nmdat, topN=20) {
   
   if (nrow(tabl)>topN) { tabl = tabl %>% slice(1:topN) }
   attr(tabl, "title") = "List of dose (EXTDOSE) that are not avaible. "  
-  attr(tabl, "key") = "EXTDOSE"  
-  attr(tabl, "value") = "EXTDOSE"
+  #attr(tabl, "key") = "EXTDOSE"  
+  #attr(tabl, "value") = "EXTDOSE"
   if (nrow(tabl)>topN) {attr(tabl, "footnote") = paste0("Note, the default is to display top ", topN, " rows.")}
   table[["EXTDOSE"]] = tabl
   
@@ -213,6 +201,6 @@ if (ihandbook) {
   nmdat <- build_nmdat(dataset)  
   
   data[["nmdat"]] = nmdat 
-  table <- check_nmdat(dataset, nmdat, topN=20)   # date_time_format = c("Ymd HMS")
+  table <- check_nmdat(nmdat, topN=20)   # date_time_format = c("Ymd HMS")
   output <- list(data=data, table=table)
 }

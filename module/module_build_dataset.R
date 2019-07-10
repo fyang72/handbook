@@ -231,36 +231,29 @@ observeEvent(input$saveAll, {
            need(values$table, message=NULL), 
            need(values$data, message=NULL)
   ) 
-    
-  tdata_org = ALL$DATA[[dataset_name]] 
-  tdata_org = tdata_org %>% 
-    rename_at(vars(colnames(tdata_org)),
-              ~ paste0(colnames(tdata_org), "_ORG")
-    )
-  
-  tdata = values$data %>% cbind(tdata_org)
+     
+  tdata = values$data[[1]]  
+  validate(need(length(values$data)==1, 
+                message="length(values$data) must be 1 in build_dataset"))
   ntabl = length(values$table)
   
   # for all curation tables
   for (i in 1:ntabl) {
     table = values$table[[i]]
+    KEY = attr(table, "key")
     if (is.null(table) ) {next} 
     if (nrow(table)==0) {next} 
+    if (is.null(KEY)) {next}  
     
-    # incompatible types (character / logical)
-    KEY = attr(table, "key")
-    tdata[, KEY] = as.character(tdata[, KEY])
-    table[, KEY]  = as.character(table[, KEY])
-    
+    tdata[, KEY] = as.character(tdata[, KEY]) # incompatible types (character / logical)
+    table[, KEY]  = as.character(table[, KEY])# incompatible types (character / logical)
+ 
     col.lst =  setdiff(colnames(table), KEY)
     tdata = tdata %>% select(-one_of(intersect(col.lst, colnames(tdata)))) %>% 
       left_join(table, by=KEY)
   }
-  
-  tdata = tdata[, setdiff(colnames(tdata), colnames(tdata_org))]
-  tdata = tdata[, colnames(values$data)]
-  
-  ALL$DATA[[dataset_name]] <- tdata
+     
+  ALL$DATA[[dataset_name]] <- tdata %>% select(-ends_with("_ORG"))
   showNotification("save all sucessfully", type="message")   # "default, "message", "warning", "error"
   
 })

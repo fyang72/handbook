@@ -102,6 +102,8 @@ build_adex <-function(dataset) {
     rename_at(
       vars(colnames(dataset)), ~ paste0(colnames(dataset), "_ORG")
     ) 
+  
+  # assume adex hasn't been filtered or arranged
   adex = bind_cols(adex, dataset)
   
   #---------------------------------------------

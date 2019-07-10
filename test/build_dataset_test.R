@@ -9,6 +9,21 @@ adsl0 = NULL
 adex0 = NULL
 adpc0 = NULL
 
+
+# ------------------------------
+# TEST
+# ------------------------------
+adslFile_name <- "~/handbook/data/adsl.csv"
+adsl0[["TEST"]] <- read_datafile(inFile=adslFile_name) 
+ 
+adexFile_name <- "~/handbook/data/adex.csv"
+adex0[["TEST"]] <- read_datafile(inFile=adexFile_name) 
+
+adpcFile_name <- "~/handbook/data/adpc.csv"
+adpc0[["TEST"]] <- read_datafile(inFile=adpcFile_name) 
+
+
+
 # ------------------------------
 #R1908-HV-1240
 # ------------------------------
@@ -101,11 +116,11 @@ adpc0[["R1908-ALG-1325"]] = adpc
 #-------------------------------
 # BUILD
 # ------------------------------
-study_lst <- c("R1908-HV-1240", "R1908-ALG-1325")
+study_lst <- c("TEST", "R1908-HV-1240", "R1908-ALG-1325")
 study_lst <- c("R1908-HV-1240" )
 
 
-nmdat <- NULL
+nmdat0 <- NULL
 for (istudy in study_lst) { 
   print(istudy)
   
@@ -115,22 +130,25 @@ for (istudy in study_lst) {
   
   # adex
   adex <- adex0[[istudy]] %>% build_adex()
-  check_adex(adex0[[istudy]], adex)
+  check_adex(adex)
   
   
   # adpc 
   adpc <- adpc0[[istudy]] %>% build_adpc()
-  check_adpc(adpc0[[istudy]], adpc)
+  check_adpc(adpc)
   
   # adpx 
   adpx <- build_adpx(adsl, adex, adpc, other=NULL)
   
   # nmdat
-  nmdat[[istudy]] <- adpx %>% build_nmdat()
+  nmdat0[[istudy]] <- adpx %>% build_nmdat()
 
 }
 
-nmdat[[istudy]] %>% select(ends_with("_ORG"))
+
+nmdat <- nmdat0[[istudy]]  #%>% select(-ends_with("_ORG"))
+check_nmdat(nmdat)
+ 
 
 # finally, nmdat
 sapply(nmdat, class)

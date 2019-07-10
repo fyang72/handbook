@@ -89,6 +89,8 @@ build_adpc <-function(dataset ) {
     rename_at(vars(colnames(dataset)),
               ~ paste0(colnames(dataset), "_ORG")
     ) 
+  
+  # assume adpc hasn't been filtered or arranged
   adpc = bind_cols(adpc, dataset)
   
   #--------------------------------------------------------------
@@ -96,7 +98,7 @@ build_adpc <-function(dataset ) {
   #--------------------------------------------------------------  
   adpc = adpc[, c(adpc_var_lst, setdiff(colnames(adpc), adpc_var_lst))]
   adpc <- convert_vars_type(adpc, adpc_data_type)
-  #adpc <- adpc %>% dplyr::arrange(STUDYID, USUBJID, TIME, TESTN) # DO NOT RE-ARRANGE
+  adpc <- adpc %>% dplyr::arrange(STUDYID, USUBJID, TIME, TESTN) # DO NOT RE-ARRANGE
   adpc <- adpc %>% ungroup()
   
   return(adpc) 
@@ -112,6 +114,7 @@ check_adpc <- function(adpc, topN=20) {
   adpc = adpc %>% ungroup()
  
   table = NULL
+  
   #----------------- 
   # ARMA
   #----------------- 
@@ -162,7 +165,7 @@ check_adpc <- function(adpc, topN=20) {
   #----------------- 
   # TESTCD
   #----------------- 
-  tabl = adpc %>% select(TESTCD, METHOD, LLOQ, TEST, TESTN, TESTCAT) %>% distinct(TEST, .keep_all=TRUE)
+  tabl = adpc %>% select(TESTCD, TESTCD_ORG, METHOD, LLOQ, TEST, TESTN, TESTCAT) %>% distinct(TEST, .keep_all=TRUE)
   
   if (nrow(tabl)>topN) { tabl = tabl %>% slice(1:topN) }
   attr(tabl, "title") = "List of analyte name (TEST), assay method, LLOQ, its category and its label"     

@@ -60,7 +60,8 @@ calc_stats  <- function(adsl, id="USUBJID",group_by="ARMA", value="DVOR") {
   adsl$DVOR = as_numeric(adsl[, value])   # take a long time
   
   stats <-  adsl %>%                     #lazyeval::interp(~ adsl %>%
-    group_by_(.dots = group_by) %>%
+    #group_by_(.dots = group_by) %>%
+    group_by_at( vars(one_of(group_by))) %>%  # 07_09_2019
     dplyr::summarise(
       N = length(unique(USUBJID)),
       N_missing= length(unique(USUBJID[is.na(DVOR)])),   # number of subjects who don't have measurable DVOR.

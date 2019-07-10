@@ -154,7 +154,7 @@ file.lst = file.lst[which(substr(file.lst, nchar(file.lst)-1, nchar(file.lst)) %
 file.lst = file.lst[which(!substr(gsub(folder.loc, "", file.lst, fix=TRUE), 1,1) %in% c("_"))]
 
 for (ifile in 1:length(file.lst)) { 
-  #print(file.lst[ifile]);  
+  print(file.lst[ifile]);  
   source(file=file.lst[ifile])  
 }     #sys.source('file.R', envir=environment())
 

@@ -1,55 +1,142 @@
  
-## Time profile <a name="time_profile"></a>
+# Descriptive analysis  <a name="descriptive_analysis"></a>
 
+This chapter is dedicated for all data-driven pharmacokinetics/pharmacodynmaic analysis, with a minimum level
+of modeling.  Most often, the concentration-time profiles will be plotted, in both log- and linear-scale.  A variety of visualization are presented for PK-PD analyses. 
  
 ```{r}
-drug_despcriptive_analysis_inputData <- reactive({
-  tdata = ALL$DATA[["mYtEsT_for_despcriptive_analysis"]] 
-  validate(need(tdata, message="no data found yet"))
+#----------------------------------------------------
+# load_nmdat_container
+#----------------------------------------------------
+output$descriptive_analysis_data_selector <-renderUI({
+   
+  # callModule 
+  #isolate({ 
+    ALL = callModule(module_load_dataset, "load_nmdat_for_descriptive_analysis", 
+                     ALL, dataset_name="mYtEsT_for_descriptive_analysis")
+ # })
   
-  if ("TESTCAT" %in% colnames(tdata)) {
-    tdata = tdata %>% filter(TESTCAT=="PK")
-  }
-  tdata
+  # UI  
+  fluidRow(column(6, 
+                   module_load_dataset_UI(id="load_nmdat_for_descriptive_analysis", label=NULL)
+                 ), 
+            column(6, 
+                   HTML(colFmt("internal library: build-in dataset <br>
+                                within session: secondary data derived from the original <br> 
+                                external file: external file", color="gray")
+                        )
+                   )
+            )  
+  })
+  
+tagList(
+  fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+  fluidRow(column(width=12, uiOutput(("descriptive_analysis_data_selector"))))
+)
+```
+
+
+## Time profile <a name="time_profile"></a>
+
+ Select which response variable for visualization. 
+  
+
+```{r}
+   
+  output$select_which_test_container <- renderUI({ 
+    
+    tdata = ALL$DATA[["mYtEsT_for_descriptive_analysis"]]  
+   
+    validate(need(tdata, message="no data found yet"), 
+             need("TEST" %in% colnames(tdata), message="missing TEST variable") 
+    )
+   
+    test_lst = c("", unique(tdata%>%drop_na(TEST)%>%pull(TEST)))
+    
+    fluidRow(
+      column(12, 
+        selectizeInput(("which_test"), 
+                       label    = "select which analyte", 
+                       choices  = test_lst, 
+                       multiple = FALSE,
+                       width="100%", 
+                       selected = test_lst[1])
+      )
+    )
+    
+  })
+  
+
+  output$select_which_arma_container <- renderUI({ 
+    
+    tdata = ALL$DATA[["mYtEsT_for_descriptive_analysis"]]  
+   
+    validate(need(tdata, message="no data found yet"), 
+             need("ARMA" %in% colnames(tdata), message="missing ARMA variable") 
+    )
+   
+    arma_lst = c(unique(tdata%>%drop_na(ARMA)%>%pull(ARMA)))
+    
+    fluidRow(
+      column(12, 
+        selectizeInput(("which_arma"), 
+                       label    = "select which dose group(s)", 
+                       choices  = arma_lst, 
+                       multiple = TRUE,
+                       width="100%", 
+                       selected = arma_lst)
+      )
+    )
+    
+  })
+  
+ fluidRow(
+   column(6, uiOutput(("select_which_test_container"))),
+   column(6, uiOutput(("select_which_arma_container")))
+ )
+
+
+```
+
+```{r}
+drug_descriptive_analysis_inputData <- reactive({
+  tdata = ALL$DATA[["mYtEsT_for_descriptive_analysis"]] 
+  validate(need(tdata, message="no data found yet"), 
+           need(input$which_test, message=FALSE), 
+           need(input$which_arma, message=FALSE)
+  )
+   
+  # also include dosing event (TEST=NA), NEED EXTRT FROM ADEX
+  tdata %>% filter(
+    TEST %in% c(NA, input$which_test), 
+    ARMA %in% input$which_arma
+  ) 
   
 })
 ```
 
-
 ```{r}  
  
-output$despcriptive_time_profile <- renderUI({ 
-  # Create a namespace function using the provided id
-  #ns <- NS(id)
-  
-  validate(need(drug_despcriptive_analysis_inputData(), message="no data found yet"))
-  
- # print("line 28")
- #print( normalizePath(".") )
-  
-    # script = readLines(paste0(HOME, "/script/desp_mean_profile.R"))
-    # script = paste0(script, sep="\n")   # sep="<br/>")
-    # script = paste0(script, collapse="")
-    # 
-    
+output$descriptive_time_profile <- renderUI({ 
+
+  validate(need(drug_descriptive_analysis_inputData(), message="no data found yet"))
+ 
   script <- list.files(path=paste0(HOME, "/script/"), 
                          full.names = TRUE,
-                         pattern="despcriptive_time_profile")
+                         pattern="descriptive_time_profile")
   names(script) = basename(script)
-  
-   isolate({ 
-      ALL = callModule(module_run_script, "despcriptive_time_profile", 
-                       ALL, 
-                       dataset=drug_despcriptive_analysis_inputData(), 
-                       script=script)
-   }) 
-  
+    
+  ALL = callModule(module_run_script, "descriptive_time_profile", 
+                   ALL, 
+                   dataset=drug_descriptive_analysis_inputData(), 
+                   script=script)
+    
 
-   module_run_script_UI(("despcriptive_time_profile"), label = NULL) 
+  module_run_script_UI(("descriptive_time_profile"), label = NULL) 
      
 })
 
- fluidRow(column(12, uiOutput(("despcriptive_time_profile"))))
+ fluidRow(column(12, uiOutput(("descriptive_time_profile"))))
 
 ```
  

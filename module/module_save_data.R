@@ -52,11 +52,20 @@ inputData <- reactive({
   validate(need(tdata, message="no data found"))      
   tdata
 })
-
-output$data_name_container <- renderUI({                                                                                                                                             
-  validate(need(globalVars$login$status, message=FALSE))                                                                                                                             
   
-  textInput(ns("data_name"), value=NULL, placeholder="data name", width="100%", label=NULL)                                                                                                       
+
+output$data_name_container <- renderUI({   
+  
+  textInput(ns("data_name"), 
+            value= NULL, 
+              # ifelse(data_name %in% "mYtEsT_for_standardize_adsl", "adsl", 
+              #            ifelse(data_name %in% "mYtEsT_for_standardize_adex", "adex", 
+              #                   ifelse(data_name %in% "mYtEsT_for_standardize_adpc", "adpc", 
+              #                          ifelse(data_name %in% "mYtEsT_for_standardize_nmdat", "nmdat", 
+              #                                 ifelse(data_name %in% "mYtEsT_for_standardize_other", "other", NULL
+              #                   ))))),
+            
+            placeholder="data name", width="100%", label=NULL)                                                                                                       
 })
 
 output$mydatatable <- DT::renderDataTable(                                                                                                                                          

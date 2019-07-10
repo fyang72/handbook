@@ -1,5 +1,5 @@
  
-## PKPD relationship <a name="despcriptive_PKPD"></a>
+## PKPD relationship <a name="descriptive_PKPD"></a>
 
  
  
@@ -14,7 +14,7 @@
   output$select_multiple_response_variables_4PKPD_container <- renderUI({
     validate(need(globalVars$login$status, message=FALSE)) 
     
-    tdata = ALL$DATA[["mYtEsT_for_despcriptive_analysis"]] 
+    tdata = ALL$DATA[["mYtEsT_for_descriptive_analysis"]] 
     validate(need(tdata, message="no data found yet"))
     
     # testcat.lst = unique(tdata$TESTCAT)
@@ -127,7 +127,7 @@
 ```{r}  
  
 output$PKPD_linked_profiles_plot <- renderUI({ 
-  tdata = ALL$DATA[["mYtEsT_for_despcriptive_analysis"]]
+  tdata = ALL$DATA[["mYtEsT_for_descriptive_analysis"]]
   validate(need(tdata, message="no data found yet"))
     
   key_col_lst <- c("USUBJID", "ARMA","TIME", "NTIM", "TEST", "DVOR", "WGTBL")
@@ -209,7 +209,7 @@ values <- reactiveValues()
   output$select_which_response_variable_4PKPD_container <- renderUI({
     validate(need(globalVars$login$status, message=FALSE)) 
     
-    tdata = ALL$DATA[["mYtEsT_for_despcriptive_analysis"]] 
+    tdata = ALL$DATA[["mYtEsT_for_descriptive_analysis"]] 
     testcat.lst = unique(tdata$TESTCAT)
     testcat.lst = testcat.lst[which(substr(testcat.lst, 1, 4)=="RESP")]
    
@@ -244,10 +244,10 @@ values <- reactiveValues()
 ```{r}
  
     
-#PKPD_despcriptive_analysis_inputData <- reactive({
+#PKPD_descriptive_analysis_inputData <- reactive({
   observeEvent({input$which_response_4PKPD}, {
                
-  tdata = ALL$DATA[["mYtEsT_for_despcriptive_analysis"]] 
+  tdata = ALL$DATA[["mYtEsT_for_descriptive_analysis"]] 
   validate(need(tdata, message="no data found yet"), 
            need(input$which_response_4PKPD, message=FALSE)
   )
@@ -271,34 +271,29 @@ values <- reactiveValues()
 
 ```{r}  
  
-output$PKPD_despcriptive_analysis_plot <- renderUI({ 
-  # Create a namespace function using the provided id
-  #ns <- NS(id)
-  
+output$PKPD_descriptive_analysis_plot <- renderUI({ 
+ 
   validate(need(values$data4_PKPD, message="no data found yet"))
-  
-    # script = readLines(paste0(HOME, "/script/desp_sigmoid_PKPD.R"))
-    # script = paste0(script, sep="\n")   # sep="<br/>")
-    # script = paste0(script, collapse="")
+   
     
   script <- list.files(path=paste0(HOME, "/script/"), 
                          full.names = TRUE,
-                         pattern="despcriptive_PKPD")
+                         pattern="descriptive_PKPD")
   names(script) = basename(script)
     
    isolate({ 
-      ALL = callModule(module_run_script, "PKPD_despcriptive_analysis_plot", 
+      ALL = callModule(module_run_script, "PKPD_descriptive_analysis_plot", 
                        ALL, 
                        dataset=values$data4_PKPD, 
                        script=script)
    }) 
   
 
-   module_run_script_UI(("PKPD_despcriptive_analysis_plot"), label = NULL) 
+   module_run_script_UI(("PKPD_descriptive_analysis_plot"), label = NULL) 
      
 })
 
- fluidRow(column(12, uiOutput(("PKPD_despcriptive_analysis_plot"))))
+ fluidRow(column(12, uiOutput(("PKPD_descriptive_analysis_plot"))))
 
 ```
  

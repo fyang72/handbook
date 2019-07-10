@@ -2,7 +2,7 @@
 # Mean time profile
 ##########################################################################################
 
-desp_sigmoid_PKPD <-function(dataset, params=NULL) {
+descriptive_PKPD_sigmoid <-function(dataset, params=NULL) {
   #
      # dataset=read_csv("./data/nmdatPKPD.csv") %>%   #filter(TESTCAT=="RESP1")
      #          mutate(TESTCAT  = gsub("RESP1", "RESP", TESTCAT , fixed=TRUE)) %>% 
@@ -16,7 +16,7 @@ desp_sigmoid_PKPD <-function(dataset, params=NULL) {
   #------------------------------
   # these key varaibles needed
   #------------------------------
-  key.column.lst <- c("STUDYID", "USUBJID", "DOSEGRP", "NTIM", "TIMEPT", "TESTCD", "DVOR", "TIME", "LLOQ", "EXTRT", "EVID")
+  key.column.lst <- c("STUDYID", "USUBJID", "ARMA", "NTIM", "TIMEPT", "TESTCD", "DVOR", "TIME", "LLOQ", "EXTRT", "EVID")
   missing.column.lst <- key.column.lst[which(!key.column.lst %in% colnames(dataset))]
   message <- paste0("missing variable(s) of ", paste0(missing.column.lst, sep=", ", collapse=""))
   
@@ -31,10 +31,10 @@ desp_sigmoid_PKPD <-function(dataset, params=NULL) {
   drug_name = ifelse(!"EXTRT" %in% colnames(dataset), "EXTRT",
                      paste0(unique(dataset$EXTRT), sep=" ", collapse=""))
   
-  pk_label = dataset %>% filter(TESTCAT=="PK") %>% select(TESTLABL) %>% unique()
+  pk_label = dataset %>% filter(TESTCAT=="PK") %>% select(TEST) %>% unique()
   pk_label = pk_label[1]
   
-  resp_label = dataset %>% filter(TESTCAT=="RESP") %>% select(TESTLABL) %>% unique()
+  resp_label = dataset %>% filter(TESTCAT=="RESP") %>% select(TEST) %>% unique()
   resp_label = resp_label[1]
   
   #------------------------------           
@@ -53,20 +53,20 @@ desp_sigmoid_PKPD <-function(dataset, params=NULL) {
     mutate(DVOR = ifelse(DVOR<LLOQ, LLOQ/2, DVOR))  
   
   # order the dose group  
-  dosegrp.lst <- unique(tdata$DOSEGRP) 
-  tdata = tdata %>%  mutate(DOSEGRP=ordered(DOSEGRP, levels=dosegrp.lst))
+  ARMA.lst <- unique(tdata$ARMA) 
+  tdata = tdata %>%  mutate(ARMA=ordered(ARMA, levels=ARMA.lst))
    
   # Spread based on TESTCAT
-  tdata = tdata %>%  select(STUDYID, USUBJID, DOSEGRP, TIMEPT, NTIM,  DVOR, TESTCAT) %>%
-    #unite(temp, STUDYID, USUBJID, DOSEGRP, TIMEPT, NTIM) %>% 
+  tdata = tdata %>%  select(STUDYID, USUBJID, ARMA, TIMEPT, NTIM,  DVOR, TESTCAT) %>%
+    #unite(temp, STUDYID, USUBJID, ARMA, TIMEPT, NTIM) %>% 
     #distinct(temp, .keep_all=TRUE) %>% 
     spread(TESTCAT, DVOR)  %>% 
-    arrange(DOSEGRP, USUBJID, NTIM)  
+    arrange(ARMA, USUBJID, NTIM)  
   
   #------------------
   # plot
   #------------------
-  tdata <- tdata%>% group_by(DOSEGRP, USUBJID) %>% 
+  tdata <- tdata%>% group_by(ARMA, USUBJID) %>% 
     mutate(xvar = PK, 
            yvar = RESP 
     ) %>% 
@@ -78,10 +78,10 @@ desp_sigmoid_PKPD <-function(dataset, params=NULL) {
               yend = yend)
   
  
-  fig = ggplot(tdata , aes(x=xvar, y=yvar, col=DOSEGRP)) + 
+  fig = ggplot(tdata , aes(x=xvar, y=yvar, col=ARMA)) + 
     #ggtitle("Concentration Time Profile") + 
     
-    geom_point(aes(shape=DOSEGRP, size=DOSEGRP)) +  #geom_line() +    
+    geom_point(aes(shape=ARMA, size=ARMA)) +  #geom_line() +    
     
     scale_color_manual(values=colScheme()) + 
     scale_shape_manual(values=shapeScheme())+
@@ -118,19 +118,19 @@ desp_sigmoid_PKPD <-function(dataset, params=NULL) {
   #------------------
   # associated table
   #------------------
-  data = tdata %>% select(STUDYID, USUBJID, DOSEGRP, TIMEPT, NTIM, PK, RESP)  
+  data = tdata %>% select(STUDYID, USUBJID, ARMA, TIMEPT, NTIM, PK, RESP)  
   
   attr(data, 'title') <-  paste0("Raw Data for Sigmoid PKPD Plot of ",
                                  resp_label, " vs. ", pk_label, "(", study_name, ")")
   data[["sigmoid_tab"]] = data
   
-  return(list(data=data, figure=figure, table=table, message=message))
+  return(list(data=data, figure=figure, table=table))
 }
 
 #################################################################
 # final output
 #################################################################
 if (ihandbook) {
-output = desp_sigmoid_PKPD(dataset, params=NULL)
+output = dataset %>% descriptive_PKPD_sigmoid(params=NULL)
 
 }

@@ -125,6 +125,8 @@ build_adsl <-function(dataset) {
     rename_at(
       vars(colnames(dataset)), ~ paste0(colnames(dataset), "_ORG")
     ) 
+  
+  # assume adsl hasn't been filtered or arranged
   adsl = bind_cols(adsl, dataset)
   
   #--------------------------------------------------------------

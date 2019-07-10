@@ -2,7 +2,7 @@
 # Mean time profile
 ################################################################################
 
-desp_mean_profile <-function(dataset, params=NULL) {
+descriptive_time_profile_mean <-function(dataset, params=NULL) {
   # dataset = read_csv("./data/nmdat_0226_2019.csv", col_names=TRUE,  
   #                  col_type=cols(.default=col_character()))  # read as character  
   
@@ -14,10 +14,10 @@ desp_mean_profile <-function(dataset, params=NULL) {
   # these key varaibles needed
   #------------------------------
   key.column.lst <- c(
-    "STUDYID", "USUBJID", "DOSEGRP", 
+    "STUDYID", "USUBJID", "ARMA", 
     "NTIM", "TIMEPT", 
     "EXTRT", 
-    "TESTCD", "TESTLABL", "DVOR", "TIME", "LLOQ")
+    "TESTCD", "TEST", "DVOR", "TIME", "LLOQ")
   missing.column.lst <- key.column.lst[which(!key.column.lst %in% colnames(dataset))]
   message <- paste0("missing variable(s) of ", 
                     paste0(missing.column.lst, collapse=", "))
@@ -28,16 +28,17 @@ desp_mean_profile <-function(dataset, params=NULL) {
   # derived information fromd dataset
   #-----------------------------------
   study_name = ifelse(!"STUDYID" %in% colnames(dataset), "STUDYID", 
-                      paste0(unique(dataset$STUDYID), collapse=" "))
+                      paste0(dataset %>% drop_na(STUDYID) %>% pull(STUDYID) %>% unique(),  collapse=", "))
   
   drug_name = ifelse(!"EXTRT" %in% colnames(dataset), "EXTRT",
-                     paste0(unique(dataset$EXTRT), collapse=" "))
+                     paste0(dataset %>% drop_na(EXTRT) %>% pull(EXTRT) %>% unique(),  collapse=", "))
   
   test_name = ifelse(!"TESTCD" %in% colnames(dataset), "TESTCD",
-                     paste0(unique(dataset$TESTCD), collapse=" "))
+                     paste0(dataset %>% drop_na(TESTCD) %>% pull(TESTCD) %>% unique(),  collapse=", "))
   
-  test_label = ifelse(!"TESTLABL" %in% colnames(dataset), "TESTLABL",
-                      paste0(unique(dataset$TESTLABL), collapse=" "))
+  test_label = ifelse(!"TEST" %in% colnames(dataset), "TEST",
+                      paste0(dataset %>% drop_na(TEST) %>% pull(TEST) %>% unique(),  collapse=", "))
+  
   
   #------------------------------           
   # prepare the dataset 
@@ -56,8 +57,8 @@ desp_mean_profile <-function(dataset, params=NULL) {
     mutate(DVOR = ifelse(DVOR<LLOQ, LLOQ/2, DVOR))  
   
   # order the dose group  
-  dosegrp.lst <- unique(tdata$DOSEGRP) %>% sort() ; # print(dosegrp.lst)
-  tdata = tdata %>%  mutate(DOSEGRP=ordered(DOSEGRP, levels=dosegrp.lst))
+  ARMA.lst <- unique(tdata$ARMA) %>% sort() ; # print(ARMA.lst)
+  tdata = tdata %>%  mutate(ARMA=ordered(ARMA, levels=ARMA.lst))
   
   #------------------
   #  calculate stats:
@@ -66,19 +67,19 @@ desp_mean_profile <-function(dataset, params=NULL) {
     
     # calculate the statistics (Mean, SE, SD)
     calc_stats(id="USUBJID", 
-               group_by=c("STUDYID", "TESTCD","DOSEGRP", "NTIM","TIMEPT"), 
+               group_by=c("STUDYID", "TESTCD","ARMA","ARMAN", "NTIM","TIMEPT"), 
                value="DVOR") %>% 
     
-    # DOSEGRP = DOSEGRP + (N)
-    arrange(DOSEGRP) %>% group_by(DOSEGRP) %>% 
-    mutate(DOSEGRP2 = paste0(DOSEGRP, "(", max(N), ")")) %>% # Note Max(N)
-    ungroup() %>%   
-    mutate(DOSEGRP2 = ordered(DOSEGRP2, levels=unique(as.character(DOSEGRP2)))) %>%
+    # ARMA = ARMA + (N)
+    group_by(ARMA) %>% 
+    mutate(ARMA2 = paste0(ARMA, "(", max(N), ")")) %>% # Note Max(N)
+    ungroup() %>% arrange(ARMAN) %>% 
+    mutate(ARMA2 = ordered(ARMA2, levels=unique(as.character(ARMA2)))) %>%
     
-    select(STUDYID, TESTCD, DOSEGRP, DOSEGRP2, NTIM, TIMEPT, 
+    select(STUDYID, TESTCD, ARMA, ARMA2, NTIM, TIMEPT, 
            N, Mean, meanMinusSE, meanPlusSE, 
            Mean_SD, SE, Median_Range) %>% 
-    arrange(TESTCD, DOSEGRP, NTIM)
+    arrange(TESTCD, ARMA, NTIM)
   
   #------------------
   # plot
@@ -93,7 +94,7 @@ desp_mean_profile <-function(dataset, params=NULL) {
   
   # no pre-dose samples in plot
   fig = ggplot(tdata, 
-               aes(x=xvar, y=yvar, group=DOSEGRP2, col=DOSEGRP2)) + 
+               aes(x=xvar, y=yvar, group=ARMA2, col=ARMA2)) + 
     #ggtitle("Concentration Time Profile") + 
     
     geom_point() + geom_line() +   
@@ -107,7 +108,7 @@ desp_mean_profile <-function(dataset, params=NULL) {
     #coord_cartesian(xlim = c(0, 85)) + 
     
     xlab("Time (week)") +  
-    ylab(paste0("Mean(±SE) ", test_label, " (mg/L)")) +   
+    ylab(paste0("Mean(SE) ", test_label, " (mg/L)")) +   
     
     theme_bw() + base_theme(font.size = as.integer(12)) + 
     guides(col=guide_legend(ncol=4, byrow=TRUE))    
@@ -118,14 +119,14 @@ desp_mean_profile <-function(dataset, params=NULL) {
   # linear scale
   #------------------
   attr(fig, 'title') <- paste0(
-    "Mean(±SE) ", test_label, 
+    "Mean ", test_label, 
     " in Serum vs Nominal Sampling Day Following Subcutaneous or Intravenous Dose(s) of ", 
     drug_name, " (", study_name, ")")
   
   attr(fig, 'width') <- 9
   attr(fig, 'height') <- 6                                
-  figure[["pk_mean_profile_ln"]] = fig 
-  figure[["pk_mean_profile_ln"]]$data =  tdata
+  figure[[paste0("mean_profile_ln_", test_name)]] = fig 
+  figure[[paste0("mean_profile_ln_", test_name)]]$data =  tdata
   
   #------------------
   # log scale 
@@ -142,23 +143,23 @@ desp_mean_profile <-function(dataset, params=NULL) {
   fig
   
   attr(fig, 'title') <- paste0(
-    "Mean(±SE) Log-scaled ", test_label, 
+    "Mean Log-scaled ", test_label, 
     " in Serum vs Nominal Sampling Day Following Subcutaneous or Intravenous Dose(s) of ", 
     drug_name, " (", study_name, ")")
   
   attr(fig, 'width') <- 9
   attr(fig, 'height') <- 6                             
-  figure[["pk_mean_profile_log"]] = fig 
-  figure[["pk_mean_profile_log"]]$data =  tdata
+  figure[[paste0("mean_profile_log_", test_name)]] = fig 
+  figure[[paste0("mean_profile_log_", test_name)]]$data =  tdata
   
   #------------------
   # associated table
   #------------------
-  tabl = tdata %>% select(STUDYID, TESTCD, DOSEGRP2, TIMEPT, NTIM, Mean_SD) %>% 
-    mutate(DOSEGRP2 = gsub("(", "\n(", DOSEGRP2, fix=TRUE), 
-           DOSEGRP2 = ordered(DOSEGRP2, levels=unique(DOSEGRP2))
-    ) %>% 
-    spread(key=DOSEGRP2, value=Mean_SD) %>% 
+  tabl = tdata %>% select(STUDYID, TESTCD, ARMA2, TIMEPT, NTIM, Mean_SD) %>% 
+    # mutate(ARMA2 = gsub("(", "(", ARMA2, fix=TRUE), # have an escape here
+    #        ARMA2 = ordered(ARMA2, levels=unique(ARMA2))
+    # ) %>% 
+    spread(key=ARMA2, value=Mean_SD) %>% 
     arrange(TESTCD, NTIM)
   
   # TESTCD
@@ -175,11 +176,10 @@ desp_mean_profile <-function(dataset, params=NULL) {
     tabl = tabl %>% mutate(STUDYID = ifelse(duplicated(STUDYID), "", STUDYID))
   }
   
-  attr(tabl, 'title') <-  paste0(
-    "Descriptive Statistics (±SD) of ", 
+  attr(tabl, 'title') <-  paste0("Descriptive Statistics (SD) of ", 
     test_label, " in Serum ", "(", study_name, ")")
   
-  table[["pk_stats_tab"]] = tabl
+  table[[paste0("stats_tab_", test_name)]] = tabl
   
   return(list(figure=figure, table=table, message=message))
 }
@@ -188,5 +188,5 @@ desp_mean_profile <-function(dataset, params=NULL) {
 # final output
 #################################################################
 if (ihandbook) {
-  output = desp_mean_profile(dataset, params=NULL)
+  output = dataset %>% descriptive_time_profile_mean(params=NULL)
 }
