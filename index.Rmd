@@ -214,8 +214,7 @@ for (ifile in 1:length(file.lst)) {
 
 ```
  
-   
-   
+  
  
 ```{r eval=FALSE}
 rmd <- list.files(pattern = '*.Rmd', recursive = T)

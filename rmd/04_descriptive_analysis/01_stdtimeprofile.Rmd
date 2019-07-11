@@ -39,78 +39,20 @@ tagList(
 ## Time profile <a name="time_profile"></a>
 
  Select which response variable for visualization. 
-  
-
-```{r}
    
-  output$select_which_test_container <- renderUI({ 
-    
-    tdata = ALL$DATA[["mYtEsT_for_descriptive_analysis"]]  
-   
-    validate(need(tdata, message="no data found yet"), 
-             need("TEST" %in% colnames(tdata), message="missing TEST variable") 
-    )
-   
-    test_lst = c("", unique(tdata%>%drop_na(TEST)%>%pull(TEST)))
-    
-    fluidRow(
-      column(12, 
-        selectizeInput(("which_test"), 
-                       label    = "select which analyte", 
-                       choices  = test_lst, 
-                       multiple = FALSE,
-                       width="100%", 
-                       selected = test_lst[1])
-      )
-    )
-    
-  })
-  
-
-  output$select_which_arma_container <- renderUI({ 
-    
-    tdata = ALL$DATA[["mYtEsT_for_descriptive_analysis"]]  
-   
-    validate(need(tdata, message="no data found yet"), 
-             need("ARMA" %in% colnames(tdata), message="missing ARMA variable") 
-    )
-   
-    arma_lst = c(unique(tdata%>%drop_na(ARMA)%>%pull(ARMA)))
-    
-    fluidRow(
-      column(12, 
-        selectizeInput(("which_arma"), 
-                       label    = "select which dose group(s)", 
-                       choices  = arma_lst, 
-                       multiple = TRUE,
-                       width="100%", 
-                       selected = arma_lst)
-      )
-    )
-    
-  })
-  
- fluidRow(
-   column(6, uiOutput(("select_which_test_container"))),
-   column(6, uiOutput(("select_which_arma_container")))
- )
-
-
-```
 
 ```{r}
 drug_descriptive_analysis_inputData <- reactive({
   tdata = ALL$DATA[["mYtEsT_for_descriptive_analysis"]] 
-  validate(need(tdata, message="no data found yet"), 
-           need(input$which_test, message=FALSE), 
-           need(input$which_arma, message=FALSE)
+  validate(need(tdata, message="no data found yet")
   )
-   
+  tdata
+  
   # also include dosing event (TEST=NA), NEED EXTRT FROM ADEX
-  tdata %>% filter(
-    TEST %in% c(NA, input$which_test), 
-    ARMA %in% input$which_arma
-  ) 
+  # tdata %>% filter(
+  #   TEST %in% c(NA, input$which_test), 
+  #   ARMA %in% input$which_arma
+  # ) 
   
 })
 ```

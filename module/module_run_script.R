@@ -22,8 +22,13 @@ module_run_script_UI <- function(id, label = "") {
        # dataset_container 
        tabPanel(width=12, title="dataset", value = "dataset", collapsible = TRUE, 
                 collapsed = TRUE, solidHeader = TRUE,
-                  fluidRow(column(12, uiOutput(ns("dataset_container")))) 
-                
+                  tagList(
+                    fluidRow(
+                      column(6, uiOutput(ns("select_TEST_container"))), 
+                      column(6, uiOutput(ns("select_ARMA_container")))
+                      ),
+                    fluidRow(column(12, uiOutput(ns("dataset_container")))) 
+                  )
        ),       
        
        # script_container 
@@ -72,25 +77,54 @@ module_run_script <- function(input, output, session,
 ################################
 # UI for dataset_container
 ################################
-output$dataset_container <- renderUI({ 
-  validate(need(globalVars$login$status, message=FALSE)#, 
-           #need(dataset!="DUMMY", message=FALSE)
-  )
-  
-  if (class(dataset) == "xpose.data") {
-    tdata = dataset %>% slot("Data")
-  }else if (class(dataset) == "list"  & all(c("adsl", "adex", "adpc") %in% names(dataset))) {
-    tdata = dataset[["adsl"]]
-  }else {
+  output$select_TEST_container <- renderUI({ 
     tdata = dataset
-  } 
+    validate(need(tdata, message="no dataset found yet"),  
+             need("TEST" %in% colnames(tdata), message=FALSE) 
+    )
+    
+    test_lst = c(unique(tdata%>%drop_na(TEST)%>%pull(TEST))) 
+    selectizeInput(ns("which_test"), 
+                  label    = "select which analyte", 
+                  choices  = test_lst, 
+                  multiple = FALSE,
+                  width="100%", 
+                  selected = test_lst[1]
+                  )
+        
+  })
+  
+  
+output$select_ARMA_container <- renderUI({ 
+  tdata = dataset
+  validate(need(tdata, message="no dataset found yet"), 
+           need("ARMA" %in% colnames(tdata), message=FALSE) 
+  )
+   
+  arma_lst = c(unique(tdata%>%drop_na(ARMA)%>%pull(ARMA)))
+  selectizeInput(ns("which_arma"), 
+                label    = "select which dose group(s)", 
+                choices  = arma_lst, 
+                multiple = TRUE,
+                width="100%", 
+                selected = arma_lst
+                )
+            
+})
+  
+  
+output$dataset_container <- renderUI({  
+ 
+  tdata = filtered_dataset()
+  validate(need(tdata, message="no data found yet")  
+  )
   
   callModule(module_save_data, "loaded_dataset", ALL, 
              data=tdata, 
              data_name="")
   
   fluidRow(
-    column(12,module_save_data_UI(ns("loaded_dataset"), label = "loaded_dataset"))
+    column(12, module_save_data_UI(ns("loaded_dataset"), label = "loaded_dataset"))
   )
 }) 
 
@@ -242,6 +276,32 @@ output$figure_container <- renderUI({
     
   ) # tagList
 })
+
+
+filtered_dataset <- reactive({
+
+  validate(need(dataset, message="no dataset"))
+  
+  if (class(dataset) == "xpose.data") {
+    tdata = dataset %>% slot("Data")
+  }else if (class(dataset) == "list"  & all(c("adsl", "adex", "adpc") %in% names(dataset))) {
+    tdata = dataset[["adsl"]]
+  }else {
+    tdata = dataset
+  }
+  
+  if ("TEST" %in% colnames(tdata) & !is.null(input$which_test)) {
+    tdata = tdata %>% filter(TEST %in% input$which_test)
+  }
+  
+  if ("ARMA" %in% colnames(tdata) & !is.null(input$which_arma)) {
+    tdata = tdata %>% filter(ARMA %in% input$which_arma)
+  } 
+   
+  tdata
+})
+
+
 
 
 ################################

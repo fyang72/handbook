@@ -116,6 +116,6 @@ descriptive_time_profile_indiv <-function(dataset, params=NULL) {
 # final output
 #################################################################
 if (ihandbook) {
-  output = dataset %>% descriptive_time_profile_indiv(params=NULL)
+  output = filtered_dataset() %>% descriptive_time_profile_indiv(params=NULL)
   
 }
