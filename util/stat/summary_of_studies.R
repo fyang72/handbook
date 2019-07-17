@@ -8,12 +8,14 @@ summary_of_studies <- function(adpx, group_by=c("STUDYID", "ARMA", "EXROUTE"), v
   # Note:   == "0",  mean  BLQ
   #         == ".",  missing, not available.
   
-  summ = adpx %>% group_by_(.dots = group_by) %>% dplyr::summarise(
-    N = fun.uniqN(USUBJID), 
-    N_mininum_one_measurable_sample = fun.uniqN(USUBJID[DVOR!="." & DVOR!="0"]),
-    N_measurable_samples = length(DVOR[DVOR!="." & DVOR!="0"]),
-    N_postdose_BLQ_samples = length(DVOR[TIME>=0 & DVOR=="0"]),
-    pct_postdose_BLQ_samples = round(N_postdose_BLQ_samples/(N_postdose_BLQ_samples+N_measurable_samples)*100, digits=2))
+  summ = adpx %>%    
+    group_by_at( vars(one_of(group_by))) %>% 
+    dplyr::summarise(
+      N = fun.uniqN(USUBJID), 
+      N_mininum_one_measurable_sample = fun.uniqN(USUBJID[DVOR!="." & DVOR!="0"]),
+      N_measurable_samples = length(DVOR[DVOR!="." & DVOR!="0"]),
+      N_postdose_BLQ_samples = length(DVOR[TIME>=0 & DVOR=="0"]),
+      pct_postdose_BLQ_samples = round(N_postdose_BLQ_samples/(N_postdose_BLQ_samples+N_measurable_samples)*100, digits=2))
   
   colnames(summ) <- c(group_by,  
                       "Number of Subjects Included in Analysis",	
@@ -331,15 +333,15 @@ calc_PKstats <- function(tdata, STUDYID="STUDYID", USUBJID="USUBJID", TIME="TIME
 #----------------------------------------------------
 
 summary_continuous_var <- function(adpx, id="USUBJID", group_by="ARMA", 
-                                   cov_name=c( "AGE", "WEIGHTBL", "HEIGHTBL", "BMIBL"), 
+                                   cov_name=c( "AGE", "WGTBL", "HGTBL", "BMIBL"), 
                                    stats_name=c("N", "Mean_SD", "Median", "Range") ) {
   
   t0 = lapply(cov_name, function(value, adpx, id, group_by  ) {
     cbind("cov_name"=value, calc_stats(adpx, id, group_by, value))}, adpx, id, group_by)  %>%     ############
   bind_rows() %>% 
-    select(ARMA, cov_name, one_of(stats_name)) %>%   
+    select(one_of(c(group_by, "cov_name", stats_name))) %>%   
     gather("stats_name", "value", one_of(stats_name))  %>%  
-    spread(ARMA, value )
+    spread(ARMA, value )           # 07162019,  ARMA shouldn't be used.
   
   # add the Overall column
   t1 = adpx  %>% gather("cov_name", "cov_value",  one_of(cov_name) ) %>% 

@@ -5,8 +5,8 @@ account: fyang72
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 1026466
-bundleId: 2229480
+bundleId: 2239043
 url: https://fyang72.shinyapps.io/handbook/
-when: 1563064488.40763
+when: 1563326623.72772
 asMultiple: FALSE
 asStatic: FALSE

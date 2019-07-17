@@ -11,6 +11,17 @@ laboratory information, and their corresponding statistics.
 
 to summarize the population for each analyte (concentration, target, biomarker, efficacy, etc)
  
+```{r }
+
+adpc <- read_datafile(paste0(HOME, "/data/adpc.csv"))
+tabl <- summary_of_studies(adpc, 
+                   group_by=c("STUDYID", "ARMA"), 
+                   value="DVOR", 
+                   id="USUBJID"
+)
+
+
+```
 
 ## Samples
 
