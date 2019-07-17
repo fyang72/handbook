@@ -54,8 +54,7 @@ if(1==1) {
                  adpc=unique(as.character(adpc$ID)))
   
   #https://stackoverflow.com/questions/33393962/r-dont-write-log-file-for-venndiagram
-  t1 = futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
-  venn.plot <- venn.diagram(a.list,fill = c("red", "green", "blue"),
+    venn.plot <- venn.diagram(a.list,fill = c("red", "green", "blue"),
                              alpha = c(0.5, 0.5, 0.5), cex = 2,cat.fontface = 4,lty =2, 
                              euler.d = FALSE, scaled = FALSE, #fontfamily =3, 
                              filename = NULL);
@@ -248,8 +247,8 @@ renderUI({
  out = check.missing.samples.events(nmdat_inputData())
  
  callModule(module_ggplot_brush, "ggplot.missing.samples.events", 
-          fig=out$fig, # values4nmdat$FIGURE$missing.samples.events, 
-          mydata = out$data, #nmdat_inputData(), #%>%filter(TEST%in%c("REGN3918", "CH50H")), 
+          fig=out$fig,  
+          mydata = out$data,  
           xvar="xvar", yvar="yvar")
  
  module_ggplot_brush_UI(id="ggplot.missing.samples.events", label = "ggplot.missing.samples.events")

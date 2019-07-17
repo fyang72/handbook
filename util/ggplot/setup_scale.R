@@ -63,7 +63,9 @@ setup_scale0 <- function(myscale='7_14', mylimit) {
     #    if (!is.na(t1)) {tt = t1
     #    }else{ tt = t2} 
     names(tt) = c("break", "label") 
-    stopifnot(mod(tt["label"], tt["break"])==0) 
+    # stopifnot(mod(tt["label"], tt["break"])==0) 
+    
+    stopifnot(tt["label"] %% tt["break"]==0)   # 0712_2019
     
     break.by.what = tt["break"]; 
     label.by.what=tt["label"];  

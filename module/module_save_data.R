@@ -9,10 +9,10 @@ tagList(
            uiOutput(ns("data_name_container"))),                                                                                                                             
     
     column(width=2, 
-           actionButton(ns("saveit"),label="Save it", style=actionButton.style)),                                                                                            
+           actionButton(ns("saveit"),label="Save it", style=actionButton_style)),                                                                                            
     
     column(width=2,                                                                                                                                                                   
-           downloadButton(ns("downloadcsv"),label="csv", icon=icon("download"), style=actionButton.style)                                                                        
+           downloadButton(ns("downloadcsv"),label="csv", icon=icon("download"), style=actionButton_style)                                                                        
     ), 
     
     column(width=3, 

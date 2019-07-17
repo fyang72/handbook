@@ -17,7 +17,7 @@ Standard naming convention for adsl, adex, adpc, and nmdat.
 ```{r, eval=TRUE } 
  
 table = NULL
-file_name <- "~/handbook/lib/pkmeta.xlsx" 
+file_name <- paste0(HOME, "/lib/pkmeta.xlsx")
   
 # adsl
 tabl = read_excel(file_name,sheet="adsl",col_names = TRUE)  %>% 
@@ -162,7 +162,8 @@ List of naming conventions and parameters for this handbook
 
 ```{r }
 table = NULL
-file_name <- "~/handbook/lib/pkmeta.xlsx"# naming convention and parameters for this handbook 
+ # naming convention and parameters for this handbook 
+file_name <- paste0(HOME, "/lib/pkmeta.xlsx")
 
 convention_all_table =  read_excel(file_name,sheet="convention",col_names = TRUE)  %>% 
   as.data.frame() %>% filter(!is.na(domain))

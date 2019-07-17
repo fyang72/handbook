@@ -1,8 +1,8 @@
 
-library(shiny)
-library(dplyr)
- 
 
+#HOME <- paste0(getwd(), "/")
+HOME = paste0(normalizePath("."), "/")
+ 
 ######################################################################
 # Load packages
 ######################################################################
@@ -10,6 +10,11 @@ library(dplyr)
 # installed.packages(.Library, priority = "high"))
 # installed.packages(lib.loc="./packrat/lib-R/x86_64-pc-linux-gnu/3.4.2/", priority = "high") 
 
+# list.files(.libPaths()[1])
+# .libPaths()
+# installed.packages()
+# tools:::.get_standard_package_names()
+# rsconnect::appDependencies()
 list.of.packages = sort((.packages())) 
 
 # [1] "grid"           "XML"            "reshape"        "pander"         "rmarkdown"      "xpose4"         "scales"         "bindrcpp"      
@@ -20,32 +25,34 @@ list.of.packages = sort((.packages()))
 # [41] "lazyeval"       "stats"          "graphics"       "grDevices"      "utils"          "datasets"       "methods"        "base"
 #if ("metrumrg" %in% list.of.packages) {base::detach(package:metrumrg) } 
 #if ("MASS" %in% list.of.packages) {base::detach(package:MASS) } 
-
-#------------------------------------------------------------
+ 
 # Reporting
-#------------------------------------------------------------
+#-------------- 
 library(knitr)
 library(rmarkdown)
-#library(ReporteRs) 
+library(ReporteRs) 
 library(officer)
 
-
-#------------------------------------------------------------
+ 
 # Shiny, Rmarkdown
-#------------------------------------------------------------
+#-------------------- 
 library(shiny)
 library(shinyAce)
 library(shinydashboard)
 library(rhandsontable)
 library(DT) 
+library(formatR)
 #library("plotly")
+
 
 
 # load data
 #------------------- 
 library(readxl)
 library(readr)        
-library(haven)
+library(haven)  # xlsx   xlsxjars
+library(xlsx)
+library(xlsxjars)
 
 
 # data manipulation
@@ -53,7 +60,7 @@ library(haven)
 library(dplyr)    # not include plyr, 
 library(tidyr)
 library(tidyverse)
-library(lazyeval)
+library(lazyeval) 
 
 library(dmutate)
 #library(xtable)
@@ -67,11 +74,13 @@ library(pryr)   # Partial function application allows you to modify a function b
 # plots
 #------------------------------------------------------------
 #library(Cairo)   # to solve X11 server problem
+require(grid)
 library("ggplot2")     # library("gplots")
 library(gridExtra)
-#library(ggpmisc)
-
+library(ggpmisc)         # add_formula_pvalue
+library(VennDiagram)
 # library(party)  # tree structure of the model development
+
 #------------------------------------------------------------
 # Pk specific package
 #------------------------------------------------------------
@@ -102,6 +111,7 @@ library('RColorBrewer')
 library("Hmisc")     
 library("gdata")     # trim
 library("RColorBrewer")
+library(chron)     # as_time
 #library(MASS)   # MUST BE FIST BEFORE dplyr
 library(Rcpp)
 library(xtable) #pretty tables
@@ -117,47 +127,41 @@ library(xtable) #pretty tables
 ######################################################################
 # Load local R functions
 ######################################################################
-
-#folder.loc <- paste0(dirname(dirname(getwd())), "/regnR/R")
-#folder.loc <- "/data/BiCS_RDE_Development/shiny-server_development/pharmacometrics/regnR/R2"
+ 
+list_files_in_a_folder <- function(folder.loc="./util/", file.extension=c(".r", ".R")) {
+  
+  file.lst <-list.files(path = folder.loc, all.files = FALSE,full.names = TRUE, include.dirs = TRUE, recursive =TRUE)     
+  file.lst = file.lst[which(substr(file.lst, nchar(file.lst)-(nchar(file.extension)-1), nchar(file.lst)) %in% file.extension)]
+  file.lst = file.lst[which(!substr(basename(file.lst), 1, 1) %in% "_")]
+  
+  file.lst = file.lst[setdiff(1:length(file.lst), grep("_not_used", file.lst, fixed=TRUE))]
+  
+  # find a string multiple files
+  # for (ifile in 1:length(file.lst)) { 
+  #   print(file.lst[ifile])
+  #   txt = paste0(readLines(file.lst[ifile]), collapse=" ")
+  #   if ( length(grep("regnR", txt, fixed=TRUE) )) {
+  #     print(file.lst[ifile])
+  #     exit;
+  #   }
+  #    
+  # }     #sys.source('file.R', envir=environment())
+  
+  return(file.lst)
+}
+  
 ihandbook = 0
+ 
+file.lst <- list_files_in_a_folder(folder.loc=paste0(HOME, "/util/"), file.extension=c(".r", ".R"))
+for (ifile in 1:length(file.lst)) { source(file=file.lst[ifile]) }     
 
-folder.loc <- "~/handbook/util"
+file.lst <- list_files_in_a_folder(folder.loc=paste0(HOME, "/module/"), file.extension=c(".r", ".R"))
+for (ifile in 1:length(file.lst)) {source(file=file.lst[ifile])  }     
+ 
+file.lst <- list_files_in_a_folder(folder.loc=paste0(HOME, "/script/"), file.extension=c(".r", ".R"))
+for (ifile in 1:length(file.lst)) {source(file=file.lst[ifile])  }     
 
-file.lst <-list.files(path = folder.loc, all.files = FALSE,full.names = TRUE, include.dirs = TRUE, recursive =TRUE)     
-
-file.lst = file.lst[which(substr(file.lst, nchar(file.lst)-1, nchar(file.lst)) %in% c(".r", ".R"))]
-
-file.lst = file.lst[setdiff(1:length(file.lst), grep("_not_used", file.lst, fixed=TRUE))]
-
-for (ifile in 1:length(file.lst)) { 
-  #print(file.lst[ifile]);  
-  source(file=file.lst[ifile])  
-}     #sys.source('file.R', envir=environment())
-
-
-folder.loc <- "~/handbook/module/"
-file.lst <-list.files(path = folder.loc, all.files = FALSE,full.names = TRUE, include.dirs = TRUE, recursive =TRUE)     
-file.lst = file.lst[which(substr(file.lst, nchar(file.lst)-1, nchar(file.lst)) %in% c(".r", ".R"))]
-
-file.lst = file.lst[which(!substr(gsub(folder.loc, "", file.lst, fix=TRUE), 1,1) %in% c("_"))]
-
-for (ifile in 1:length(file.lst)) { 
-  #print(file.lst[ifile]);  
-  source(file=file.lst[ifile])  
-}     #sys.source('file.R', envir=environment())
-
-folder.loc <- "~/handbook/script/"
-file.lst <-list.files(path = folder.loc, all.files = FALSE,full.names = TRUE, include.dirs = TRUE, recursive =TRUE)     
-file.lst = file.lst[which(substr(file.lst, nchar(file.lst)-1, nchar(file.lst)) %in% c(".r", ".R"))]
-
-file.lst = file.lst[which(!substr(gsub(folder.loc, "", file.lst, fix=TRUE), 1,1) %in% c("_"))]
-
-for (ifile in 1:length(file.lst)) { 
-  print(file.lst[ifile]);  
-  source(file=file.lst[ifile])  
-}     #sys.source('file.R', envir=environment())
-
+ 
 ######################################################################
 # default options in shiny
 ######################################################################
@@ -167,12 +171,6 @@ for (ifile in 1:length(file.lst)) {
 if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=10000*1024^2)
 options(shiny.maxRequestSize=1000*1024^2)   #  1000MBi..e 1GB
 options(bitmapType='cairo')   # solve Warning: Error in grDevices::png: X11 is not available
-
-# Load server detail objects into the global workspace.
-#globalConfigurationDirectory <- "../../global_configuration/"
-#source(file=paste(globalConfigurationDirectory,"load_server_configuration_objects.R",sep=""),local=TRUE)
-
-
 
 ######################################################################
 # default options in bookdown
@@ -195,7 +193,6 @@ knitr::opts_chunk$set(fig.width=9,
                       cache=FALSE, 
                       autodep=TRUE, 
                       echo=FALSE)
-
 
 # echo=FALSE indicates that the code will not be shown in the final document (though any results/output would still be displayed).
 # results="hide" to hide the results/output (but here the code would still be displayed).
@@ -259,14 +256,8 @@ options(dplyr.print_min = 6, dplyr.print_max = 6)
 # initialization of key variables
 ######################################################################
 
-#HOME = "~/handbook/" 
-HOME = paste0(normalizePath("."), "/")
-
 server_IP_address =  NULL  #"10.244.64.97"    # NULL  #
-
 actionButton_style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
-actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
-
 
 login = NULL
 login$status = TRUE
@@ -275,92 +266,16 @@ login$user.name = "feng.yang"   # determineCurrentUser(session=session)
 login$status = login$user.name %in% login$user.name.lst  
 globalVars <- reactiveValues(login=login)
 
-# placehold for all tables and figures  
-
-graphics.off() 
-
-FIGURE_ALL = NULL
-TABLE_ALL = NULL
-
-mg = 1
-mkg = 2
-
-SC = 1
-IV = 2
-
 
 ######################################################################
 # convention 
 ######################################################################
-topN = 20
-date_time_format = c("Ymd HMS", "mdY HMS", "bdY HMS", "dbY HMS")
-
-testcat.lst = c("PK1", "TARGET1", "SAF1", "EFF1", "BIOMKR1", "ADA1", "AE1")
-
-adsl.var.lst = c("STUDYID", "USUBJID",  
-                 "AGE",  "AGEU",  "SEX",  "SEXN", "RACE",  "RACEN", "ETHNIC", "ETHNICN", 
-                 "WGTBL", "HGTBL", "BMIBL", "BSABL","SITEID", 
-                 "PKFL", "FASFL", "SAFFL", "ENRLFL", "RANDFL", "COMPLFL" )
-
-sex.lst = c( "MALE", "FEMALE", "UNKNOWN")
-
-ethnic.lst = c("NOT HISPANIC OR LATINO",  "HISPANIC OR LATINO")
-
-race.lst =c("WHITE", 
-            "BLACK OR AFRICAN AMERICAN",
-            "ASIAN",
-            "AMERICAN INDIAN OR ALASKA NATIVE",
-            "NATIVE HAWAIIAN OR OTHER PACIFIC ISLANDER",    
-            "OTHER", 
-            "UNKNOWN",
-            "NOT REPORTED"
-)
-
-
-
-adex.var.lst = c("STUDYID",  "USUBJID",  "ARMA", "ARMAN", "VISIT",    "VISITNUM",  "TIME",   
-                 "EXTRT", "EXDOSE",   "EXDOSU",  "EXTDOSE",  "EXDUR", "EXROUTE", "EXROUTN",   
-                 "EXSTDTC",  "EXENDTC", "TRTSDTM")
-
-
-
-dvoru.lst = c("mg/L")
-dosu.lst = c("mg", "mg/kg")
-admin.route.lst = c("SUBCUTANEOUS", "INTRAVENOUS", "INTRAMUSCULAR", "IVT")
-
-
-adpc.var.lst <- c(
-  "STUDYID",   "USUBJID", "ARMA",  "ARMAN",
-  "VISIT",   "VISITN",   "PCTPT", "TIME", "NTIM",  
-  "TEST", "TESTN", "TESTCD", "TESTCAT",   "DVOR", "DVORU", "BLQ", "LLOQ",  "METHOD", "SAMDTTM"      
-)  
-
-
-nmdat.mandatory.var.lst = c("ROWID","ID","TIME","DV","CMT","MDV","AMT","RATE","EVID")
-nmdat.var.lst =  c(
-  "C", "ROWID",  "ID", "ARMAN", "VISITNUM", "TIME", "NTIM",
-  "TESTN", "DV", "DVOR", "BLQ", "LLOQ", "CMT",  "MDV",
-  "EXTRTN", "AMT",  "RATE", "EXROUTN", "EVID",  
-  "AGE",  "AGEU",  "SEX",  "SEXN", "RACE",  "RACEN", "ETHNIC", "ETHNICN", 
-  "WGTBL", "HGTBL", "BMIBL", "BSABL","SITEID", 
   
-  "STUDYID", "USUBJID", "ARMA",  "VISIT",  "PCTPT", 
-  "TEST", "TESTCD", "TESTCAT",  "DVORU", "METHOD", "SAMDTTM",  
-  "EXTRT", "EXDOSE",   "EXDOSU",  "EXTDOSE", "EXDUR", "EXROUTE", "EXSTDTC", "EXENDTC", "TRTSDTM",
-  
-  "PKFL", "FASFL", "SAFFL", "ENRLFL", "RANDFL", "COMPLFL",
-  "CFLAG"             
-)
-adpx.var.lst = nmdat.var.lst
-
-
-
-
 library(dplyr)
 library(readxl)
-file_name <- "~/handbook/lib/pkmeta.xlsx" 
+file_name <- paste0(HOME, "/lib/pkmeta.xlsx" )
 
-
+# key data format
 std_adsl <- read_excel(file_name,sheet="adsl",col_names = TRUE)  %>% 
   as.data.frame() %>% filter(!is.na(standard.name))
 
@@ -376,6 +291,7 @@ std_nmdat <- read_excel(file_name,sheet="nmdat",col_names = TRUE)  %>%
 std_convention <- read_excel(file_name,sheet="convention",col_names = TRUE)  %>% 
   as.data.frame() %>% filter(!is.na(domain))
 
+# key variables
 adsl_var_lst <- std_adsl %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
 adex_var_lst <- std_adex %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
 adpc_var_lst <- std_adpc %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
@@ -402,10 +318,7 @@ nmdat_data_type <- fuzzy_match(std_nmdat %>% pull(type),
 names(nmdat_data_type) = std_nmdat %>% pull(standard.name)  #c("STUDYID", "SEXN", "WGTBL")
 
 
-
-
-
-
+# key convention
 dvoru_var_lst <- std_convention %>% filter(domain=="DATA", name=="DVORU") %>% pull(value)
 sex_var_lst <- std_convention %>% filter(domain=="DATA", name=="SEX") %>% pull(value)
 race_var_lst <- std_convention %>% filter(domain=="DATA", name=="RACE") %>% pull(value)
@@ -425,3 +338,98 @@ nmdat.mandatory.var.lst = c("ROWID","ID","TIME","DV","CMT","MDV","AMT","RATE","E
 infusion_hrs_lst = c(0.5, 1, 2)
 followup_period = 112   # days
 simulation_delta = 1  # days
+
+
+
+
+######################################################################
+# default ALL for debugt purpose 
+######################################################################
+
+library(shiny)
+library(ggplot2)
+
+DATA = NULL
+FIGURE = NULL
+TABLE = NULL
+cppModel = NULL
+ctlModel = NULL
+script = NULL
+
+tdata = data.frame(xvar=1:10, yvar=1:10)
+figLn <- ggplot(tdata, aes(x=xvar, y=yvar)) + geom_point() + geom_line()
+figLog <- figLn + scale_y_log10()
+
+fig <- figLn
+attr(fig, 'title') <- paste0(
+  "Mean(±SE) ", " in Serum vs Nominal Sampling Day Following Subcutaneous or Intravenous Dose(s) of ", ")")
+
+attr(fig, 'width') <- 9
+attr(fig, 'height') <- 6                                
+FIGURE[["pk_mean_profile_ln"]] = fig 
+FIGURE[["pk_mean_profile_ln"]]$data =  tdata
+
+
+fig <- figLog
+attr(fig, 'title') <- paste0(
+  "Semi-Log Mean(±SE) ", " in Serum vs Nominal Sampling Day Following Subcutaneous or Intravenous Dose(s) of ", ")")
+
+attr(fig, 'width') <- 9
+attr(fig, 'height') <- 6                                
+FIGURE[["pk_mean_profile_log"]] = fig 
+FIGURE[["pk_mean_profile_log"]]$data =  tdata
+
+
+tabl = data.frame(x=1, y=1)
+attr(tabl, 'title') <-  "tst1"
+TABLE[["TSET1"]] = tabl
+
+tabl = data.frame(x=10, y=10)
+attr(tabl, 'title') <-  "tst2"
+TABLE[["TSET2"]] = tabl
+
+tabl = data.frame(x=1, y=1)
+attr(tabl, 'title') <-  "tst1"
+DATA[["TSET1"]] = tabl
+
+tabl = data.frame(x=10, y=10)
+attr(tabl, 'title') <-  "tst2"
+DATA[["TSET2"]] = tabl
+
+cppModel1=mread(model='cppModel',
+                project=paste0(HOME, '/cpp/'),
+                quiet=TRUE,
+                file=basename("LN001.cpp"))
+
+cppModel2=mread(model='cppModel',
+                project=paste0(HOME, '/cpp/'),
+                quiet=TRUE,
+                file=basename("LN001.cpp"))
+
+
+cppModel = list(
+  "LN0011.cpp"=cppModel1, 
+  "LN0022.cpp"=cppModel2
+) 
+
+ctlModel = list(
+  "LN001.ctl"=readLines(paste0(HOME, "/ctl/", "LN001.ctl")), 
+  "LN002.ctl"=readLines(paste0(HOME, "/ctl/", "LN002.ctl"))
+) 
+
+
+script = list(
+  "build_adsl.R"=readLines(paste0(HOME, "/script/", "build_adsl.R")), 
+  "build_adex.R"=readLines(paste0(HOME, "/script/", "build_adex.R"))
+)
+
+default_DATA   = DATA
+default_FIGURE = FIGURE
+default_TABLE = TABLE 
+default_cppModel = cppModel
+default_ctlModel = ctlModel
+default_script = script
+
+
+
+

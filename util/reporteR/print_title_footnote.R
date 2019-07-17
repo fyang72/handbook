@@ -1,21 +1,4 @@
-
-#--------------------------------------------
-# print.std.title
-#--------------------------------------------
-print.std.title <- function(type="figure" , key ="Mean(SE) ",
-                            log.scale.name = "Log-Scaled ",
-                            y.name = "Concentrations of Total Evinacumab in Serum ",
-                            x.name = "Nominal Sample Time (Day) ",
-                            by.name = "Dose Regimen ",
-                            patient.name = "Patients with Elevated TG and LDL-C ",
-                            dosing.name = "Following Multiple Subcutaneous or Intravenous Dose(s) of Evinacumab ",
-                            study.name = "Study R1500-CL-1321"
-)   {
-  if (type=="figure") versus = "versus "
-  if (type=="table") versus = ""
-  paste(key, log.scale.name, y.name, versus, x.name, "by ", by.name, "in ", patient.name, dosing.name,  "(", study.name, ")", sep="")
-}
-
+ 
 #--------------------------------------------
 # fig.title.std.errbar
 #--------------------------------------------

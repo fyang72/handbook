@@ -111,46 +111,46 @@ doubleYPlot <- function(data, adjust = FALSE, drug = "Drug") {
   return(g)
   
   
-  
-  
-# http://stackoverflow.com/questions/13875637/changing-the-y-axis-text-size-with-doubleyscale-plot
-if (1==2) {
-library(ggplot2)
-library(reshape)
-
-set.seed(123)
-foo <- list(x = 1:100, y = cumsum(rnorm(100)))
-
-foo <- as.data.frame(foo)
-foo$z <- foo$y^2
-mymelt <- melt(foo, id.var = 'x')
-mymelt$label <- ifelse(mymelt$variable == 'y', "Produktion", "Summa.skulder")
-mymelt$line.colour <- ifelse(mymelt$variable == 'y', "red", "blue") # specify colours here
-
-
-ggplot(data = mymelt, aes(x = x, y = value)) +
-    geom_line(aes(colour = mymelt$line.colour)) +
-    facet_wrap(~ label, ncol = 1, scales = "free_y") +
-    scale_colour_manual(values = unique(mymelt$line.colour)) +
-    ggtitle("TOtalProduktion VS SummaSkulder/TotaltKapital i procent") +
-    theme(strip.text.x = element_text(size = 12)) +
-    theme(axis.text.x = element_text(size = 9)) +
-    theme(axis.text.y = element_text(size = 9)) +
-    theme(axis.title.x = element_text(size = 15)) +
-    theme(axis.title.y = element_text(size = 15)) +
-    theme(axis.title.x = element_blank()) + # comment out this line if you want an x axis title
-    theme(axis.title.y = element_blank()) + # comment out this line if you want a y axis title
-    theme(legend.position = "none")
-    
 }
-
-
+#   
+#   
+#   
+# # http://stackoverflow.com/questions/13875637/changing-the-y-axis-text-size-with-doubleyscale-plot
+# if (1==2) {
+# library(ggplot2)
+# library(reshape)
+# 
+# set.seed(123)
+# foo <- list(x = 1:100, y = cumsum(rnorm(100)))
+# 
+# foo <- as.data.frame(foo)
+# foo$z <- foo$y^2
+# mymelt <- melt(foo, id.var = 'x')
+# mymelt$label <- ifelse(mymelt$variable == 'y', "Produktion", "Summa.skulder")
+# mymelt$line.colour <- ifelse(mymelt$variable == 'y', "red", "blue") # specify colours here
+# 
+# 
+# ggplot(data = mymelt, aes(x = x, y = value)) +
+#     geom_line(aes(colour = mymelt$line.colour)) +
+#     facet_wrap(~ label, ncol = 1, scales = "free_y") +
+#     scale_colour_manual(values = unique(mymelt$line.colour)) +
+#     ggtitle("TOtalProduktion VS SummaSkulder/TotaltKapital i procent") +
+#     theme(strip.text.x = element_text(size = 12)) +
+#     theme(axis.text.x = element_text(size = 9)) +
+#     theme(axis.text.y = element_text(size = 9)) +
+#     theme(axis.title.x = element_text(size = 15)) +
+#     theme(axis.title.y = element_text(size = 15)) +
+#     theme(axis.title.x = element_blank()) + # comment out this line if you want an x axis title
+#     theme(axis.title.y = element_blank()) + # comment out this line if you want a y axis title
+#     theme(legend.position = "none")
+#     
+# }
+# 
+# 
 
 
 
   
-  
-}
 
 
 

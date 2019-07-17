@@ -30,15 +30,15 @@ module_save_figure_UI <- function(id, label = "") {
       ),
       
       column(width=2, #status = "primary",  #class = 'rightAlign',#background ="aqua",
-             actionButton(ns("figure_saveit"),label="Save it", style=actionButton.style)
+             actionButton(ns("figure_saveit"),label="Save it", style=actionButton_style)
       ), 
       
       column(width=2,                                                                                                                                                                   
-             downloadButton(ns("downloaddoc"),label="doc", icon=icon("download"), style=actionButton.style)                                                                        
+             downloadButton(ns("downloaddoc"),label="doc", icon=icon("download"), style=actionButton_style)                                                                        
       ), 
       
       column(width=2,                                                                                                                                                                   
-             downloadButton(ns("downloadppt"),label="ppt", icon=icon("download"), style=actionButton.style)                                                                        
+             downloadButton(ns("downloadppt"),label="ppt", icon=icon("download"), style=actionButton_style)                                                                        
       )
     ), 
     

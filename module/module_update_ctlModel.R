@@ -85,7 +85,7 @@ output$ctlModel_content_container <- renderUI({
              ),
       
       column(3, 
-             actionButton(ns("update_model"), label="Save model", style=actionButton.style )
+             actionButton(ns("update_model"), label="Save model", style=actionButton_style )
       )
     ),
     

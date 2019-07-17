@@ -29,6 +29,8 @@ close(zz)
 
 ## Display the log file
 message <- readLines("all.Rout")
+if (file.exists("all.Rout")) {file.remove("all.Rout")}
+
 
 #return(list(output=output, error_message=error_message))
 

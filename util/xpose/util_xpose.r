@@ -463,76 +463,8 @@ polygon(d, col="gray", border="blue")
 }
 
 
+   
   
-if (1==2 ) {
-#The sm.density.compare( ) function in the sm package allows you to superimpose the 
-#kernal density plots of two or more groups. The format is sm.density.compare(x, factor) 
-#where x is a numeric vector and factor is the grouping variable. 
-# Compare MPG distributions for cars with
-# 4,6, or 8 cylinders
-library(sm)
-attach(mtcars)
-
-# create value labels
-cyl.f <- factor(cyl, levels= c(4,6,8),
-  labels = c("4 cylinder", "6 cylinder", "8 cylinder"))
-
-# plot densities
-sm.density.compare(mpg, cyl, xlab="Miles Per Gallon")
-title(main="MPG Distribution by Car Cylinders")
-
-# add legend via mouse click
-colfill<-c(2:(2+length(levels(cyl.f))))
-legend(locator(1), levels(cyl.f), fill=colfill) 
-
-}
-  
-  
-  
-################################################################################
-# 
-#  Use ggplot as the way to plot
-#
-################################################################################
-
-#' Extracts the time matched concntration vs effect data
-#'
-#' @param data A data frame.  The data frame must conform to Regeneron standards and contain the variables: `week`, `ndy`, `concn`, `concni`, `pchg`, `actarmcd`, `ada`
-#' @return A dataframe with columns `ndy`, `concn`, `effect`.
-#' @export
-#' @importFrom dplyr left_join group_by summarise
-#' @examples
-#'   inFile <- system.file("extdata/pk_pd_hysteresis.xls", package = "pkGraph")
-#'   library(readxl)
-#'   theData <-read_excel(inFile)
-#'   timeMatchedPK(data = theData) 
-multiplot <- function(..., plotlist=NULL, cols=2) {
-##    http://wiki.stdout.org/rcookbook/Graphs/Multiple%20graphs%20on%20one%20page%20%28ggplot2%29/
-    require(grid)
-
-    # Make a list from the ... arguments and plotlist
-    plots <- c(list(...), plotlist)
-
-    numPlots = length(plots)
-
-    # Make the panel
-    plotCols = cols                          # Number of columns of plots
-    plotRows = ceiling(numPlots/plotCols) # Number of rows needed, calculated from # of cols
-
-    # Set up the page
-    grid.newpage()
-    pushViewport(viewport(layout = grid.layout(plotRows, plotCols)))
-    vplayout <- function(x, y)
-        viewport(layout.pos.row = x, layout.pos.col = y)
-
-    # Make each plot, in the correct location
-    for (i in 1:numPlots) {
-        curRow = ceiling(i/plotCols)
-        curCol = (i-1) %% plotCols + 1
-        print(plots[[i]], vp = vplayout(curRow, curCol ))
-    }
-
-}
 
 
 #-------------------------------------------------------------------------------

@@ -237,8 +237,7 @@ every_nth <- function(x, nth, empty = TRUE, inverse = FALSE)
  
  
   # if log scale
-  library(ggplot2)
-  # print(regnR::base_theme(font.size))
+  library(ggplot2) 
  
   bp0 = lazyeval::lazy_eval(bp) +  base_theme(font.size)  
      
@@ -371,58 +370,6 @@ every_nth <- function(x, nth, empty = TRUE, inverse = FALSE)
  ###############################################################################
  ###############################################################################
  ###############################################################################
- 
- # in case base_xyplot is not working
- if (1==2) {
-
-      # DVOR + IPRED/PRED vs TIME 
-      #-------------------------------------
-      library('regnR')
-      #source("H:\\FYANG\\aTemplate\\Rpackage\\regnR\\latex\\_common.R")
-        # filter(adpx, STUDYID == "R1500-CL-1321")
-      #tdata = tdata %>% filter(ARMA == "R2810: 3 mg/kg")
-      tdata$TIME = as_numeric(tdata$TIME)
-      tdata$DVOR = as_numeric(tdata$DVOR)
-      tdata = tdata %>% filter(!is.na(TIME) & !is.na(DVOR))
-      tdata = tdata %>% filter(!is.na(log(TIME)), !is.na(log(DVOR)) )   
-     # figLog =capitalize_names(tdata) %>%
-    #         base_xyplot("TIME", "DVOR", "USUBJID", "ARMA",  
-    #              xlab.txt="Day",   ylab.txt="Concentration", 
-    #              xlimits=c(0, 150),     ylimits=range(tdata$DVOR,na.rm=TRUE), 
-    #              xscale="month",       yscale="log", 
-    #              font.size=12 )    +   
-                  
-      figLog =capitalize_names(tdata) %>%
-               ggplot(aes(x=TIME, DVOR, group=USUBJID, ARMA=ARMA)) + 
-      scale_y_log10() +             
-      coord_cartesian(xlim = c(0, 1000)) + 
-      coord_cartesian(ylim = c(1, 1000)) + 
-        theme_bw() +  regnR::base_theme(font.size=12 )+           
-               
-                  #xlab.txt="Day",   ylab.txt="Concentration", 
-                  #xlimits=c(0, 150),     ylimits=range(tdata$DVOR,na.rm=TRUE), 
-                  #xscale="month",       yscale="log", 
-                  #font.size=12 )                          
-             geom_point(size=1) + 
-             geom_line(size=1, lwd=1) + 
-             geom_hline(yintercept=0.078, color="gray10", lty="dashed")  
-      bp = figLog #+ facet_wrap(~ARMA)   
-      
-      #out$USUBJID= out$ID
-      #out$ARMA = "R2810: 3 mg/kg"
-      #bp = bp + geom_line(data=tdata,aes(x=TIME, y=IPRED, group=USUBJID, ARMA=ARMA  ))  
-      #bp = bp + geom_line(data=simdat,aes(x=TIME, y=PRED), col="red")  
-      
-
- #geom_ribbon(data=predframe,aes(ymin=lwr,ymax=upr),alpha=0.3))
- 
-       
-     # bp
-      
-  }
-  
-  
-  
   
   
   

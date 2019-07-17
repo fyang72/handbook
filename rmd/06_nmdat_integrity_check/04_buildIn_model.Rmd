@@ -104,10 +104,7 @@ newuoa_parameter_estimation <- function(nmdat, cppModel, values4nmdat)  {
   
   print("loading..OK")
   print( cppModel   %>% param())
-  
-  #source(paste0("./cpp/",  "mod_R3918_human_MM_final.cpp"))
-  #cppModel <- mread("SHINY", tempdir(), mymodel)     # ?mread , ?mcode
-    
+   
   ##' Initial estimates
   theta <- cppModel %>% param(TVCL=1.125676) %>% param()   %>% as.numeric()   # log(c(DENCL=6, DENVC=3000, DENVMAX=1000, DENVP=3000))
   
@@ -123,7 +120,7 @@ newuoa_parameter_estimation <- function(nmdat, cppModel, values4nmdat)  {
   # Fit with `minqa::newuoa`
   # ----------------------------
   #fit1 <- newuoa(theta=theta, fn=ols, d=d, n=names(theta), control=list(iprint=5))
-  tdata <- nmdat %>% filter(TIME>=0, C!="C", TEST=="REGN3918")
+  tdata <- nmdat %>% filter(TIME>=0, C!="C")
   
   fit1 <- newuoa(par=theta, fn=ols, mod=cppModel, nmdat=tdata, control=list(iprint=5))
   #exp(fit1$par)
@@ -199,7 +196,7 @@ theta <- cppModel %>% param(values4nmdat$newuoa$params) %>% param()  %>% as.nume
 param.lst = c("TVCL" , "TVV2",  "TVQ",   "TVV3",  "TVKA" ,  "TVF1", "TVVMAX","TVKSS" )
 theta = theta[param.lst] #%>% log()
 
-tdata <- nmdat %>% filter(TIME>=0, C!="C", TEST %in% c(".", "REGN3918"))
+tdata <- nmdat %>% filter(TIME>=0, C!="C" )
 simData <- ols(cppModel, theta=theta,  tdata, pred=TRUE) %>% 
   mutate(PRED = CONC, 
          DV = DVOR, 

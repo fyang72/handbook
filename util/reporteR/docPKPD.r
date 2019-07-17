@@ -17,7 +17,7 @@
 #'   theData <- dataCheck(theData)
 #'   concTime(data = theData)
 #'   concTime(data = theData, adjust = TRUE)
-docPKPD <- function(FIGURE_ALL, TABLE_ALL, mydoc, myppt, regnR_PKreport,             
+docPKPD <- function(FIGURE_ALL, TABLE_ALL, mydoc, myppt, PKreport,             
   font.size=12, errorbar = "SD" 
  ) { 
 
@@ -44,13 +44,13 @@ txt=names(TABLE_ALL)
 txt=paste(txt,'=',"TABLE_ALL$",txt,";",sep="")
 eval(parse(text=txt))
 #
-#lib_DRUG  <- convert.info(regnR_PKreport, type="DRUG")
-#lib_TEST  <- convert.info(regnR_PKreport, type="TEST")
-#lib_STUDY <- convert.info(regnR_PKreport, type="STUDY")
+#lib_DRUG  <- convert.info(PKreport, type="DRUG")
+#lib_TEST  <- convert.info(PKreport, type="TEST")
+#lib_STUDY <- convert.info(PKreport, type="STUDY")
 #
-lib_AUTHOR <- regnR_PKreport$lib_AUTHOR 
-lib_TEST  <- regnR_PKreport$lib_TEST 
-lib_STUDY <- regnR_PKreport$lib_STUDY 
+lib_AUTHOR <- PKreport$lib_AUTHOR 
+lib_TEST  <- PKreport$lib_TEST 
+lib_STUDY <- PKreport$lib_STUDY 
 
 drug_name =   lib_TEST["drug_name", "DESCRIPTIVE_NAME"]
 study_name =  lib_STUDY["study_name", "DESCRIPTIVE_NAME"]

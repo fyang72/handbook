@@ -21,8 +21,7 @@ build_adsl <-function(dataset) {
     USUBJID = standardise_USUBJID(STUDYID, USUBJID) %>% 
       as.character()
     )
-   
-    
+  
   #--------------------------------------------------------------
   # Analysis Treatment Variables 
   #--------------------------------------------------------------

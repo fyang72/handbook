@@ -28,15 +28,15 @@ module_save_table_UI <- function(id, label = "") {
       ), 
       
       column(2,  
-             actionButton(ns("saveit"),label="Save it", style=actionButton.style)
+             actionButton(ns("saveit"),label="Save it", style=actionButton_style)
       ) , 
       
       column(width=2,                                                                                                                                                                   
-             downloadButton(ns("downloaddoc"),label="doc", icon=icon("download"), style=actionButton.style)                                                                        
+             downloadButton(ns("downloaddoc"),label="doc", icon=icon("download"), style=actionButton_style)                                                                        
       ), 
       
       column(width=2,                                                                                                                                                                   
-             downloadButton(ns("downloadppt"),label="ppt", icon=icon("download"), style=actionButton.style)                                                                        
+             downloadButton(ns("downloadppt"),label="ppt", icon=icon("download"), style=actionButton_style)                                                                        
       )
       
     ), 
@@ -71,7 +71,7 @@ module_save_table <- function(input, output, session, ALL, table,
   ns <- session$ns 
   #values <- reactiveValues()
   
-  actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
+  actionButton_style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
   
   output$table_title_container <- renderUI(renderText({
       paste0("<b>Table ", table_index, ": ", attributes(table)$title,"</b>")

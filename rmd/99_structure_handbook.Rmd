@@ -4,7 +4,12 @@
 
 key words:  input, output, FIGURE, TABLE, 
 
-```{r }
+TO DO LIST
+
+1. replace ReporteRs with officer; 
+2. 
+
+```{r, eval=FALSE}
 library(fakeDataWithError)
 tdata = tdata %>% mutate(TIME=as_numeric(TIME), 
                          DVOR = as_numeric(DVOR)

@@ -22,12 +22,21 @@ module_run_script_UI <- function(id, label = "") {
        # dataset_container 
        tabPanel(width=12, title="dataset", value = "dataset", collapsible = TRUE, 
                 collapsed = TRUE, solidHeader = TRUE,
-                  tagList(
+                  tagList( 
+                      
                     fluidRow(
-                      column(6, uiOutput(ns("select_TEST_container"))), 
-                      column(6, uiOutput(ns("select_ARMA_container")))
+                      HTML(colFmt("You may apply the following commonly used filters to filter your dataset<br>", color="gray")
                       ),
-                    fluidRow(column(12, uiOutput(ns("dataset_container")))) 
+                      uiOutput(ns("select_TEST_container")), 
+                      uiOutput(ns("select_ARMA_container")),
+                      style='margin-bottom:30px;  border:1px solid; padding: 10px;'
+                     ),
+                    fluidRow(
+                      column(12, 
+                             uiOutput(ns("dataset_container")), 
+                             style='margin-bottom:30px;  border:1px solid; padding: 10px;'
+                             )
+                      ) 
                   )
        ),       
        
@@ -84,13 +93,23 @@ module_run_script <- function(input, output, session,
     )
     
     test_lst = c(unique(tdata%>%drop_na(TEST)%>%pull(TEST))) 
-    selectizeInput(ns("which_test"), 
+    inline = function (x) {
+      tags$div(style="display:inline-block;", x)
+    }
+    
+    #fluidRow(
+    #  column(6,
+    inline(
+        selectizeInput(ns("which_test"), 
                   label    = "select which analyte", 
                   choices  = test_lst, 
                   multiple = FALSE,
                   width="100%", 
                   selected = test_lst[1]
                   )
+    )
+    #  )
+   # )
         
   })
   
@@ -102,14 +121,24 @@ output$select_ARMA_container <- renderUI({
   )
    
   arma_lst = c(unique(tdata%>%drop_na(ARMA)%>%pull(ARMA)))
-  selectizeInput(ns("which_arma"), 
-                label    = "select which dose group(s)", 
-                choices  = arma_lst, 
-                multiple = TRUE,
-                width="100%", 
-                selected = arma_lst
-                )
-            
+  
+  inline = function (x) {
+    tags$div(style="display:inline-block;", x)
+  }
+  
+  #fluidRow(
+  #  column(6, 
+  inline(
+      selectizeInput(ns("which_arma"), 
+                    label    = "select which dose group(s)", 
+                    choices  = arma_lst, 
+                    multiple = TRUE,
+                    width="100%", 
+                    selected = arma_lst
+                    )
+  )
+   # )
+  #)
 })
   
   

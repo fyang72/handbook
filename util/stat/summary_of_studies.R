@@ -1,8 +1,8 @@
 
 ################################################################################
 # Table-1     
-#Accounting of Subjects for Total REGN2222 Measurements by Dose Group and Overall 
-#Following a Single and Repeat IV or IM Dose(s) of REGN2222 (All Subjects in Study R2222-HV-1326)
+#Accounting of Subjects for Total xxxx Measurements by Dose Group and Overall 
+#Following a Single and Repeat IV or IM Dose(s) of xxxx (All Subjects in Study R2222-HV-1326)
 ################################################################################
 summary_of_studies <- function(adpx, group_by=c("STUDYID", "ARMA", "EXROUTE"), value="DVOR", id="USUBJID") {
   # Note:   == "0",  mean  BLQ
@@ -323,8 +323,8 @@ calc_PKstats <- function(tdata, STUDYID="STUDYID", USUBJID="USUBJID", TIME="TIME
 
 ################################################################################
 # Table-2     
-#Accounting of Subjects for Total REGN2222 Measurements by Dose Group and Overall 
-#Following a Single and Repeat IV or IM Dose(s) of REGN2222 (All Subjects in Study R2222-HV-1326)
+#Accounting of Subjects for Total xxxx Measurements by Dose Group and Overall 
+#Following a Single and Repeat IV or IM Dose(s) of xxxx (All Subjects in Study R2222-HV-1326)
 ################################################################################
 
 # summary stats for the continuous variables

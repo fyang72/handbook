@@ -18,16 +18,16 @@
 #'   theData <- dataCheck(theData)
 #'   concTime(data = theData)
 #'   concTime(data = theData, adjust = TRUE)
-docCoverPage <- function(mydoc, myppt, regnR_PKreport)   {
+docCoverPage <- function(mydoc, myppt, PKreport)   {
 
-#lib_AUTHOR  <- convert.info(regnR_PKreport, type="AUTHOR")
-#lib_TEST  <- convert.info(regnR_PKreport, type="TEST")
-#lib_STUDY <- convert.info(regnR_PKreport, type="STUDY")
+#lib_AUTHOR  <- convert.info(PKreport, type="AUTHOR")
+#lib_TEST  <- convert.info(PKreport, type="TEST")
+#lib_STUDY <- convert.info(PKreport, type="STUDY")
 #
 
-lib_AUTHOR <- regnR_PKreport$lib_AUTHOR 
-lib_TEST  <- regnR_PKreport$lib_TEST 
-lib_STUDY <- regnR_PKreport$lib_STUDY 
+lib_AUTHOR <- PKreport$lib_AUTHOR 
+lib_TEST  <- PKreport$lib_TEST 
+lib_STUDY <- PKreport$lib_STUDY 
 
 # parse lib_AUTHOR
  

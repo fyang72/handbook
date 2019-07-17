@@ -11,7 +11,7 @@ module_runsim_setting_UI <- function(id, label = "") {
   
   tagList(  
     fluidRow(
-      column(width=12, actionButton(ns("confirm"), label="Confirm", style=actionButton.style)
+      column(width=12, actionButton(ns("confirm"), label="Confirm", style=actionButton_style)
        )
     ),
     

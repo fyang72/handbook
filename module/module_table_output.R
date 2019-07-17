@@ -12,7 +12,7 @@ module_table_output_UI <- function(id, label="") {
   # tags$style(type='text/css', "#search_button { padding-bottom: 35px; }"),
   # and change the number (35) till it looks right.
   # tags$style(type='text/css', "button#searchButton { margin-bottom: 9px; }")
-  actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332; vertical-align: bottom;"
+  actionButton_style ="float:left;color: #fff; background-color: #328332; border-color: #328332; vertical-align: bottom;"
   
   fluidPage(
     fluidRow(
@@ -35,7 +35,7 @@ module_table_output_UI <- function(id, label="") {
              ), 
       
       column(width=2, 
-             downloadButton(ns("downloadcsv"),label="download", icon=icon("download"), style=actionButton.style)
+             downloadButton(ns("downloadcsv"),label="download", icon=icon("download"), style=actionButton_style)
             )
       )
     
@@ -52,7 +52,7 @@ module_table_output <- function(input, output, session, mytab) {
   
   ns <- session$ns
   
-  actionButton.style ="float:left;color: #fff; background-color: #328332; border-color: #328332; vertical-align: bottom;"
+  actionButton_style ="float:left;color: #fff; background-color: #328332; border-color: #328332; vertical-align: bottom;"
   
   
   # selected_data

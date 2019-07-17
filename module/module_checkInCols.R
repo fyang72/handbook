@@ -15,7 +15,7 @@ module_checkInCols_UI <- function(id, label = "") {
   tagList(
     fluidRow(
       column(width=4,
-             actionButton(ns("checkIn"),label = "checkIn", style=actionButton.style)   # http://getbootstrap.com/docs/4.0/components/buttons/
+             actionButton(ns("checkIn"),label = "checkIn", style=actionButton_style)   # http://getbootstrap.com/docs/4.0/components/buttons/
       )
     ), 
     fluidRow(

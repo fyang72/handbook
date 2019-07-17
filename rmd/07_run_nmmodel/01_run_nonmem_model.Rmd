@@ -205,53 +205,7 @@ output$submit_container <-renderUI({
 
 
 
-
-
-```{r, eval=FALSE}
-# If currently being run on the development server, replace the username with the name of the current developer.
-#  Sys.info()["user"]
-
  
- 
-system(command = "mkdir -p /home/feng.yang/FYANG/Template/Handbook/model/output/feng.yang/test")
-         
- 
-
-# processx 3.2.0
-# https://www.tidyverse.org/articles/2018/09/processx-3.2.0/
-#Running shell command and capturing the output   in R
-
-
-# system(command = "scp   ./model/ctl/control5.ctl    10.244.106.127:/home/feng.yang/test_data/test_nm/", intern = T)
-# system(command = "scp   ./data/THEOPP.csv     10.244.106.127:/home/feng.yang/test_data/test_nm/", intern = T)
-# 
-# txt = system(command = "ssh 10.244.106.127 'cd /home/feng.yang/test_data/test_nm/; execute control5.ctl  -clean=4'", intern = T)
-# system(command = "scp   10.244.106.127:/home/feng.yang/test_data/test_nm/control5.lst   ./model/ctl/")
-
-
-# ps -fs | grep 
-  
-   
-  
-  local RESULTS
-RESULTS=$(ssh user@server /usr/local/scripts/test_ping.sh)
-echo $?
-  
-  
- system(command = paste0("scp 10.244.106.127:", paste0(server.model.dir, model.runno, ".ext   ", local.result.dir)))
-  
-
- system(command = "scp   ./ctl/LN_BASE_WT/LN_BASE_WT.ctl  10.244.106.127:/home/feng.yang/R3918/ctl/LN_BASE_WT/", intern = T)
-#
-
- system(command = "  local RESULTS") 
- 
- bash shell - ssh remote script capture output and exit code?
- #  https://unix.stackexchange.com/questions/66581/bash-shell-ssh-remote-script-capture-output-and-exit-code
-```
-
-
-
 
 
 
