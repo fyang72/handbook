@@ -64,15 +64,16 @@ runSim_by_dosing_regimen <- function(
   # if multiple dosing regimens (with loading dose)
   adex <- adex %>% 
     left_join(adex %>% group_by(ID) %>% mutate(ARMA2 = paste0(ARMA, collapse="+")) %>% 
-                select(ID, ARMA2)%>% distinct(ID, .keep_all=TRUE), 
+                dplyr::select(ID, ARMA2)%>% distinct(ID, .keep_all=TRUE), 
               by = "ID") %>% 
     dplyr::select(-ARMA) %>% dplyr::rename(ARMA=ARMA2)
   
   # POP + REP + ID + DOSEID(ARMA) + TIME
+  if (!"CMT" %in% colnames(adex)) {adex$CMT = 0}
   adex = adex %>% mutate(AMT = ifelse(UNIT=="mg/kg", AMT * as_numeric(WGTBL), AMT), 
                          
-                         CMT = ifelse(ROUTE=="IV", 2, 
-                                      ifelse(ROUTE=="SC", 1, 0)), 
+                         CMT = ifelse(CMT==0 & ROUTE=="IV", 2, 
+                                      ifelse(CMT==0 & ROUTE=="SC", 1, CMT)), 
                          
                          RATE = ifelse(ROUTE=="IV", AMT/(as_numeric(infusion_hrs_lst[1])/24), 0), 
                          
@@ -165,7 +166,7 @@ runSim_by_nmdat <-function(
   adex[w] <- lapply(adex[w], function(x) as.character(x) )
   col_lst = names(which(sapply(adex, typeof) == "character"))
   
-  out = cppModel %>% data_set(adex %>% select(-one_of(col_lst))) %>% 
+  out = cppModel %>% data_set(adex %>% dplyr::select(-one_of(col_lst))) %>% 
     mrgsim(end=sim_end, delta=simulation_delta, add=tgrid, tad=TRUE, carry.out=c("II", "EVID")) %>% 
     as.data.frame() %>% capitalize_names()  %>% slice(2:n())
   
@@ -175,7 +176,7 @@ runSim_by_nmdat <-function(
   out = out  %>% 
     left_join(adex %>% as.data.frame() %>% 
                 distinct(ID, .keep_all=TRUE) %>% 
-                select(one_of(c("ID", add_col_lst))),    
+                dplyr::select(one_of(c("ID", add_col_lst))),    
               by=c("ID")
     )  
   
@@ -203,6 +204,7 @@ runSim_by_nmdat <-function(
   return(out)
   
 }
+
 
 
 

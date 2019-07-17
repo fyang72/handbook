@@ -3,7 +3,7 @@
   
 ```{r, eval=TRUE } 
 
-file_name <- "~/handbook/lib/pkmeta.xlsx" 
+file_name <- paste0(HOME, "/lib/pkmeta.xlsx")
 
 std_nmdat <- read_excel(file_name,sheet="nmdat",col_names = TRUE)  %>% 
   as.data.frame() %>% filter(!is.na(standard.name))
