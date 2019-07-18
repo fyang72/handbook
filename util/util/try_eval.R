@@ -13,6 +13,7 @@ try_eval <-function(text="") {
   
 owd <- setwd(tempdir())
 on.exit(setwd(owd))  
+ 
 
 zz <- file("all.Rout", open="wt")
 sink(zz, type="message")
@@ -29,12 +30,14 @@ close(zz)
 
 ## Display the log file
 message <- readLines("all.Rout")
-if (file.exists("all.Rout")) {file.remove("all.Rout")}
-
-
+#if (file.exists("all.Rout")) {file.remove("all.Rout")}
+ 
+ 
+#unlink(Tpath)
 #return(list(output=output, error_message=error_message))
 
 #rm(owd, text, zz)
+
 return(environment())
 
 }

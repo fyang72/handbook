@@ -25,7 +25,7 @@ module_run_script_UI <- function(id, label = "") {
                   tagList( 
                       
                     fluidRow(
-                      HTML(colFmt("You may apply the following commonly used filters to filter your dataset<br>", color="gray")
+                      HTML(colFmt("The following commonly used filters can be used to narrow down your dataset<br>", color="gray")
                       ),
                       uiOutput(ns("select_TEST_container")), 
                       uiOutput(ns("select_ARMA_container")),
@@ -199,11 +199,8 @@ output$script_container <- renderUI({
  
   tagList(
     fluidRow(column(12,
-                    HTML(colFmt("Note, by running/modifying the following script template,
-                                you will be able to generate any derived data(s), table(s) and figure(s)
-                                based on the input data (dataset) with/withou the parameters (params).
-                                Certain key words should be reserved; certain formatting should be followed.
-                                See instruction carefully.", color="gray"))
+                    HTML(colFmt("Step: 1) select which script template, 2) click 'run script', 3) modify
+                                the script if needed, then re-run it.", color="gray"))
                     )
              ),
 
@@ -386,13 +383,14 @@ observeEvent(input$run_script, {
   if ("output" %in% ls(env)) {output = get("output", env)}
   if ("message" %in% ls(env)) {error_message = get("message", env)}
   
+  #removeNotification("myid")
   if ((length(error_message)==0 & !is.null(output))) {
     if("data" %in% names(output)) {values$data = output$data}
     if("figure" %in% names(output))   {values$figure = output$figure}
     if("table" %in% names(output)) {values$table = output$table}
-    showNotification("run script sucessfully", type="message") 
+    showNotification("run script sucessfully", type="message", id="myid") 
   }else{
-    showNotification(paste0(error_message, collapse="\n"), type="error")
+    showNotification(paste0(error_message, collapse="\n"), type="error", id="myid")
   }
    
  })

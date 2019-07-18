@@ -90,7 +90,7 @@ module_load_ctlModel <- function(input, output, session, ALL, ctlModel_name="ctl
     validate(need(globalVars$login$status, message=FALSE), 
              need(input$ctlModel_source=="within session", message=FALSE)) 
      
-    name_lst <- names(ALL$ctlModel)
+    name_lst <- names(isolate({ALL$ctlModel}))
     only_for_internal_use <- name_lst[which(substr(name_lst, 1, 6)=="mYtEsT")]
     dirs_list = c("", setdiff(name_lst, only_for_internal_use))
     

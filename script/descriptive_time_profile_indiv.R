@@ -1,10 +1,10 @@
-##########################################################################################
+################################################################################
 # Individual time profile
-##########################################################################################
+################################################################################
  
 descriptive_time_profile_indiv <-function(dataset, params=NULL) {
-  #dataset=read_csv("./data/nmdatPKPD.csv") %>% filter(TESTCAT=="TARGET")
 
+  # initialize variables
   figure=NULL
   table =NULL
   data = NULL
@@ -12,26 +12,46 @@ descriptive_time_profile_indiv <-function(dataset, params=NULL) {
   #------------------------------
   # these key varaibles needed
   #------------------------------
-  key.column.lst <- c("STUDYID", "USUBJID", "ARMA", "NTIM", "TIMEPT", "TESTCD", "DVOR", "TIME", "LLOQ", "EXTRT")
-  missing.column.lst <- key.column.lst[which(!key.column.lst %in% colnames(dataset))]
-  #message <- paste0("missing variable(s) of ", paste0(missing.column.lst, sep=", ", collapse=""))
+  key.column.lst <- c("STUDYID", "USUBJID", "ARMA", "NTIM", "TIMEPT", 
+                      "TESTCD", "DVOR", "TIME", "LLOQ", "EXTRT")
+  missing.column.lst <- 
+    key.column.lst[which(!key.column.lst %in% colnames(dataset))]
   
-  #validate(need(all(key.column.lst %in% colnames(dataset)), message=message))
+  #message <- paste0("missing variable(s) of ", 
+  # paste0(missing.column.lst, sep=", ", collapse=""))
+  
+  #validate(
+  #  need(all(key.column.lst %in% colnames(dataset)), message=message)
+  #)
    
   #----------------------------------
   # derived information fromd dataset
   #-----------------------------------
-  study_name = ifelse(!"STUDYID" %in% colnames(dataset), "STUDYID", 
-                      paste0(dataset %>% drop_na(STUDYID) %>% pull(STUDYID) %>% unique(),  collapse=", "))
+  study_name = ifelse(
+    !"STUDYID" %in% colnames(dataset), "STUDYID",
+    paste0(dataset %>% drop_na(STUDYID) %>% pull(STUDYID) %>% unique(), collapse=", ")
+    )
   
-  drug_name = ifelse(!"EXTRT" %in% colnames(dataset), "EXTRT",
-                     paste0(dataset %>% drop_na(EXTRT) %>% pull(EXTRT) %>% unique(),  collapse=", "))
+  drug_name = ifelse(
+    !"EXTRT" %in% colnames(dataset), "EXTRT",
+    paste0(dataset %>% drop_na(EXTRT) %>% pull(EXTRT) %>% unique(), collapse=", ")
+    )
   
-  test_name = ifelse(!"TESTCD" %in% colnames(dataset), "TESTCD",
-                     paste0(dataset %>% drop_na(TESTCD) %>% pull(TESTCD) %>% unique(),  collapse=", "))
+  test_name = ifelse(
+    !"TESTCD" %in% colnames(dataset), "TESTCD",
+     paste0(dataset %>% drop_na(TESTCD) %>% pull(TESTCD) %>% unique(), collapse=", ")
+     )
   
-  test_label = ifelse(!"TEST" %in% colnames(dataset), "TEST",
-                      paste0(dataset %>% drop_na(TEST) %>% pull(TEST) %>% unique(),  collapse=", "))
+  test_label = ifelse(
+    !"TEST" %in% colnames(dataset), "TEST",
+    paste0(dataset %>% drop_na(TEST) %>% pull(TEST) %>% unique(), collapse=", ")
+    )
+  
+  test_unit = ifelse(
+    !"DVORU" %in% colnames(dataset), "DVORU",
+    paste0(dataset %>% drop_na(DVORU) %>% pull(DVORU) %>% unique(), collapse=" ")
+    )
+  
   
   #------------------------------           
   # prepare the dataset 
@@ -40,9 +60,12 @@ descriptive_time_profile_indiv <-function(dataset, params=NULL) {
     mutate(DVOR=as_numeric(DVOR), 
            NTIM=as_numeric(NTIM),
            TIME=as_numeric(TIME), 
-           LLOQ = as_numeric(LLOQ)
+           LLOQ=as_numeric(LLOQ), 
+           EVID=as.integer(EVID)
            ) %>% 
     filter(TIME>=0) %>%  # exclude pre-dose samples
+    filter(EVID==0) %>%  # exclude dosing events
+    mutate(LLOQ = ifelse(is.na(LLOQ), 0, LLOQ)) %>% 
     #Concentrations below the lower limit of quantification (LLOQ = 0.078 mg/L) are set to LLOQ/2 
     mutate(DVOR = ifelse(DVOR<LLOQ, LLOQ/2, DVOR))  
   
@@ -53,15 +76,10 @@ descriptive_time_profile_indiv <-function(dataset, params=NULL) {
   #------------------
   # plot
   #------------------
-  tdata <- tdata%>% 
-       mutate(xvar = TIME, 
-              yvar = DVOR 
-              )
-      
-  x=setup_scale(myscale='1_2', mylimit=c(0, max(tdata$xvar/7, na.rm=TRUE)))
+  tdata <- tdata %>% mutate(xvar = NTIM/7, yvar = DVOR)
+  x=setup_scale(myscale='1_2',mylimit=c(0, max(tdata$xvar, na.rm=TRUE)))
   
-  # no pre-dose samples in plot
-  fig = ggplot(tdata%>%mutate(xvar=xvar/7), aes(x=xvar, y=yvar, group=USUBJID, col=ARMA)) + 
+  fig = ggplot(tdata, aes(x=xvar, y=yvar, group=USUBJID, col=ARMA)) + 
     #ggtitle("Concentration Time Profile") + 
     
     geom_point() + geom_line() +   
@@ -74,41 +92,50 @@ descriptive_time_profile_indiv <-function(dataset, params=NULL) {
     #coord_cartesian(xlim = c(0, 85)) + 
     
     xlab("Time (week)") +  
-    ylab(test_label) +    #paste0(test_label, " (mg/L)")) +   
+    ylab(paste0(test_label, "(", test_unit, ")")) +  
     
     theme_bw() + base_theme(font.size = as.integer(12)) + 
     guides(col=guide_legend(ncol=4,byrow=TRUE))    
-  
-  fig
-  
+   
   #------------------
   # linear scale
   #------------------
-  attr(fig, 'title') <-  paste0("Individual ", 
-                                test_label, 
-                                " in Serum vs Nominal Sampling Day Following Subcutaneous or Intravenous Dose(s) of ", 
-                                drug_name, " (", study_name, ")")
+  attr(fig, 'title') <-  
+    paste0("Individual ", 
+            test_label, 
+            " in Serum vs Nominal Sampling Day Following Subcutaneous or Intravenous Dose(s) of ", 
+            drug_name, " (", study_name, ")")
+  
+  attr(fig, 'width') <- 9
+  attr(fig, 'height') <- 6   
   figure[[paste0("indiv_profile_ln_", test_name)]] = fig 
-  figure[[paste0("indiv_profile_ln_", test_name)]]$data =  tdata%>%mutate(xvar=xvar/7)
+  figure[[paste0("indiv_profile_ln_", test_name)]]$data =  tdata
   
   #------------------
   # log scale 
   #------------------
+  BLOQ = 0.078 # mg/L
   fig = fig + scale_y_log10(breaks = 10^(seq(-3,3,by=1)),      #trans_breaks("log10", function(x) 10^x),
                             labels = 10^(seq(-3,3,by=1))) +      # trans_format("log10", math_format(10^.x))) +
     annotation_logticks(sides ="l")  +  # "trbl", for top, right, bottom, and left.
     
-    geom_hline(yintercept=c(0.078), lty="dashed") + 
-    geom_text(y=log10(0.092 ), x=0.1, aes(label="BLQ=0.078 mg/L", hjust=0), size=4, color='black')  
+    geom_hline(yintercept=c(BLOQ), lty="dashed") + 
+    geom_text(y=log10(BLOQ*1.2), x=0.1, 
+              aes(label=paste0("BLQ=", BLOQ," mg/L"), hjust=0), 
+              size=4, 
+              color='black') 
   
   fig
-  attr(fig, 'title') <- paste0("Individual Log-scaled ", 
-                               test_label, " in Serum vs Nominal Sampling Day Following Subcutaneous or Intravenous Dose(s) of ", 
-                               drug_name, " (", study_name, ")")
-  figure[[paste0("indiv_profile_log_", test_name)]] = fig 
-  figure[[paste0("indiv_profile_log_", test_name)]]$data =  tdata%>%mutate(xvar=xvar/7)
-   
+  attr(fig, 'title') <- 
+    paste0("Individual Log-scaled ", 
+           test_label, " in Serum vs Nominal Sampling Day Following Subcutaneous or Intravenous Dose(s) of ", 
+           drug_name, " (", study_name, ")")
   
+  attr(fig, 'width') <- 9
+  attr(fig, 'height') <- 6   
+  figure[[paste0("indiv_profile_log_", test_name)]] = fig 
+  figure[[paste0("indiv_profile_log_", test_name)]]$data =  tdata
+   
   return(list(figure=figure, table=table ))
   }
   
@@ -116,6 +143,8 @@ descriptive_time_profile_indiv <-function(dataset, params=NULL) {
 # final output
 #################################################################
 if (ihandbook) {
-  output = filtered_dataset() %>% descriptive_time_profile_indiv(params=NULL)
+  output = suppressWarnings(
+    filtered_dataset() %>% descriptive_time_profile_indiv(params=NULL)
+  )
   
 }

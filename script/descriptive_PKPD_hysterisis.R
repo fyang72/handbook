@@ -156,6 +156,8 @@ descriptive_PKPD_hysterisis <-function(dataset, params=NULL) {
 # final output
 #################################################################
 if (ihandbook) {
-output = filtered_dataset() %>% descriptive_PKPD_hysterisis(params=NULL)
+output = suppressWarnings(
+  filtered_dataset() %>% descriptive_PKPD_hysterisis(params=NULL)
+)
 
 }

@@ -2,14 +2,11 @@
 # Descriptive analysis  <a name="descriptive_analysis"></a>
 
 This chapter is dedicated for all data-driven pharmacokinetics/pharmacodynmaic analysis, with a minimum level
-of modeling.  Most often, the concentration-time profiles will be plotted, in both log- and linear-scale.  A variety of visualization are presented for PK-PD analyses. 
+of modeling.  Most often, the concentration-time profiles will be plotted, 
+in both log- and linear-scale (see section [Time profile](#time_profile)).  A variety of visualization for PK-PD analyses are presented in section [PKPD relationship](#descriptive_PKPD)) 
 
-You need to load your dataset first (see below), by three methods mentioned earlier.
-If loading sucessfully, the dataset will be presented in the tab of *dataset*. 
-Within the tab, some commonly used filters will be shown and they could be used to narrow down your dataset.
-Note the loaded data will be used in all sections in this chapter. 
-
-
+First of all, a dataset (see below) needs to be loaded by using three different approaches mentioned earlier. If load sucessfully, the dataset will be populated in the subsequent sections in this chapter.  
+ 
  
 ```{r}
 #----------------------------------------------------
@@ -38,14 +35,24 @@ output$descriptive_analysis_data_selector <-renderUI({
   
 tagList(
   fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
-  fluidRow(column(width=12, uiOutput(("descriptive_analysis_data_selector"))))
+  fluidRow(column(width=12, uiOutput(("descriptive_analysis_data_selector")))), 
+  fluidRow(column(width=12, tags$hr(style="border-color: gray;")))
 )
 ```
 
 
 ## Time profile <a name="time_profile"></a>
 
-2. In the tab of *script*, you may select/run/modify the template scripts and generate the derived data(s), table(s) and figure(s) based on the input data (dataset) with/withou the parameters (params). Note certain key words should be reserved; certain formatting should be followed. See instruction carefully.
+The concentration-time profiles are the most commonly used visualization for both PK or PD. 
+If your dataset were standardized previously, you should be able to generate these time-profiles using 
+the scripts below. The general step-by-step instructions were shown below: 
+
+1. As mentioned early, the loaded dataset is presented in the tab of *dataset*. 
+Within the tab, some commonly used filters is shown and they could be used to narrow down your dataset. 
+For examples, select either one study or multiple studies, select which analyte and which dose groups.
+Note you can only choose one analye; you may choose multiple analytes at next section of PKPD relationship.
+
+2. In the tab of *script*, you may select/run/modify the template scripts and generate the derived data(s), table(s) and figure(s) based on the input data (dataset) with/withou the parameters (params). Note, certain key words should be reserved; certain formatting should be followed. See instruction carefully.
 
 3. The resulting *data*, *table*, and *figure* (if ever generated) will be presented in the corresponding tab. You may save or download them accordingly.
  
@@ -72,17 +79,19 @@ output$descriptive_time_profile <- renderUI({
 
   validate(need(drug_descriptive_analysis_inputData(), message="no data found yet"))
  
+  # scripts
   script <- list.files(path=paste0(HOME, "/script/"), 
                          full.names = TRUE,
                          pattern="descriptive_time_profile")
   names(script) = basename(script)
     
+  # callModule
   ALL = callModule(module_run_script, "descriptive_time_profile", 
                    ALL, 
                    dataset=drug_descriptive_analysis_inputData(), 
                    script=script)
     
-
+  # UI
   module_run_script_UI(("descriptive_time_profile"), label = NULL) 
      
 })

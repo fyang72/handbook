@@ -13,7 +13,7 @@ TABLE = NULL
 
 #-------------------------------------------------
 tt = nmdat %>% 
-  filter(TESTCAT == "PK") %>% 
+  filter(TESTCAT == "RESP1") %>% select(-DVOR) %>% 
   descriptive_time_profile_mean(params=NULL)
 FIGURE = c(FIGURE, tt$figure)
 TABLE = c(TABLE, tt$table)

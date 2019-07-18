@@ -131,6 +131,8 @@ descriptive_PKPD_sigmoid <-function(dataset, params=NULL) {
 # final output
 #################################################################
 if (ihandbook) {
-output = filtered_dataset() %>% descriptive_PKPD_sigmoid(params=NULL)
+output = suppressWarnings(
+  filtered_dataset() %>% descriptive_PKPD_sigmoid(params=NULL)
+)
 
 }

@@ -100,7 +100,7 @@ output$load_session_cppModel_container <- renderUI({
   validate(need(globalVars$login$status, message=FALSE), 
            need(input$cppModel_source=="within session", message=FALSE)) 
    
-  name_lst <- names(ALL$cppModel) 
+  name_lst <- names(isolate({ALL$cppModel})) 
   only_for_internal_use <- name_lst[which(substr(name_lst, 1, 6)=="mYtEsT")]
   dirs_lst = c("", setdiff(name_lst, only_for_internal_use))
   

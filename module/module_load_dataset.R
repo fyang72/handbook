@@ -75,15 +75,15 @@ module_load_dataset <- function(input, output, session,
     validate(need(globalVars$login$status, message=FALSE), 
              need(input$dataset_source=="internal library", message=FALSE)) 
      
-    dirs.list = c("", list.files(path = paste0(HOME, "/data"), full.names = FALSE, recursive = FALSE)) 
+    dirs_list = c("", list.files(path = paste0(HOME, "/data"), full.names = FALSE, recursive = FALSE)) 
     fluidRow(
       column(12,
              selectizeInput(ns("which_internal_dataset"), 
                    label    = "load internal dataset", 
-                   choices  = dirs.list, 
+                   choices  = dirs_list, 
                    multiple = FALSE,
                    width="100%", 
-                   selected = dirs.list[1]) 
+                   selected = dirs_list[1]) 
       )
     )
   })
@@ -97,18 +97,18 @@ module_load_dataset <- function(input, output, session,
     validate(need(globalVars$login$status, message=FALSE), 
              need(input$dataset_source=="within session", message=FALSE)) 
     
-    name_lst <- names(ALL$DATA)
+    name_lst <- names(isolate({ALL$DATA}))
     only_for_internal_use <- name_lst[which(substr(name_lst, 1, 6)=="mYtEsT")]
-    dirs.list = c("", setdiff(name_lst, only_for_internal_use))
+    dirs_list = c("", setdiff(name_lst, only_for_internal_use))
     
     fluidRow(
       column(12,
         selectizeInput(ns("which_session_dataset"), 
                        label    = "load session dataset", 
-                       choices  = dirs.list, 
+                       choices  = dirs_list, 
                        multiple = FALSE,
                        width="100%", 
-                       selected = dirs.list[1]) 
+                       selected = dirs_list[1]) 
       )
     )
   }) 
@@ -121,7 +121,8 @@ module_load_dataset <- function(input, output, session,
              need(input$which_external_dataset, message = FALSE))
      
     inFile = input$which_external_dataset
-    tdata = read_datafile(inFile)
+    tdata = read_datafile(inFile$datapath)
+    
     # print(inFile)
     # name            size type  datapath
     # 1 cpp.model.cpp 6369      /tmp/RtmprQR1xU/1eb54214311d1970e61c917f/0.cpp
@@ -136,11 +137,6 @@ module_load_dataset <- function(input, output, session,
     #               "RData" =  load(inFile$datapath), 
     #               NULL
     # )
-
-    
-    message.info = "read data not sucessful. Only .csv, .xlsx, .xls, .sas7bdat, .RData can be read"
-    if (is.null(tdata)) {print(message.info)}
-    validate(need(tdata, message.info)) 
        
     attr(tdata, 'file_name') <- inFile$name   # only file name, no directory for external file
     attr(tdata, 'locaton_source') <- "external"
@@ -157,20 +153,19 @@ module_load_dataset <- function(input, output, session,
              need(input$which_internal_dataset, message=FALSE))
      
     inFile = paste0(HOME, "/data/", input$which_internal_dataset)
-    ext <- tools::file_ext(inFile) 
-     
-    tdata = switch(ext,
-                  "csv" = read_csv(inFile, col_names=TRUE,  
-                                   col_type=cols(.default=col_character()))  %>% as.data.frame(),
-                  "xlsx"=read_excel(inFile, sheet = 1, col_names = TRUE)  %>% as.data.frame(),
-                  "xls" = read_excel(inFile)  %>% as.data.frame(),
-                  "sas7bdat" =  read_sas(inFile)  %>% as.data.frame(), 
-                  "RData" =  load(inFile),   # MUST NAMED AS "adpx"   need some work 
-                  NULL
-    )
-    message.info = "read data not sucessful. Only .csv, .xlsx, .xls, .sas7bdat, .RData can be read"
-    if (is.null(tdata)) {print(message.info)}
-    validate(need(tdata, message.info)) 
+    tdata = read_datafile(inFile)
+   
+    # ext <- tools::file_ext(inFile) 
+    #  
+    # tdata = switch(ext,
+    #               "csv" = read_csv(inFile, col_names=TRUE,  
+    #                                col_type=cols(.default=col_character()))  %>% as.data.frame(),
+    #               "xlsx"=read_excel(inFile, sheet = 1, col_names = TRUE)  %>% as.data.frame(),
+    #               "xls" = read_excel(inFile)  %>% as.data.frame(),
+    #               "sas7bdat" =  read_sas(inFile)  %>% as.data.frame(), 
+    #               "RData" =  load(inFile),   # MUST NAMED AS "adpx"   need some work 
+    #               NULL
+    # )
     
     attr(tdata, 'file_name') <- inFile  # with directory
     attr(tdata, 'locaton_source') <- "internal"
@@ -183,14 +178,11 @@ module_load_dataset <- function(input, output, session,
   # reactive of load_session_dataset
   #-------------------------------------- 
   load_session_dataset <- reactive({
+    validate(need(input$which_session_dataset, message=FALSE))
     
     dataset = ALL$DATA[[input$which_session_dataset]]
-    
-    validate(need(globalVars$login$status, message=FALSE), 
-             need(input$which_session_dataset, message=FALSE), 
-             need(dataset, message="no data found")
-    )
-     
+    validate(need(dataset, message="no data found"))
+
     attr(dataset, 'file_name') <- paste0(input$which_session_dataset, ".csv")  # only .csv
     attr(dataset, 'locaton_source') <- "session"
     dataset
