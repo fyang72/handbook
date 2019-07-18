@@ -30,8 +30,7 @@ resource_files:
 - rmd/08_exposure_response/01_exposure_response.Rmd
 - rmd/09_advanced_model/01_advanced_model.Rmd
 - rmd/10_reporting/01_reporting.Rmd
-- rmd/90_appendix/01_global_setting.Rmd
-- rmd/90_appendix/01_global_variable_notused.Rmd
+- rmd/90_appendix/01_global_setting.Rmd 
 - rmd/90_appendix/01_model_library.Rmd
 - rmd/90_appendix/02_dplyr.Rmd
 - rmd/90_appendix/03_ggplot.Rmd
@@ -223,7 +222,7 @@ if (1==2) {
     for (ifile in 1:length(file.lst)) {
      print(file.lst[ifile])
      txt = paste0(readLines(file.lst[ifile]), collapse=" ")
-     if ( length(grep("abc", txt, fixed=TRUE) )) {        #  reshape sm
+     if ( length(grep("within standard_dataset_container", txt, fixed=TRUE) )) {        #  reshape sm
        print(file.lst[ifile])
        print("found one")
        
@@ -340,9 +339,6 @@ cat(chunks, sep = '\n')
 ```
 
 ```{r child = './rmd/90_appendix/01_global_setting.Rmd'}
-```
-
-```{r child = './rmd/90_appendix/01_global_variable_notused.Rmd'}
 ```
 
 ```{r child = './rmd/90_appendix/01_model_library.Rmd'}

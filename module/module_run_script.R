@@ -86,6 +86,36 @@ module_run_script <- function(input, output, session,
 ################################
 # UI for dataset_container
 ################################
+  output$select_STUDYID_container <- renderUI({ 
+    tdata = dataset
+    validate(need(tdata, message="no dataset found yet"),  
+             need("STUDYID" %in% colnames(tdata), message=FALSE) 
+    )
+    
+    studyid_lst = c(unique(tdata%>%drop_na(STUDYID)%>%pull(STUDYID))) 
+    validate(need(length(studyid_lst)>1, message=FALSE))  
+    
+    inline = function (x) {
+      tags$div(style="display:inline-block;", x)
+    }
+    
+    #fluidRow(
+    #  column(6,
+    inline(
+      selectizeInput(ns("which_studyid"), 
+                     label    = "select which study", 
+                     choices  = studyid_lst, 
+                     multiple = TRUE,
+                     width="100%", 
+                     selected = studyid_lst[1]
+      )
+    )
+    #  )
+    # )
+    
+  })
+  
+  
   output$select_TEST_container <- renderUI({ 
     tdata = dataset
     validate(need(tdata, message="no dataset found yet"),  
@@ -93,6 +123,8 @@ module_run_script <- function(input, output, session,
     )
     
     test_lst = c(unique(tdata%>%drop_na(TEST)%>%pull(TEST))) 
+    validate(need(length(test_lst)>1, message=FALSE))  
+    
     inline = function (x) {
       tags$div(style="display:inline-block;", x)
     }
@@ -121,6 +153,7 @@ output$select_ARMA_container <- renderUI({
   )
    
   arma_lst = c(unique(tdata%>%drop_na(ARMA)%>%pull(ARMA)))
+  validate(need(length(arma_lst)>1, message=FALSE)) 
   
   inline = function (x) {
     tags$div(style="display:inline-block;", x)
@@ -319,11 +352,15 @@ filtered_dataset <- reactive({
     tdata = dataset
   }
   
-  if ("TEST" %in% colnames(tdata) & !is.null(input$which_test)) {
+  if ("STUDYID" %in% colnames(tdata) && !is.null(input$which_studyid)) {
+    tdata = tdata %>% filter(STUDYID %in% input$which_arma)
+  } 
+  
+  if ("TEST" %in% colnames(tdata) && !is.null(input$which_test)) {
     tdata = tdata %>% filter(TEST %in% input$which_test)
   }
   
-  if ("ARMA" %in% colnames(tdata) & !is.null(input$which_arma)) {
+  if ("ARMA" %in% colnames(tdata) && !is.null(input$which_arma)) {
     tdata = tdata %>% filter(ARMA %in% input$which_arma)
   } 
    

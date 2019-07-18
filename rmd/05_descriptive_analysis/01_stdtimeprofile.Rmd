@@ -4,16 +4,12 @@
 This chapter is dedicated for all data-driven pharmacokinetics/pharmacodynmaic analysis, with a minimum level
 of modeling.  Most often, the concentration-time profiles will be plotted, in both log- and linear-scale.  A variety of visualization are presented for PK-PD analyses. 
 
-Step-by-step instruction is follows: 
+You need to load your dataset first (see below), by three methods mentioned earlier.
+If loading sucessfully, the dataset will be presented in the tab of *dataset*. 
+Within the tab, some commonly used filters will be shown and they could be used to narrow down your dataset.
+Note the loaded data will be used in all sections in this chapter. 
 
-1. You need to load your dataset first (see below), by three methods mentioned earlier.
-Following the loading, the dataset will be presented in the tab of *dataset*,
-you may apply those commonly used filters to narrow down your dataset. 
 
-2. In the tab of *script*, you may select/run/modify the template scripts and generate the derived data(s), table(s) and figure(s) based on the input data (dataset) with/withou the parameters (params). Note certain key words should be reserved; certain formatting should be followed. See instruction carefully.
-
-3. The resulting *data*, *table*, and *figure* (if ever generated) will be presented in the corresponding tab. You may save or download them accordingly.
- 
  
 ```{r}
 #----------------------------------------------------
@@ -49,8 +45,10 @@ tagList(
 
 ## Time profile <a name="time_profile"></a>
 
- Select which response variable for visualization. 
-   
+2. In the tab of *script*, you may select/run/modify the template scripts and generate the derived data(s), table(s) and figure(s) based on the input data (dataset) with/withou the parameters (params). Note certain key words should be reserved; certain formatting should be followed. See instruction carefully.
+
+3. The resulting *data*, *table*, and *figure* (if ever generated) will be presented in the corresponding tab. You may save or download them accordingly.
+ 
 
 ```{r}
 drug_descriptive_analysis_inputData <- reactive({

@@ -297,3 +297,50 @@ output$global_params_ggplot_container <- renderUI({
 
 
 ```
+
+
+```{r }
+
+################################
+# save all curation tables  
+################################ 
+observeEvent(input$saveAll, {
+  validate(need(input$saveAll, message=NULL), 
+           need(values$table, message=NULL), 
+           need(values$data, message=NULL)
+  ) 
+    
+  tdata_org = ALL$DATA[[dataset_name]] 
+  tdata_org = tdata_org %>% 
+    rename_at(vars(colnames(tdata_org)),
+              ~ paste0(colnames(tdata_org), "_ORG")
+    )
+  
+  tdata = values$data %>% cbind(tdata_org)
+  ntabl = length(values$table)
+  
+  # for all curation tables
+  for (i in 1:ntabl) {
+    table = values$table[[i]]
+    if (is.null(table) ) {next} 
+    if (nrow(table)==0) {next} 
+    
+    # incompatible types (character / logical)
+    KEY = attr(table, "key")
+    tdata[, KEY] = as.character(tdata[, KEY])
+    table[, KEY]  = as.character(table[, KEY])
+    
+    col.lst =  setdiff(colnames(table), KEY)
+    tdata = tdata %>% select(-one_of(intersect(col.lst, colnames(tdata)))) %>% 
+      left_join(table, by=KEY)
+  }
+  
+  tdata = tdata[, setdiff(colnames(tdata), colnames(tdata_org))]
+  tdata = tdata[, colnames(values$data)]
+  
+  ALL$DATA[[dataset_name]] <- tdata
+  showNotification("save all sucessfully", type="message")   # "default, "message", "warning", "error"
+  
+})
+
+```
