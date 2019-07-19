@@ -1,0 +1,10 @@
+
+# \@ref(introduction)	Introduction {#introduction}
+ 
+Blockade of the PD-1/PD-L1 T-cell checkpoint pathway is an effective and well tolerated approach to stimulate the antitumor immune response, and has achieved significant objective responses in advanced, melanoma, renal cell cancer (RCC), and NSCLC (Topalian 2012).
+
+Cemiplimab (REGN 2810) is a high-affinity, fully human, hinge-stabilized IgG4P antibody directed to the PD-1 receptor that potently blocks the interaction of PD-1 with the ligands, PD-L1 and PD-L2. In syngeneic tumor models in immunocompetent mice humanized for PD-1, the antitumor activity of cemiplimab delivered as a monotherapy against a mouse colon adenocarcinoma tumor line is similar to that observed with antibodies generated in house based on the publicly available genetic sequences of pembrolizumab and nivolumab, anti-PD-1 antibodies approved for the treatment of melanoma, and in late-stage development for use against several other malignancies.
+
+Cemiplimab is currently undergoing evaluation in the two clinical studies, first-in-human (FIH) study R2810-ONC-1423 and phase 2 study R2810-ONC-1540. R2810-ONC-1423 is a phase 1, open-label, multicenter repeat dosing study of cemiplimab, alone and in combination with other anti-cancer therapies in patients with advanced malignancies, and contains both dose escalation and expansion cohorts. R2810-ONC-1540 is a phase 2 study of cemiplimab in patients with advanced cutaneous squamous cell carcinoma. The primary objective of this study is to estimate the clinical benefit of cemiplimab with monotherapy for patients with: metastatic (nodal or distant) CSCC, treated every 2 weeks (mCSCC; Group 1); or with unresectable locally advanced CSCC, treated every 2 weeks (laCSCC; Group 2); or with metastatic (nodal or distant) CSCC, treated every 3 weeks (Group 3).
+
+

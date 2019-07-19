@@ -1,0 +1,510 @@
+# load adpx, manipulate, and write as nmdat
+
+
+```{r libraries, message=FALSE, warning=FALSE}
+library(PKPDmisc)
+library(knitr)
+library(tidyverse)
+```
+
+
+```{r }
+
+# used in primary modeling
+adpx07A = read_csv(file=paste0("./data/", "R2810NM_Dec72017.csv"))  # after remove outliers
+tdata1 = adpx07A  %>% select(USUBJID, TIME, DVOR, AMT, EVID, RATE, PCDTC, PCTPT, WGTBL, CEXDURD)  #%>% filter(C==".")　
+ tdata1 = tdata1 %>% mutate(PCDTC = as.character(PCDTC)) #,
+#                            EXSTDTM = as.character(EXSTDTM),
+#                            EXSTDT = as.character(EXSTDT),
+#                            EXENDTM = as.character(EXENDTM),
+#                            EXENDT = as.character(EXENDT),
+#                            RFSTDTM = as.character(RFSTDTM)
+#                           　
+#                            )
+tdata1[is.na(tdata1)]<-"."
+tdata1[tdata1==""]<-"."
+
+
+# used in primary modeling
+adpk_FINAL = read_sas(paste0(HOME, "/data/R2810NM_1218_2017.sas7bdat"))
+
+adpk_FINAL = read_csv("Y:\\R2810\\POOL_01\\NONMEM\\Derived_Data\\NM\\R2810NM.csv")
+adpk_FINAL = adpk_FINAL %>% select(USUBJID, TIME, DVOR, AMT, EVID, RATE, PCDTC, PCTPT, WGTBL, CEXDURD)   %>% mutate(PCDTC = as.character(PCDTC)) #,
+colnames(adpk_FINAL) = toupper(colnames(adpk_FINAL))
+dim(adpk_FINAL) 
+adpk_FINAL[is.na(adpk_FINAL)]<-"."
+adpk_FINAL[adpk_FINAL==""]<-"."
+tdata2 = adpk_FINAL #%>% filter(C==".")
+
+
+dim(tdata1)
+dim(tdata2)
+
+
+setdiff(paste(tdata1$USUBJID, tdata1$TIME, tdata1$DVOR, tdata1$AMT, tdata1$RATE, sep="_"), 
+        paste(tdata2$USUBJID, tdata2$TIME, tdata2$DVOR, tdata2$AMT, tdata2$RATE, sep="_")
+        )
+
+
+setdiff(paste(tdata2$USUBJID, tdata2$TIME, tdata2$DVOR, tdata2$AMT, tdata2$RATE, sep="_"),
+        paste(tdata1$USUBJID, tdata1$TIME, tdata1$DVOR, tdata1$AMT, tdata1$RATE, sep="_")
+        )
+
+
+
+dim(tdata1)
+tdata1 %>% filter(USUBJID=="R2810-ONC-1540-840005-004", EVID==1)  %>% select(USUBJID, PCTPT, PCDTC, TIME, DVOR, AMT, RATE, WGTBL, CEXDURD)  # %>% pull(DVOR)
+
+dim(tdata2)
+tdata2 %>% filter(USUBJID=="R2810-ONC-1540-840005-004", EVID==1)  %>% select(USUBJID, PCTPT,PCDTC, TIME, DVOR, AMT, RATE, WGTBL, CEXDURD)  # %>% pull(DVOR)
+
+
+
+
+
+adpx18A %>% filter(USUBJID=="R2810-ONC-1540-840015-011", TIME==42)
+
+
+
+```
+
+
+
+
+Objectives:
+
+* Import datasets  
+* Perform data manipulation upon importing the data.
+
+### Read in Hong's data
+
+1. Read in Hong's data, and basic manipulation.
+
+```{r setup, include=FALSE, eval=FALSE}
+#1423390
+
+key.col.lst = c("C", "CFLAG", "ROWID", "USUBJID", "TIME", "VISIT", "NTIM", "PCTEST" ,"DVOR", "DV", "FBLQ","EXSEQ", "AMT", "RATE", "EVID")
+adpk_FINAL = read_sas(paste0(HOME, "/data/R2810NM_1218_2017.sas7bdat"))
+colnames(adpk_FINAL) = toupper(colnames(adpk_FINAL))
+dim(adpk_FINAL)
+ 
+adpk_FINAL%>% filter(EVID==0, TIME==0, DVOR!=0)  %>% select(C, CFLAG, USUBJID, TIME, DVOR)
+
+adpk_FINAL = adpk_FINAL %>% 
+                  mutate(
+                       ARMA=TR01PG4,
+                       ARMAN=TR01PG4N,
+                       TEST=PCTEST,
+                       CSCCP2F=ifelse(CSCCP2FN==1, "Y", "N"), 
+                       PCDTC = as.character(PCDTC)             
+                       #EXSTDTC  = as.character(EXSTDTC),           
+                       #EXENDTC = as.character(EXENDTC), 
+                       #FSTDOSE = as.character(FSTDOSE) 
+                  ) %>% 
+                  filter(ARMA != c("350 mg Q3W" ))
+
+unique(adpk_FINAL$ARMA)
+
+adpk_FINAL[is.na(adpk_FINAL)]<-"."
+adpk_FINAL[adpk_FINAL==""]<-"."
+#adpk_FINAL[is.nan(adpk_FINAL)]<-"."
+                                          
+# continous covariate variables
+adpx = adpk_FINAL
+
+
+# use imputed varaibles if necessary
+col.lst = substr(colnames(adpx), 2, nchar(colnames(adpx)))[which(substr(colnames(adpx), 1,1)=="I")]
+col.lst = col.lst[col.lst %in% colnames(adpx)]   # these are the columns that were imputed
+# 
+adpx = adpx %>% select(-one_of(col.lst))
+adpx2 = adpx %>% rename2(oldnames=paste0("I", col.lst), newnames=col.lst)
+changes( adpx, adpx2 )
+
+adpx0 = adpx2
+ 
+
+
+## DATA MANIPULATION
+# The goals of this section:
+# 
+# * Use data manipulation tools to prepare the dataset for analysis
+#  
+# 1.  Double check a few varaibles, such as EXSEQ
+# 
+#  
+
+adpx = adpx0
+
+stopifnot(length(unique(adpx$USUBJID)) == length(unique(adpx$NMID)))
+
+adpx <- adpx %>% mutate(ROWID=1:nrow(adpx), 
+                        ID = NMID
+                       # C=ifelse(is.na(C), ".", C),    # must be in ".", no NA
+                       # CFLAG = ifelse(is.na(CFLAG), ".", CFLAG),    # must be in ".", no NA
+                       # FBLQ = ifelse(EVID==0&is.finite(DVOR)&DVOR<0.078, 1,   # must be in ".", no NA
+                       #               ifelse(EVID==1, ".", FBLQ))   
+                        )
+#adpx$AMT[which(!is.finite(adpx$AMT) |is.na(adpx$AMT))] = "."     # must be in ".", no NA
+#adpx$RATE[which(!is.finite(adpx$RATE) |is.na(adpx$RATE))] = "."   # must be in ".", no NA
+            
+#adpx %>% filter(FBLQ==1, TIME==0, EVID==0) %>% select(one_of(key.col.lst)  ) %>% as.data.frame()
+#adpx <- adpx %>% mutate(TIME=ifelse(TIME==0 &NTIM==0 &EVID==0& FBLQ==1, -1/60/24, TIME))
+
+
+# check EXSEQ again PCGRPID
+#----------------------
+adpx$EVENT = adpx$EVID
+adpx = adpx %>% group_by(USUBJID) %>% mutate(EXSEQ=cumsum(EVID))
+adpx = adpx %>% select(-EVENT)
+
+stopifnot(sum(adpx$PCGRPID - adpx$EXSEQ)==0)
+
+ids = which((adpx$PCGRPID - adpx$EXSEQ)!=0)
+adpx[ids, ]  %>% as.data.frame()  %>%  select(USUBJID, EVID, AMT, EVID, DVOR, EXSEQ, PCGRPID)
+#adpx %>% filter(USUBJID=="R2810-ONC-1423-724001-005")  %>% as.data.frame()  %>% select(USUBJID, EVID, AMT, EVID, DVOR, EXSEQ, PCGRPID)
+
+ 
+# DVOR==0, if TIME=0, EVID=0
+adpx %>% filter(TIME==0, EVID==0, DVOR!=0)   %>% select(C, CFLAG, ROWID, USUBJID, TIME, EVID, DVOR) %>% as.data.frame()
+
+
+cont.col.lst = c("AGE", "WGTBL", "HGTBL", "BMIBL", "BSABL",    "CREATBL", 
+                 "CRCLBL",   "ALTBL",    "ASTBL",    "BILIBL",   "ALBBL",    "IGGBL",    "LDHBL" ,     "ALPBL")
+
+#tt = anyna(adpx[, c("USUBJID", cont.col.lst)]) 
+# calculate the missing continous covariate variables, if necessary
+# if (length(tt)>1) { 
+#     adpx = adpx %>% as.data.frame()
+#     for (i in 1:length(cont.col.lst)) {
+#       colname = cont.col.lst[i]
+#       adpx[,colname] = as_numeric(adpx[,colname])    #be careful! only work in data.frame
+#       adpx[which(is.na(adpx[,colname])), colname] = median(adpx[,colname], na.rm=TRUE)
+#     }
+# }
+
+#-----------------------------------------------------
+# category covariate variables
+#-----------------------------------------------------                                  MONOTFLN
+cat.col.lst = c("SEX",      "SEXN" ,    "ETHNIC" ,  "ETHNICN",  "RACE",     "RACEN", "MONOTFLN", "CSCCP2FN")
+cov.col.lst = c(cat.col.lst, cont.col.lst)
+
+setdiff(cat.col.lst, colnames(adpx))
+unique(adpx$MONOTFLN)
+unique(adpx$CSCCP2FN)
+  
+
+
+#-----------------------------------------------------
+#  post-dose  "BLQ" samples  
+#-----------------------------------------------------
+# 
+adpx = adpx %>% mutate(TIME=as_numeric(TIME)) 
+adpx %>% filter(FBLQ==1, TIME>0, EVID==0) %>% select(one_of(key.col.lst)  ) %>% as.data.frame()
+# adpx <- adpx %>% mutate(C = ifelse(CFLAG=="Post 1st dose concentration < LLOQ", ".", C),    # want BLQ
+#                         DVOR = ifelse(CFLAG=="Post 1st dose concentration < LLOQ", 0.039, DVOR),    # want BLQ
+#                         DV = ifelse(CFLAG=="Post 1st dose concentration < LLOQ", log(0.039), DV)   # want BLQ
+#                         )   # "BLQ" samples
+
+ 
+#-----------------------------------------------------
+# routine check 
+#-----------------------------------------------------
+ 
+adpx_Hong = check_adpx(adpx %>% filter(C==".") )   # from Hong's dataset
+adpx_Hong %>% filter(CFLAG=="Predose.samples") %>% select(C, CFLAG, USUBJID, TIME, DVOR, EVID)
+
+
+#test =  check_adpx(adpx %>% mutate(C="."))                      # from original dataset
+
+
+adpx =  check_adpx(adpx)                      # from original dataset
+
+
+if (1==2) { 
+  # key
+  tdata = adpx%>% select(C, CFLAG, ROWID, STDY, ID, ARMA , VISIT,PCTPT,TIME,NTIM, TAD, DV,DVOR,FBLQ, EXSEQ, AMT,RATE,EVID,MDV,CMT,ADA, TITER, TITERCAT, ABSTA, ADAFLN, 
+  
+ 
+  # adpk
+  PCGRPID, PCTEST, PCTESTCD, PCREFID, PCDTC, PCMETHOD, PCORRES, PCORRESU,    PCCAT, PCSTAT, PCREASND, PCCOM, PCNAM, PCSPEC,  PCLLOQ, PCSTRESU,  PCDY, NTAD ,  DALCONC, MISSTIME,     
+  
+  # adex
+  FSTDOSE,  CEXDURD,   EXDOSEP,       EXDOSEPU,            EXSTDTC ,      EXENDTC,       EXDOSCHG, INFTIMEM , 
+   CMDECOD,       CMDOSE,
+  
+  # adsl
+  STUDYID,  USUBJID, SUBJ, SITEID, COUNTRY,  COUNTRYC, AGE, AGEGR1, AGEGR1N, SEX, SEXN, RACE, RACEN, RACEOTH,   ETHNIC, ETHNICN, FUPFL,  
+ TRTGRPP, TRTGRPA,  ARMN,ARM ,   ACTARMN , ACTARM  ,  STDYPHSE,   TR01PG3N,    
+  COHORT,   TR01PG3,  TR01PG4,  TR01PG4N, TRT01P,   TRT01PN,  TRT01A,   TRT01AN, TR01AG3,       TR01AG3N,      TR01AG4,       TR01AG4N,      TR01PG6,   TR01AG6, 
+ 
+  TUMTYPE,  TUMTYPE2, CMPRSYSN, CMPRLINN,  CMPRLIN, 
+  ECOGBL,  WGTBL, HGTBL, BSABL,  BMIBL, CREATBL, CRCLBL, ALTBL, ASTBL, BILIBL, ALBBL, IGGBL, LDHBL, ALPBL, 
+  WGT,           ALB,    LDH,     CORTFLN, 
+ 
+   EFFFLN , FASFLN, SAFFLN, CSCCP2FN, MONOTFLN, PKFLN,   CYCPHFLN, DSESCFLN,  HCCGBMFLN, ENRLFLN, DLTFLN,   BIOPCFLN )
+  
+  setdiff(colnames(adpx), colnames(tdata))
+  
+   adpx = tdata
+}
+
+ 
+
+######################################################################
+# 2. summary of final dataset (nmdat.csv)
+
+######################################################################
+
+tdata = adpx %>% filter(C==".")
+if(nrow(tdata)!=nrow(adpx)) print(paste(nrow(adpx)-nrow(tdata), " of records has been removed due to the following reasons:",sep=""))
+
+#adpx %>% ungroup() %>% filter(CFLAG0!=".") %>% select(CFLAG0) %>% table() %>% as.matrix()
+
+OBS = adpx %>% ungroup() %>% filter(C!=".") %>% select(CFLAG) %>% table() %>% as.matrix()
+SUBJ = adpx %>% ungroup() %>% filter(C!=".") %>% distinct(USUBJID, CFLAG, .keep_all=TRUE) %>% select(CFLAG) %>% table() %>% as.matrix()
+tdata = data.frame(OBS, SUBJ)
+tdata
+
+
+tdata = adpx %>% filter(C==".")
+print(paste0("After check_adpx, there are ", nrow(tdata), " records in total."))
+print(paste0("In total, # Of subject = ", length(unique(tdata$USUBJID))))
+print(paste0("In total, # Of samples = ", length(tdata %>% filter(EVID==0)%>%pull(DVOR))))
+print(paste0("In total, # Of dose event = ", length(tdata %>% filter(EVID==1)%>%pull(AMT))))
+ 
+
+write_csv(adpx, path=paste0(HOME, "./data/adpx_1218_2017.csv"), na=".")
+
+
+
+```
+
+3. Finally, write adpx as nmdat
+  
+
+```{r}
+
+# adpx = adpx %>% mutate(PCDTC=as.character(PCDTC), 
+#                        EXSTDTC=as.character(EXSTDTC), 
+#                        EXENDTC=as.character(EXENDTC), 
+#                        FSTDOSE=as.character(FSTDOSE) 
+#                        )
+ 
+nmdat = build_nmdat(adpx)   
+nmdat = nmdat %>% mutate(STDYARMA=paste0(STDY, ARMAN))
+
+#nmdat = build_nmdat(test)   
+#nmdat[nmdat=="."] = ""
+#nmdat$ID = as.integer(as.factor(nmdat$ID))
+ 
+
+nmdat.col.lst = c( "C", "CFLAG", "ROWID", "STDY", "USUBJID", "ARMA", "ARMAN", "ID", "NTIM", "TAD","TIME", 
+                    "TEST", "DVOR", "DV","MDV", "CMT", "AMT", "RATE", "EVID" , "EXSEQ",   
+                    "WGTBL", "HGTBL",  "BMIBL",   "BSABL",   "AGE",  "SEXN", "RACEN", "ETHNICN", 
+                   "MONOTFLN", "CSCCP2FN", "FASCSFLN", "CREATBL",  "CRCLBL",   "ALTBL", "ASTBL", "BILIBL", "ALBBL","IGGBL", "LDHBL" , "ALPBL", "STDYARMA")
+setdiff(nmdat.col.lst, colnames(nmdat))
+
+nmdat %>% select(one_of(nmdat.col.lst)) %>% head()
+nmdat = nmdat[, c(nmdat.col.lst  #, 
+                  #setdiff(colnames(nmdat), nmdat.col.lst)
+                  )]
+
+col.lst = c("CFLAG", "USUBJID", "ARMA","TEST")
+DATA_INPUT = ifelse(colnames(nmdat) %in% col.lst, paste0(colnames(nmdat),"=DROP"), colnames(nmdat))
+paste0("$INPUT ", paste0(DATA_INPUT, sep=" ", collapse=" "))  %>% print()
+
+
+# final check, any abnormal entries?
+anyAbnormal <- function(df) {
+  nacols<- function(df) { 
+    colnames(df)[unlist(lapply(df, function(x) any(is.na(x)|is.nan(x)|x=="NA"|x=="NAN"|x=="NaN"|x==".")))] }
+  
+  df = data.frame(df, check.names = FALSE)      
+  t.df = data.frame(t(df), check.names = FALSE)
+  return(df[nacols(t.df), nacols(df)])  }
+
+#anyAbnormal(nmdat[, cov.col.lst]  )
+
+# output
+write_csv(nmdat, path=paste0(HOME, "./data/nmdat_1218_2017.csv"))
+ 
+
+#  
+#  nmdat[which(nmdat$ID %in% c("1423061") & nmdat$C=="."), "CFLAG"] = "Outliers" 
+# nmdat[which(nmdat$ID %in% c("1423061") & nmdat$C=="."), "C"] = "C" 
+#  
+# write_csv(nmdat, path=paste0(HOME, "./data/nmdat_test.csv"))
+#  
+
+```
+ 
+
+Update all dataset name and input name in all ctl files
+
+```{R, eval=FALSE }
+folder.loc <- paste0("H:\\FYANG\\R2810_PD1\\MODEL\\ctl\\HPC\\")
+file.lst <-list.files(path = folder.loc, pattern = ".ctl",  all.files = FALSE,full.names = FALSE, include.dirs = FALSE)     
+ 
+file.lst = setdiff(file.lst, paste0(c("LN103_org", "LN001_FULL", "QMM001", "QSS001", "LN800000",  "MM_FULL"), ".ctl"))
+file.lst
+
+
+
+for (ifile in 1:length(file.lst)) { 
+  file.name = file.lst[ifile]
+  print(file.name);    
+  base.ctl = readLines(con<-file(paste0(folder.loc, file.name)))
+  close(con)
+  
+  #base.ctl =  gsub("nmdat_1207A_2017.csv", "nmdat_1218A_2017.csv", base.ctl, fix=TRUE)
+  #base.ctl =  gsub("MONOTHFLN", "MONOTFLN", base.ctl, fix=TRUE)
+  #base.ctl =  gsub("CSCCFLN", "CSCCP2FN", base.ctl, fix=TRUE)
+  
+  #base.ctl =  gsub("STUDYID=DROP", "STDY", base.ctl, fix=TRUE)
+  #base.ctl =  gsub("ARMA=DROP", "ARMAN", base.ctl, fix=TRUE)   
+  #base.ctl =  gsub("ARMAN", "ARMA=DROP ARMAN ", base.ctl, fix=TRUE)      
+  #base.ctl =  gsub("ALBBL  IGGBL  LDHBL  ALPBL", "ALBBL  IGGBL  LDHBL  ALPBL  STDYARMA", base.ctl, fix=TRUE)
+  
+  #base.ctl =  gsub("PRED DV MDV", "PRED DV TY MDV", base.ctl, fix=TRUE)
+  #base.ctl =  gsub("PRED DV CL MDV", "PRED DV TY CL MDV", base.ctl, fix=TRUE)
+  ###########################################################
+ 
+    
+  # base.ctl =  gsub("nmdat_1218A_2017.csv", "nmdat_2018.csv", base.ctl, fix=TRUE)
+  # base.ctl =  gsub("ARMA=DROP", "TR01PG4=DROP", base.ctl, fix=TRUE)
+  # base.ctl =  gsub("ARMAN", "TR01PG4N", base.ctl, fix=TRUE)
+  # base.ctl =  gsub("TEST=DROP", "PCTEST=DROP", base.ctl, fix=TRUE) 
+  # 
+  # base.ctl =  gsub("ALBBL", "IALBBL", base.ctl, fix=TRUE) 
+  # base.ctl =  gsub("LDHBL", "ILDHBL", base.ctl, fix=TRUE) 
+  # base.ctl =  gsub("ALTBL", "IALTBL", base.ctl, fix=TRUE) 
+  # base.ctl =  gsub("IGGBL", "IIGGBL", base.ctl, fix=TRUE) 
+  # base.ctl =  gsub("BILIBL", "IBILIBL", base.ctl, fix=TRUE) 
+  # 
+  base.ctl =  gsub("../../data/nmdat_1218_2017.csv", "../../data/nmdat.csv", base.ctl, fix=TRUE) 
+  base.ctl =  gsub("../../data/nmdat_2018.csv", "../../data/nmdat.csv", base.ctl, fix=TRUE) 
+  writeLines(base.ctl, paste0(folder.loc, file.name))  
+  
+  }
+ 
+
+# write a batch file, to run everything 
+
+file.lst = paste0("LN", seq(1, 1000, by=1), ".ctl")
+file.lst
+
+folder.loc <- paste0("H:\\FYANG\\R2810_PD1\\MODEL\\ctl\\HPC\\")
+file.lst <-list.files(path = folder.loc, pattern = ".ctl",  all.files = FALSE,full.names = FALSE, include.dirs = FALSE)     
+ file.lst
+
+batch.run.lst = NULL
+for (ifile in 1:length(file.lst)) { 
+  file.name = file.lst[ifile]
+  batch.run.lst = c(batch.run.lst, paste0("./run.sh  ", gsub(".ctl", "", file.name, fix=TRUE), "   1"))
+
+}
+ batch.run.lst
+ 
+ writeLines(batch.run.lst, paste0(folder.loc, "run.all.HPC.txt"))  
+  
+ 
+```
+
+
+
+
+
+# read runno and remove outliers 
+
+```{r }
+
+
+# remove outliers, rewrite nmdata  
+#-------------------------------------
+MODEL_HOME <- "H:\\FYANG\\R2810_PD1\\MODEL\\"
+tt = read_runno(MODEL_HOME, subdir="ctl/HPC/", runno="LN000", postfix="")  
+adpx = tt$adpx;    #unique(adpx$CFLAG)
+xpdb = tt$xpdb
+
+xpdb$TEST= "R2810"
+xpdb$ARMA = "3 mg/kg"
+xpdb$STUDYID = "ALL"
+xpdb$USUBJID = xpdb$ID
+ 
+# remove outliers and use shiny/R to show which samples were removed
+adpx2 = remove_CWRES6(xpdb, adpx, CWRES_threshold=5)
+adpx2[which(adpx2$ID %in% c("1423061") & adpx2$C=="."), "CFLAG"] = "Outliers" 
+adpx2[which(adpx2$ID %in% c("1423061") & adpx2$C=="."), "C"] = "C" 
+
+adpx2 %>% filter(EVID==0, TIME==0, DVOR=="0")
+#adpx2[which(adpx2$EVID==0 & adpx2$TIMIE==0 & adpx2$DVOR=="0"), "CFLAG"] = "Outliers" 
+#adpx2[which(adpx2$EVID==0 & adpx2$TIMIE==0 & adpx2$DVOR=="0"), "C"] = "C" 
+
+# 
+# dim(adpk_FINAL)
+# 
+#  
+# t1 = adpk_FINAL %>% filter(C!=".") %>% pull(ROWID)  
+# t2 = adpx2 %>% filter(C!=".") %>% pull(ROWID)
+# ROWID2 = t1[which(!t1 %in% t2)]
+# tt = adpk_FINAL %>% filter(ROWID %in% setdiff(t1, t2))  %>% select(C, CFLAG, USUBJID)  %>% as.data.frame()
+
+
+
+REMOVED.ROWID  = adpx%>%filter(C!=".")%>% pull(ROWID)
+REMOVED.ROWID2 = adpx2%>%filter(C!=".")%>% pull(ROWID)
+xpdb <- xpdb %>% mutate(C=ifelse(ROWID %in% setdiff(REMOVED.ROWID2, REMOVED.ROWID), "C", ".")) %>% filter(MDV!=1) 
+ggplot(xpdb, aes(x=PRED, y=DV, col=C)) + geom_point()
+ggplot(xpdb, aes(x=PRED, y=DV, col=C)) + geom_point() + scale_x_log10()+ scale_y_log10()
+
+
+
+
+# output
+tt = check_adpx(adpx2 %>% filter(C=="."))  # if no more removal
+nmdat = build_nmdat(adpx2) 
+
+nmdat %>% select(WGTBL,  HGTBL,  BMIBL,  BSABL,  AGE,  SEXN,  RACEN,  ETHNICN,  
+MONOTFLN,  CSCCP2FN,  FASCSFLN,  CREATBL,  CRCLBL,  ALTBL,  ASTBL,  BILIBL,  ALBBL,  IGGBL,  LDHBL,  ALPBL) %>% anyAbnormal() 
+  
+
+write_csv(nmdat, path=paste0(HOME, "./data/nmdat_1218A_2017.csv"))
+
+# FOR USE IN VPC stratificaion
+
+#write_csv(nmdatB, path=paste0(HOME, "./data/nmdat_1218B_2017.csv"))
+
+
+```
+
+
+```{r }
+
+
+# read model result
+#--------------------------------------
+runno.lst = "LN001"
+ 
+# load all modeling result
+PsN_HOME <- "H:\\FYANG\\R2810_PD1\\MODEL\\ctl\\PsN\\"
+PARAMS = lapply(runno.lst, function(runno) {
+  library(readr)
+  file.name = paste0(PsN_HOME, runno, "/modelfit_dir1/raw_results_", runno, ".csv")
+  tt = read_csv(file.name)
+  colnames(tt) = trim(colnames(tt))
+  tt
+})
+names(PARAMS) = runno.lst
+
+ PARAMS %>% as.data.frame()  %>% t()
+
+summary_all_base_models = get_summary_params(PARAMS, runno.lst)
+
+#  
+
+
+```
+ 
+ 
+

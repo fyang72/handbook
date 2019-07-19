@@ -1,0 +1,320 @@
+---
+title: "Untitled"
+author: "Feng Yang"
+date: "December 8, 2017"
+output: word_document
+---
+
+```{r preliminary-selection-covariates}
+#http://www.cognigencorp.com/nonmem/nm/98nov132000.html
+
+
+# 
+# I think there are 4 methods for creating 95% confidence intervals on parameter estimates.
+# 
+# 1. Simulate say 1000+ sets of data using your model and a design similar to your original data. Determine empirically the range of parameter estimates that cover 95% of the values you get from these 1000+ runs. This is the gold standard method.
+# 
+# 2. Bootstrap 1000+ data sets from your original data and fit these with your model. Determine CI as in method 1. This method is conditional on your original data and its properties in relation to method 1 when used with NONMEM are not described in the literature as far as I know.
+# 
+# 3. Compute a log likelihood profile for each parameter you are interested in. You do this by fixing the parameter of interest to values close to the final estimate from your model and refitting your original data. Empirically determine (e.g. by interpolation) the parameter values on either side of the final estimate that produce a 3.84 change in objective function. This relies on the assumption that the chi-square distribution is an appropriate way to describe the change in objective function. Might be OK for FOCE but almost certainly not for FO.
+# 
+# 4. Use the asymptotic standard errors reported by NONMEM (if the covariance step runs). The CI obtained in this way will necessarily be symmetrical. CIs determined using the other methods above are often asymmetrical. You may be lucky and the asymptotic SEs may agree with the more reliable computationally intensive methods.
+
+
+cov.lst <- c("WGT", "AGE", "BMI", "BSA", "HGT", "SEX", "BLK", "ASIA", "OTHER", "HISPANIC", "MONO", "CSCC", "CREAT", "CRCL", "ALT", "AST", "BILI", "ALB", "IGG", "LDH", "ALP")
+cov.lst <- c(paste0(cov.lst, "_ON_CLQ"), 
+  paste0(cov.lst, "_ON_VSS"), 
+  paste0(cov.lst, "_ON_EMAX"), 
+  paste0(cov.lst, "_ON_T50"))
+
+ordered.cov.lst <- c(c("WGT_ON_CLQ", "WGT_ON_VSS"), setdiff(cov.lst, c("WGT_ON_CLQ", "WGT_ON_VSS")))
+
+
+
+# ln.lst =paste0("LN", u.add.prefix(c(1:4, 11:14),prefix="", add.number.zero=3))
+# mm.lst = paste0("MM", u.add.prefix(c(1:3, 11:15),prefix="", add.number.zero=3))
+# runno.lst = c(ln.lst , mm.lst)
+
+
+runno.lst= c("LN101", "LN102")
+PARAMS <- read_PARAMS(MODEL.HOME="H:\\FYANG\\R2810_PD1\\MODEL\\", subdir="/ctl/HPC/", runno.lst)
+  
+ 
+
+# xx_ON_CLQ
+params = PARAMS[["LN101"]] %>% select(ends_with("_ON_CLQ")) %>% select(-starts_with("se", ignore.case = FALSE))  %>% as.data.frame() %>% t()
+abs_params = abs(params)
+t_CLQ = data.frame(params.name=as.character(rownames(params)), params, abs_params, stringsAsFactors = FALSE)  %>% filter(abs_params>=0.1) %>% arrange(-abs_params)
+
+# xx_ON_VSS
+params = PARAMS[["LN101"]] %>% select(ends_with("_ON_VSS")) %>% select(-starts_with("se", ignore.case = FALSE))  %>% as.data.frame() %>% t()
+abs_params = abs(params)
+t_VSS = data.frame(params.name=as.character(rownames(params)), params, abs_params, stringsAsFactors = FALSE)  %>% filter(abs_params>=0.1) %>% arrange(-abs_params)
+
+# xx_ON_CLQ
+params = PARAMS[["LN102"]] %>% select(ends_with("_ON_EMAX")) %>% select(-starts_with("se", ignore.case = FALSE))  %>% as.data.frame() %>% t()
+abs_params = abs(params)
+t_EMAX = data.frame(params.name=as.character(rownames(params)), params, abs_params, stringsAsFactors = FALSE)  %>% filter(abs_params>=0.1) %>% arrange(-abs_params)
+
+# xx_ON_VSS
+params = PARAMS[["LN102"]] %>% select(ends_with("_ON_T50")) %>% select(-starts_with("se", ignore.case = FALSE))  %>% as.data.frame() %>% t()
+abs_params = abs(params)
+t_T50 = data.frame(params.name=as.character(rownames(params)), params, abs_params, stringsAsFactors = FALSE)  %>% filter(abs_params>=0.1) %>% arrange(-abs_params)
+
+
+preliminary.selection.covariates = rbind(t_CLQ,  t_VSS,  t_EMAX,  t_T50)  
+
+
+#      params.name    params abs_params
+# 1     ALB_ON_CLQ -0.495968   0.495968
+# 2     WGT_ON_CLQ  0.313571   0.313571
+# 3     SEX_ON_CLQ  0.257334   0.257334
+# 4     ALP_ON_CLQ  0.184393   0.184393
+# 5     IGG_ON_CLQ  0.172684   0.172684
+# 6    MONO_ON_CLQ -0.157257   0.157257
+# 7     LDH_ON_CLQ  0.113987   0.113987
+# 8     ALT_ON_CLQ -0.103178   0.103178
+# 9            ---       ---        ---
+# 10    WGT_ON_VSS  0.712829   0.712829
+# 11    BMI_ON_VSS    -0.337      0.337
+# 12    ALB_ON_VSS    0.1511     0.1511
+# 13    SEX_ON_VSS  0.148128   0.148128
+# 14  CREAT_ON_VSS -0.106224   0.106224
+# 15           ---       ---        ---
+# 16 CREAT_ON_EMAX  0.587319   0.587319
+# 17   BMI_ON_EMAX -0.452764   0.452764
+# 18   HGT_ON_EMAX  0.418811   0.418811
+# 19   IGG_ON_EMAX -0.413564   0.413564
+# 20  CRCL_ON_EMAX  0.320416   0.320416
+# 21  ASIA_ON_EMAX -0.259071   0.259071
+# 22  CSCC_ON_EMAX  0.229238   0.229238
+# 23   BLK_ON_EMAX  0.183736   0.183736
+# 24  MONO_ON_EMAX   0.17533    0.17533
+# 25   SEX_ON_EMAX -0.172188   0.172188
+# 26 OTHER_ON_EMAX  0.158494   0.158494
+# 27   ALT_ON_EMAX  0.156813   0.156813
+# 28   ALP_ON_EMAX  0.118306   0.118306
+# 29           ---       ---        ---
+# 30    BSA_ON_T50  0.613399   0.613399
+# 31   ASIA_ON_T50  0.514141   0.514141
+# 32    BLK_ON_T50  0.418586   0.418586
+# 33  OTHER_ON_T50  0.270525   0.270525
+# 34    ALT_ON_T50 -0.266903   0.266903
+# 35    SEX_ON_T50 -0.247178   0.247178
+# 36  CREAT_ON_T50   0.20565    0.20565
+# 37    IGG_ON_T50  0.168353   0.168353
+# 38    ALB_ON_T50 -0.123367   0.123367
+# 39    AST_ON_T50 -0.107339   0.107339
+
+```
+
+
+## \@ref(result-full-model)	Full Model {#result-full-model}
+
+To achieve unbiased estimation of covariate effects, two full models (LN101 and LN102) in which all pre-specified covariate-parameter relationships were simultaneously estimated, were used to pre-select the potential covariates listed in Section \@ref(covariates) for further processes.  In particular, LN101 was used to select covariates that may impact on clearance parameters (CL and Q), and LN102 is for selecting covariates that may impact on Emax and T50 in the Sigmoid Emax model.  An effect threshold (absolute effect > 0.1) in relative to reference patient was used for this pre-selection. 
+
+Table  \@ref(tab:tab-preliminary-selection-covariates) shows the covariates identified by the full models of LN101 and LN102. Not surprisingly, body weight has significant effects on both CL/Q and VSS (V~2/V~3), and albumin is another significant covariate identified. A number of covariates were found to be associated with Emax and T50 in the Sigmoid Emax model for the time-varying clearance.  A total of 36 parameters were used to characterize the covariate-parameter relationship. 
+
+Using the final base model (Model-LN014) identified in the previous section as reference model and the list of covariates identified in Table \@ref(tab:tab-preliminary-selection-covariates), a full model was used to assess the covariate effects on the key model parameters (CL/Q, V2/V3, Emax and T50) and the results were presented in Figure \@ref(fig:forest-plot-using-full-model). Note body weight was in default treated as one of the most influential covariate and incorporated into the base structural model. 
+ 
+Results of the full model indicate that albumin is most significant covariate on clearance parameters (CL and Q), Emax, T50 and less degree on VSS (V2 and V3). The second most significant covariate is body weight on clearance and VSS, consistent with the principle of allometrical scaling.  Race also appear to be a significant covariate, espcially BLACK_ON_T50, ASIA_ON_T50 and BLACK_ON_EMAX.  Graphical analysis of the individual POSTHOC parameters T50 against the RACE variable are presented in Appendix \@ref(sec-appendix-C). However, given the small number of population size, such effects were not considered clinically relevant.
+
+The magnitude of the effect of the remaining covariates on model parameters are relative small---within ±20% of the reference value and the 95% confidence interval contains the null, indicating that they are unlikely to be clinically relevant. The estimated 25.8% decrease in VSS due to BMI was judged to not be clinically relevant, as it is highly copupled with body weight and may associate with patient's heathy condition. 
+
+
+<!--
+Given the substantial overlap of CL estimates, and the small number of ADA positive patients, the immunogenicity effect was not considered clinically relevant.
+
+LDH was also retained as covariates in the final model. 
+
+PS appears to be an important covariate for CL, showing a >20% increase of CL in patients with PS >0. Sex appears to have similar effect on CL and VC, and the magnitude of the effect was outside the boundary of ±20%. Male patients included in this analysis had a higher CL and VC than females; however, these effects are unlikely to be of clinical relevance, as exposures are similar between male and female patients. Other covariates that were within the ±20% boundaries were race, tumor type, hepatic function, and age, suggesting these covariates are also not of clinical relevance. 
+
+Tumor type has less than 20% effect on CL. This finding is similar with the results from a previous report, in which the dose-normalized REGN2810concentrations at steady state (Cavgss) were similar between patients with NSCLC and melanoma.17 The CL (% of typical value, baseline CL) was similar across tumor types (Figure 1b), indicating that PK is independent of tumor types. The median CL (baseline CL) estimates in patients with NSCLC, melanoma, and RCC were 10.5, 10.8, and 11.5 mL/h, respectively.
+
+The magnitude of covariate effects on CL and Vc in the full model was presented as a forest plot, as shown in Figure 8, which is the approach recently recommended by the US FDA.   Forest plot representation of covariate effects shows the magnitude of the effect of continuous covariates over a broad range (5th to 95th percentile) of values. This representation also enables assessment of the potential clinical relevance of a covariate – those with less than a 20% effect on PK model parameters are unlikely to be relevant.
+Compared to the base model, variability of the full model has been reduced xx%, xx% for CL and V2, respectively.  
+
+Graphical analysis of the individual POSTHOC parameters CL/Q, V2/V3, Emax and T50 against the covariates are presented in Appendix \@ref(sec-appendix-C).  
+
+
+Since incidence of positive anti-cemiplimab antibodies was low (<3%) and patients with a positive ADA response (a total of 13 subjects) were not associated with an elevated CL compared with those negative for ADA. Therefore, ADA was not considered as covariates in this analysis. 
+
+Typically, continuous covariates were tested in a power function normalized with the median value; categorical covariates were tested in a fractional change manner.
+less than 5% (X/XXX) of patients developed ADA, and ADA were transient in most.
+
+
+-->
+
+
+```{r tab-preliminary-selection-covariates, tidy=FALSE, message=FALSE, warning=FALSE}
+
+#tabl = rbind(t_CLQ, "---", t_VSS, "---", t_EMAX, "---", t_T50) %>% select(-abs_params)
+#  
+tabl = preliminary.selection.covariates %>% select(-abs_params)
+
+# cbind in r with different number of rows
+#tabl = tabl %>% mutate(params =u.signif(params, digits=3))
+t1 = tabl %>% filter(grepl('_ON_CLQ|_ON_VSS', params.name)) %>% as.data.frame()
+t2 = tabl %>% filter(grepl('_ON_EMAX|_ON_T50', params.name))%>% as.data.frame()
+
+library(rowr)
+out = Map(cbind.fill, t1, t2, MoreArgs = list(fill=NA))
+out = cbind(cbind(as.character(out$params.name[[1]]), out$params[[1]]), 
+  cbind(as.character(out$params.name[[2]]), out$params[[2]])
+)
+
+colnames(out) = c("Parameters on CLQ/VSS", "Value1", "Parameters on EMAX/T50", "Value2")
+tabl= out %>% as.data.frame() %>% mutate(Value1=u.signif(as_numeric(Value1), digits=3), 
+                                   Value2=u.signif(as_numeric(Value2), digits=3))
+colnames(tabl) = c("Parameters on CLQ/VSS (LN101)", "Value (LN101)", "Parameters on EMAX/T50 (LN102)", "Value (LN102)")
+
+tabl[, 1] = as.character(tabl[, 1])
+tabl[, 2] = as_numeric(tabl[, 2])
+tabl[is.na(tabl)] = "---"
+
+TABLE_ALL[["LN101_LN102_covarites"]] = tabl
+
+caption = "Pre-selected Covariates Using Full Model Approach (LN101 and LN102)"
+knitr::kable(tabl, booktabs = TRUE, caption = caption)
+
+ 
+
+``` 
+ 
+<br>
+<br>
+ 
+ 
+```{r generate-LN103-model, eval=FALSE }
+
+
+
+directory = paste0(MODEL.HOME, subdir="/ctl/HPC/")
+base.ctl = readLines(paste0(directory, "LN100.ctl"),warn=FALSE) 
+  
+preliminary.selection.covariates <- preliminary.selection.covariates %>% 
+                 mutate(params.name=ordered(params.name, levels=ordered.cov.lst)) %>% dplyr::arrange(params.name)
+
+params.lst = setdiff(preliminary.selection.covariates %>% pull(params.name), c("WGT_ON_CLQ", "WGT_ON_VSS"))
+
+base.ID = 13
+for (i in 1:length(params.lst)) {
+  params.name = params.lst[i]
+  
+  ids = grep(paste0(params.name, " = 0"), base.ctl, fixed=TRUE)
+  base.ctl[ids] = paste0(" ", params.name, " = ", "THETA(", base.ID+i, ")")
+  
+  ids = grep(paste0(";(.00001)  ;",params.name), base.ctl, fixed=TRUE)
+  base.ctl[ids] = paste0(" (.00001)  ;",params.name)
+}
+writeLines(base.ctl, paste0(directory, "LN103.ctl"))
+
+
+
+```
+
+
+
+
+```{r forest-plot-using-full-model, fig.cap = "Influence of relevant covariates on the model parameters (estimated with the full model), relative to the parameter values of a reference subject", fig.height=8, fig.width=6, message=FALSE}
+ 
+
+ 
+  
+runno.lst= c("LN103")
+#OUTPUT = read_OUTPUT(MODEL.HOME, subdir="ctl/HPC/", runno.lst, adpx00) 
+PARAMS <- read_PARAMS(MODEL.HOME, subdir="/ctl/HPC/", runno.lst)
+  
+ 
+
+# xx_ON_CLQ
+params = PARAMS[["LN103"]] %>% select(ends_with("_ON_CLQ"), ends_with("_ON_VSS"), ends_with("_ON_EMAX"), ends_with("_ON_T50")) %>% 
+        select(-starts_with("se", ignore.case = FALSE))  %>% as.data.frame() %>% t()
+
+
+abs_params = abs(params)
+tdata = data.frame(params.name=as.character(rownames(params)), params, abs_params, stringsAsFactors = FALSE)  %>% filter(abs_params>=0.1) %>% arrange(-abs_params)
+
+colnames(tdata) = c("params.name", "value", "abs.params")
+
+
+preliminary.selection.covariates2 = tdata
+
+
+
+# for ploting
+tdata = tdata %>% mutate(value=round(value, digits=3))
+
+tdata = tdata %>% mutate(KEY=substr(params.name, nchar(params.name)-6, nchar(params.name))) %>% 
+                 mutate(KEY=gsub("_ON", "ON", KEY, fix=TRUE)) %>% 
+                 mutate(KEY=ordered(KEY, levels=c("ON_T50", "ON_EMAX",  "ON_VSS", "ON_CLQ")))  %>% 
+        arrange(KEY, abs.params)
+
+tdata$params.name = ordered(tdata$params.name, levels=tdata$params.name)
+
+#tt = filter(correlations, PARAM=="AUC.SS") %>% arrange(desc(VALUE))  
+#tt$COV = ordered(tt$COV, levels=unique(tt$COV))  
+fig = ggplot(tdata , aes(x=params.name, y=value, fill=KEY, label = value, col=KEY)) +
+  #ggtitle("Influence of relevant covariates on the model parameters") + 
+  ylab("Covariate Effects on Key Model Parameters") + xlab("") + 
+  coord_cartesian(ylim = c(-0.75, 0.75)) + 
+  geom_point(aes(col=KEY), position="identity", stat="identity")  +  coord_flip()  + 
+  # geom_errorbar(aes(ymin=value-0.1*value, ymax=value+0.1*value),
+  #                 size=.3,    # Thinner lines
+  #                 width=.2,
+  #                 position=position_dodge(.9)) +
+  
+  theme(legend.position="none")  + 
+  #geom_text(size = 3, position = position_stack(), col="black")   + 
+  theme(plot.margin=unit(c(0.5,0.75,0.5,0.5),"cm")) + 
+  base_theme() + 
+    theme(#legend.title=element_text("EXSEQ"), 
+        #legend.position=c(0.95, 0.86), 
+        panel.grid.minor= element_line(colour = "gray97",size=0.1),
+        panel.grid.major= element_line(colour = "gray97",size=0.1),
+        panel.spacing = unit(0.2, "lines"), 
+        panel.border=element_rect(colour="black", fill=NA), 
+        strip.background = element_blank()   # element_rect(colour=NA, fill=NA),
+  ) #+scale_color_gradient(low="grey", high="black")
+
+fig = fig + geom_hline(yintercept= c(-0.2,0.2), lty="dashed", alpha=0.5)   
+fig = fig + geom_hline(yintercept= c(0), lty="solid", alpha=0.5)   
+
+fig
+
+
+FIGURE_ALL[["forest_plot_full_model"]] = fig
+
+fig 
+
+
+
+
+```
+
+
+```{r }
+
+tabl =tdata
+
+colnames(tabl) = gsub("params.name", "Parameters", colnames(tabl), fix=TRUE)
+colnames(tabl) = gsub("value", "Covariate Effect", colnames(tabl), fix=TRUE)
+colnames(tabl) = gsub("KEY", "Group", colnames(tabl), fix=TRUE)
+
+tabl = tabl %>% select(-abs.params)
+
+TABLE_ALL[["FOREST_TABLE_LN103"]] = tabl
+
+
+
+```
+
+
+
+<!--
+
+Note: (a and b) Covariate effects on PK model parameters from full population PK model. Categorical covariate effects (95% CI) are represented by open symbols (horizontal lines). Continuous covariate effects (95% CI) at the 5th/95th percentiles of the covariate are represented by the end of horizontal boxes (horizontal lines). Open/shaded area of boxes represents the range of covariate effects from the median to the 5th/95th percentile of the covariate. The reference patient is a 65-year-old Caucasian/other female weighing 80 kg with a baseline performance status of 0, LDH of 200 IU/L, baseline albumin of 4 g/dL, estimated GFR of 90 mL/min/1.73 m2, and normal hepatic function. Parameter estimate in reference patient is considered 100% (vertical solid line), and dashed vertical lines are at 80% and 120% of this value. AA, African American; ALB, albumin; CI, confidence interval; CL, clearance; eGFR, estimated glomerular filtration rate; LDH, lactate dehydrogenase; MEL, melanoma; NSCLC, non-small cell lung cancer; PS, baseline performance status; RCC, renal cell carcinoma; PK, pharmacokinetics; VC, volume of central compartment; W, white.
+
+-->
+
+

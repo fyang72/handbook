@@ -1,0 +1,178 @@
+VARIABLE,TYPE,LEN,POS,FORMAT,INFORMAT,LABEL,NOTE
+\textbf{Key variable},,,,,,,
+C,Char,1,752,$1.00 ,,NONMEM Comment Flag,"Derived. C=""C"" when meet below conditions: CNINCFL=N; No post dose above LLOQ concentration; missing elapsed time; Pre first dose concentration > LLOQ.
+"
+CFLAG,Char,70,753,$70.00 ,,Reason for exclusion,"CFLAG=CNEXCRSN if CNINCFL=""N"", reason for other exclusion otherwise."
+ROWID,Num,8,0,,,Record Number,NONMEM dataset record number
+STDY,Num,8,8,,,NONMEM Study Number,"Numberic study number (i.e.1423, 1540)"
+ID,Char,15,823,,,NONMEM Subject ID,ID=SUBJ
+USUBJID,Char,25,853,,,Unique Subject Identifier,ISS.ADSL
+TIME,Num,8,280,8.1,,Actual Elapsed Time from 1st Dose (day),Derived.  Time of sample collection date/time (APCDTM)  to first dose date/time (RFSTDTM) if both not missing; if RFSTDTM=. Then use the first infusion end time-1800 for TIME calculation;  TIME=(APCDT-RFSTDT )+pctptnum/24; otherwise =APCDT-RFSTDT; 
+NTIM,Num,8,288,,,Nominal Elapsed Time from 1st Dose (day),"Derived, Difference from planned visit, time point to the first dose visit."
+TAD,Num,8,296,8.1,,Time Since Last Dose (day),"Derived. Time of sample collection date/time (APCDTM) to previous infusion start date and time if both available, Use APCDT and last infusiondate otherwise."
+NTAD,Num,8,304,8.1,,Nominal Time Since Last Dose (day),"Derived, Difference from planned visit, time point to the previous dose visit."
+DV,Num,8,312,8.1,,Drug Concentration (log),Log of concentration value (DVOR)
+DVOR,Num,8,320,8.1,,Drug  Concentration (mg/L),DVOR=1/2*PCLLOQ if AVAL=0 and TIME <=0; DVOR=AVAL otherwise
+CMT,Num,8,328,,,Compartment,Derived. Assgined CMT=2
+EVID,Num,8,336,,,Event ID,EVID=1 if AMT>. ; EVID=0 otherwise
+MDV,Num,8,344,,,Missing Dependent Variable,MDV=1 if DV=.; ) otherwise.
+FBLQ,Num,8,360,,,PK Concentration <LLOQ,"FBLQ=1 if DVOR=0.039, FBLQ=0 if DVOR> 0.039"
+AMT,Num,8,376,5.1,,Cumulated Dose Amount (mg),Cumulated the dose administrated at each infusion visit (ADEX.EXDOSMG)
+RATE,Num,8,384,,,Infusion Rate,"Derived. RATE=round(AMT/CEXDURD, .01)"
+PCGRPID,Num,8,368,,,Referece Dose Number,Derived. Dose number associated to the previous infusion according to the elapsed time 
+ROUTE,Char,11,1740,,,Route of Administration,ADPC pooled from study 1423 and 1551
+,,,,,,,
+\textbf{Subject},,,,,,,
+STUDYID,Char,14,1705,,,Study Identifier,ISS.ADSL
+SUBJ,Char,15,838,,,Subject ID,"Study and Subject numeber (strip(scan(usubjid, 3,'-')||scan(usubjid, 4,'-')||scan(usubjid, 5,'-'))"
+AGE,Num,8,40,,,Age,ISS.ADSL
+AGEGR1N,Num,8,48,,,Age Group 1 (N),ISS.ADSL
+AGEGR1,Char,4,1842,,,Age Group 1,ISS.ADSL
+AGEGR2,Char,11,1846,$11.00 ,,Age Group 2,ISS.ADSL
+AGEGR2N,Num,8,688,,,Age Group 2 (N),ISS.ADSL
+BSABL,Num,8,464,,,Baseline Body Surface Area (m2),rename ISS.ADSL.BLBSA
+BMIBL,Num,8,472,,,Baseline BMI (kg/m2),rename ISS.ADSL.BLBMI
+HGTBL,Num,8,480,,,Baseline Height (cm),ISS.ADSL
+WGTBL,Num,8,488,,,Baseline Weight (kg),ISS.ADSL
+WGT,Num,8,496,,,Body Weight (kg),"ISS.ADVS .Select paramcd=""WEIGHT""  and anl01fl=""Y"",  use the last non missing WGT if WGT missing at current visit ; use baseline weight if cycle 1 day 1  WGT is missing."
+SITEID,Char,6,1796,,,Study Site Identifier,ISS.ADSL
+COUNTRY,Char,3,1802,,,Country,ISS.ADSL
+COUNTRYC,Char,24,1805,,,Country - Full Text,ISS.ADSL
+REGION,Char,13,1829,,,Geographic Region,ISS.ADSL
+REGIONN,Num,8,680,,,Geographic Region (N),ISS.ADSL
+SEX,Char,1,1857,,,Sex,ISS.ADSL
+SEXN,Num,8,24,,,Sex (N),ISS.ADSL
+RACE,Char,32,1858,,,Race,ISS.ADSL
+RACEN,Num,8,32,,,Race (N),ISS.ADSL
+RACEOTH,Char,8,1890,,,"Race, Other",ISS.ADSL
+RACEGR1,Char,9,1898,$10.00 ,,Pooled Race Group 1,ISS.ADSL
+RACEGR1N,Num,8,696,,,Pooled Race Group 1 (N),ISS.ADSL
+ETHNIC,Char,22,1907,,,Ethnicity,ISS.ADSL
+ETHNICN,Num,8,704,,,Ethnicity (N),ISS.ADSL
+ETHGR1,Char,22,1929,$30.00 ,,Pooled Ethnicity Group 1,ISS.ADSL
+ETHGR1N,Num,8,712,,,Pooled Ethnicity Group 1 (N),ISS.ADSL
+RFSTDTC,Char,16,1951,,,Subject Reference Start Date/Time,ISS.ADSL
+RFENDT,Num,8,720,E8601DA.,,Subject Reference End Date,ISS.ADSL
+RFSTDT,Num,8,648,E8601DA.,,Subject Reference Start Date,ISS.ADSL
+RFSTDTM,Num,8,656,E8601DT.,,Subject Reference Start Datetime,ISS.ADSL
+METSTAT,,,,,,,
+METSTATN,,,,,,,
+ECOGBL,,,,,,,
+ECOGGR,,,,,,,
+ECOGGRN,,,,,,,
+TUMTYPE,Char,11,1116,$40.00 ,,Tumor Type,ISS.ADSL
+TUMTYPE2,Char,200,1127,,,Tumor Type ((coded),"Derived. For study 1423,TUMTYPE2=scan (arm, 2, '-'); Further mapping  if index(tumtype2, 'CSCC') then tumtype2=tr01pg3;
+  if cohort=""DE"" then tumtype2=tumtype; For 1540: coded as laCSCC if group=2; as mCSCC otherwise."
+,,,,,,,
+\textbf{Treatment },,,,,,,
+STDYPHSE,Char,15,1967,,,Study Phase,ISS.ADSL
+ARMN,Num,8,56,,,Description of Planned Arm (N),ISS.ADSL
+ARM,Char,57,878,,,Description of Planned Arm,ISS.ADSL
+ACTARM,Char,57,935,,,Description of Actual Arm,ISS.ADSL
+ACTARMN,Num,8,64,,,Description of Actual Arm (N),ISS.ADSL
+COHORT,Char,10,992,,,Cohort (pooled),ISS.ADSL
+TRT01P,Char,57,1002,$60.00 ,,Planned Treatment for Period 01,ISS.ADSL
+TRT01PN,Num,8,72,,,Planned Treatment for Period 01 (N),ISS.ADSL
+TRT01A,Char,57,1059,$60.00 ,,Actual Treatment for Period 01,ISS.ADSL
+TRT01AN,Num,8,80,,,Actual Treatment for Period 01 (N),ISS.ADSL
+TR01PG1,Char,6,1327,$100.00 ,,Planned Pooled Treatment 1 for Period 01,ISS.ADSL
+TR01PG1N,Num,8,88,,,Planned Pooled Trt 1 for Period 01 (N),ISS.ADSL
+TR01AG1,Char,6,1333,$100.00 ,,Actual Pooled Treatment 1 for Period 01,ISS.ADSL
+TR01AG1N,Num,8,96,,,Actual Pooled Trt 1 for Period 01 (N),ISS.ADSL
+TR01PG3,Char,17,1339,$100.00 ,,Planned Pooled Treatment 3 for Period 01,ISS.ADSL
+TR01PG3N,Num,8,104,,,Planned Pooled Trt 3 for Period 01 (N),ISS.ADSL
+TR01AG3,Char,17,1356,$100.00 ,,Actual Pooled Treatment 3 for Period 01,ISS.ADSL
+TR01AG3N,Num,8,112,,,Actual Pooled Trt 3 for Period 01 (N),ISS.ADSL
+TR01PG4,Char,12,1373,$100.00 ,,Planned Pooled Treatment 4 for Period 01,ISS.ADSL
+TR01PG4N,Num,8,120,,,Planned Pooled Trt 4 for Period 01 (N),ISS.ADSL
+TR01AG4,Char,12,1385,$100.00 ,,Actual Pooled Treatment 4 for Period 01,ISS.ADSL
+TR01AG4N,Num,8,128,,,Actual Pooled Trt 4 for Period 01 (N),ISS.ADSL
+ETRGR1,Char,33,1397,$35.00 ,,Pooled End of Treatment Reason,ISS.ADSL
+ETRGR1N,Num,8,136,,,Pooled End of Treatment Reason (N),ISS.ADSL
+CMPRSYSN,Num,8,728,,,Number Prior Systemic Regimens (N),ISS.ADSL
+PRSYTHP,Char,1,1982,,,Subject had Prior Systemic Therapy?,ISS.ADSL
+PRSYTHPN,Num,8,736,,,Subject had Prior Systemic Therapy? (N),ISS.ADSL
+PRRAD,Char,1,1983,,,Subject had Prior Radiotherapy?,ISS.ADSL
+PRRADN,Num,8,744,,,Subject had Prior Radiotherapy? (N),ISS.ADSL
+CMDECOD,Char,45,1751,,,Standardized Medication Name,ISS.ADCM.CMDECOD
+,,,,,,,
+\textbf{Flag},,,,,,,
+FASFLN,Num,8,144,,,Full Analysis Set,Numeric value of ISS.ADSL.FASFL
+SAFFLN,Num,8,152,,,Safet Analysis Set,Numeric value of ISS.ADSL.SAFFL
+FASCSFLN,Num,8,160,,,CSCC Efficacy Analysis Set,Numeric value of ISS.ADSL.FASCSFL
+CSCCP2FN,Num,8,168,,,CSCC Population (1540),Numeric value of ISS.ADSL.CSCCP2FL for study 1423; set=1 for study 1540
+PKEFCSCC,Num,8,176,,,PK Efficacy CSCC Analysis Set,"Derived.  PKEFCSCC=""Y"" if ADSL.FASCSFL=""Y"" and PKFL=""Y""; ""N"" otherwise
+"
+PKSFCSCC,Num,8,184,,,PK Safety CSCC Analysis Set,"Derived.  PKSFCSCC=""Y"" if ADSL.SAFFL=""Y"" and PKFL=""Y"" and TR01PK3=""CSCC Patients""; ""N"" otherwise
+"
+ENRLFLN,Num,8,192,,,Enrolled Population Flag,Numeric value of ISS.ADSL.ENRLFL
+MONOTFLN,Num,8,200,,,Monotherapy,Numeric value of ISS.ADSL.MONTHFL
+BIOPCFLN,Num,8,208,,,Biopsy Confirmed CSCC flag,Numeric value of ISS.ADSL.BIOPCFL
+FUPFLN,Num,8,216,,,Follow Up Population,Numeric value of ISS.ADSL.FUPFL
+HCCFLN,Num,8,224,,,HCC+GBM Population,Numeric value of ISS.ADSL.HCCFL
+ADAFLN,Num,8,232,,,ADA Analysis Set,Numeric value of ISS.ADSL.ADAFL
+PKFLN,Num,8,240,,,PK Analysis Set,Numeric value of ISS.ADSL.PKFL
+CORTFLN,Num,8,248,,,Concomitant Systemic Cortisteroids,"Derived according to the systemic corticorsteroids list. CORTFLN=1 if cmdecod in ( 'CORTICOSTEROID NOS', 'CORTICOSTEROIDS', 'CORTISONE','DEXAMETHASONE', 'DEXAMETHASONE SODIUM PHOSPHATE','HYDROCORTISONE',
+'METHYLPREDNISOLONE','METHYLPREDNISOLONE SODIUM SUCCINATE','PREDNISOLONE','PREDNISONE'); 0 otherwise."
+,,,,,,,
+\textbf{Dose},,,,,,,
+CEXDURD,Num,8,392,,,Duration of Infusion (day),Cumulated duration of infusion at each infusion visit
+MISSDFL,Char,13,1497,,,Missed Dose,"Derived. MISSDFL=""Dose not given"" if at planned infusion visit the AMT<=0."
+DALCONC,Num,8,400,,,Dose after last available conc.,Derived. Dose record is after the last available concentration record.
+EXDOSEP,Num,8,408,,,Planned Dose,EXDOSEP=ADEX.ECDOSE
+EXDOSEPU,Char,5,1510,,,Planned Dose Unit,EXDOSEPU=ADEX.ECDOSEU
+EXSTDTM,Num,8,416,E8601DT.,,Infusion Start Date/time,EXSTDTM=ADEX.ASTDTM
+EXSTDT,Num,8,424,E8601DA.,,Analysis Start Date,EXSTDT=ADEX.ASTDT
+EXENDTM,Num,8,432,E8601DT.,,Infusion End Date/time,EXENDTM=ADEX.AENDTM
+EXENDT,Num,8,440,E8601DA.,,Analysis End Date,EXENDT=ADEX.AENDT
+EXDOSADJ,Char,2,1515,,,Reason for Dose Adjustment,EXDOSADJ=ECADJ
+EXDOSINT,Char,1,1517,,,Treatment Interrupted,EXDOSINT=ECINTYN
+EXINTRS,Char,5,1518,$10.00 ,,Treatment Interrupted Reason,EXINTRS=ECINTRS
+INFTIMEM,Char,21,1719,,,Infusion Start Time Missing,"INFTIMEM=""Missing Infusion time"" if adex.astdtm=."
+CMDOSE,Num,8,672,,,Dose per Administration,ISS.ADCM.CMDOSE
+,,,,,,,
+\textbf{PK-Time},,,,,,,
+VISITNUM,Num,8,256,,,Visit Number,ADPC (pooled study 1423 and 1540)
+VISIT,Char,26,1430,,,Visit Name,ADPC (pooled study 1423 and 1540)
+PCTPT,Char,41,1456,,,Planned Time Point Name,ADPC (pooled study 1423 and 1540)
+APCDTM,Num,8,264,E8601DT19.,,Analysis Date/Time,rename ADPC.ADTM
+APCDT,Num,8,272,E8601DA10.,,Analysis Date,rename ADPC.ADT
+PCDTC,Char,16,1670,,,Date/Time of Specimen Collection,ADPC pooled from study 1423 and 1547
+PCDY,Num,8,640,,,Study Day of PK concentration,ADPC pooled from study 1423 and 1548
+,,,,,,,
+\textbf{PK-Conc},,,,,,,
+PCORRES,Char,7,1610,,,PK Concentration Original (ng/mL),ADPC pooled from study 1423 and 1540
+PCORRESU,Char,5,1617,,,PK Concentration Original Unit,ADPC pooled from study 1423 and 1541
+PCSTRESN,Num,8,632,,,Numeric Result/Finding in Standard Units,ADPC pooled from study 1423 and 1542
+PCSTRESU,Char,4,1622,,,Standard Units,ADPC pooled from study 1423 and 1543
+PCTEST,Char,25,1626,,,PC test,ADPC pooled from study 1423 and 1544
+PCTESTCD,Char,8,1651,,,PC Test Code,ADPC pooled from study 1423 and 1545
+PCREFID,Char,11,1659,,,Reference ID,ADPC pooled from study 1423 and 1546
+PCNAM,Char,9,1686,,,Vendor Name,ADPC pooled from study 1423 and 1549
+PCSPEC,Char,5,1695,,,Sample matrix,ADPC pooled from study 1423 and 1550
+PCMETHOD,Char,5,1700,$12.00 ,$12.00 ,Method of Test or Examination,ADPC pooled from study 1423 and 1551
+PCLLOQ,Num,8,352,,,Lower Limit of Quantitation,Derived: =PCLLOQ/1000; converted to mg/L
+,,,,,,,
+\textbf{ADA},,,,,,,
+ADASTA,Char,29,1523,,,ADA status,Derived from pooled ADISADA dataset from study 1423 and 1540. ADASTA=ADISADA.AVAL select ADISADA.PARAM = 'ADA Status'  
+TITER,Num,8,448,,,Maximum Titer,"Derived from pooled ADISADA dataset from study 1423 and 1540. TITER=ADISADA.AVAL select ADISADA.paramcd ="" Treatment-emergent/boosted Max. Titer"""
+MAXTCAT,Num,8,456,,,Maximum Titer Category,"Derived from pooled ADISADA dataset from study 1423 and 1540. MAXTCAT=ADISADA.AVALC select ADISADA.paramcd ="" Treatment-emergent/boosted Max. Titer CAT"""
+NABSTA,Char,29,1581,,,Neutralized AB status,Derived from pooled ADISADA dataset from study 1423 and 1540. NABSTA=ADISADA.AVAL select ADISADA.PARAM = 'Neutralizing Status'  
+,,,,,,,
+\textbf{Lab},,,,,,,
+ALBBL,Num,8,504,,,Baseline Albumin (g/L),ISS.ADVS
+IALBBL,Num,8,512,5.1,,Imputed Baseline ALB (g/L),"If ALBBL is missing, IALBBL= Median of ALBBL within study"
+ALB,Num,8,520,,,Albumin (g/L),"ISS.ADLB.AVAL select PARAMCD=""ALB"" and ADY >=1 and ANL01FL=""Y"";  take the last non missing value If ALB missing at current visit; use baseline ALB if cycle 1 day 1 ALB is missing."
+LDHBL,Num,8,528,,,Baseline Lactate Dehydrogenase (IU/L),rename ISS.ADSL.BLLDH
+ILDHBL,Num,8,536,5.1,,Imputed Baseline LDH (IU/L),"If LDHBL is missing, ILDHBL= Median of LDHBL within study"
+LDH,Num,8,544,,,LDH (IU/L),"ISS.ADLB.AVAL select PARAMCD=""LDH"" and ADY >=1 and ANL01FL=""Y""; take the last non missing value If LDH missing at current visit;  use baseline LDH  if cycle 1 day 1 LDH is missing."
+ASTBL,Num,8,552,,,Baseline Aspartate Aminotransferase (IU/L),rename ISS.ADSL.BLAST
+ALTBL,Num,8,560,,,Baseline Alanine Aminotransferase (IU/L),rename ISS.ADSL.BLALT
+IALTBL,Num,8,568,5.1,,Imputed Baseline ALT (IU/L),"If ALTBL is missing, IALTBL= Median of ALTBL within study"
+IGGBL,Num,8,576,,,Baseline Immunoglobulin G (g/L),rename ISS.ADSL.BLIGG
+IIGGBL,Num,8,584,5.1,,Imputed Baseline IGG (g/L),"If IGGBL is missing, IIGGBL= Median of IGGBL within study"
+BILIBL,Num,8,592,,,Baseline Bilirubin (umol/L),rename ISS.ADSL.BLBILI
+IBILIBL,Num,8,600,5.1,,Imputed Baseline BILI (umol/L),"If BILIBL is missing, IBILIBL =Median of BILIBL within study"
+CREATBL,Num,8,608,,,Baseline Creatinine (umol/L),rename ISS.ADSL.BLCREAT
+CRCLBL,Num,8,616,,,Baseline Creatinine Clearance (mL/min),rename ISS.ADSL.BLCRCL
+ALPBL,Num,8,624,,,Baseline Alkaline Phosphatase (IU/L),rename ISS.ADSL.BLALP

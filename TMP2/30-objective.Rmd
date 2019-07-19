@@ -1,0 +1,15 @@
+
+
+
+# \@ref(objective)	Objective {#objective}
+
+The pharmacokinetic information collected in the cemiplimab program comprise data from both dense and sparse blood sampling during repeated administration of cemiplimab in studies 1423 and 1540 . The population PK approach offers the possibility of gaining essential integrated information on pharmacokinetics and clinically relevant sources of pharmacokinetic variability. 
+
+The primary objectives of this analysis are to:
+
+*	Develop a population pharmacokinetic (Pop PK) model to estimate the population and individual predicted PK parameters of functional cemiplimab across studies and patients;
+
+*	Identify and characterize the variability in PK parameters, especially the clinically relevant sources of variability; 
+
+*	Characterize the post-hoc estimates of exposure for the typical patient and typical CSCC patient and the variance, as well as the descriptive statistics of exposure for these patients.  
+

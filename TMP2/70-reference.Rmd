@@ -1,0 +1,28 @@
+---
+title: "Untitled"
+author: "Feng Yang"
+date: "December 8, 2017"
+output: word_document
+---
+
+
+# \@ref(reference) Reference {#reference}
+
+
+Gastonguay M. Full covariate models as an alternative to methods relying on statistical significance for inferences about covariate effects: a review of methodology and 42 case studies. PAGE Conference, June 2011, Athens, Greece. Available at http://www.page-meeting.org/?abstract=2229  
+
+Harrell FE, Jr. Regression Modeling Strategies: With Applications to Linear Models, Logistic Regression, and Survival Analysis. New York: Springer, 2010.
+
+Mould DR, Green B. Pharmacokinetics and pharmacodynamics of monoclonal antibodies: concepts andlessons for drug development. BioDrugs 2010; 24: 23–39.
+
+Keizer RJ, Huitema AD, Schellens JH, Beijnen JH. Clinical pharmacokinetics of therapeutic monoclonal antibodies. Clin Pharmacokinet 2010; 49: 493–507.
+
+Shivaraj Gowda, 1 , & Prakash B. Desai, 1 Vinayak V. Hull, 1 Avinash A K. Math, 1 Sonal N. Vernekar, 1 and Shruthi S. Kulkarni, A review on laboratory liver 
+function tests, Pan Afr Med J 2009; 3:17
+
+X Wang, Y Feng1, G Bajaj1, M Gupta1, S Agrawal1, A Yang2, *Quantitative Characterization of the Exposure–Response Relationship for Cancer Immunotherapy: A Case 
+Study of REGN2810 in Patients With Advanced Melanoma , J-S Park3, B Lestini2 and A Roy1  (2017) 6, 40–48;
+
+Levey AS, Bosch JP, Lewis JB, Greene T, Rogers N, Roth D, for  Modification of Diet in Renal Disease Study Group. A more accurate method to estimate glomerular filtration rate from serum creatinine: a new prediction equation. Ann Intern Med 1999; 130: 461–70.
+
+Ramalingam SS, Kummar S, Sarantopoulos J, Shibata S,  LoRusso P, Yerk M, Holleran J, Lin Y, Beumer JH, Harvey RD, Ivy SP, Belani CP, Egorin MJ. Phase I study of vorinostat in patients with advanced solid tumors and hepatic dysfunction: a National Cancer Institute Organ Dysfunction Working Group study. J Clin Oncol 2010; 28: 4507–12.

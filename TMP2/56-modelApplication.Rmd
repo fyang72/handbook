@@ -1,0 +1,2680 @@
+---
+title: "Untitled"
+author: "Feng Yang"
+date: "December 8, 2017"
+output: word_document
+---
+ 
+ 
+ 
+ 
+## \@ref(result-model-application) Pop PK Model Application {#result-model-application}
+
+ 
+<!--“A discussion of how the results of the analysis were used (e.g., to support labeling, individualize dosage, safety, or to define additional studies) should be provided. A discussion of the relationship between statistical significance and clinical relevance should also be included. In addition, the use of graphics, often based on simulations of potential responses under the final fitted model, to communicate the application of a population model (e.g., for dosage adjustment) is recommended.”  -->
+ 
+
+### \@ref(result-exposure-metrics) Exposure Metrics of Cemiplimab {#result-exposure-metrics}
+
+The final Pop PK model (`r final.model.runno`) was used to generate the post-hoc estimates of individual PK parameter and exposure for each patient. Descriptive statistics for the steady-state exposure of interests (e.g., Ctrough,ss, Cmax,ss and AUCtau,ss), were reported by proposed dose regimens in Table  \@ref(tab:summary-posthoc-params); and by different covariate categories in Table \@ref(tab:summary-posthoc-params-covariate). 
+
+Systemic accumulation was evident by an accumulation index of approximately 2.0-fold, and steady-state was reached by the end of the second treatment cycle (~112 days). The model-predicted steady-state Cmax,ss, Ctrough,ss and Cav,ss were highly correlated (Pearson correlation coefficient > 0.9). Model-predicted trough concentration after the first cemiplimab dose (Cmin1, >30 mg/L) and steady-state Ctrough (Ctrough,ss, >60 mg/L) exceeded the target trough concentration of 5 mg/L and 20 mg/L, which have been used as the cut-off for maximal binding for PD-L1 and PD-L2 in non-clinical setting, respectively.  However, more research is warranted to assess the transbility of non-clinical setting (vitro cell-based assay) to clinical setting. However, uncertainties always remain regarding the transferability of results obtained in vitro to the in vivo clinical setting.
+   
+ 
+ 
+ 
+```{r simPK, eval=FALSE  }
+ # simPK.Rdata
+ # 
+
+# use  simPK is for post-hoc exposure metrics for 
+#1) Post-hoc Pharmacokinetics of Cemiplimab at Steady-state in 6 Weeks Dosing Intervals in Patients with Solid Tumors in the Final PK Population Model, (N, Mean(%CV), SE, SD, Median (2.5-97.5 percentile), Geometric Mean)         overall
+
+# 2) Summary (Mean±SD) of Individual Post-Hoc Estimates of Exposure at Steady State (AUCss and Ctrough) of Cemiplimab at the ProposedRegimens of 3 mg/kg Q2W and 350 mg Q3W by Covariates and Patient Stratifications         by covariate
+ 
+################################################################################
+# load mrgsolve models 
+################################################################################
+# read model
+
+  # from LN900 model
+#runno.lst = final.model.runno
+#PARAMS = read_PARAMS(MODEL.HOME, subdir="/ctl/HPC/", runno.lst) 
+ 
+
+ 
+library(dplyr)
+library("mrgsolve")
+source("./cpp/mod.R2810.LN900.cpp")
+mod <- mread("R2810", tempdir(),mymodel)     # ?mread , ?mcode
+ 
+ 
+  # used in primary modeling
+  #adpx = read_csv("H:\\FYANG\\R2810_PD1\\MODEL\\data\\nmdat.csv")  # after remove outliers
+ # adpx = adpx %>% rename(ALBBL=IALBBL, LDHBL=ILDHBL, ALTBL=IALTBL, IGGBL=IIGGBL, BILIBL=IBILIBL)
+ 
+#----------------------------------------  
+# adsl
+#----------------------------------------
+MODEL.HOME <- "H:\\FYANG\\R2810_PD1\\MODEL\\"
+adpx = read_OUTPUT(MODEL.HOME, subdir="ctl/HPC/", runno.lst="LN900", adpx00)  
+
+adpx = adpx[["LN900"]] %>% filter(   C==".") #%>%
+       #distinct(USUBJID, .keep_all=TRUE) %>% 
+       # select(USUBJID, ID,  WGTBL, HGTBL, BMIBL, BSABL, AGE, SEXN, RACEN, ETHNICN, MONOTFLN, CSCCP2FN, FASCSFLN, 
+       #        CREATBL,  CRCLBL, IALTBL, ASTBL, IBILIBL, IALBBL, IIGGBL, ILDHBL, ALPBL,
+       #         CL, V2,  Q, V3,  F1,  KA, EMAX, T50, HILL,  RUVCV,  RUVSD,   
+       #         WGT_ON_CLQ,  WGT_ON_VSS ,  ALT_ON_CLQ,   ALB_ON_CLQ ,  IGG_ON_CLQ,    BMI_ON_VSS,   BLK_ON_T50
+       #         )
+        
+ 
+adpx$POP = "SIM"
+adpx = adpx %>% rename(TVCL=CL, TVV2=V2, TVQ=Q, TVV3=V3, TVEMAX=EMAX,TVT50=T50) 
+                       #ALBBL=IALBBL, IGGBL=IIGGBL, ALTBL=IALTBL)
+                       
+# adsl$ALB_ON_CLQ=-1.00381
+# adsl$ALT_ON_CLQ=-0.0817805
+# adsl$IGG_ON_CLQ=0.182303    
+# adsl$BMI_ON_VSS=-0.552805
+# adsl$BLK_ON_T50=0.946409
+
+#adsl = adsl %>% select(POP, USUBJID, WGTBL, ALBBL, IGGBL,  BMIBL)  ########
+adpx = adpx %>% mutate(ID = as_numeric(ID), 
+                       WGTBL=as_numeric(WGTBL), 
+                       ALBBL=as_numeric(ALBBL), 
+                       IGGBL=as_numeric(IGGBL), 
+                       BMIBL=as_numeric(BMIBL))
+ 
+adpx = adpx %>% mutate(TVCL=as_numeric(TVCL), 
+                       TVV2=as_numeric(TVV2), 
+                       TVQ=as_numeric(TVQ), 
+                       TVV3=as_numeric(TVV3), 
+                       AMT = as_numeric(AMT),
+                       RATE = as_numeric(RATE),
+                       TIME=as_numeric(TIME),
+                       
+                       F1=as_numeric(F1), 
+                       KA=as_numeric(KA), 
+                       
+                       TVEMAX=as_numeric(TVEMAX), 
+                       TVT50=as_numeric(TVT50), 
+                       HILL=as_numeric(HILL), 
+                       
+                       RUVCV=as_numeric(RUVCV), 
+                       RUVSD=as_numeric(RUVSD), 
+                       
+                       WGT_ON_CLQ=as_numeric(WGT_ON_CLQ),
+                       WGT_ON_VSS=as_numeric(WGT_ON_VSS),
+                       ALT_ON_CLQ=as_numeric(ALT_ON_CLQ),
+                       ALB_ON_CLQ=as_numeric(ALB_ON_CLQ),
+                       IGG_ON_CLQ=as_numeric(IGG_ON_CLQ),
+                       BMI_ON_VSS=as_numeric(BMI_ON_VSS),
+                       BLK_ON_T50=as_numeric(BLK_ON_T50)
+)
+    
+adpx.0 = adpx
+
+#adpx = adpx  %>% select(POP, ID, TIME, TVCL, TVV2,TVQ,TVV3,TVEMAX,TVT50,HILL,AMT,RATE,TIME,CMT,EVID,     
+#                        WGTBL, IPRED, DVOR, NTIM)
+
+#adpx = adpx %>% group_by(ID) %>% mutate(TVCL0= TVCL[1])
+
+
+adsl = adpx %>% distinct(ID, .keep_all=TRUE)  %>% mutate(USUBJID=USUBJID)  
+
+adsl = adsl %>% select(-AMT, -EVID, -CMT )
+
+
+
+#----------------------------------------
+# adex
+#----------------------------------------  
+#library('gdata')
+library('xlsx')    # do you have to open the file at least once?
+ADEX = data.frame(read.xlsx("./cpp/run_Rsim_input.xlsx", "Sheet1"), stringsAsFactors=FALSE)
+ADEX0 = ADEX[which(!is.na(as.numeric(ADEX$STUDYID))),  ]
+ 
+ADEX0$ARMA = trim(ADEX0$ARMA)
+
+adex = create_adex(adsl, ADEX0%>% filter(STUDYID==4))   #, GROUP %in% c(2,3)
+    
+
+#----------------------------------------
+# run simulation
+#---------------------------------------- 
+ 
+ 
+
+simPK = NULL
+ 
+  # setup simulation timept 
+  treat_end = 24*14;  sim_end = 28*14 
+  
+  tgrid = sim_timept(start=0, end=sim_end, delta=1, dtime=seq(0,treat_end, by=7))
+  tgrid = sort(unique(c(tgrid, unique(as_numeric(adpx$NTIM)))))
+
+  # run simulation
+  out = mod %>%  param( COVARIATE=0, SCALING=0) %>%  
+     omat(CLQ_VSS=dmat(0,0), IIV_EMAX=dmat(0), IIV_T50=dmat(0)) %>%  
+    #data_set(adpx) %>% 
+    ev(as.ev(adex)) %>% 
+    mrgsim(end=sim_end, delta=1, add=tgrid) %>% as.data.frame() #%>% capitalize_names()
+  
+  out = out %>% left_join(adex %>% as.data.frame() %>% distinct(ID, .keep_all=TRUE) %>% select(ID, POP, STUDYID, USUBJID, ARMA), by="ID") 
+  colnames(out) = toupper(colnames(out))
+  
+  # change back USUBJID
+  simPK = out
+ 
+
+ simPK$USUBJID = gsub("SIM-", "", simPK$USUBJID, fix=TRUE)
+ simPK$USUBJID = substr(simPK$USUBJID, 1, 25)
+  
+simPK = simPK %>% mutate(DVOR=IPRED, NTIM=TIME)
+  save(simPK, file="./data/simPK.Rdata")
+ 
+ 
+ 
+  
+ 
+#----------------------------------------  
+# confirm  BY A SSINGLE SUBJECT
+#----------------------------------------
+ tt = adpx00%>% filter(ARMA %in% c("3 mg/kg Q2W" )) %>%
+   group_by(USUBJID) %>% dplyr::summarise(N=length(DVOR)) %>% ungroup() %>% arrange(-N)
+ subj.lst = tt$USUBJID[1:5]
+ 
+  
+  adex %>% filter(SUBJID %in% subj.lst)  %>% select(SUBJID, ARMA, amt, cmt, ii, evid, addl, time)
+  
+ simPK = simPK %>% mutate(DVOR=IPRED, NTIM=TIME)
+ 
+ tdata = simPK %>% filter(USUBJID %in% subj.lst) %>% 
+        filter(TIME<400) %>% 
+        filter(ARMA %in% c("3 mg/kg Q2W IV" ))
+ 
+ tdata$DVOR = tdata$DVOR + 0.039
+ fig = ggplot(tdata, aes(x=TIME, y=DVOR,group=USUBJID))  +geom_line() +  scale_y_log10()  + 
+     coord_cartesian(xlim = c(0, 56) ) + 
+     coord_cartesian(ylim = c(0.039, 450) )   
+   
+   
+   tt = adpx.0 %>%  filter(USUBJID %in% subj.lst) %>% 
+        mutate(TIME=as_numeric(TIME), DVOR=as_numeric(DVOR))
+   fig + geom_point(data=tt, aes(x=TIME, y=DVOR))  + 
+     facet_wrap(~USUBJID)
+   
+   
+   
+ 
+ 
+ 
+ 
+ 
+ 
+#----------------------------------------  
+# confirm
+#----------------------------------------
+ 
+ 
+ 
+ 
+tdata = left_join(adpx.0%>% mutate(NTIM=as_numeric(NTIM),TIME=as_numeric(TIME)) %>% 
+                    filter(ARMA %in% c("3 mg/kg Q2W" )), 
+                  
+                  simPK %>% filter(ARMA %in% c("3 mg/kg Q2W IV" )) %>%select(ARMA, USUBJID, TIME, IPRED) %>%  
+                       rename(SIMPK=IPRED, NTIM=TIME) %>% 
+                       mutate(ARMA=trim(gsub("IV", "", ARMA, fix=TRUE))),  
+                  by=c("ARMA", "USUBJID", "TIME"))
+ 
+ 
+ adpx.0 %>% filter(USUBJID %in% "R2810-ONC-1423-036001-001")  %>% select(USUBJID, ID, ARMA, TIME, NTIM, DVOR )
+
+  simPK%>% filter(USUBJID %in% "R2810-ONC-1423-036001-001") %>% select(USUBJID, ARMA, TIME,  IPRED)  %>% head(n=100)
+  
+  tdata%>% filter(USUBJID %in% "R2810-ONC-1423-036001-001") %>% select(USUBJID, ARMA, TIME, NTIM, IPRED)  %>% head()
+  
+
+tdata = tdata %>% mutate(DVOR=as_numeric(DVOR), 
+                         IPRED=as_numeric(IPRED),
+                         SIMPK=as_numeric(SIMPK))
+
+tdata = tdata %>% filter(DVOR<300, SIMPK<300)
+
+ggplot(tdata, aes(x=IPRED, y=SIMPK)) + geom_point() + 
+     coord_cartesian(xlim = c(0, 200) ) + 
+     coord_cartesian(ylim = c(0, 200) )  + 
+  geom_abline(slope=1, intercept = 0, col="red")
+
+ 
+
+
+tdata = tdata %>% mutate(DIFF=abs(IPRED-SIMPK)) %>% filter(DIFF>20)
+tdata %>% select(USUBJID, ARMA, TIME, IPRED, SIMPK)
+
+
+
+
+  
+  
+```
+ 
+  
+ 
+  
+```{r NCA-CEMIPLIMAB-3mkgQ2W}  
+
+
+  load("./data/simPK.Rdata")
+  
+     treat_end = 24*14;  sim_end = 28*14
+  
+  #---------------------------------------
+  #Steady-state PK parameters
+  #---------------------------------------
+   # use for the Steady state 
+  tt.ss = simPK %>% filter(TIME>=(treat_end-6*7), TIME<=treat_end)  %>% 
+    mutate( Vss = V2 + V3, 
+            KE = CL/V2, 
+            K32 = Q/V3, 
+            K23 = Q/V2,
+            alpha.plus.beta  = KE + K23 + K32,
+            alpha.multi.beta = KE * K32,
+            alpha =(alpha.plus.beta + sqrt(alpha.plus.beta^2-4*alpha.multi.beta))/2,
+            beta  = (alpha.plus.beta - sqrt(alpha.plus.beta^2-4*alpha.multi.beta))/2,
+            alpha.half.life.ss = 0.693/alpha,
+            beta.half.life.ss = 0.693/beta
+           ) 
+
+  tt.ss = tt.ss %>% 
+      group_by_(.dots =c("STUDYID", "ARMA", "USUBJID")) %>%   
+           dplyr::summarise(
+             Cmin.ss = DVOR[n()],  # the last conc at this time interval
+             Cmax.ss = max(DVOR),
+             AUCtau.ss = auc_partial(NTIM, DVOR),
+             Cavg.ss = AUCtau.ss/(6*7),   # 6 wks
+      
+             CL.ss = min(CL, na.rm=TRUE),
+             Vss = unique(Vss), 
+             alpha.half.life.ss = max(alpha.half.life.ss), 
+             beta.half.life.ss = max(beta.half.life.ss)
+           )   
+  
+     
+  # Used for the first 0-42 dose
+  tt.1st = simPK %>% filter(TIME>=0, TIME<=42)  %>%  # 6 weeks %>% 
+    mutate( Vss = V2 + V3, 
+            KE = CL/V2, 
+            K32 = Q/V3, 
+            K23 = Q/V2,
+            alpha.plus.beta  = KE + K23 + K32,
+            alpha.multi.beta = KE * K32,
+            alpha =(alpha.plus.beta + sqrt(alpha.plus.beta^2-4*alpha.multi.beta))/2,
+            beta  = (alpha.plus.beta - sqrt(alpha.plus.beta^2-4*alpha.multi.beta))/2,
+            alpha.half.life.1st = 0.693/alpha,
+            beta.half.life.1st = 0.693/beta
+           ) %>% ungroup()
+
+  tt.0.14 = tt.1st %>% filter(TIME>=0, TIME<=14)  %>%  #
+      group_by_(.dots =c("STUDYID", "ARMA", "USUBJID")) %>%   
+           dplyr::summarise(
+             Cmin.1st = DVOR[n()],  # the last conc at this time interval
+             Cmax.1st = max(DVOR), 
+             CL.1st = max(CL, na.rm=TRUE),
+             Vss.1st = unique(Vss), 
+             alpha.half.life.1st = min(alpha.half.life.1st), 
+             beta.half.life.1st = min(beta.half.life.1st)
+           )  %>% ungroup() 
+  
+
+  tt.0.42 = tt.1st %>% filter(TIME>=0, TIME<=42)  %>%  #
+      group_by_(.dots =c("STUDYID", "ARMA", "USUBJID")) %>%   
+           dplyr::summarise(
+             AUCtau.1st = auc_partial(NTIM, DVOR),
+             Cavg.1st = AUCtau.1st/(6*7)   # 6 wks
+           )  %>% ungroup()  
+
+  
+  tt.1st = tt.0.14 %>% left_join(tt.0.42, by=c("STUDYID", "ARMA", "USUBJID"))  
+  
+  
+  
+  OUT1 = tt.ss %>% left_join(tt.1st%>%select(-STUDYID), by=c("ARMA", "USUBJID"))
+  
+  OUT1 = OUT1 %>% mutate(AUCtau.ACCUM=AUCtau.ss/AUCtau.1st, CL.PCT=(CL.1st-CL.ss)/CL.1st*100)
+  
+  OUT1 = OUT1 %>% gather(PARAMS, DVOR, -STUDYID, -ARMA, -USUBJID)
+   
+  
+  #################################### 
+  # time to achieve steady-state  in 3 mg/kg Q2W!!!!!!!!!! only
+  ####################################   
+  treat_end = 24*14;  sim_end = 28*14
+  
+  
+  tdata = simPK %>% mutate(NTIM=as_numeric(NTIM)) %>% 
+    assign_Q(value="NTIM", 
+           quartile= NULL,
+            breaks = seq(0,treat_end, by=14)  )  
+  
+  OUT2 = tdata %>%  
+    group_by_(.dots =c("STUDYID", "ARMA", "USUBJID",  "Q_LABEL", "Quantile")) %>%   
+         dplyr::summarise( 
+           AUCtau = auc_partial(NTIM, DVOR) 
+         )  %>% ungroup() %>%  
+    filter(!is.na(Q_LABEL)) %>% group_by(ARMA, USUBJID) %>% 
+     mutate(AUCtauss = max(AUCtau ), 
+            PCT.SS = AUCtau/AUCtauss*100)
+  
+   OUT2 = OUT2 %>% mutate(PARAMS=Q_LABEL, DVOR=PCT.SS) %>% 
+     filter(PARAMS %in% c("(42,56]", "(56,70]", "(70,84]", "(84,98]", "(98,112]"  ))   
+
+    
+   
+   OUT2 = OUT2 %>% select(-Q_LABEL, -Quantile, -AUCtau, -AUCtauss, -PCT.SS) 
+   
+   
+   # merge
+   OUT = rbind(OUT1, OUT2) %>% ungroup()
+   OUT.NCA.PARAMS = OUT   
+   
+    
+#   
+#    
+   tabl4.NCA.PARAMS <- function(tabl) {
+   # cosmetic 
+   #------------------------
+  
+
+  metrics.lst = c(   "beta.half.life.1st",   "beta.half.life.ss" ,
+     "CL.1st",     "CL.ss" ,  "CL.PCT",     
+     "Vss", 
+     "Cmax.1st", "Cmax.ss", 
+     "Cmin.1st", "Cmin.ss", 
+     "Cavg.1st", "Cavg.ss", 
+     "AUCtau.1st", "AUCtau.ss",    "AUCtau.ACCUM", 
+     "(42,56]", "(56,70]", "(70,84]", "(84,98]", "(98,112]", 
+     "(42,63]",   "(63,84]",   "(84,105]",  "(105,126]", "(126,147]" )
+ 
+  tabl = tabl %>% ungroup() %>% filter(PARAMS %in% metrics.lst) %>%  
+                mutate(PARAMS=ordered(PARAMS, levels=metrics.lst) ) %>%  
+                arrange(PARAMS)  %>% 
+          select(-STUDYID)
+    
+  tabl = tabl %>% mutate(Median_CI95=paste0(u.signif(Median, digits=3), "(", 
+                                              u.signif(PCT2P5, digits=3), "-", 
+                                              u.signif(PCT97P5, digits=3),")"),
+                           
+                           GEOmean_SD=paste0(u.signif(GEOmean, digits=3), "(", 
+                                             u.signif(GEOmean/GEOSD, digits=3), "-", 
+                                             u.signif(GEOmean*GEOSD, digits=3),")") ) 
+    
+     
+       
+  tabl =  tabl %>% 
+  mutate(Median=u.signif(Median, digits=3), 
+       PCT2P5=u.signif(PCT2P5, digits=3),
+       PCT97P5=u.signif(PCT97P5, digits=3), 
+       SE=u.signif(SE, digits=3),
+       SD=u.signif(SD, digits=3), 
+       GEOmean=u.signif(GEOmean, digits=3)
+  )
+  
+  tabl = tabl %>% select(-Median, -PCT2P5, -PCT97P5, -GEOmean, -GEOSD)
+  
+  
+  tabl = as.matrix(tabl)  %>% as.data.frame()
+  tabl$PARAMS = as.character(tabl$PARAMS)
+  
+   
+  tabl$PARAMS = gsub("alpha.half.life.1st", "t1/2,alpha,2wk",tabl$PARAMS,  fix=TRUE)
+  tabl$PARAMS = gsub("beta.half.life.1st", "t1/2,beta,2wk",tabl$PARAMS,  fix=TRUE)
+  
+  tabl$PARAMS = gsub("alpha.half.life.ss", "t1/2,alpha,ss",tabl$PARAMS,  fix=TRUE)
+  tabl$PARAMS = gsub("beta.half.life.ss", "t1/2,beta,ss",tabl$PARAMS,  fix=TRUE)
+  
+  tabl$PARAMS = gsub("CL.1st", "Baseline Clearance\n(L/day)",tabl$PARAMS,  fix=TRUE)
+  tabl$PARAMS = gsub("CL.ss", "Clearance at ss (L/day)",tabl$PARAMS,  fix=TRUE)
+  tabl$PARAMS = gsub("CL.PCT", "Percent of \n reduction in CL",tabl$PARAMS,  fix=TRUE)
+  
+  tabl$PARAMS = gsub("Vss", "Volume of distribution (L)",tabl$PARAMS,  fix=TRUE)
+  
+  tabl$PARAMS = gsub("Cmin.1st", "Ctrough,2wk\n(mg/L)",tabl$PARAMS,  fix=TRUE) 
+  tabl$PARAMS = gsub("Cmin.ss", "Ctrough,ss\n(mg/L)",tabl$PARAMS,  fix=TRUE) 
+  
+  tabl$PARAMS = gsub("CMAX.1st", "Cmax,2wk\n(mg/L)",tabl$PARAMS,  fix=TRUE) 
+  tabl$PARAMS = gsub("CMAX.ss", "Cmax,ss\n(mg/L)",tabl$PARAMS,  fix=TRUE) 
+  
+  tabl$PARAMS = gsub("Cavg.1st", "Cavg0-6wk\n(mg/L)",tabl$PARAMS,  fix=TRUE) 
+  tabl$PARAMS = gsub("Cavg.ss",  "Cavg6wk,ss\n(mg/L)",tabl$PARAMS,  fix=TRUE) 
+  
+  tabl$PARAMS = gsub("AUCtau.1st", "AUC0-6wk\n(mg*day/L)",tabl$PARAMS,  fix=TRUE)
+  tabl$PARAMS = gsub("AUCtau.ss", "AUC6wk,ss\n(mg*day*/L)",tabl$PARAMS,  fix=TRUE)
+  tabl$PARAMS = gsub("AUCtau_ACCUM", "Accumulation Index",tabl$PARAMS,  fix=TRUE)
+  
+  tabl$PARAMS = gsub("(42,56]", "Percentage achieving \n SS during (42,56] days",tabl$PARAMS,  fix=TRUE)
+  tabl$PARAMS = gsub("(56,70]", "Percentage achieving \n SS during (56,70] days",tabl$PARAMS,  fix=TRUE)
+  tabl$PARAMS = gsub("(70,84]", "Percentage achieving \n SS during (70,84] days",tabl$PARAMS,  fix=TRUE)
+  tabl$PARAMS = gsub("(84,98]", "Percentage achieving \n SS during (84,98] days",tabl$PARAMS,  fix=TRUE)
+  tabl$PARAMS = gsub("(98,112]", "Percentage achieving \n SS during (98,112] days",tabl$PARAMS,  fix=TRUE)
+   
+ 
+  tabl$PARAMS = gsub("(42,63]", "Percentage achieving \n SS during (42,63] days",tabl$PARAMS,  fix=TRUE)
+  tabl$PARAMS = gsub("(63,84]", "Percentage achieving \n SS during (63,84] days",tabl$PARAMS,  fix=TRUE)
+  tabl$PARAMS = gsub("(84,105]", "Percentage achieving \n SS during (84,105] days",tabl$PARAMS,  fix=TRUE)
+  tabl$PARAMS = gsub("(105,126]", "Percentage achieving \n SS during (105,126] days",tabl$PARAMS,  fix=TRUE)
+  tabl$PARAMS = gsub("(126,147]", "Percentage achieving \n SS during (126,147] days",tabl$PARAMS,  fix=TRUE)
+  tabl$PARAMS = gsub("(147,168]", "Percentage achieving \n SS during (147,168] days",tabl$PARAMS,  fix=TRUE)
+ 
+  
+  colnames(tabl) = gsub("ARMA", "Dose", colnames(tabl))
+  colnames(tabl) = gsub("Median_CI95", "Median(CI95)", colnames(tabl))
+  colnames(tabl) = gsub("GEOmean_SD", "GEOmean(SD)", colnames(tabl))
+  colnames(tabl) = gsub("Mean_CV", "Mean(CV)", colnames(tabl))
+  colnames(tabl) = gsub("PARAMS", "Parameter", colnames(tabl))
+  
+  tabl$Parameter[duplicated(tabl$Parameter)] = ""
+  
+  tabl = tabl %>% select(-Dose)
+  
+  return(tabl)
+  
+   }
+   
+   
+   tabl =  OUT.NCA.PARAMS %>% calc_stats(id="USUBJID", group_by=c("STUDYID", "ARMA", "PARAMS"), value="DVOR") %>% 
+     select( STUDYID, PARAMS, ARMA, N, Mean_CV, SE, SD, Median, PCT2P5, PCT97P5, GEOmean, GEOSD)   %>% 
+     filter(ARMA=="3 mg/kg Q2W IV") 
+   
+    
+   TABLE_ALL[["NCA_CEMIPLIMAB_3mkg"]] = tabl4.NCA.PARAMS(tabl) 
+
+
+
+   
+```
+  
+
+  
+```{r NCA-CEMIPLIMAB-350mgQ3W}  
+
+    treat_end = 24*14;  sim_end = 28*14
+  
+   
+  #---------------------------------------
+  #Steady-state PK parameters
+  #---------------------------------------
+   # use for the Steady state 
+  tt.ss = simPK %>% filter(TIME>=(treat_end-6*7), TIME<=treat_end)  %>% 
+    mutate( Vss = V2 + V3, 
+            KE = CL/V2, 
+            K32 = Q/V3, 
+            K23 = Q/V2,
+            alpha.plus.beta  = KE + K23 + K32,
+            alpha.multi.beta = KE * K32,
+            alpha =(alpha.plus.beta + sqrt(alpha.plus.beta^2-4*alpha.multi.beta))/2,
+            beta  = (alpha.plus.beta - sqrt(alpha.plus.beta^2-4*alpha.multi.beta))/2,
+            alpha.half.life.ss = 0.693/alpha,
+            beta.half.life.ss = 0.693/beta
+           ) 
+
+  tt.ss = tt.ss %>% 
+      group_by_(.dots =c("STUDYID", "ARMA", "USUBJID")) %>%   
+           dplyr::summarise(
+             Cmin.ss = DVOR[n()],  # the last conc at this time interval
+             Cmax.ss = max(DVOR),
+             AUCtau.ss = auc_partial(NTIM, DVOR),
+             Cavg.ss = AUCtau.ss/(6*7),   # 6 wks
+      
+             CL.ss = min(CL, na.rm=TRUE),
+             Vss = unique(Vss), 
+             alpha.half.life.ss = max(alpha.half.life.ss), 
+             beta.half.life.ss = max(beta.half.life.ss)
+           )   
+  
+     
+  # Used for the first 0-42 dose
+  tt.1st = simPK %>% filter(TIME>=0, TIME<=42)  %>%  # 6 weeks %>% 
+    mutate( Vss = V2 + V3, 
+            KE = CL/V2, 
+            K32 = Q/V3, 
+            K23 = Q/V2,
+            alpha.plus.beta  = KE + K23 + K32,
+            alpha.multi.beta = KE * K32,
+            alpha =(alpha.plus.beta + sqrt(alpha.plus.beta^2-4*alpha.multi.beta))/2,
+            beta  = (alpha.plus.beta - sqrt(alpha.plus.beta^2-4*alpha.multi.beta))/2,
+            alpha.half.life.1st = 0.693/alpha,
+            beta.half.life.1st = 0.693/beta
+           ) %>% ungroup()
+
+  tt.0.21 = tt.1st %>% filter(TIME>=0, TIME<=21)  %>%  #
+      group_by_(.dots =c("STUDYID", "ARMA", "USUBJID")) %>%   
+           dplyr::summarise(
+             Cmin.1st = DVOR[n()],  # the last conc at this time interval
+             Cmax.1st = max(DVOR), 
+             CL.1st = max(CL, na.rm=TRUE),
+             Vss.1st = unique(Vss), 
+             alpha.half.life.1st = min(alpha.half.life.1st), 
+             beta.half.life.1st = min(beta.half.life.1st)
+           )  %>% ungroup() 
+  
+
+  tt.0.42 = tt.1st %>% filter(TIME>=0, TIME<=42)  %>%  #
+      group_by_(.dots =c("STUDYID", "ARMA", "USUBJID")) %>%   
+           dplyr::summarise(
+             AUCtau.1st = auc_partial(NTIM, DVOR),
+             Cavg.1st = AUCtau.1st/(6*7)   # 6 wks
+           )  %>% ungroup()  
+
+  
+  tt.1st = tt.0.21 %>% left_join(tt.0.42, by=c("STUDYID", "ARMA", "USUBJID"))  
+  
+  
+  
+  OUT1 = tt.ss %>% left_join(tt.1st%>%select(-STUDYID), by=c("ARMA", "USUBJID"))
+  
+  OUT1 = OUT1 %>% mutate(AUCtau.ACCUM=AUCtau.ss/AUCtau.1st, CL.PCT=(CL.1st-CL.ss)/CL.1st*100)
+  
+  OUT1 = OUT1 %>% gather(PARAMS, DVOR, -STUDYID, -ARMA, -USUBJID)
+   
+  
+  #################################### 
+  # time to achieve steady-state  in 3 mg/kg Q2W!!!!!!!!!! only
+  ####################################   
+  treat_end = 24*14;  sim_end = 28*14
+  
+  
+  tdata = simPK %>% mutate(NTIM=as_numeric(NTIM)) %>% 
+    assign_Q(value="NTIM", 
+           quartile= NULL,
+            breaks = seq(0,treat_end, by=21)  )  
+  
+  OUT2 = tdata %>%  
+    group_by_(.dots =c("STUDYID", "ARMA", "USUBJID",  "Q_LABEL", "Quantile")) %>%   
+         dplyr::summarise( 
+           AUCtau = auc_partial(NTIM, DVOR) 
+         )  %>% ungroup() %>%  
+    filter(!is.na(Q_LABEL)) %>% group_by(ARMA, USUBJID) %>% 
+     mutate(AUCtauss = max(AUCtau ), 
+            PCT.SS = AUCtau/AUCtauss*100)
+  
+   OUT2 = OUT2 %>% mutate(PARAMS=Q_LABEL, DVOR=PCT.SS) %>% 
+     filter(PARAMS %in% c( "(42,63]",   "(63,84]",   "(84,105]",  "(105,126]", "(126,147]"   ))   
+
+    
+   
+   OUT2 = OUT2 %>% select(-Q_LABEL, -Quantile, -AUCtau, -AUCtauss, -PCT.SS) 
+   
+   
+   # merge
+   OUT = rbind(OUT1, OUT2) %>% ungroup()
+   
+   
+   tabl =  OUT %>% calc_stats(id="USUBJID", group_by=c("STUDYID", "ARMA", "PARAMS"), value="DVOR") %>% 
+     select( STUDYID, PARAMS, ARMA, N, Mean_CV, SE, SD, Median, PCT2P5, PCT97P5, GEOmean, GEOSD)   %>% 
+     filter(ARMA=="350 mg Q3W IV") 
+   
+    
+   TABLE_ALL[["NCA_CEMIPLIMAB_350mg"]] = tabl4.NCA.PARAMS(tabl) 
+
+
+
+
+```
+
+
+
+```{r NCA-CEMIPLIMAB-3mkg-350mg}
+    
+   TABLE_ALL[["NCA_CEMIPLIMAB_3mkg"]] 
+
+
+  tabl1 = TABLE_ALL[["NCA_CEMIPLIMAB_3mkg"]]   # _3mkg
+  tabl2 = TABLE_ALL[["NCA_CEMIPLIMAB_350mg"]] 
+  
+  tabl = bind_cols(tabl1 %>% select(one_of("Parameter", "N", "Mean(CV)", "SD")), 
+                   tabl2 %>% select(one_of("Parameter", "N", "Mean(CV)", "SD"))
+                   )
+  
+     TABLE_ALL[["NCA_CEMIPLIMAB_3mkg_350mg"]] =tabl
+
+  
+
+
+```
+
+
+
+
+
+```{r summary-posthoc-params-pd-responder}
+
+  tdata = OUT.NCA.PARAMS
+  tdata = tdata %>% left_join(adpx00 %>% distinct(USUBJID, .keep_all=TRUE) %>% select(USUBJID,BORIND), 
+                            by ="USUBJID")
+  
+  
+  
+  tabl =  tdata %>% calc_stats(id="USUBJID", group_by=c("STUDYID", "ARMA", "PARAMS", "BORIND"), value="DVOR") %>% 
+   select( STUDYID, PARAMS, BORIND, ARMA, N, Mean_CV, SE, SD, Median, PCT2P5, PCT97P5, GEOmean, GEOSD)   %>% 
+   filter(ARMA=="3 mg/kg Q2W IV")
+  
+  
+  TABLE_ALL[["NCA_CEMIPLIMAB_RESPONDER"]] = tabl4.NCA.PARAMS(tabl) 
+ 
+```
+
+
+
+
+
+
+  
+  
+  
+
+```{r summary-posthoc-general-params-steady-state}
+
+  #load(file="./data/simPK.Rdata") 
+
+   tdata = simPK %>% filter(TIME>=(treat_end-6*7), TIME<=treat_end)  %>% 
+      group_by_(.dots =c("STUDYID", "ARMA", "USUBJID")) %>%   
+           dplyr::summarise(
+             CMIN = DVOR[n()],  # the last conc at this time interval
+             CMAX = max(DVOR),
+             AUCtau = auc_partial(NTIM, DVOR),
+             CavgSS = AUCtau/(6*7)    # 6 wks
+           )   
+    
+   cor( tdata$CMIN, tdata$AUCtau, use = "everything", method = c("pearson"))
+  #[1] 0.992
+   cor( tdata$CMAX, tdata$AUCtau, use = "everything", method = c("pearson"))
+  #[1] 0.978
+   cor( tdata$CMAX, tdata$CMIN, use = "everything", method = c("pearson")) 
+  #[1] 0.946
+     
+   tdata = tdata %>% gather(PARAMS, DVOR, -STUDYID, -ARMA, -USUBJID)
+  
+
+
+  metrics.lst = c("CMIN",  "CavgSS", "CMAX", "AUCtau") 
+  arma.lst = c("1 mg/kg Q2W IV" , "3 mg/kg Q2W IV", "10 mg/kg Q2W IV", "200 mg Q2W IV", "3 mg/kg Q3W IV",  "350 mg Q3W IV")
+  
+  
+  tabl = tdata %>% calc_stats(id="USUBJID", group_by=c("ARMA","PARAMS" ), value="DVOR")  %>% 
+         select(PARAMS, ARMA, N, Mean_CV, SE, SD, Median, PCT2P5, PCT97P5, GEOmean, GEOSD)  %>% 
+         filter(PARAMS %in% metrics.lst) %>% ungroup() %>% 
+         mutate(PARAMS = ordered(PARAMS, levels=metrics.lst), 
+                ARMA = ordered(ARMA, arma.lst)) %>%
+         arrange(PARAMS, ARMA)
+  
+  tabl = tabl %>% mutate(Median_CI95=paste0(u.signif(Median, digits=3), "(", 
+                                            u.signif(PCT2P5, digits=3), "-", 
+                                            u.signif(PCT97P5, digits=3),")"),
+                         
+                         GEOmean_SD=paste0(u.signif(GEOmean, digits=3), "(", 
+                                           u.signif(GEOmean/GEOSD, digits=3), "-", 
+                                           u.signif(GEOmean*GEOSD, digits=3),")") ) 
+  
+   
+     
+  tabl =  tabl %>% 
+      mutate(Median=u.signif(Median, digits=3), 
+             PCT2P5=u.signif(PCT2P5, digits=3),
+             PCT97P5=u.signif(PCT97P5, digits=3), 
+             SE=u.signif(SE, digits=3),
+             SD=u.signif(SD, digits=3), 
+             GEOmean=u.signif(GEOmean, digits=3)
+      )
+  
+  tabl = tabl %>% select(-Median, -PCT2P5, -PCT97P5, -GEOmean, -GEOSD)
+
+ 
+  
+  tabl = tabl %>% mutate(PARAMS=as.character(PARAMS)) %>% 
+                        mutate(PARAMS=ifelse(PARAMS %in% c("CMIN", "CMAX", "CavgSS"),  
+                                       paste0(PARAMS, "\n(mg/L)"), 
+                                       paste0(PARAMS, "\n(mg*day*/L)")))
+  
+  tabl$PARAMS = gsub("CMAX", "Cmax,ss", tabl$PARAMS, fix=TRUE)
+  tabl$PARAMS = gsub("CMIN", "Ctrough,ss", tabl$PARAMS, fix=TRUE)
+  tabl$PARAMS = gsub("CavgSS", "Cavg,6wk,ss", tabl$PARAMS, fix=TRUE)
+  tabl$PARAMS = gsub("AUCtau", "AUC6wk,ss", tabl$PARAMS, fix=TRUE)
+  
+  colnames(tabl) = gsub("ARMA", "Dose", colnames(tabl))
+  colnames(tabl) = gsub("Median_CI95", "Median(CI95)", colnames(tabl))
+  colnames(tabl) = gsub("GEOmean_SD", "GEOmean(SD)", colnames(tabl))
+  colnames(tabl) = gsub("Mean_CV", "Mean(CV)", colnames(tabl))
+  colnames(tabl) = gsub("PARAMS", "Metrics", colnames(tabl))
+   
+  
+  tabl$Metrics[duplicated(tabl$Metrics)] = ""
+   
+  tabl %>% as.data.frame()
+  
+  
+  TABLE_ALL[["summary_posthoc_params"]] = tabl
+   
+  caption = "Descriptive Statistics For Cemiplimab PK Parameters at Steady-state in 6 Weeks Dosing in Patients with Solid Tumors in the Final PK Population Model"   
+  			
+  
+  knitr::kable(tabl, booktabs = TRUE, caption = caption)
+   
+ 
+ 
+```
+  
+   
+
+```{r summary-posthoc-params-covariate}
+
+
+  #load(file="./data/simPK.Rdata") 
+
+  tdata00 = simPK %>% filter(TIME>=(treat_end-6*7), TIME<=treat_end)  %>% 
+    group_by_(.dots =c("STUDYID", "ARMA", "USUBJID")) %>%   
+         dplyr::summarise(
+           CMIN = DVOR[n()],  # the last conc at this time interval
+           CMAX = max(DVOR),
+           AUCtau = auc_partial(NTIM, DVOR),
+           CavgSS = AUCtau/(6*7)    # 6 wks
+         )   
+  
+  tdata00 = tdata00 %>% gather(PARAMS, DVOR, -STUDYID, -ARMA, -USUBJID)
+  
+  # add adpx00 to tdata00
+  adpx = adpx00 %>% filter(C==".", EVID==0)
+  tdata = tdata00 %>% left_join(adpx[, c("USUBJID", setdiff(colnames(adpx00), colnames(tdata00)))] %>% distinct(USUBJID, .keep_all=TRUE), 
+                                by  = "USUBJID")
+  
+   
+  metrics.lst = c("CMIN",  "CavgSS", "CMAX", "AUCtau") 
+  arma.lst = c("1 mg/kg Q2W IV" , "3 mg/kg Q2W IV", "10 mg/kg Q2W IV", "200 mg Q2W IV", "3 mg/kg Q3W IV",  "350 mg Q3W IV")
+
+       
+  tdata$ARMA = trim(tdata$ARMA)
+  
+  tdata = as.data.frame(tdata)
+  
+  tdata = tdata %>% mutate(TUMTYPE3 = ifelse(TUMTYPE2%in%c("laCSCC", "mCSCC", "CSCC Patients"), "CSCC", 
+                                            ifelse(TUMTYPE2 %in% c("NSCLC(1L)" , "NSCLC"), "NSCLC", "Others")))
+  
+  tdata = tdata %>% mutate(TUMTYPE4 = ifelse(TUMTYPE2%in%c("laCSCC", "mCSCC"), TUMTYPE2, 
+                                            ifelse(TUMTYPE2 %in% c("NSCLC(1L)" , "NSCLC"), "NSCLC", "Others")))
+  
+  tdata = tdata %>% mutate(RACEGRP = ifelse(RACE%in%c("BLACK OR AFRICAN AMERICAN"), "Black", 
+                                            ifelse(RACE %in% c("ASIAN"), "Asia", 
+                                                   ifelse(RACE %in% "WHITE", "White", "Others"))))
+  
+   
+  #	Typically the range for normal albumin is reported between 35 to 55 g/L 
+  tdata = tdata %>% mutate(WGTBL=as_numeric(WGTBL)) %>% 
+              assign_Q(value="WGTBL", 
+                     quartile=c(0, 0.25, 0.5, 0.75, 1), 
+                      breaks = NULL 
+                     ) %>% arrange(Quantile) %>% 
+           #mutate(Q_LABEL=ordered(Q_LABEL, levels=unique(Q_LABEL)))  %>% 
+           mutate(WGTBL_Q_LABEL= Q_LABEL) %>% 
+           mutate(WGTBL_Quantile = Quantile)
+  
+  
+    #IGG 
+  tdata = tdata %>% mutate(IGGBL=as_numeric(IGGBL)) %>% 
+              assign_Q(value="IGGBL", 
+                     quartile=c(0, 0.25, 0.5, 0.75, 1), 
+                      breaks = NULL 
+                     ) %>% arrange(Quantile) %>% 
+           #mutate(Q_LABEL=ordered(Q_LABEL, levels=unique(Q_LABEL)))  %>% 
+           mutate(IGGBL_Q_LABEL= Q_LABEL) %>% 
+           mutate(IGGBL_Quantile = Quantile)
+  
+  
+   
+  #	Typically the range for normal albumin is reported between 35 to 55 g/L 
+  tdata = tdata %>% mutate(ALBBL=as_numeric(ALBBL)) %>% 
+              assign_Q(value="ALBBL", 
+                     quartile=NULL, 
+                     breaks=c(-Inf,30, 35, Inf )
+                     ) %>% arrange(Quantile) %>% 
+           #mutate(Q_LABEL=ordered(Q_LABEL, levels=unique(Q_LABEL)))  %>% 
+           mutate(ALBBL_Q_LABEL= Q_LABEL) %>% 
+           mutate(ALBBL_Quantile = Quantile)
+  
+  
+  #Normal creatinine clearance is 88–128 mL/min for healthy women and 97–137 mL/min for healthy men. 
+  # effect of severe renal impairment (CLcr 15 to 29 mL/min) 
+  # moderate renal impairment (CLcr 30 to 59 mL/min), 
+  # mild renal impairment (creatinine clearance (CLcr) 60 to 89 mL/min), 
+  
+  tdata = tdata %>% mutate(CRCLBL=as_numeric(CRCLBL)) %>% 
+                assign_Q(value="CRCLBL", 
+                     quartile=NULL, 
+                     breaks=c(-Inf, 30, 60, 89, Inf )
+                     ) %>% arrange(Quantile) %>% 
+           #mutate(Q_LABEL=ordered(Q_LABEL, levels=unique(Q_LABEL)))  %>% 
+           mutate(CRCLBL_Q_LABEL= Q_LABEL) %>% 
+           mutate(CRCLBL_Quantile = Quantile)
+  
+  
+  # # Total Bilirubin	: 3-25 umol/l (SI)
+  #(bilirubin less than or equal to ULN and AST greater than ULN or bilirubin greater than 1.0 to 1.5 times ULN and any AST), 
+  # severe hepatic impairment (bilirubin greater than 3.0 times ULN and any AST) 
+  tdata = tdata %>% mutate(BILIBL=as_numeric(BILIBL)) %>% 
+                assign_Q(value="BILIBL", 
+                     quartile=NULL, 
+                     breaks=c(-Inf, 3, 25, 38, Inf )
+                     ) %>% arrange(Quantile) %>% 
+           #mutate(Q_LABEL=ordered(Q_LABEL, levels=unique(Q_LABEL)))  %>% 
+           mutate(BILIBL_Q_LABEL= Q_LABEL)  %>% 
+           mutate(BILIBL_Quantile = Quantile)
+  
+  
+  #Typically the range for normal AST is reported between 10 to 40 units per liter and 
+  tdata = tdata %>% mutate(ASTBL=as_numeric(ASTBL)) %>% 
+                assign_Q(value="ASTBL", 
+                     quartile=NULL, 
+                     breaks=c(-Inf, 10, 40, 60, Inf )
+                     ) %>% arrange(Quantile) %>% 
+           #mutate(Q_LABEL=ordered(Q_LABEL, levels=unique(Q_LABEL)))  %>% 
+           mutate(ASTBL_Q_LABEL= Q_LABEL) %>% 
+           mutate(ASTBL_Quantile = Quantile)
+  
+  
+  # ALT between 7 to 56 units per liter. 
+  #Mild elevations are generally considered to be 2-3 times higher than the normal range.
+   tdata = tdata %>% mutate(ALTBL=as_numeric(ALTBL)) %>% 
+                    assign_Q(value="ALTBL", 
+                     quartile=NULL, 
+                     breaks=c(-Inf, 7, 56, 84, Inf)
+                     ) %>% arrange(Quantile) %>% 
+           #mutate(Q_LABEL=ordered(Q_LABEL, levels=unique(Q_LABEL)))  %>% 
+           mutate(ALTBL_Q_LABEL= Q_LABEL) %>% 
+           mutate(ALTBL_Quantile = Quantile)
+  
+  
+  
+  cov.lst = c("STDY", "STDYPHSE",  "FASCSFLN", "CSCCP2FN",  "BORIND", "MONOTFLN",   # "COHORT", 
+              "SEX", "RACEGRP", "ETHGR1", "AGEGR2", "COUNTRYC", 
+              "ADASTA", "NABSTA", 
+              "TUMTYPE3", "TUMTYPE4",  "ECOGBL", "METSTAT",
+              "CORTFLN") 
+  
+  cov.lst2 = c("WGTBL", "ALBBL", "IGGBL", "CRCLBL", "BILIBL", "ASTBL", "ALTBL"   )
+  
+  cov.lst = c(cov.lst, cov.lst2)
+  
+  stopifnot(length(setdiff(cov.lst, colnames(tdata)))==0)
+  
+  tdata.COV <- lapply(cov.lst, function(cov.name) {
+    print(cov.name)
+      tdata$COV.Name = cov.name
+      tdata$COV.Value = tdata[, cov.name]
+      tdata$COV.Quantile = "Quantile"
+      
+      if (cov.name %in% cov.lst2) { 
+        tdata$COV.Value = tdata[, paste0(cov.name, "_Q_LABEL")]  # cov.name]
+        tdata$COV.Quantile = tdata[, paste0(cov.name, "_Quantile")]
+      }
+      
+      group_by=c("ARMA","PARAMS", "COV.Name", "COV.Value", "COV.Quantile")
+      tdata %>% calc_stats(group_by=group_by, value="DVOR") %>% 
+        select(one_of(group_by), N, Mean_SD, GEOmean_SD) %>% ungroup() %>%
+        mutate(COV.Value=as.character(COV.Value)) %>% 
+        mutate(COV.Quantile=as.character(COV.Quantile))   
+        #rename("COV"=one_of(cov.name)) %>% select(-one_of(cov.name))
+  })  %>% bind_rows()
+  
+  table(tdata.COV$COV.Name)
+  dim(tdata.COV )
+  
+  
+   tdata.COV %>% filter(ARMA=="3 mg/kg Q2W IV", PARAMS=="AUCtau", COV.Name=="IGGBL")
+   
+   
+   
+   
+   
+   
+   
+  # from tdata.COV to tabl 
+  tabl = tdata.COV %>% select(-GEOmean_SD) %>% spread(ARMA, Mean_SD) %>% ungroup()  #@  Mean_SD     GEOmean_SD
+  
+  tabl = tabl %>% mutate(PARAMS=ordered(PARAMS, levels=c("AUCtau", "CMIN",  "CMAX", "CavgSS")))
+  
+  tabl = tabl %>% mutate(COV.Name=ordered(COV.Name, levels=cov.lst))
+  tabl = tabl %>% arrange(PARAMS, COV.Name, COV.Quantile)
+   
+    
+  tabl = tabl %>% select(-one_of("1 mg/kg Q2W IV", "10 mg/kg Q2W IV", "200 mg Q2W IV" ))
+  tabl1 = tabl %>% filter(PARAMS=="AUCtau") %>% select(-COV.Quantile)
+  tabl2 = tabl %>% filter(PARAMS=="CMIN")
+  tdata  = cbind(tabl1[, c("PARAMS", "COV.Name", "COV.Value", "N" ,
+                           "3 mg/kg Q3W IV", "3 mg/kg Q2W IV",   "350 mg Q3W IV")], 
+                 tabl2[, c( "3 mg/kg Q3W IV", "3 mg/kg Q2W IV",   "350 mg Q3W IV")])
+  
+  colnames(tdata) <- c("PARAMS", "COV.Name", "COV.Value", "N" , #"COV.Quantile" ,  
+   "3 mg/kg Q3W IV (AUC)",     "3 mg/kg Q2W IV (AUC)",        "350 mg Q3W IV (AUC)",  
+   "3 mg/kg Q3W IV (Ctrough)", "3 mg/kg Q2W IV (Ctrough)",    "350 mg Q3W IV (Ctrough)")
+   
+  tabl =  tdata[, c(2,3,4, 5,8, 6,9, 7,10)] %>% rename(cov_name=COV.Name, cov_value=COV.Value)
+  
+   
+  cov_cov_name_value <- function(tabl) {
+    tabl$cov_name = gsub("STDYPHSE", "Phase", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("STDY", "Study", tabl$cov_name, fix=TRUE)
+    
+    tabl$cov_name = gsub("METSTAT", "Metastasis Status", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("WGTBL", "Weight Quantile\n(kg)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("SEX", "Sex", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("ETHGR1", "Ethnicity", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("RACEGR1", "Race", tabl$cov_name, fix=TRUE)
+    
+    tabl$cov_name = gsub("FASCSFLN", "CSCC flag\n(Efficacy)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("CSCCP2FN", "CSCC flag\n (1540)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("BORIND", "Responder flag", tabl$cov_name, fix=TRUE)
+      
+    tabl$cov_name = gsub("MONOTFLN", "Monotherapy flag", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("RACEGR1", "Race flag", tabl$cov_name, fix=TRUE)
+     
+    tabl$cov_name = gsub("AGEGR2", "Age group\n(year)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("COUNTRYC", "Country", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("ADASTA", "ADA status\n Treatment emergent", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("NABSTA", "Neutralized\n AB status", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("TUMTYPE3", "Tumor type 1", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("TUMTYPE4", "Tumor type 2", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("CORTFLN", "Corticosteroid", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("ECOGBL", "Baseline ECOG", tabl$cov_name, fix=TRUE)
+    
+  
+    tabl$cov_name = gsub("AGE", "Age\n(year)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("WGTBL", "Weight\n(kg)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("HGTBL", "Height\n(cm)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("ALBBL", "Albumin\n(g/L)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("BMIBL", "BMI\n(kg/m2)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("CREATBL", "Creatinine\n(umol/L)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("CRCLBL", "Creatinine \nClearance (mL/min)", tabl$cov_name, fix=TRUE)    
+    tabl$cov_name = gsub("ALTBL", "ALT\n(IU/L)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("ASTBL", "AST\n(IU/L)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("BILIBL", "Total Bilirubin\n(umol/L)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("IGGBL", "IGG\n(g/L)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("LDHBL", "LDH\n(IU/L)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("ALPBL", "ALP\n(IU/L)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("IGGBL", "IgG\n(g/L)", tabl$cov_name, fix=TRUE)
+    
+    tabl$cov_value = gsub("HISPANIC OR LATINO", "Hispanic/Latino", tabl$cov_value, fix=TRUE)
+    tabl$cov_value = gsub("NOT HISPANIC OR LATINO", "Not Hispanic/Latino", tabl$cov_value, fix=TRUE)
+    tabl$cov_value = gsub("NOT REPORTED", "Not Reported", tabl$cov_value, fix=TRUE)
+    
+    tabl$cov_value = gsub("WHITE", "White", tabl$cov_value, fix=TRUE)
+    tabl$cov_value = gsub("ASIAN", "Asian", tabl$cov_value, fix=TRUE)
+    tabl$cov_value = gsub("BLACK OR AFRICAN AMERICAN", "Black", tabl$cov_value, fix=TRUE)
+    tabl$cov_value = gsub("OTHERS", "Others", tabl$cov_value, fix=TRUE)
+    tabl$cov_value = gsub("NEGATIVE", "Negative", tabl$cov_value, fix=TRUE)
+    tabl$cov_value = gsub("POSITIVE", "Positive", tabl$cov_value, fix=TRUE)
+       
+    tabl$cov_value = gsub("DOSE ESCALATION", "Escalation", tabl$cov_value, fix=TRUE)
+    tabl$cov_value = gsub("EXPANSION", "Expansion", tabl$cov_value, fix=TRUE)
+        
+       
+    tabl$cov_value = gsub("United States of America", "US", tabl$cov_value, fix=TRUE)
+    
+    tabl$cov_value = gsub("[-Inf,30]", "<30", tabl$cov_value, fix=TRUE)
+    tabl$cov_value = gsub("(35, Inf]", ">35", tabl$cov_value, fix=TRUE)
+    
+    tabl$cov_value = gsub("[-Inf,3]", "<3", tabl$cov_value, fix=TRUE)
+    tabl$cov_value = gsub("(89, Inf]", ">89", tabl$cov_value, fix=TRUE)
+  
+    tabl$cov_value = gsub("(38, Inf]", ">38", tabl$cov_value, fix=TRUE)
+    tabl$cov_value = gsub("[-Inf,10]", "<10", tabl$cov_value, fix=TRUE)
+    tabl$cov_value = gsub("(60, Inf]", ">60", tabl$cov_value, fix=TRUE)
+    
+    tabl$cov_value = gsub("[-Inf,7]", "<7", tabl$cov_value, fix=TRUE)
+    tabl$cov_value = gsub("(84, Inf]", ">84", tabl$cov_value, fix=TRUE)
+      
+  
+    tabl$cov_name[which(duplicated(tabl$cov_name))] = ""
+  
+    return(tabl)    
+  }
+  
+  
+  tabl = cov_cov_name_value(tabl) 
+  colnames(tabl) = gsub("cov_name", "Covariate",  colnames(tabl), fix=TRUE)     
+  colnames(tabl) = gsub("cov_value", "Value",  colnames(tabl), fix=TRUE)  
+  colnames(tabl) = gsub("Ctrough", "Ctrough,ss\n(mg/L)",colnames(tabl), fix=TRUE)
+  colnames(tabl) = gsub("AUC", "AUC6wk,ss\n(day*mg/L)", colnames(tabl),fix=TRUE)
+  
+  tabl = tabl[, c(1,2,3,   6,7,8,9)]   # no 3 mg/kg Q3W IV (AUC) 3 mg/kg Q3W IV (Ctrough)
+  
+  TABLE_ALL[["summary_posthoc_params_covariate"]] = tabl
+  
+    
+ 
+caption = "Summary (Mean±SD) of Individual Post-Hoc Estimates of Exposure at Steady State (AUCss and Ctrough) of Cemiplimab at the Proposed Regimens of 3 mg/kg Q2W and 350 mg Q3W by Covariates and Patient Stratifications"
+# knitr::kable(tabl, booktabs = TRUE, caption = caption)
+ 
+# #individually population predicted post-hoc estimations for CSCC patients with descriptive statistics
+# 2) post-hoc estimations of exposure and PK parameters for the CSCC patients (i.e. ).
+```
+
+
+
+
+
+```{r fun-tornado-plot  }
+
+  ##############################################################################
+  ## Rapp 86. The applicant should provide a tornado plot showing the influence of 
+  # all statistically relevant covariate on the AUC and Ctrough exposure range in steady state.
+#  Tornado Plot of covariate effects on pharmacokinetics and efficacy parameters of TAK-875. The reference line represents the typical subject in this population: a 52-year-old female subject with AST level of 21U/L, BFPG of 163.5?mg/dl and having diabetes for 4.61 years. Extreme values represent 5th and 95th percentile value observed for a covariate in this phase 2 study. AST, aspartate aminotransferase; BFPG, baseline fasting plasma glucose; DD, disease duration.
+  ##############################################################################
+
+   tdata00 = simPK %>% filter(TIME>=(treat_end-6*7), TIME<=treat_end)  %>% 
+      group_by_(.dots =c("STUDYID", "ARMA", "USUBJID")) %>%   
+           dplyr::summarise(
+             CMIN = DVOR[n()],  # the last conc at this time interval
+             CMAX = max(DVOR),
+             AUCtau = auc_partial(NTIM, DVOR),
+             CavgSS = AUCtau/(6*7)    # 6 wks
+           )   
+    
+   #cor( tdata$CMIN, tdata$AUCtau, use = "everything", method = c("pearson"))
+  #[1] 0.992
+   #cor( tdata$CMAX, tdata$AUCtau, use = "everything", method = c("pearson"))
+  #[1] 0.978
+   #cor( tdata$CMAX, tdata$CMIN, use = "everything", method = c("pearson")) 
+  #[1] 0.946
+     
+  tdata00 = tdata00 %>% gather(PARAMS, DVOR, -STUDYID, -ARMA, -USUBJID)
+ 
+  # "CMIN"   "CMAX"   "AUCtau" "CavgSS"
+  tdata00 = left_join(tdata00 %>% filter(PARAMS %in% c("AUCtau", "CMIN")), 
+                    adpx00%>%distinct(USUBJID, .keep_all=TRUE)%>% select(-STUDYID, -ARMA, -DVOR), 
+                    by="USUBJID")
+  
+  tdata00$ARMA = trim(tdata00$ARMA)
+  tdata00 = tdata00 %>% as.data.frame()
+ 
+  
+   
+  # from tdata to tt_al
+  calc_tt_all <-  function(tdata) { 
+    tt_all= NULL
+    
+  cov1.lst = c("WGTBL", "ALBBL", "CRCLBL", "BMIBL", "CREATBL",  "IGGBL",  "ALTBL",  "ASTBL",  "BILIBL",  "LDHBL",  "ALPBL")
+  for (i in 1:length(cov1.lst)) { 
+    cov.name = cov1.lst[i]
+    tdata[, cov.name] = as_numeric(tdata[, cov.name])
+  
+    tmp = assign_Q(tdata, value=cov.name, quartile=c(0, 0.1,  0.9, 1))
+    
+    tt = tmp %>% filter(Quantile %in% c("Q1", "Q3")) %>% 
+      group_by(PARAMS, ARMA, Quantile, Q_LABEL) %>% 
+      summarise(N = length(unique(USUBJID)), 
+                Median=median(DVOR, na.rm=TRUE), 
+                Mean=mean(DVOR, na.rm=TRUE), 
+                SD =sd(DVOR, na.rm=TRUE),
+                SE =fun.SE(DVOR), 
+                PCT2P5 = fun.pct2p5(DVOR), 
+                PCT97P5 = fun.pct97p5(DVOR) 
+                )#%>%
+      #mutate(DIFF=Median-ref_PK)
+    tt$CAT = cov.name
+    
+    tt_all = rbind(tt_all, tt)
+  }
+  
+  
+  cov2.lst = c("SEX", "CSCCP2F", "ADASTA", "CORTFLN")
+  for (i in 1:length(cov2.lst)) { 
+    cov.name = cov2.lst[i]
+   
+    tt = tdata %>% filter(ADASTA!=".") %>% 
+      mutate_(Quantile= cov.name, Q_LABEL=cov.name) %>% 
+      mutate(Quantile=as.character(Quantile), Q_LABEL=as.character(Q_LABEL)) %>% 
+      group_by(PARAMS, ARMA, Quantile, Q_LABEL) %>% 
+      summarise(N = length(unique(USUBJID)), 
+                Median=median(DVOR, na.rm=TRUE), 
+                Mean=mean(DVOR, na.rm=TRUE), 
+                SD =sd(DVOR, na.rm=TRUE),
+                SE =fun.SE(DVOR), 
+                PCT2P5 = fun.pct2p5(DVOR), 
+                PCT97P5 = fun.pct97p5(DVOR) 
+                )#%>%
+    tt$CAT = cov.name
+    
+    tt_all = rbind(tt_all, tt)
+  }
+  
+   #calculate the reference PK
+   tmp = tdata %>% group_by(PARAMS, ARMA) %>% summarise(REF_PK=median(DVOR, na.rm=TRUE))
+   tt_all = tt_all %>% left_join(tmp, by=c("PARAMS", "ARMA"))  %>% 
+             mutate(DIFF=Median-REF_PK)
+   
+   # add range, to order the category 
+   tmp = tt_all %>% group_by(PARAMS, ARMA, CAT) %>% summarise(RANGE = max(DIFF)-min(DIFF))
+   tt_all = tt_all %>% ungroup() %>% left_join(tmp, by=c("PARAMS", "ARMA", "CAT")) %>% 
+     dplyr::arrange(PARAMS, ARMA, RANGE)
+   
+  
+  tt_all$CAT = ordered(tt_all$CAT, levels=unique(tt_all%>%pull(CAT)) )
+  
+  return(tt_all)
+  }
+   
+ 
+  ref_PK = tdata00 %>% filter(PARAMS=="AUCtau", ARMA=="3 mg/kg Q2W IV") %>% 
+          summarise(Median=median(DVOR, na.rm=TRUE)) %>% as_numeric()
+  print(paste0("ref_AUC at SS=", u.signif(ref_PK, digits=3)))
+     
+ 
+  tt_all =  calc_tt_all(tdata00)
+  
+  
+```
+
+
+
+```{r tornado-AUCtau, fig.cap='Tornado Plot of Steady-state AUC0-6wks by Relevant Covariates in 3 mg/kg Q2W', fig.align='center', fig.height=6, fig.width=9}
+
+  tdata = tdata00 %>% filter(ADASTA!=".") %>% as.data.frame()
+  
+  ref_PK_1MKG = tdata %>% filter(PARAMS=="AUCtau", ARMA=="1 mg/kg Q2W IV") %>% 
+          summarise(Median=median(DVOR, na.rm=TRUE)) %>% as_numeric()
+
+  
+  ref_PK_10MKG = tdata %>% filter(PARAMS=="AUCtau", ARMA=="10 mg/kg Q2W IV") %>% 
+          summarise(Median=median(DVOR, na.rm=TRUE)) %>% as_numeric()
+
+  ref_PK = tdata %>% filter(PARAMS=="AUCtau", ARMA=="3 mg/kg Q2W IV") %>% 
+          summarise(Median=median(DVOR, na.rm=TRUE)) %>% as_numeric()
+  
+  print(paste0("ref_AUC_1MKG at SS=", u.signif(ref_PK_1MKG, digits=3)))
+  print(paste0("ref_AUC_10MKG at SS=", u.signif(ref_PK_10MKG, digits=3)))
+  print(paste0("ref_AUC_3MKG at SS=", u.signif(ref_PK, digits=3)))
+     
+     
+    # for plot
+    #------------------------------------
+  tt_all$ARMA = trim(tt_all$ARMA)
+  tt = tt_all %>% mutate(PCHG= (Median/REF_PK ), 
+                             SE= (SE/REF_PK), 
+                             SD= (SD/REF_PK),
+                             PCT2P5= (PCT2P5/REF_PK),
+                             PCT97P5= (PCT97P5/REF_PK)
+                             )
+  
+  t1 = tt %>% filter(PARAMS=="AUCtau", ARMA=="3 mg/kg Q2W IV")
+   
+  fig = ggplot(t1 , aes(CAT, PCHG, fill=CAT, label = Q_LABEL)) +
+      #ggtitle("Influence of Relevant Covariates on the AUC at steasddy state") + 
+      ylab("Fold-change in Relation to Reference AUCss") + xlab("") + 
+      #ylim(-800, 800) + 
+      geom_point(position="identity", stat="identity")  +  coord_flip()  + 
+      geom_line(position="identity", stat="identity")   +  
+      scale_y_continuous(trans='log2', 
+                        breaks=c(seq(0.2, 1.2, by=0.2), seq(1.6, 3, by=0.6))) + 
+   
+       #geom_text(size = 3, position = position_dodge(width = 0.9), hjust=-0.1, check_overlap=TRUE) + 
+       theme(plot.margin=unit(c(0.5,0.75,0.5,0.5),"cm")) + 
+        geom_hline(yintercept= (1), color="black", lwd=0.5, lty="dashed") +  
+    
+    geom_hline(yintercept= (c(ref_PK_1MKG)/ref_PK), lwd=0.5, lty="dashed", col="blue") +  
+    geom_hline(yintercept= (c(ref_PK_10MKG)/ref_PK), lwd=0.5, lty="dashed", col="red") +  
+    
+    geom_hline(yintercept= (c(0.75, 1.25)), lwd=0.5, lty="dashed", col="green") +  
+    
+    
+    base_theme(font.size = 12) + 
+    
+   theme(legend.position='none', 
+         panel.grid.minor= element_line(colour = "gray95",size=0.5),
+         panel.grid.major= element_line(colour = "gray95",size=0.5),
+         panel.spacing = unit(0.2, "lines"), 
+         panel.border=element_rect(colour="black", fill=NA), 
+         strip.background = element_blank()   # element_rect(colour=NA, fill=NA),
+   )  
+   
+  
+  
+  FIGURE_ALL[["tornado_AUCtau"]] = fig
+  
+  
+  fig
+  
+```
+
+
+
+```{r tornado-AUCtau-505-patients-TABLE}
+
+    tt_all$ARMA = trim(tt_all$ARMA) 
+    t1 = tt_all %>% filter(PARAMS=="AUCtau", ARMA=="3 mg/kg Q2W IV")
+     
+    tabl =t1 %>%  
+       mutate(Mean=u.signif(Mean, digits=3),
+             SD = u.signif(SD, digits=3),
+             SE = u.signif(SE, digits=3),
+             
+        Median_CI95 = paste0(u.signif(Median,digits=3), "(",
+                                u.signif(PCT2P5, digits=3),"-", 
+                                u.signif(PCT97P5,digits=3),")"))  %>% 
+    
+        select(CAT, Quantile, Q_LABEL, N, Mean, SD, SE, Median_CI95)  %>% 
+        rename(cov_name=CAT, cov_value=Quantile)
+    
+
+    tabl = cov_cov_name_value(tabl) 
+    tabl$cov_value = gsub("Q1", "10%", tabl$cov_value,  fix=TRUE)
+    tabl$cov_value = gsub("Q3", "90%", tabl$cov_value,  fix=TRUE)
+
+    
+    colnames(tabl) = gsub("cov_name", "Covariate", colnames(tabl), fix=TRUE)
+    colnames(tabl) = gsub("cov_value", "Top 90% or \nBottom 10% or Category", colnames(tabl), fix=TRUE)
+    colnames(tabl) = gsub("Q_LABEL", "Value", colnames(tabl), fix=TRUE)
+    
+    
+    tabl$Covariate[duplicated(tabl$Covariate)] = ""
+
+
+   TABLE_ALL[["TORNADO_TABLE_AUCSS"]] = tabl
+
+
+
+```
+
+
+ 
+
+
+<br>
+<br>
+  
+```{r tornado-CMIN, fig.cap='Tornado Plot of Steady-state Ctrough by Relevant Covariates in 3 mg/kg Q2W', fig.align='center', fig.height=6, fig.width=9}
+
+  #------------------------------------------------
+  # for plot
+  #------------------------------------
+  t1 = tt_all %>% filter(PARAMS=="CMIN", ARMA=="3 mg/kg Q2W*24 IV")
+  
+  tdata = tdata %>% as.data.frame()
+  
+  ref_PK_1MKG = tdata %>% filter(PARAMS=="CMIN", ARMA=="1 mg/kg Q2W IV") %>% 
+          summarise(Median=median(DVOR, na.rm=TRUE)) %>% as_numeric()
+
+  ref_PK_10MKG = tdata %>% filter(PARAMS=="CMIN", ARMA=="10 mg/kg Q2W IV") %>% 
+          summarise(Median=median(DVOR, na.rm=TRUE)) %>% as_numeric()
+
+  ref_PK = tdata %>% filter(PARAMS=="CMIN", ARMA=="3 mg/kg Q2W IV") %>% 
+          summarise(Median=median(DVOR, na.rm=TRUE)) %>% as_numeric()
+  
+  # for plot
+  #------------------------------------
+  tt_all$ARMA = trim(tt_all$ARMA)
+  tt_all = tt_all %>% mutate(PCHG=(Median/REF_PK ))
+  
+  t1 = tt_all %>% filter(PARAMS=="CMIN", ARMA=="3 mg/kg Q2W IV")
+ 
+  fig = ggplot(t1 , aes(CAT, PCHG, fill=CAT, label = Q_LABEL)) +
+      #ggtitle("Influence of Relevant Covariates on the AUC at steasddy state") + 
+      ylab("Fold-change in Relation to Reference Ctrough,ss") + xlab("") + 
+      #ylim(-800, 800) + 
+      geom_point(position="identity", stat="identity")  +  coord_flip()  + 
+     geom_line(position="identity", stat="identity")  +  coord_flip()  +  
+     scale_y_continuous(trans='log2', 
+                        breaks=c(seq(0.2, 1.2, by=0.2), seq(1.6, 3, by=0.6))) + 
+      # geom_errorbar(aes(ymin=PCHG-0.1*PCHG, ymax=PCHG+0.1*PCHG),
+      #             size=.3,    # Thinner lines
+      #             width=.2,
+      #             position=position_dodge(.9)) +
+  
+    
+       #geom_text(size = 3, position = position_dodge(width = 0.9), hjust=-0.1, check_overlap=TRUE) + 
+       theme(plot.margin=unit(c(0.5,0.75,0.5,0.5),"cm")) + 
+        geom_hline(yintercept=1, color="black", lwd=0.5, lty="dashed") +  
+    
+    geom_hline(yintercept=(c(ref_PK_1MKG)/ref_PK), lwd=0.5, lty="dashed", col="blue") +  
+    geom_hline(yintercept=(c(ref_PK_10MKG)/ref_PK), lwd=0.5, lty="dashed", col="red") +  
+    
+    geom_hline(yintercept=(c(0.75, 1.25)), lwd=0.5, lty="dashed", col="green") +  
+    
+    base_theme(font.size = 12) + 
+    
+   theme(legend.position='none', 
+         panel.grid.minor= element_line(colour = "gray95",size=0.5),
+         panel.grid.major= element_line(colour = "gray95",size=0.5),
+         panel.spacing = unit(0.2, "lines"), 
+         panel.border=element_rect(colour="black", fill=NA), 
+         strip.background = element_blank()   # element_rect(colour=NA, fill=NA),
+   )  
+   
+  
+  
+  FIGURE_ALL[["tornado_CMIN"]] = fig
+  
+  fig
+  
+  
+  
+  
+```  
+  
+  
+  
+  
+
+```{r tornado-CMIN-TABLE}
+
+
+tt_all$ARMA = trim(tt_all$ARMA)
+# tt = tt_all %>% mutate(PCHG=log(Median/REF_PK ), 
+#                            SE=log(SE/REF_PK), 
+#                            SD=log(SD/REF_PK),
+#                            PCT2P5=log(PCT2P5/REF_PK),
+#                            PCT97P5=log(PCT97P5/REF_PK)
+#                            )
+
+t1 = tt_all %>% filter(PARAMS=="CMIN", ARMA=="3 mg/kg Q2W IV")
+ 
+
+
+tabl =t1 %>%  
+  mutate(Mean=u.signif(Mean, digits=3),
+         SD = u.signif(SD, digits=3),
+         SE = u.signif(SE, digits=3),
+         
+    Median_CI95 = paste0(u.signif(Median,digits=3), "(",
+                            u.signif(PCT2P5, digits=3),"-", 
+                            u.signif(PCT97P5,digits=3),")"))  %>% 
+
+  select(CAT, Quantile, Q_LABEL, N, Mean, SD, SE, Median_CI95)  %>% 
+  rename(cov_name=CAT, cov_value=Quantile)
+
+  tabl = cov_cov_name_value(tabl) 
+  tabl$cov_value = gsub("Q1", "10%", tabl$cov_value,  fix=TRUE)
+  tabl$cov_value = gsub("Q3", "90%", tabl$cov_value,  fix=TRUE)
+  
+  
+  colnames(tabl) = gsub("cov_name", "Covariate", colnames(tabl), fix=TRUE)
+  colnames(tabl) = gsub("cov_value", "Top 90% or \nBottom 10% or Category", colnames(tabl), fix=TRUE)
+  colnames(tabl) = gsub("Q_LABEL", "Value", colnames(tabl), fix=TRUE)
+  
+  
+  tabl$Covariate[duplicated(tabl$Covariate)] = ""
+
+
+
+TABLE_ALL[["TORNADO_TABLE_CMIN"]] = tabl
+
+
+
+```
+
+
+
+
+ 
+ 
+
+
+
+
+
+```{r summary-posthoc-params-WGTBL-3mkg} 
+
+
+
+summary_tabl_covariate <- function(tdata) { 
+    # tdata %>% group_by(PARAMS, WGTBL_Quantile, WGTBL_Q_LABEL) %>% summa
+    group_by=c("ARMA", "PARAMS", "Quantile", "Q_LABEL")
+    tabl = tdata %>%  group_by_(.dots =c(group_by )) %>%  
+            dplyr::summarise(N=length(unique(USUBJID)),
+                             AUC_Median_SD=paste0(u.signif(mean(DVOR,na.rm=TRUE), digits=3), "(", 
+                                             u.signif(sd(DVOR,na.rm=TRUE), digits=3), ")" ),
+                             WGT_Median_SD=paste0(u.signif(mean(WGTBL,na.rm=TRUE), digits=3), "(", 
+                                             u.signif(sd(WGTBL,na.rm=TRUE), digits=3), ")" ),
+                             ALB_Median_SD=paste0(u.signif(mean(ALBBL,na.rm=TRUE), digits=3), "(", 
+                                             u.signif(sd(ALBBL,na.rm=TRUE), digits=3), ")" ),
+                             IGG_Median_SD=paste0(u.signif(mean(IGGBL,na.rm=TRUE), digits=3), "(", 
+                                             u.signif(sd(IGGBL,na.rm=TRUE), digits=3), ")" ),
+                             CRCL_Median_SD=paste0(u.signif(mean(CRCLBL,na.rm=TRUE), digits=3), "(", 
+                                             u.signif(sd(CRCLBL,na.rm=TRUE), digits=3), ")" ),
+                             ALP_Median_SD=paste0(u.signif(mean(ALPBL,na.rm=TRUE), digits=3), "(", 
+                                             u.signif(sd(ALPBL,na.rm=TRUE), digits=3), ")" ) 
+                             
+            ) 
+
+        
+return(tabl)
+}
+
+tdata = tdata00   # calculated in tornado plots
+
+tdata$ARMA = trim(tdata$ARMA)
+#tdata = tdata %>% filter(ARMA=="3 mg/kg Q2W IV", PARAMS=="AUCtau") %>% distinct(USUBJID, .keep_all=TRUE)
+
+tdata = tdata %>% filter(ARMA=="3 mg/kg Q2W IV", PARAMS=="AUCtau") %>% distinct(USUBJID, .keep_all=TRUE)
+
+#	Typically the range for normal albumin is reported between 35 to 55 g/L 
+tdata = tdata %>% mutate(WGTBL=as_numeric(WGTBL)) %>% 
+            assign_Q(value="WGTBL", 
+                   quartile=c(0, 0.25, 0.5, 0.75, 1), 
+                    breaks = NULL 
+                   ) %>% arrange(Quantile)
+tabl1 = summary_tabl_covariate(tdata)  
+
+
+tdata = tdata %>% mutate(WGTBL=as_numeric(WGTBL)) %>% 
+            assign_Q(value="WGTBL", 
+                   quartile=NULL, 
+                    breaks =  c(-Inf,60, 100, 125, Inf) 
+                   ) %>% arrange(Quantile)
+tabl2 = summary_tabl_covariate(tdata) 
+
+tabl = bind_rows(tabl1, tabl2)  %>% ungroup() %>% select(-ARMA, -PARAMS)
+
+tabl$Q_LABEL = gsub("[-Inf,60]", "<60",tabl$Q_LABEL,  fix=TRUE)
+tabl$Q_LABEL = gsub("(125, Inf]", ">125",tabl$Q_LABEL,  fix=TRUE)
+
+#colnames(tabl) = gsub("WGTBL_Quantile", "Quantile \n of weight", colnames(tabl), fixed=TRUE)
+colnames(tabl) = gsub("Q_LABEL", "Weight (kg)", colnames(tabl), fixed=TRUE) 
+colnames(tabl) = gsub("Median_SD", "Median(SD)", colnames(tabl), fixed=TRUE) 
+
+
+TABLE_ALL[["summary_posthoc_params_WGTBL_3mkg"]] = tabl
+
+
+
+```
+
+ 
+```{r summary-posthoc-params-WGTBL-350mg} 
+
+tdata = tdata00   # calculated in tornado plots
+
+tdata$ARMA = trim(tdata$ARMA)
+#tdata = tdata %>% filter(ARMA=="3 mg/kg Q2W IV", PARAMS=="AUCtau") %>% distinct(USUBJID, .keep_all=TRUE)
+
+tdata = tdata %>% filter(ARMA=="350 mg Q3W IV", PARAMS=="AUCtau") %>% distinct(USUBJID, .keep_all=TRUE)
+
+#	Typically the range for normal albumin is reported between 35 to 55 g/L 
+tdata = tdata %>% mutate(WGTBL=as_numeric(WGTBL)) %>% 
+            assign_Q(value="WGTBL", 
+                   quartile=c(0, 0.25, 0.5, 0.75, 1), 
+                    breaks = NULL 
+                   ) %>% arrange(Quantile)
+tabl1 = summary_tabl_covariate(tdata)  
+
+
+tdata = tdata %>% mutate(WGTBL=as_numeric(WGTBL)) %>% 
+            assign_Q(value="WGTBL", 
+                   quartile=NULL, 
+                    breaks =  c(-Inf,60, 100, 125, Inf) 
+                   ) %>% arrange(Quantile)
+tabl2 = summary_tabl_covariate(tdata) 
+
+tabl = bind_rows(tabl1, tabl2)  %>% ungroup() %>% select(-ARMA, -PARAMS)
+
+tabl$Q_LABEL = gsub("[-Inf,60]", "<60",tabl$Q_LABEL,  fix=TRUE)
+tabl$Q_LABEL = gsub("(125, Inf]", ">125",tabl$Q_LABEL,  fix=TRUE)
+
+#colnames(tabl) = gsub("WGTBL_Quantile", "Quantile \n of weight", colnames(tabl), fixed=TRUE)
+colnames(tabl) = gsub("Q_LABEL", "Weight (kg)", colnames(tabl), fixed=TRUE) 
+colnames(tabl) = gsub("Median_SD", "Median(SD)", colnames(tabl), fixed=TRUE) 
+
+
+TABLE_ALL[["summary_posthoc_params_WGTBL_350mg"]] = tabl
+
+
+
+``` 
+
+
+
+
+
+
+```{r summary-posthoc-params-CRCL}
+ 
+tdata = tdata00   # calculated in tornado plots
+
+tdata$ARMA = trim(tdata$ARMA)
+tdata = tdata %>% filter(ARMA=="3 mg/kg Q2W IV", PARAMS=="AUCtau") %>% distinct(USUBJID, .keep_all=TRUE)
+ 
+tdata = tdata %>% mutate(WGTBL=as_numeric(WGTBL)) %>% 
+            assign_Q(value="CRCLBL", 
+                   quartile=NULL, 
+                    breaks =  c(-Inf,30, 60, 89, Inf) 
+                   ) %>% arrange(Quantile)
+tabl = summary_tabl_covariate(tdata)  %>% ungroup() %>% select(-ARMA, -PARAMS)
+
+tabl$Q_LABEL = gsub("[-Inf,30]", "<30",tabl$Q_LABEL,  fix=TRUE)
+tabl$Q_LABEL = gsub("(89, Inf]", ">89",tabl$Q_LABEL,  fix=TRUE)
+ 
+colnames(tabl) = gsub("Q_LABEL", "CRCL((mL/min))", colnames(tabl), fixed=TRUE) 
+colnames(tabl) = gsub("Median_SD", "Median(SD)", colnames(tabl), fixed=TRUE) 
+
+
+TABLE_ALL[["summary_posthoc_params_CRCL"]] = tabl
+
+
+ 
+
+```
+
+
+```{r summary-posthoc-params-BILI}
+ 
+tdata = tdata00   # calculated in tornado plots
+
+tdata$ARMA = trim(tdata$ARMA)
+tdata = tdata %>% filter(ARMA=="3 mg/kg Q2W IV", PARAMS=="AUCtau") %>% distinct(USUBJID, .keep_all=TRUE)
+ 
+tdata = tdata %>% mutate(WGTBL=as_numeric(WGTBL)) %>% 
+            assign_Q(value="BILIBL", 
+                   quartile=NULL, 
+                    breaks =  c(-Inf,3,25,38, Inf) 
+                   ) %>% arrange(Quantile)
+tabl = summary_tabl_covariate(tdata)  %>% ungroup() %>% select(-ARMA, -PARAMS)
+
+tabl$Q_LABEL = gsub("[-Inf,3]", "<3",tabl$Q_LABEL,  fix=TRUE)
+tabl$Q_LABEL = gsub("(38, Inf]", ">38",tabl$Q_LABEL,  fix=TRUE)
+ 
+colnames(tabl) = gsub("Q_LABEL", "Total Bilirubin\n (umol/L)", colnames(tabl), fixed=TRUE) 
+colnames(tabl) = gsub("Median_SD", "Median(SD)", colnames(tabl), fixed=TRUE) 
+
+ 
+tabl[4, ] = gsub("( NaN)", "", tabl[4, ], fix=TRUE)
+
+
+TABLE_ALL[["summary_posthoc_params_BILI"]] = tabl
+
+
+
+```
+
+
+ 
+
+```{r summary-posthoc-params-ALB}
+ 
+tdata = tdata00   # calculated in tornado plots
+
+tdata$ARMA = trim(tdata$ARMA)
+tdata = tdata %>% filter(ARMA=="3 mg/kg Q2W IV", PARAMS=="AUCtau") %>% distinct(USUBJID, .keep_all=TRUE)
+ 
+tdata = tdata %>% mutate(WGTBL=as_numeric(WGTBL)) %>% 
+            assign_Q(value="ALBBL", 
+                   quartile=NULL, 
+                    breaks =  c(-Inf,30, 35, Inf) 
+                   ) %>% arrange(Quantile)
+tabl = summary_tabl_covariate(tdata)  %>% ungroup() %>% select(-ARMA, -PARAMS)
+
+tabl$Q_LABEL = gsub("[-Inf,30]", "<30",tabl$Q_LABEL,  fix=TRUE)
+tabl$Q_LABEL = gsub("(35, Inf]", ">35",tabl$Q_LABEL,  fix=TRUE)
+ 
+colnames(tabl) = gsub("Q_LABEL", "Albumin\n (g/L)", colnames(tabl), fixed=TRUE) 
+colnames(tabl) = gsub("Median_SD", "Median(SD)", colnames(tabl), fixed=TRUE) 
+ 
+
+TABLE_ALL[["summary_posthoc_params_ALB"]] = tabl
+
+
+
+```
+
+
+
+
+ 
+
+
+
+
+```{r summary-posthoc-params-IGG}
+ 
+tdata = tdata00   # calculated in tornado plots
+
+tdata$ARMA = trim(tdata$ARMA)
+tdata = tdata %>% filter(ARMA=="3 mg/kg Q2W IV", PARAMS=="AUCtau") %>% distinct(USUBJID, .keep_all=TRUE)
+ 
+tdata = tdata %>% mutate(IGGBL=as_numeric(IGGBL)) %>% 
+            assign_Q(value="IGGBL", 
+                   quartile=c(0, 0.25, 0.5, 0.75, 1), 
+                    breaks = NULL
+                   ) %>% arrange(Quantile)
+tabl = summary_tabl_covariate(tdata)  %>% ungroup() %>% select(-ARMA, -PARAMS)
+
+#tabl$Q_LABEL = gsub("[-Inf,3]", "<3",tabl$Q_LABEL,  fix=TRUE)
+#tabl$Q_LABEL = gsub("(38, Inf]", ">38",tabl$Q_LABEL,  fix=TRUE)
+ 
+colnames(tabl) = gsub("Q_LABEL", "IgG\n (g/L)", colnames(tabl), fixed=TRUE) 
+colnames(tabl) = gsub("Median_SD", "Median(SD)", colnames(tabl), fixed=TRUE) 
+ 
+TABLE_ALL[["summary_posthoc_params_IGG"]] = tabl
+
+
+
+```
+
+
+
+
+```{r summary-posthoc-params-BORIND}
+ 
+tdata = tdata00   # calculated in tornado plots
+
+tdata$ARMA = trim(tdata$ARMA)
+tdata = tdata %>% filter(ARMA=="3 mg/kg Q2W IV", PARAMS=="AUCtau") %>% distinct(USUBJID, .keep_all=TRUE)
+ 
+# tdata = tdata %>% mutate(IGGBL=as_numeric(IGGBL)) %>% 
+#             assign_Q(value="IGGBL", 
+#                    quartile=c(0, 0.25, 0.5, 0.75, 1), 
+#                     breaks = NULL
+#                    ) %>% arrange(Quantile)
+
+tdata$Quantile = tdata$BORIND
+tdata$Q_LABEL = tdata$BORIND
+tabl = summary_tabl_covariate(tdata)  %>% ungroup() %>% select(-ARMA, -PARAMS)
+
+#tabl$Q_LABEL = gsub("[-Inf,3]", "<3",tabl$Q_LABEL,  fix=TRUE)
+#tabl$Q_LABEL = gsub("(38, Inf]", ">38",tabl$Q_LABEL,  fix=TRUE)
+ 
+colnames(tabl) = gsub("Q_LABEL", "IgG\n (g/L)", colnames(tabl), fixed=TRUE) 
+colnames(tabl) = gsub("Median_SD", "Median(SD)", colnames(tabl), fixed=TRUE) 
+
+ 
+tabl[1, ] = gsub("( NaN)", "", tabl[1, ], fix=TRUE)
+
+TABLE_ALL[["summary_posthoc_params_BORIND"]] = tabl
+
+```
+
+
+
+
+
+
+### \@ref(result-patient-stratification) Opportunities for dose adjustment or patient stratification {#result-patient-stratification}
+ 
+To estimate covariate–parameter relationships of interest that could not be assessed in the full model, ad hoc analyses were performed by using 
+the final Pop PK model.   
+
+<!--determined for the purpose of computing Cavgss by dividing the cemiplimab  dose with the maximum a posteriori Bayesian estimate of CL. 
+ 
+#### \@ref(result-factor-demog) Demographic factors {#result-factor-demog}
+ -->
+ 
+```{r AUCtauvsWGTBL-3mkg, fig.cap='Scatter Plot of Steady-state AUC0-6wks vs. Baseline Body Weight at 3 mg/kg Q2W', fig.align='center', fig.height=6, fig.width=9} 
+
+ # AUCss  vs bodyWt
+ #---------------------------------
+ tdata = tdata00 %>% filter(PARAMS=="AUCtau", ARMA=="3 mg/kg Q2W IV")
+ tdata = tdata %>% mutate(WGTBL=as_numeric(WGTBL), 
+                          DVOR=as_numeric(DVOR))
+ 
+ fig = ggplot(tdata, aes(x=WGTBL, y=as_numeric(DVOR) )) + geom_point(col="black", pch=1)  + 
+  
+   xlab("Baseline Body Weight (Kg)") + 
+   ylab("Steady-State AUC over 6 weeks (day*mg/L)") + 
+   base_theme(font.size=14) + 
+     #scale_x_continuous(breaks=x$breaks, label=x$labels) + 
+     #scale_y_log10(breaks=y$breaks, label=y$labels) + 
+  
+     geom_smooth(method="loess", fill=NA) + 
+     coord_cartesian(xlim = range(tdata$WGTBL, na.rm=TRUE)) + 
+     coord_cartesian(ylim = range(tdata$DVOR, na.rm=TRUE)) + 
+     
+   theme(#legend.title=element_text("EXSEQ"), 
+         legend.position="none", 
+         panel.grid.minor= element_line(colour = "gray95",size=0.5),
+         panel.grid.major= element_line(colour = "gray95",size=0.5),
+         panel.spacing = unit(0.2, "lines"), 
+         panel.border=element_rect(colour="black", fill=NA), 
+         strip.background = element_blank()   # element_rect(colour=NA, fill=NA),
+   )  + 
+   facet_wrap(~ARMA, ncol = 2)
+  
+  fig
+  
+
+FIGURE_ALL[["AUCtauvsWGTBL_3mkg"]] = fig
+
+
+```
+
+
+```{r AUCtauvsWGTBL-350mg, fig.cap='Scatter Plot of Steady-state AUC0-6wks vs. Baseline Body Weight at 350 mg Q2W', fig.align='center', fig.height=6, fig.width=9}
+
+
+
+ # CavgSS  vs bodyWt
+ #---------------------------------
+ tdata = tdata00 %>% filter(PARAMS=="AUCtau", ARMA=="350 mg Q3W IV")
+ fig = ggplot(tdata, aes(x=WGTBL, y=DVOR )) + geom_point(col="black", pch=1)  + 
+  
+   xlab("Baseline Body Weight (Kg)") + 
+   ylab("Steady-State AUC over 6 weeks (day*mg/L)") + 
+   base_theme(font.size=14) + 
+     #scale_x_continuous(breaks=x$breaks, label=x$labels) + 
+     #scale_y_log10(breaks=y$breaks, label=y$labels) + 
+  
+     geom_smooth(method="loess", fill=NA) + 
+     coord_cartesian(xlim = range(tdata$WGTBL, na.rm=TRUE)) + 
+     coord_cartesian(ylim = range(tdata$DVOR, na.rm=TRUE)) + 
+     
+   theme(#legend.title=element_text("EXSEQ"), 
+         legend.position="none", 
+         panel.grid.minor= element_line(colour = "gray95",size=0.5),
+         panel.grid.major= element_line(colour = "gray95",size=0.5),
+         panel.spacing = unit(0.2, "lines"), 
+         panel.border=element_rect(colour="black", fill=NA), 
+         strip.background = element_blank()   # element_rect(colour=NA, fill=NA),
+   )  + 
+   facet_wrap(~ARMA, ncol = 2)
+  
+  
+
+FIGURE_ALL[["AUCtauvsWGTBL_350mg"]] = fig
+
+
+```
+
+
+  
+
+
+
+ 
+```{r boxplot-WGTBL-ON-AUC-3mkg}
+    
+tdata = tdata00 %>% filter(PARAMS=="AUCtau", ARMA=="3 mg/kg Q2W IV")  %>% 
+      select(ARMA, USUBJID, PARAMS, DVOR, WGTBL)
+
+t1 =tdata %>% distinct(USUBJID, .keep_all=TRUE) %>% 
+       mutate(WGTBL=as_numeric(WGTBL)) %>%   
+       assign_Q(value="WGTBL", quartile=c(0, 0.25, 0.5, 0.75, 1), breaks=NULL, 
+                       include.lowest = TRUE, right = TRUE, ordered_result = FALSE) 
+
+t1 =  t1 %>% #select(CL, ALBBL, Q_LABEL, Quantile) %>% 
+        mutate(Q_LABEL=paste0("WGTBL=", Q_LABEL))
+  
+t1 = t1 %>% arrange(Quantile) %>% mutate(Q_LABEL=ordered(Q_LABEL, levels=unique(Q_LABEL)))
+  
+ 
+fig  = noWarning(cat_boxplot(t1, xvar="Q_LABEL", yvar="DVOR", 
+                             theTitle="AUCss by Quantile of Baseline Body Weight") )
+
+
+fig = fig + ylab("Steady-state AUC over 6 Weeks") + 
+  geom_hline(yintercept=1180, lty="dashed", color="blue") + 
+  geom_hline(yintercept=11800, lty="dashed", col="red") +
+  geom_hline(yintercept=3550*c(0.75, 1.25), lty="dashed", col="green")   + 
+  geom_hline(yintercept=3550, lty="dashed", col="black")  
+
+
+FIGURE_ALL[["boxplot_WGTBL_ON_AUC_3mkg"]] = fig
+
+fig
+
+   
+```
+ 
+ 
+```{r boxplot-WGTBL-ON-CMIN-3mkg}
+    
+tdata = tdata00 %>% filter(PARAMS=="CMIN", ARMA=="3 mg/kg Q2W IV")  %>% 
+      select(ARMA, USUBJID, PARAMS, DVOR,  WGTBL)
+
+t1 =tdata %>% distinct(USUBJID, .keep_all=TRUE) %>% 
+       mutate(WGTBL=as_numeric(WGTBL)) %>%   
+       assign_Q(value="WGTBL", quartile=c(0, 0.25, 0.5, 0.75, 1), breaks=NULL, 
+                       include.lowest = TRUE, right = TRUE, ordered_result = FALSE) 
+
+t1 =  t1 %>% #select(CL, ALBBL, Q_LABEL, Quantile) %>% 
+        mutate(Q_LABEL=paste0("WGTBL=", Q_LABEL))
+  
+t1 = t1 %>% arrange(Quantile) %>% mutate(Q_LABEL=ordered(Q_LABEL, levels=unique(Q_LABEL)))
+  
+ 
+fig  = noWarning(cat_boxplot(t1, xvar="Q_LABEL", yvar="DVOR", 
+                             theTitle="Ctrough by Quantile of Baseline Body Weight") )
+
+fig = fig + ylab("Ctrough at Steady State") +  
+      geom_hline(yintercept=202, lty="dashed", color="blue") + 
+      geom_hline(yintercept=202, lty="dashed", col="red") +
+      geom_hline(yintercept=60.7*c(0.75, 1.25), lty="dashed", col="green")   + 
+      geom_hline(yintercept=60.7, lty="dashed", col="black")  
+     
+      
+
+FIGURE_ALL[["boxplot_WGTBL_ON_CMIN_3mkg"]] = fig
+
+fig
+
+   
+```
+
+
+
+
+
+ 
+```{r boxplot-WGTBL-ON-AUC-350mg}
+    
+tdata = tdata00 %>% filter(PARAMS=="AUCtau", ARMA=="350 mg Q3W IV")  %>% 
+      select(ARMA, USUBJID, PARAMS, DVOR, WGTBL)
+
+t1 =tdata %>% distinct(USUBJID, .keep_all=TRUE) %>% 
+       mutate(WGTBL=as_numeric(WGTBL)) %>%   
+       assign_Q(value="WGTBL", quartile=c(0, 0.25, 0.5, 0.75, 1), breaks=NULL, 
+                       include.lowest = TRUE, right = TRUE, ordered_result = FALSE) 
+
+t1 =  t1 %>% #select(CL, ALBBL, Q_LABEL, Quantile) %>% 
+        mutate(Q_LABEL=paste0("WGTBL=", Q_LABEL))
+  
+t1 = t1 %>% arrange(Quantile) %>% mutate(Q_LABEL=ordered(Q_LABEL, levels=unique(Q_LABEL)))
+  
+ 
+fig  = noWarning(cat_boxplot(t1, xvar="Q_LABEL", yvar="DVOR", 
+                             theTitle="AUCss by Quantile of Baseline Body Weight") )
+
+
+fig = fig + ylab("Steady-state AUC over 6 Weeks") + 
+  geom_hline(yintercept=1180, lty="dashed", color="blue") + 
+  geom_hline(yintercept=11800, lty="dashed", col="red") +
+  geom_hline(yintercept=3550*c(0.75, 1.25), lty="dashed", col="green")   + 
+  geom_hline(yintercept=3550, lty="dashed", col="black")  
+
+
+FIGURE_ALL[["boxplot_WGTBL_ON_AUC_350mg"]] = fig
+
+fig
+
+   
+```
+ 
+ 
+```{r boxplot-WGTBL-ON-CMIN-350mg}
+    
+tdata = tdata00 %>% filter(PARAMS=="CMIN", ARMA=="350 mg Q3W IV")  %>% 
+      select(ARMA, USUBJID, PARAMS, DVOR,  WGTBL)
+
+t1 =tdata %>% distinct(USUBJID, .keep_all=TRUE) %>% 
+       mutate(WGTBL=as_numeric(WGTBL)) %>%   
+       assign_Q(value="WGTBL", quartile=c(0, 0.25, 0.5, 0.75, 1), breaks=NULL, 
+                       include.lowest = TRUE, right = TRUE, ordered_result = FALSE) 
+
+t1 =  t1 %>% #select(CL, ALBBL, Q_LABEL, Quantile) %>% 
+        mutate(Q_LABEL=paste0("WGTBL=", Q_LABEL))
+  
+t1 = t1 %>% arrange(Quantile) %>% mutate(Q_LABEL=ordered(Q_LABEL, levels=unique(Q_LABEL)))
+  
+ 
+fig  = noWarning(cat_boxplot(t1, xvar="Q_LABEL", yvar="DVOR", 
+                             theTitle="Ctrough by Quantile of Baseline Body Weight") )
+
+fig = fig + ylab("Ctrough at Steady State") +  
+      geom_hline(yintercept=202, lty="dashed", color="blue") + 
+      geom_hline(yintercept=202, lty="dashed", col="red") +
+      geom_hline(yintercept=60.7*c(0.75, 1.25), lty="dashed", col="green")   + 
+      geom_hline(yintercept=60.7, lty="dashed", col="black")  
+     
+      
+
+FIGURE_ALL[["boxplot_WGTBL_ON_CMIN_350mg"]] = fig
+
+fig
+
+   
+```
+
+
+
+
+ 
+```{r Histogram-AUCtau, fig.cap='Histogram Plots of Steady-state AUC0-6wks by Two Proposed Dose Regimens of 3 mg/kg Q2W and 350 mg Q3W', fig.align='center', fig.height=9, fig.width=6}
+
+tdata = tdata00 %>% filter(PARAMS=="AUCtau" )  %>% 
+      filter(ARMA %in% c("3 mg/kg Q2W IV",  "350 mg Q3W IV")) %>% 
+      select(ARMA, USUBJID, PARAMS, DVOR,  WGTBL)
+
+ fig = base_hist(tdata, xval="DVOR", group="ARMA", binwidth=100, title=NULL, xlab.txt="AUC6wk,ss") + 
+   #xlab("Time (day)") + 
+  # ylab("Concentration (mg/L)") + 
+   base_theme(font.size=14) + 
+     #scale_x_continuous(breaks=x$breaks, label=x$labels) + 
+     #scale_y_log10(breaks=y$breaks, label=y$labels) + 
+  
+     #coord_cartesian(xlim = range(tdata$TIME, na.rm=TRUE)) + 
+     #coord_cartesian(ylim = range(tdata$DVOR, na.rm=TRUE)) + 
+     
+   theme(#legend.title=element_text("EXSEQ"), 
+         legend.position="bottom", 
+         panel.grid.minor= element_line(colour = "gray95",size=0.5),
+         panel.grid.major= element_line(colour = "gray95",size=0.5),
+         panel.spacing = unit(0.2, "lines"), 
+         panel.border=element_rect(colour="black", fill=NA), 
+         strip.background = element_blank()   # element_rect(colour=NA, fill=NA),
+   )
+
+FIGURE_ALL[["Histogram_AUCtau"]] = fig
+
+
+```
+
+
+```{r  AUCSSvs-ALBBL}
+
+
+# scatter plot AUCss  vs Albumin
+#---------------------------------
+tdata = tdata00 %>% filter(PARAMS=="AUCtau", ARMA=="3 mg/kg Q2W IV")
+tdata = tdata %>% mutate(ALBBL=as_numeric(ALBBL), 
+                         DVOR=as_numeric(DVOR))
+
+fig = ggplot(tdata, aes(x=ALBBL, y=as_numeric(DVOR) )) + geom_point(col="black", pch=1)  + 
+  
+  xlab("Baseline Albumin (g/L)") + 
+  ylab("Steady-State AUC over 6 weeks (day*mg/L)") + 
+  base_theme(font.size=14) + 
+  #scale_x_continuous(breaks=x$breaks, label=x$labels) + 
+  #scale_y_log10(breaks=y$breaks, label=y$labels) + 
+  
+  geom_smooth(method="loess", fill=NA) + 
+  coord_cartesian(xlim = range(tdata$ALBBL, na.rm=TRUE)) + 
+  coord_cartesian(ylim = range(tdata$DVOR, na.rm=TRUE)) + 
+  
+  theme(#legend.title=element_text("EXSEQ"), 
+    legend.position="none", 
+    panel.grid.minor= element_line(colour = "gray95",size=0.5),
+    panel.grid.major= element_line(colour = "gray95",size=0.5),
+    panel.spacing = unit(0.2, "lines"), 
+    panel.border=element_rect(colour="black", fill=NA), 
+    strip.background = element_blank()   # element_rect(colour=NA, fill=NA),
+  )  + 
+  facet_wrap(~ARMA, ncol = 2)
+
+fig
+
+
+FIGURE_ALL[["scatter_AUCtauvsALBBL_3mkg"]] = fig
+ 
+
+##### {r boxplot-ALBBL-ON-AUC}
+
+tdata = tdata00 %>% filter(PARAMS=="AUCtau", ARMA=="3 mg/kg Q2W IV")  %>% 
+  select(ARMA, USUBJID, PARAMS, DVOR, ALBBL)
+
+t1 =tdata %>% distinct(USUBJID, .keep_all=TRUE) %>% 
+  mutate(ALBBL=as_numeric(ALBBL)) %>%   
+  assign_Q(value="ALBBL", quartile=c(0, 0.25, 0.5, 0.75, 1), breaks=NULL, 
+           include.lowest = TRUE, right = TRUE, ordered_result = FALSE) 
+
+t1 =  t1 %>% #select(CL, ALBBL, Q_LABEL, Quantile) %>% 
+  mutate(Q_LABEL=paste0("ALBBL=", Q_LABEL))
+
+t1 = t1 %>% arrange(Quantile) %>% mutate(Q_LABEL=ordered(Q_LABEL, levels=unique(Q_LABEL)))
+
+
+fig  = noWarning(cat_boxplot(t1, xvar="Q_LABEL", yvar="DVOR", 
+                             theTitle="AUCss by Quantile of Baseline Albumin") )
+
+
+fig = fig + ylab("Steady-state AUC over 6 Weeks") + 
+  geom_hline(yintercept=1180, lty="dashed", color="blue") + 
+  geom_hline(yintercept=11800, lty="dashed", col="red") +
+  geom_hline(yintercept=3550*c(0.75, 1.25), lty="dashed", col="green")   + 
+  geom_hline(yintercept=3550, lty="dashed", col="black")  
+
+
+
+FIGURE_ALL[["boxplot_ALBBL_ON_AUCtau"]] = fig
+
+fig
+
+
+
+
+
+
+
+
+
+```
+
+
+
+
+
+
+```{r  AUCSSvs.IGGBL}
+# scatter plot AUCss  vs Albumin
+#---------------------------------
+tdata = tdata00 %>% filter(PARAMS=="AUCtau", ARMA=="3 mg/kg Q2W IV")
+tdata = tdata %>% mutate(IGGBL=as_numeric(IGGBL), 
+                         DVOR=as_numeric(DVOR))
+
+fig = ggplot(tdata, aes(x=IGGBL, y=as_numeric(DVOR) )) + geom_point(col="black", pch=1)  + 
+  
+  xlab("Baseline IgG (g/L)") + 
+  ylab("Steady-State AUC over 6 weeks (day*mg/L)") + 
+  base_theme(font.size=14) + 
+  #scale_x_continuous(breaks=x$breaks, label=x$labels) + 
+  #scale_y_log10(breaks=y$breaks, label=y$labels) + 
+  
+  geom_smooth(method="loess", fill=NA) + 
+  coord_cartesian(xlim = range(tdata$IGGBL, na.rm=TRUE)) + 
+  coord_cartesian(ylim = range(tdata$DVOR, na.rm=TRUE)) + 
+  
+  theme(#legend.title=element_text("EXSEQ"), 
+    legend.position="none", 
+    panel.grid.minor= element_line(colour = "gray95",size=0.5),
+    panel.grid.major= element_line(colour = "gray95",size=0.5),
+    panel.spacing = unit(0.2, "lines"), 
+    panel.border=element_rect(colour="black", fill=NA), 
+    strip.background = element_blank()   # element_rect(colour=NA, fill=NA),
+  )  + 
+  facet_wrap(~ARMA, ncol = 2)
+
+fig
+
+
+FIGURE_ALL[["scatter_AUCtauvsIGGBL_3mkg"]] = fig
+ 
+
+##### {r boxplot-IGGBL-ON-AUC}
+
+tdata = tdata00 %>% filter(PARAMS=="AUCtau", ARMA=="3 mg/kg Q2W IV")  %>% 
+  select(ARMA, USUBJID, PARAMS, DVOR, IGGBL)
+
+t1 =tdata %>% distinct(USUBJID, .keep_all=TRUE) %>% 
+  mutate(IGGBL=as_numeric(IGGBL)) %>%   
+  assign_Q(value="IGGBL", quartile=c(0, 0.25, 0.5, 0.75, 1), breaks=NULL, 
+           include.lowest = TRUE, right = TRUE, ordered_result = FALSE) 
+
+t1 =  t1 %>% #select(CL, IGGBL, Q_LABEL, Quantile) %>% 
+  mutate(Q_LABEL=paste0("IGGBL=", Q_LABEL))
+
+t1 = t1 %>% arrange(Quantile) %>% mutate(Q_LABEL=ordered(Q_LABEL, levels=unique(Q_LABEL)))
+
+
+fig  = noWarning(cat_boxplot(t1, xvar="Q_LABEL", yvar="DVOR", 
+                             theTitle="AUCss by Quantile of Baseline Albumin") )
+
+
+fig = fig + ylab("Steady-state AUC over 6 Weeks") + 
+  geom_hline(yintercept=1180, lty="dashed", color="blue") + 
+  geom_hline(yintercept=11800, lty="dashed", col="red") +
+  geom_hline(yintercept=3550*c(0.75, 1.25), lty="dashed", col="green")   + 
+  geom_hline(yintercept=3550, lty="dashed", col="black")  
+
+
+
+FIGURE_ALL[["boxplot_IGGBL_ON_AUCtau"]] = fig
+
+fig
+
+
+```
+
+
+
+
+
+
+ 
+The analysis population encompassed a wide distribution of body weight, with a median of 
+`r adpx%>% distinct(USUBJID,.keep_all=TRUE)%>% pull(WGTBL) %>% median(na.rm=TRUE)` kg and a range of 
+`r adpx%>% distinct(USUBJID,.keep_all=TRUE)%>% pull(WGTBL) %>% range(na.rm=TRUE) %>% paste0(collapse="-")` kg. Estimates (90% confidence intervals [CI]) of the relationship between clearance and body weight based on the Pop PK model revealed an allometric exponent (α) of 0.442 (95% CI, 0.421–0.566) for the clearance parameters and 0.534 (95% CI, 0.462–0.583) for the volumes of distribution.  These intermediate exponent values between values of zero (no relationship with body weight) and one (linear relationship with body weight) are within the range of reported exponent values for monoclonal antibodies, in which both fixed dosing and body weight-based dosing approaches have been shown to perform similarly.
+
+<!--
+Most of the covariate effects were modest in magnitude. Black subjects had a slightly greater than 20% decrease in steady state minimum plasma concentration (Cmin,ss) relative to White subjects, and subjects with low body weight (60 kg) had a slightly greater than 25% increase in Cmin,ss, steady state maximum plasma concentration (Cmax,ss) and steady state area under the plasma concentration-time curve from time zero to 28 days post dose (AUC0-28d,ss) relative to subjects with median weight of 88 kg. Combinations of covariates (low body weight with low CRCL; high body weight with high CRCL; low body weight and female; and high body weight and Black race) had greater impact on exposure (all outside the bounds of 0.8-1.25 in forest plots).
+
+
+Statistically significant effects of sex were found on clearance and central volume. Clearance was found to be lower (17%; P<0.0001), translating into a 20% increase in AUC in female subjects (??), which is small in relation to the exposure margins of (0.5–5.0) GMR and, therefore, of no clinical relevance. The central volume of distribution was lower (15%; P<0.0001) in female compared with male subjects (??) similar to findings for other monoclonal antibodies (??). -->
+
+
+<!--#### \@ref(result-tumortype-factor) Tumor type, combo vs. mono, treatment cycles, dose escalation and expansion cohorts {#result-tumortype-factor}  
+ 
+Coadministered drugs: Systemic corticosteroids (glucocorticoids) are anticipated to be one of the more frequent combination treatments administered with cemiplimab, either directly or indirectly as an antiemetic during chemotherapy or as a treatmentfor immune-related adverse events.  Therefore, prolonged (>1 week) corticosteroid administration was assessed as a potential covariate in the population PK analysis. No relationship was observed between prolonged use of systemic corticosteroids and cemiplimab exposure, and no significant impact of corticosteroid use on cemiplimab exposure was identified (P50.4).
+
+Figure 14:	Impacts of dose level, tumor types and body weight on clearance
+ 
+Distribution of post-dose 1 trough concentrations (Cmin1) by dose. The box plots represent median (bold line), 25th, and 75th percentiles of the Cmin1 distribution. The whiskers represent 5th and 95th percentiles of the distribution. The shaded areas indicate the target trough concentration ranges that maximally inhibit the binding of CTLA-4 to B7.1 (6–20 μgml−1) and B7.2 (1–3 μgml−1)
+
+Figure 1. (a) PPK-based estimates of individual cemiplimab clearance versus dose based on final PPK model. The box plots represent median (bold line), 25th, and 75th percentiles of clearance distribution. The whiskers represent 5th and 95th percentiles of the distribution. PPK, population pharmacokinetic. (b) Distribution of cemiplimab clearance estimates across tumor types using final PPK model. The box plots represent median (bold line), 25th, and 75th percentiles of the distribution. The whiskers represent 5th and 95th percentiles of the distribution. (c) cemiplimab dose-normalized Cavgss versus body weight for body weight-based, Q2W dose regimens. Normalized exposure is Cavgss. Solid line represents locally weighted smooth line and is used to visualize relationships between dose-normalized Cavgss and body weight. Cavgss, average concentration at steady state; CRC, colorectal cancer; CRPC, castration-resistant prostate cancer; MEL, melanoma; NSCLC, non-small cell lung cancer; PPK, population pharmacokinetic; Q2W, every 2 weeks; RCC, renal cell carcinoma.
+
+
+#### \@ref(result-intrinsic-factors) Intrinsic factors {#result-intrinsic-factors}   -->
+ 	
+Therapeutic antibodies, such as cemiplimab, are primarily eliminated by protein catabolism in a multitude of tissues, and, thus, clearance is not dependent on a single organ. Consequently, intrinsic factors, such as organ dysfunction or age, typically have limited impact on the exposure
+of therapeutic antibodies, and were, therefore, not anticipated to affect the exposure of cemiplimab to a clinically meaningful extent (most effect sizes were <20%). 
+
+Because therapeutic antibodies are too large to pass through the glomerular membrane of the kidney, renal insufficiency was not expected to significantly impact cemiplimab exposure. Although the eGFR was found to have a statistically significant effect on clearance based on formal testing of the covariate relationship, the effect size was small and well within clinical bounds (0.5–5.0), indicating that renal impairment has no clinically relevant effect. AST and total bilirubin as measures of hepatic function on cemiplimab exposure had no clinically relevant impact on clearance. Consequently, no substantial changes in cemiplimab exposure are anticipated in the setting of hepatic impairment.
+
+The covariate analysis did show that baseline albumin (ALBBL) has a significant effect on CL (>20%) and that cemiplimab CL was greater in patients with lower ALB levels. cemiplimab exposures (Cavgss over six weeks) in patients with lower than normal albumin were markedly lower than in patients with normal albumin levels  (Figure xx).  It is consistent with the findings in similar PD-1 inhibitors [??], since albumin is also being cleared by similar mechanisms as antibodies and the covariate effect of albumin likely reflects the underlying general catabolic rate.   <!--baseline lactate dehydrogenase (LDH)--  The effect of LDH was also found to be significant with cemiplimab CL higher in patients with higher LDH levels; however, the magnitude of the effect was within 20%.  -->
+
+ 
+
+  
+ 
+
+
+ 
+   
+
+
+ 
+ 
+
+<!--
+Although the eGFR was found to have a statistically significant effect on clearance based on formal testing of the covariate relationship, the effect size was small and well within clinical bounds (0.5–5.0), indicating that renal impairment has no clinically relevant effect.
+<!--The AUCss tends to decrease with increasing LDH (Figure 5A), as expected from the covariateeffect of LDH on CL. However, this decrease is not considered clinically significant, based on available safety and efficacy data [8]. Furthermore, the AUCss in patients with mild or moderate renal impairment is similar to that of other patients (Figure 5B), as is the AUCss in patients with  mild hepatic impairment (Figure 5C). Thus, no dose adjustment is needed for patients with pre-existing mild hepatic impairment, or mild or moderate renal impairment. The relationship between Cmin,ss and these covariates is similar to AUCss, given the high correlation between these exposure measures.   
+
+
+  #### \@ref(result-disease-related-factors) Disease-related factors {#result-disease-related-factors}
+ 	
+The effects of PS are shown in the online supplement (Supplemental Figure S4). The lack of effect of parameters, including renal function status, hepatic function status, and PD-L1 expression, on cemiplimab CL are also shown in the online supplement (Appendix -->
+
+Disease-related factors were not found to have significant effects on cemiplimab pharmacokinetics, including ECOG status, metastatis vs. locally advanced, PD-L1 expression levels (? limited data) and baseline tumor burden.  
+
+
+The prevalence of immunogenicity (anti-drug antibodies [ADAs]) on cemiplimab was low. Out of 
+`r adpx0 %>% filter(C==".")%>% distinct(USUBJID) %>% pull(USUBJID) %>% length()` patints in the pooled dataset of Study-1423 and Study-1540, 
+`r adpx0 %>% filter(C==".")%>%filter(ADASTA=="POSITIVE") %>% distinct(USUBJID) %>% pull(USUBJID) %>% length()` (<1%) patients were found to be persistent ADA response, 
+`r adpx0 %>% filter(C==".")%>%filter(ADASTA=="Pre-existing Immunoreactivity") %>% distinct(USUBJID) %>% pull(USUBJID) %>% length()` patients have  pre-existing immunoreactivity, and 
+`r adpx0 %>% filter(ADASTA=="Treatment Emergent Response") %>% distinct(USUBJID) %>% pull(USUBJID) %>% length()` are with reatment emergent response. 
+In addition, eleven (11) patients were identified to be low titer and 
+two (2) patiens with moderate titer. None of the observed occurrences of ADA positivity was found to have an effect on the systemic exposure of cemiplimab, in relative to occasions when ADAs were not present.
+
+<!--ADA has minimal effect on cemiplimab CL (<20%), and the estimated effect for ADA on CL was 114% (95% confidence interval: 106–122%) relative to occasions when ADAs were not present. Given the modest impact of ADAs on CL, for a fraction of the treatment period over which ADA is positive, and the small number of patients with low titer of ADA-positive samples, the effect of immunogenicity on the PK of cemiplimab was not considered to be clinically relevant in this analysis.  -->
+
+
+<!--#### \@ref(result-Summary-factors) Summary {#result-Summary-factors}  
+the negative covariate results (i.e., age, AST, coadministered drugs, and race on clearance; cancer type, age, AST, ECOG, bilirubin, tumor burden, eGFR, and race on central volume) indeed indicate 
+Overall, covariates have relatively limited impact on individual exposure to cemiplimab.-->
+This result confirms there is lack of clinically important effects on the PK properties of cemiplimab.  Nevertheless, because of covariate inclusion the between-subject variability on clearance decreased from 49% to 37%, indicating that ~32% of variation in clearance could be explained by the identified covariate relations.
+
+Taken together, results from this analysis and present evidence for the lacking need for dose adjustment for most subpopulations of patients with advanced solid tumors, thereby supporting the recomendated  cemiplimab dosage of 3 mg/kg Q2W or 350 mg Q3W in a variety of patient subpopulations.
+
+
+### \@ref(result-prediction-350mg) Dose justification of 350 mg IV Q3W in Phase 3 Study (study 1540, Group 3) {#result-prediction-350mg}
+  
+Theoretically, fixed dosing would work the best when CL is not affected by body weight (α = 0) and body-weight–based dosing would work the best when α equals to 1 [1–3]. Given that α estimates were close to 0.5 for both clearance and volume of distribution, no advantage of weight-based dosing over fixed dosing is expected, and both weight-based and fixed dosing should provide adequate and similar control of PK variability.  Body weight power coefficients of clearance (CL/Q) and volume of distribution (V2/V3) in the final PPK model were close to 0.5.  The suitability of flat dosing was confirmed by the similar variability observed in AUCtau,ss over a wide body weight range.
+
+<!--Specifically,  cemiplimab  dose of 350 mg every 3 weeks (Q3W) was chosen for Group 3 of study R2810-ONC-1540 based on the safety and preliminary anti-tumor activity observed in the ongoing FIH study R2810-ONC-1423 (NCT02383212). Preliminary simulation results using population pharmacokinetic (PK) model derived from 1423 study indicated that: 1) the variability in cemiplimab  exposure (CV%) was similar with body weight adjusted as compared to fixed doses; therefore, supporting the fixed dose selection, and 2) that a 350 mg Q3W dose resulted in similar (≤20% difference) Ctrough, AUC12W and Cmax as compared to a 3 mg/kg Q2W dose used in the FIH study. These cemiplimab  concentrations exceed those observed at the 1 mg/kg Q2W dose, and demonstrated clinical efficacy in the FIH study. At the 350 mg Q3W dose, Ctrough values at steady state generally exceed concentrations of approximately 5 mg/L to 20 mg/L, above which (based on animal data) saturation of PD-1 target occupancy is expected to occur. Therefore, the 350 mg Q3W dose of cemiplimab  is being proposed in Group 3 and in new phase 2 and phase 3studies across the cemiplimab  program. -->
+ 
+The population predicted exposure of cemiplimab in patients administrated at 350 mg Q3W from study-1540 will be characterized by a Maximum A Posteriori (MAP) Bayesian approach on the basis of the established final Pop PK model described in Section \@ref(model-evaluation), with model parameter estimates as priori for the individual PK parameters and exposure estimate. The predictive performance of Pop PK model for the observed data will be assessed based upon model evaluation criteria described in Section \@ref(model-evaluation) (e.g. by plotting observed vs predicted concentrations).  Estimation and comparison of PK parameters and exposures (AUCss and Cmax) of cemiplimab following 350 mg Q3W  to 3 mg/kg Q2W will be conducted.  
+<!--
+Relative to ECOG-PS 1, ECOG-PS 0 was associated
+with a 7.3% increase in clearance. Similarly, cancer type (14.5% increases for patients with NSCLC) and ipilimumab status (13.9% increase in clearance for patients pretreated
+with ipilimumab) had a statistically significant effect on clearance. Last, a significant correlation between baseline tumor burden and clearance was observed; at the 90th percentile of baseline tumor burden distribution, clearance was increased by 8.79% (95% CI, 6.5–11%) relative to a
+typical subject, translating to a 9.17% reduction in AUC. Theoretically, this finding could be related to an increased extent of target PD-1-mediated clearance in patients with a high tumor burden. However, the total level of cemiplimab outside the blood is low based on the limited volume of distribution, and tumor volume represents only a fraction of total body volume. Therefore, tumors have a limited potential to contribute to total body clearance of cemiplimab.
+Because the resulting effect on cemiplimab exposure for each of these factors was well within clinical bounds (AUC GMR: 0.5–5.0), none of them is considered to be clinically relevant.  -->
+
+
+<!--#### \@ref(result-ADA-factors) ADA {#result-ADA-factors}      ???? why use adpx0 here  -->ADASTA   ABDSTA
+  
+
+
+ 
+
+  
+  
+```{r SIMDATA2, eval=FALSE }  
+   
+# Use to simulated time-profiles for 350mg 
+# ---------------------------------------------
+
+#tabl = read_PARAMS(MODEL.HOME="H:\\FYANG\\R2810_PD1\\MODEL\\", subdir="/ctl/HPC/",  runno.lst=final.model.runno)
+#get_summary_params(tabl, final.model.runno)
+
+
+
+
+library(dplyr)
+library("mrgsolve")
+source("./cpp/mod.R2810.LN900.cpp")
+mod <- mread("R2810", tempdir(),mymodel)     # ?mread , ?mcode
+ 
+#mod_MM = mod %>% param(THETA_MM)
+#param(mod_MM)  
+   
+
+seed =1234
+set.seed(seed);    
+
+#----------------------------------------  
+# adsl
+#----------------------------------------
+#MODEL_HOME <- "H:\\FYANG\\R2810_PD1\\MODEL\\"
+#tt = read_runno(MODEL_HOME, subdir="ctl/PsN/", runno="LN014", postfix="")  
+
+#adsl = create_adsl(POP="STD", nsubject=10, meanWt=80, seed=1234)    
+adsl =  adpx00 %>% dplyr::filter(C==".") %>% distinct(USUBJID, .keep_all=TRUE)     #, ID %in% tt$xpdb$ID)
+
+adsl$POP = "SIM"
+#adsl$WEIGHTBL = adsl$WGTBL  
+adsl = adsl %>% select(POP, USUBJID, WGTBL, ALBBL, IGGBL,  BMIBL, ALTBL, RACEN)  ########
+adsl = adsl %>% mutate(WGTBL=as_numeric(WGTBL), 
+                       ALBBL=as_numeric(ALBBL), 
+                       IGGBL=as_numeric(IGGBL), 
+                       BMIBL=as_numeric(BMIBL), 
+                       ALTBL=as_numeric(ALTBL),
+                       RACEN=as_numeric(RACEN))
+# WGTBL=75, ALBBL=38, IGGBL=9.7, BMIBL=26.5, ALTBL=21, RACEN=1,
+# adsl$ALB_ON_CLQ=-1.00381
+# adsl$ALT_ON_CLQ=-0.0817805
+# adsl$IGG_ON_CLQ=0.182303    
+# adsl$BMI_ON_VSS=-0.552805
+# adsl$BLK_ON_T50=0.946409
+
+#adsl = sample_n(adsl, size=2000, replace=TRUE)
+#adsl$USUBJID = as.integer(as.factor(adsl$USUBJID))
+
+
+#----------------------------------------
+# adex
+#----------------------------------------  
+#library('gdata')
+library('xlsx')    # do you have to open the file at least once?
+ADEX = data.frame(read.xlsx("./cpp/run_Rsim_input.xlsx", "Sheet1"), stringsAsFactors=FALSE)
+ADEX0 = ADEX[which(!is.na(as.numeric(ADEX$STUDYID))),  ]
+ 
+ADEX0$ARMA = trim(ADEX0$ARMA)
+
+adex = create_adex(adsl, ADEX0%>% filter(STUDYID==5))   #, GROUP %in% c(2,3)
+    
+
+#----------------------------------------
+# run simulation
+#---------------------------------------- 
+
+# setup simulation timept 
+treat_end = 3*56  
+sim_end = 3*56 
+ 
+#treat_end = 24*7;  sim_end = 32*7
+tgrid = sim_timept(start=0, end=sim_end, delta=1, dtime=seq(0,treat_end, by=7))
+ 
+OUT = NULL
+ n.replicate = 10
+ for (ireplicate in 1:n.replicate)  {
+  
+   print(ireplicate)
+    
+     # run simulation
+  out = mod %>%  param( COVARIATE=1, SCALING=0) %>%  
+     #omat(CLQ_VSS=dmat(0,0), IIV_EMAX=dmat(0), IIV_T50=dmat(0)) %>%  
+  ev(as.ev(adex)) %>% mrgsim(end=sim_end, delta=1, add=tgrid) %>% as.data.frame() #%>% capitalize_names()
+  
+  out = out %>% left_join(adex %>% as.data.frame() %>% select(ID, POP, STUDYID, USUBJID, ARMA), by="ID") 
+  colnames(out) = toupper(colnames(out))
+ 
+  OUT= rbind(OUT, cbind(replicate=ireplicate, out))
+ }
+  
+ 
+ ######################################
+Predict350<- OUT %>% mutate(DVOR=IPRED)
+save(Predict350, file="./data/Predict350.Rdata")
+ ######################################
+ 
+```
+
+
+
+
+```{r PREDICTION-3mkg-350mg }
+  
+   
+  plot.Prediction <- function(tdata, 
+           group_by=c("STUDYID", "ARMA", "TIME"), 
+           ARMA.txt=c("3 mg/kg Q2W IV"), 
+           xlab.txt="Time (day)",
+           ylab.txt="Concentration (mg/L)" ,
+           xlim = c(0,168), 
+           ylim = c(0, 300), 
+           major.tick=28, minor.tick=7, 
+           font.size = 14
+  )  {
+    tdata = tdata %>% mutate(Mean=ifelse(Mean==0, 0.039, Mean))
+    tdata = tdata %>% mutate(Median=ifelse(Median==0, 0.039, Median))
+    tdata = tdata %>% mutate(PCT2P5=ifelse(PCT2P5==0, 0.039, PCT2P5))
+    tdata = tdata %>% mutate(PCT97P5=ifelse(PCT97P5==0, 0.039, PCT97P5))
+     
+    tdata = tdata%>% filter(ARMA==ARMA.txt)  # "3 mg/kg Q2W IV")
+    x = tick_label(x=as_numeric(tdata$TIME), xmin=0, xmax=max(tdata$TIME), major.tick=major.tick, minor.tick=minor.tick, log=FALSE)
+    y = tick_label(x=as_numeric(tdata$PCT97P5), xmin=1E-2, xmax=1E+3,  log=TRUE) 
+  
+   
+    fig = ggplot(tdata, aes(x=TIME, y=Median)) + 
+     geom_line(col="black", show.legend=TRUE  ) +
+     geom_ribbon(aes(ymin=PCT2P5,ymax=PCT97P5), fill="gray50", alpha="0.5", show.legend=F)   + 
+     scale_fill_manual(values=c(clear,blue)) + 
+    
+     xlab(xlab.txt) + 
+     ylab(ylab.txt) + 
+    
+     base_theme(font.size=font.size) + 
+       scale_x_continuous(breaks=x$breaks, label=as.character(x$labels)) + 
+      
+    
+       coord_cartesian(xlim =xlim) + 
+       coord_cartesian(ylim = ylim) + 
+       
+     theme(#legend.title=element_text("EXSEQ"), 
+           #legend.position=c(0.90, 0.85), 
+           legend.position= "bottom", 
+           panel.grid.minor= element_line(colour = "gray95",size=0.5),
+           panel.grid.major= element_line(colour = "gray95",size=0.5),
+           panel.spacing = unit(0.2, "lines"), 
+           panel.border=element_rect(colour="black", fill=NA), 
+           strip.background = element_blank()   # element_rect(colour=NA, fill=NA),
+     )   
+     
+  return(fig)
+  }
+
+  
+  load("./data/Predict350.Rdata")
+  
+  
+  
+  group_by = c("STUDYID", "ARMA", "TIME")
+  tdata = Predict350 %>% calc_stats(id="USUBJID", group_by=group_by, value="DVOR")  %>%
+           select(STUDYID, ARMA, TIME, N, Mean, Median, PCT2P5, PCT97P5) #%>% 
+           #mutate(replicate=ireplicate)
+  
+  # c("3 mg/kg Q2W IV"), 
+  #-----------------------------
+  fig = plot.Prediction(tdata, 
+         group_by=c("STUDYID", "ARMA", "TIME"), 
+         ARMA.txt=c("3 mg/kg Q2W IV"), 
+         xlab.txt="Time (day)",
+         ylab.txt="Concentration (mg/L)" ,
+         xlim = c(0,168), 
+         ylim = c(0.039, 2000),
+         major.tick=28, minor.tick=7, 
+         font.size = 14
+  )  
+   
+  
+  FIGURE_ALL[["PREDICTION_3mkg_LN"]] = fig
+  y = tick_label(x=as_numeric(tdata$PCT97P5), xmin=1E-2, xmax=1E+3,  log=TRUE) 
+  fig = fig + scale_y_log10(breaks=y$breaks, label=as.character(y$labels)) # +  coord_cartesian(ylim = c(0.039,300)) 
+  FIGURE_ALL[["PREDICTION_3mkg_SemiLog"]] = fig
+  
+  #c("350 mg Q3W IV"), 
+  #-----------------------------
+  fig = plot.Prediction(tdata, 
+         group_by=c("STUDYID", "ARMA", "TIME"), 
+         ARMA.txt=c("350 mg Q3W IV"), 
+         xlab.txt="Time (day)",
+         ylab.txt="Concentration (mg/L)" ,
+         xlim = c(0,168), 
+         ylim = c(0.039, 2000),
+         major.tick=28, minor.tick=7, 
+         font.size = 14
+  )  
+  FIGURE_ALL[["PREDICTION_350mg_LN"]] = fig
+  y = tick_label(x=as_numeric(tdata$PCT97P5), xmin=1E-2, xmax=1E+3,  log=TRUE) 
+  fig = fig + scale_y_log10(breaks=y$breaks, label=as.character(y$labels)) # +  coord_cartesian(ylim = c(0.039,300)) 
+  FIGURE_ALL[["PREDICTION_350mg_SemiLog"]] = fig
+
+    
+ 
+
+  # c("3 mg/kg Q2W IV"), weekly axis
+  #-----------------------------
+  fig = plot.Prediction(tdata %>% mutate(TIME=TIME/7), 
+         group_by=c("STUDYID", "ARMA", "TIME"), 
+         ARMA.txt=c("3 mg/kg Q2W IV"), 
+         xlab.txt="Time (Week)",
+         ylab.txt="Concentration (mg/L)" ,
+         xlim = c(0, 24), 
+         ylim = c(0.039, 2000),
+         major.tick=4, minor.tick=1, 
+         font.size = 14
+  )  
+   
+  
+  FIGURE_ALL[["PREDICTION_3mkg_LN_Weekly"]] = fig
+  y = tick_label(x=as_numeric(tdata$PCT97P5), xmin=1E-2, xmax=1E+3,  log=TRUE) 
+  fig = fig + scale_y_log10(breaks=y$breaks, label=as.character(y$labels)) # +  coord_cartesian(ylim = c(0.039,300)) 
+  FIGURE_ALL[["PREDICTION_3mkg_SemiLog_Weekly"]] = fig
+  
+  #c("350 mg Q3W IV"), , weekly axis
+  #-----------------------------
+  fig = plot.Prediction(tdata %>% mutate(TIME=TIME/7), 
+         group_by=c("STUDYID", "ARMA", "TIME"), 
+         ARMA.txt=c("350 mg Q3W IV"), 
+         xlab.txt="Time (Week)",
+         ylab.txt="Concentration (mg/L)" ,
+         xlim = c(0,24), 
+         ylim = c(0.039, 2000),
+         major.tick=4, minor.tick=1, 
+         font.size = 14
+  )  
+  FIGURE_ALL[["PREDICTION_350mg_LN_Weekly"]] = fig
+  y = tick_label(x=as_numeric(tdata$PCT97P5), xmin=1E-2, xmax=1E+3,  log=TRUE) 
+  fig = fig + scale_y_log10(breaks=y$breaks, label=as.character(y$labels)) # +  coord_cartesian(ylim = c(0.039,300)) 
+  FIGURE_ALL[["PREDICTION_350mg_SemiLog_Weekly"]] = fig
+
+    
+  
+  
+
+
+  #adpc = read_sas("H:\\FYANG\\R2810_PD1\\MODEL\\data\\GRP3\\pkgrp3.sas7bdat")   ############ old group 3
+  adpc = read_sas("./data/pkgrp3.sas7bdat")   ############  03/20/2018
+
+
+  adpc = adpc %>% mutate(NTIM=as_numeric(NTIM), DVOR=as_numeric(PCSTRESC))
+  adpc = adpc %>% mutate(PCTPT=ifelse(PCTPT=="", VISIT, PCTPT))
+  adpc$PCTPT = gsub("PREINFUSION", "Preinfusion", adpc$PCTPT, fix=TRUE)
+  adpc$PCTPT = gsub("END OF INFUSION", "End of Infusion", adpc$PCTPT, fix=TRUE)
+  adpc$PCTPT = ordered(adpc$PCTPT, levels= c("Preinfusion", "End of Infusion", "EOS"))     
+  
+  
+  fig = FIGURE_ALL[["PREDICTION_350mg_LN"]] 
+  FIGURE_ALL[["PREDICTION_350mg_LN_Overlay"]]  = fig +   geom_point(data=adpc, aes(x=NTIM, y=DVOR,col=PCTPT))
+  
+  fig = FIGURE_ALL[["PREDICTION_350mg_SemiLog"]]     
+  FIGURE_ALL[["PREDICTION_350mg_SemiLog_Overlay"]]  = fig +   geom_point(data=adpc, aes(x=NTIM, y=DVOR,col=PCTPT))
+  
+  
+  
+  # WEEKLY
+  fig = FIGURE_ALL[["PREDICTION_350mg_LN_Weekly"]]  
+  FIGURE_ALL[["PREDICTION_350mg_LN_Weekly_Overlay"]]  = fig +   geom_point(data=adpc, aes(x=NTIM/7, y=DVOR,col=PCTPT))
+   
+  
+  fig = FIGURE_ALL[["PREDICTION_350mg_SemiLog_Weekly"]]
+  FIGURE_ALL[["PREDICTION_350mg_SemiLog_Weekly_Overlay"]]  = fig +   
+    geom_point(data=adpc %>% mutate(DVOR=ifelse(DVOR==0, 0.039, DVOR)), 
+               aes(x=NTIM/7, y=DVOR,col=PCTPT)) + 
+    geom_hline(yintercept = 0.078, lty="dashed")
+   
+
+
+  
+    
+    
+    
+ 
+
+ 
+
+
+```
+
+  
+
+
+
+
+
+```{r  }
+
+
+  plot.Prediction.Data <- function(tdata, 
+           group_by=c("STUDYID", "ARMA", "TIME"), 
+           ARMA.txt=c("3 mg/kg Q2W IV"), 
+           xlab.txt="Time (day)",
+           ylab.txt="Concentration (mg/L)" ,
+           xlim8 = c(0,168), 
+           ylim8 = c(0, 300), 
+           major.tick=28, minor.tick=7, 
+           font.size = 14
+  )  {
+    
+     
+    #tdata = tdata%>% filter(ARMA==ARMA.txt)  # "3 mg/kg Q2W IV")
+    x = tick_label(x=as_numeric(tdata$TIME), xmin=0, xmax=max(xlim8), major.tick=major.tick, minor.tick=minor.tick, log=FALSE)
+    y = tick_label(x=as_numeric(tdata$DVOR), xmin=1E-2, xmax=1E+3,  log=TRUE) 
+  
+   
+    fig = ggplot(tdata, aes(x=TIME, y=DVOR, group=USUBJID, col=factor(PCTPT))) + 
+     # geom_line(col="black") + 
+     geom_point() +
+     #geom_ribbon(aes(ymin=PCT2P5,ymax=PCT97P5), fill="gray50", alpha="0.5")   + 
+     #scale_fill_manual(values=c(clear,blue)) + 
+    
+     xlab(xlab.txt) + 
+     ylab(ylab.txt) + 
+    
+     base_theme(font.size=font.size) + 
+       scale_x_continuous(limits = xlim8, breaks=x$breaks, label=as.character(x$labels)) + 
+       #scale_x_continuous() +  #   removes/extend all data points outside the given range 
+       coord_cartesian(xlim =xlim8) +            #  only adjusts the visible area
+       coord_cartesian(ylim = ylim8) + 
+       
+     theme(#legend.title=element_text("EXSEQ"), 
+           #legend.position=c(0.90, 0.85), 
+           legend.position= "none", 
+           panel.grid.minor= element_line(colour = "gray95",size=0.5),
+           panel.grid.major= element_line(colour = "gray95",size=0.5),
+           panel.spacing = unit(0.2, "lines"), 
+           panel.border=element_rect(colour="black", fill=NA), 
+           strip.background = element_blank()   # element_rect(colour=NA, fill=NA),
+     )   
+     
+  return(fig)
+  }
+
+
+
+
+  
+  adpc = read_sas("H:\\FYANG\\R2810_PD1\\MODEL\\data\\GRP3\\pkgrp3.sas7bdat")
+  adpc = read_sas("./data/pkgrp3.sas7bdat")   ############  03/20/2018
+  
+  adpc = adpc %>% mutate(NTIM=as_numeric(NTIM), 
+                         TIME=as_numeric(NTIM),
+                         DVOR=as_numeric(PCSTRESC))
+  adpc = adpc %>% mutate(PCTPT=ifelse(PCTPT=="", VISIT, PCTPT))
+  adpc$PCTPT = gsub("PREINFUSION", "Preinfusion", adpc$PCTPT, fix=TRUE)
+  adpc$PCTPT = gsub("END OF INFUSION", "End of Infusion", adpc$PCTPT, fix=TRUE)
+  adpc$PCTPT = ordered(adpc$PCTPT, levels= c("Preinfusion", "End of Infusion", "EOS"))     
+  
+
+ 
+  tdata = adpc
+   
+  
+  #c("350 mg Q3W IV"), daily
+  #-----------------------------
+  fig = plot.Prediction.Data(tdata,  
+         group_by=c("STUDYID", "ARMA", "TIME"), 
+         ARMA.txt=c("350 mg Q3W IV"), 
+         xlab.txt="Time (day)",
+         ylab.txt="Concentration (mg/L)" ,
+         xlim = c(0,168), 
+         ylim = c(0.039, 2000),
+         major.tick=28, minor.tick=7, 
+         font.size = 14
+  )  
+  FIGURE_ALL[["PREDICTION_350mg_LN_DATA"]] = fig
+  y = tick_label(x=as_numeric(tdata$DVOR), xmin=1E-2, xmax=1E+3,  log=TRUE) 
+  fig = fig + scale_y_log10(breaks=y$breaks, label=as.character(y$labels)) # +  coord_cartesian(ylim = c(0.039,300)) 
+  FIGURE_ALL[["PREDICTION_350mg_SemiLog_DATA"]] = fig
+
+    
+ 
+ 
+  #c("350 mg Q3W IV"), , weekly axis
+  #-----------------------------
+  fig = plot.Prediction.Data(tdata %>% mutate(TIME=TIME/7) %>% mutate(DVOR=ifelse(DVOR==0, 0.039, DVOR)),
+         group_by=c("STUDYID", "ARMA", "TIME"), 
+         ARMA.txt=c("350 mg Q3W IV"), 
+         xlab.txt="Time (Week)",
+         ylab.txt="Concentration (mg/L)" ,
+         xlim = c(0,24), 
+         ylim = c(0.01, 2000), 
+         major.tick=4, minor.tick=1, 
+         font.size = 14
+  )  + 
+    geom_hline(yintercept = 0.078, lty="dashed")
+  y = tick_label(x=as_numeric(tdata$DVOR), xmin=1E-2, xmax=2E+3,  log=TRUE) 
+  fig = fig + scale_y_log10(breaks=y$breaks, label=as.character(y$labels)) # +  coord_cartesian(ylim = c(0.039,300)) 
+  FIGURE_ALL[["PREDICTION_350mg_SemiLog_Weekly_DATA"]] = fig
+  
+  
+  
+  fig = plot.Prediction.Data(tdata %>% mutate(TIME=TIME/7),  #  %>% mutate(DVOR=ifelse(DVOR==0, 0.039, DVOR)),
+         group_by=c("STUDYID", "ARMA", "TIME"), 
+         ARMA.txt=c("350 mg Q3W IV"), 
+         xlab.txt="Time (Week)",
+         ylab.txt="Concentration (mg/L)" ,
+         xlim = c(0,24), 
+         ylim = c(0.0, 2000), 
+         major.tick=4, minor.tick=1, 
+         font.size = 14
+  ) # + geom_hline(yintercept = 0.078, lty="dashed")
+  #y = tick_label(x=as_numeric(tdata$DVOR), xmin=1E-2, xmax=2E+3,  log=TRUE) 
+  #fig = fig + scale_y_log10(breaks=y$breaks, label=as.character(y$labels)) # +  coord_cartesian(ylim = c(0.039,300)) 
+  FIGURE_ALL[["PREDICTION_350mg_LN_Weekly_DATA"]] = fig
+  
+  
+
+    
+  
+  
+
+ 
+    
+    
+```
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

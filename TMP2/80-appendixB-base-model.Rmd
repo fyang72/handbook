@@ -1,0 +1,116 @@
+---
+title: "Untitled"
+author: "Feng Yang"
+date: "December 21, 2017"
+output: word_document
+---
+
+## \@ref(sec-appendix-B)	Appendix B Additional Diagnostic plots for Base Model {#sec-appendix-B}
+
+
+
+```{r tab-base-dev-LN, eval=TRUE} 
+
+tdata = read_csv("./data/model_dev_steps.csv")
+
+runno.lst = paste0("LN", add_prefix(c(1:4, 11:14), digits=3))
+Description = lapply(runno.lst, function(runno) {
+  tdata %>% filter(Model==runno) %>% pull(Description) %>% paste0(., collapse="\\n")  
+}) %>% unlist()
+
+tabl = data.frame(Model=runno.lst, Description=Description)
+
+TABLE_ALL[["LN_model_dev_step"]] = tabl
+
+caption = "List of Key Steps in Development of the Linear Population PK Base Model Using Data from Studies 1423 and 1540 "
+knitr::kable(tabl, booktabs = TRUE, caption = caption)
+
+```
+
+<br>
+<br>
+
+```{r tab-base-dev-MM, eval=TRUE} 
+
+#tdata = read_csv("./data/model_dev_steps.csv")
+
+runno.lst = paste0("MM", add_prefix(c(1:3, 11:14), digits=3))
+Description = lapply(runno.lst, function(runno) {
+  tdata %>% filter(Model==runno) %>% pull(Description) %>% paste0(., collapse="\\n")  
+}) %>% unlist()
+
+tabl = data.frame(Model=runno.lst, Description=Description)
+TABLE_ALL[["MM_model_dev_step"]] = tabl
+
+caption = "List of Key Steps in Development of the MM-based Nonlinear Population PK Base Model Using Data from Studies 1423 and 1540 "
+knitr::kable(tabl, booktabs = TRUE, caption = caption)
+
+```
+
+
+```{r diagnostic-plot-base-model, fig.cap='Conditional residue (CWRES) versus time, individual prediction (IPRED), subject ID, and theoretical quantiles from the Final Model', fig.align='center', out.width='80%', fig.asp=.75}
+  
+runno = base.model.runno     # "LN014" # "LN001"
+OUTPUT = read_OUTPUT(MODEL.HOME, subdir="/ctl/HPC/", runno, adpx00)
+
+tdata = OUTPUT[[runno]]  %>% filter(EVID==0)  %>% mutate(CWRES=as_numeric(CWRES), 
+                                                         IWRES=as_numeric(IWRES),
+                                                         ID=as.integer(as.factor(USUBJID)))
+
+fig = GOF2(tdata)
+fig <- recordPlot()
+FIGURE_ALL[["diagnostic_plot_base_model"]] = fig
+
+
+fig
+  
+```
+
+
+
+
+
+
+
+ 
+
+
+
+
+```{r  }
+
+runno = base.model.runno     # "LN014" # "LN001"
+OUTPUT = read_OUTPUT(MODEL.HOME, subdir="/ctl/HPC/", runno, adpx00)
+
+tdata = OUTPUT[[runno]]  %>% filter(EVID==0)  %>% mutate(CWRES=as_numeric(CWRES), 
+                                                         IWRES=as_numeric(IWRES),
+                                                         DVOR =as_numeric(DVOR),
+                                                         PRED=as_numeric(PRED), 
+                                                         IPRED=as_numeric(IPRED),
+                                                         TIME=as_numeric(TIME),
+                                                         ID=as.integer(as.factor(USUBJID)))
+
+
+tdata = tdata %>% filter(TIME<56, ID %in% sample(tdata$ID, 25)) 
+
+fig = ggplot(tdata, aes(x=TIME, y=DVOR, group=USUBJID)) + geom_point()  + 
+   geom_line(aes(x=TIME, PRED, group=USUBJID), col="blue") + 
+   geom_line(aes(x=TIME, IPRED, group=USUBJID), col="green") + 
+   scale_y_log10() + facet_wrap(~ID, ncol=5) + 
+   xlab("Time (day)") + 
+   ylab("Concentration (mg/L)")  + 
+  base_theme(font.size=14)   + 
+ facet_wrap(~ID, ncol=5)
+
+ 
+
+FIGURE_ALL[["Base_RepresentiveFit_25"]] = fig
+ 
+ fig
+ 
+
+
+
+```
+
+

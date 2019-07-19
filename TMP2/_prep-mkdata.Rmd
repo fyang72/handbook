@@ -1,0 +1,130 @@
+---
+title: "mkdata_preparation"
+author: "Feng Yang"
+date: "12/5/2017"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+ 
+
+```{r mkdata_compilation, eval=FALSE}
+
+# monkey_14152
+monkey_14065= read_excel(path="H:\\FYANG\\R2810_PD1\\DATA\\Hao\\REGN2810_PK_14065_INPUTDATA.xls",  sheet="FINAL_PK")
+colnames(monkey_14065) = gsub(" ", "_", toupper(colnames(monkey_14065)))
+colnames(monkey_14065)
+monkey_14065 = monkey_14065  %>% mutate(STUDYID = STUDY_IDENTIFIER, 
+                                        USUBJID=paste0(STUDYID, "-", SUBJECT_IDENTIFIER), 
+                                        ARMA = paste0(DOSEID, " ", ROUTE), 
+                                        TIMEPT = PLANNED_TIME_POINT_NAME, 
+                                        TIME = STUDY_DAY_OF_SPECIMEN_COLLECTION,   # PLOTTING_TIME, 
+                                        TAD = TIMEPOSTDOSETAB, 
+                                        DVOR = STANDARDIZED_RESULT_IN_CHARACTER_FORMAT, 
+                                        DV = EXCLUDED_STANDARDIZED_RESULT_IN_NUMERIC_FORMAT
+) %>% 
+  select(STUDYID, USUBJID, ARMA, TIMEPT, TIME, TAD, DVOR, DV)
+ 
+
+# monkey_14152
+monkey_14152= read_excel(path="H:\\FYANG\\R2810_PD1\\DATA\\Hao\\REGN2810-PK-14152-DATA.xlsx", sheet="WNL", skip=0)
+colnames(monkey_14152) = gsub(" ", "_", toupper(colnames(monkey_14152)))
+colnames(monkey_14152)
+monkey_14152 = monkey_14152 %>% filter(ANALYSIS_ID == "ALL") %>% 
+                          mutate(STUDYID = STUDYID, 
+                          USUBJID=UNIQUE_SUBJECT_IDENTIFIER, 
+                          ARMA =paste0(DOSED, " ", ROUTE),  
+                          TIMEPT = PLANNED_TIME_POINT, 
+                          TIME = SPOTFIRE_PLOT_TIME_IN_DAYS,   # PLOTTING_TIME, 
+                          TAD = TIME_ELAPSED_IN_DAYS_FROM_DOSING, 
+                          DVOR = CHARACTER_RESULT_IN_STANDARD_FORMAT, 
+                          DV = NUMERIC_RESULT_IN_STANDARD_FORMAT
+) %>% 
+  select(STUDYID, USUBJID, ARMA, TIMEPT, TIME, TAD, DVOR, DV)
+
+monkey_14152 %>% filter(USUBJID %in% "REGN2810-PK-14152-3505")  %>% as.data.frame()
+
+# monkey_14059
+monkey_14059= read_excel(path="H:\\FYANG\\R2810_PD1\\DATA\\Hao\\REGN2810-TX-14059-DATA.xlsx", sheet="WNL", col_names=TRUE)
+colnames(monkey_14059) = gsub(" ", "_", toupper(colnames(monkey_14059)))
+colnames(monkey_14059)
+
+monkey_14059 = monkey_14059  %>% mutate(STUDYID = STUDYID, 
+                                        USUBJID=paste0(STUDYID, "-", STUDY_SUBJECT_IDENTIFICATION),
+                                        ARMA = paste0(DOSED, " ", ROUTE),  
+                                        TIMEPT = PLANNED_TIME_POINT, 
+                                        TIME = PLOTTING_TIME, 
+                                        TAD =DERIVED_TIME_ELAPSED_FROM_RECENT_DOSE, 
+                                        DVOR = CHARACTER_RESULT_IN_STANDARD_FORMAT, 
+                                        DV = NUMERIC_RESULT_IN_STANDARD_FORMAT
+                                        )  %>% 
+  select(STUDYID, USUBJID, ARMA, TIMEPT, TIME, TAD, DVOR, DV)
+ 
+
+
+monkey_all <- merge_all(list(monkey_14065, monkey_14152, monkey_14059))  %>% 
+   mutate(DV=ifelse(DVOR=="BLQ", 0.039, as_numeric(DV)))
+write_csv(monkey_all, path="./MODEL/tabl/monkey_all.csv")
+
+#monkey_14152 %>% filter(USUBJID %in% "REGN2810-PK-14152-3505")  %>% as.data.frame()
+
+#monkey= read_csv(file="H:\\FYANG\\R2810_PD1\\DATA\\Hao\\R2810 monkey PK (IV_SC)_TK_ExcData.csv")
+
+
+tdata = monkey_all
+ dim(tdata)
+# tdata %>% ggplot(aes(x=as_numeric(TIME), y=as_numeric(DV), group=USUBJID, col=ARMA)) + 
+#     geom_point() +  geom_line() + 
+#   scale_y_log10()
+
+
+ ###########################################################
+ ## for these subjects, I want the whole profiles
+ ###########################################################
+
+path= "H:\\FYANG\\R2810_PD1\\DATA\\Hao\\USUBJID_WANTED.csv"
+ids_wanted = read_csv(path)  %>% pull(USUBJID) %>% unique() %>% .[which(!is.na(.))]
+ids_wanted = setdiff(ids_wanted, c("REGN2810-TX-14059-2001", "REGN2810-TX-14059-2504"))
+tdata_wanted = monkey_all %>% filter(USUBJID %in% ids_wanted)
+dim(tdata)
+# tdata_wanted %>% ggplot(aes(x=as_numeric(TIME), y=as_numeric(DV), group=USUBJID, col=ARMA)) + 
+#   geom_point() +  geom_line() + 
+#   scale_y_log10()
+# 
+
+
+
+###########################################################
+## merge with Hao's dataset, to produce tdata0
+###########################################################
+
+tdata <- read_csv("H:\\FYANG\\R2810_PD1\\DATA\\Hao\\R2810 monkey PK (IV_SC)_TK_ExcData.csv")
+tdata = tdata  %>% filter(!is.na(Group)) %>% 
+                          mutate(STUDYID = Study_No, 
+                          USUBJID=paste0(STUDYID, "-", Animal_No), 
+                          ARMA = paste0("REGN2810", " ", Group, " ", Route), 
+                          TIMEPT = ".", 
+                          TIME = as_numeric(Time), 
+                          TAD = ".", 
+                          DVOR = ".", 
+                          DV = as_numeric(Conc)
+)  
+
+tdata_wanted[, setdiff(colnames(tdata), colnames(tdata_wanted))] = "."
+tdata = merge_all(list(tdata %>% filter(!USUBJID %in% ids_wanted), 
+          tdata_wanted))%>% 
+        mutate(ARMA= gsub("IV Infusion", "IV Inf", ARMA, fix=TRUE))  %>% 
+        filter(!is.na(DV))  
+
+
+tdata = tdata %>% mutate(ARMA=gsub("REGN2810 ", "", ARMA))
+
+tdata0 = tdata
+write_csv(tdata0, path="monkey_tdata.csv")
+
+
+```
+ 

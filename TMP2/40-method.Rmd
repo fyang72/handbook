@@ -1,0 +1,381 @@
+
+ 
+ 
+# \@ref(method)	Materials and Methods {#method}
+ 
+## \@ref(study-design)	Overall Study Design {#study-design}
+
+The cemiplimab Pop PK model was developed using data from patients for whom cemiplimab concentrations were available in two phase 1/2 studies.   Pertinent details regarding the design and pharmacokinetic sampling scheme for each study were provided in Table \@ref(tab:study-design).   Studies were identified by the last 4 digits of the study number hereafter. 
+
+The PK data collected from Study-1423 and Study-1540 were combined to develop the population PK model, regardless of tumor types (i.e, patients with CSCC versus patients with other tumor types) and classification (mCSCC or laCSCC).  Characterization of the nonlinear portion of elimination (ie, target-elimination) of cemiplimab is limited due to study design (dose levels and dosing frequencies, mostly Q2W) and the number of samples in the off treatment period and the follow-up duration since the last dose.
+
+Therefore, three densely sampled preclinical PK/TX studies (Table \@ref(tab:study-monkey)) were included to inform the model development process, particularly, to estimate parameters governing the nonlinear elimination of cemiplimab in monkey and explore whether such nonlinear elimination component improves estimation of the concentration time-profiles of cemiplimab in patients.
+   
+ 
+
+
+```{r study-design, tidy=FALSE, message=FALSE, warning=FALSE}
+#~~October 30th, 2017~~  
+  
+  tabl =  data.frame("Study.Name"=c("Study-1423", "Study-1540"), 
+"Dosing.Regimens" = c("Cemiplimab administrated via IV infusion 1, 3, 10 mg/kg and 200 mg Q2W, and 3 mg/kg Q3W", 
+                      "Cemiplimab administrated via IV infusion 3 mg/kg Q2W (Group 1 and Group 2)"),
+"Study.Population" = c("Adult subjects with advanced malignancies ", 
+                     "Adult subjects with advanced cutaneous squamous cell carcinoma"),
+"PK.ADA.Samples" = c("Serial sampling during the first cycle: prior to and at the end of 30 mins infusion, 1, 4, 8, 24, 48, 72 hours post the first infusion, day 8, 15, 29, and day 43;  Sparse sampling at trough and/or the end of infusion at day 1, 15, 29, 43 in cycle 2-6. Anti-cemiplimab antibody samples collected pre-infusion on day 1 of cycles 1, 2, and 4. ", 
+"Sparse sampling at trough and/or the end of infusion at days 1, 15, 29, and 43 of cycle 1, and on day 1 of cycles 2 through 6, 7, 9, and 11. The final PK samples collected either at the end of study visit or at the follow-up visit. ADA samples collected prior to treatment on day 1 of cycles 1, 3, 5, 7, and 11. "))
+
+  caption = "Summary of Studies Included in Population PK Analysis "
+
+  knitr::kable(tabl, booktabs = TRUE, caption = caption)
+    
+```
+
+<br>
+
+
+```{r study-monkey, tidy=FALSE, message=FALSE, warning=FALSE}
+
+  tabl =  data.frame("Study.Name"=c("REGN2810-PK-14065 ", "REGN2810-TX-14059", "REGN2810-PK-14152"), 
+                     "Type" = c("Non-GLP PK", "GLP Tox", "Non-GLP PK"),
+                     "Species" = c("Cynomolgus monkeys", "Cynomolgus monkeys", "Cynomolgus monkeys"), 
+                     "Route " = c("IV infusion", "IV infusion", "SC"),
+                     "Dose.Regimen" = c("Single dose", "4 x QW + 8-week Rec Phase", "Single dose"), 
+                     "Dose.Level" = c("1.0, 5.0 and 15.0 mg/kg", "2, 10 and 50 mg/kg; control article", "1, 5, 15 mg/kg"),
+                     "Number of Subjects"= c("5F per group", "5M + 5F per group", "5F per group")
+                      )
+
+  caption = "Summary of Preclinical PK Studies Conducted in Cynomolgus monkeys"
+
+  knitr::kable(tabl, booktabs = TRUE, caption = caption)
+    
+```
+
+Note: F: female, M: male, QW: every week
+
+
+ 
+## \@ref(assay)	Bioanalytical Assay {#assay}
+
+### \@ref(cemiplimab-assay)	Functional Cemiplimab Assay {#cemiplimab-assay}
+
+Serum samples were analyzed for functional cemiplimab using a validated enzyme-linked immunosorbent assay (ELISA) (bioanalytical procedure PCL3950). In this functional assay, cemiplimab with at least one available binding site is detected. The lower limit of quantification (LLOQ) is 0.078 mg/L in neat human serum.
+
+The bioanalytical assay for functional cemiplimab is described in detail in the corresponding bioanalytical report.
+
+
+
+### \@ref(ADA-assay)	Anti-cemiplimab Antibody Assay in Serum {#ADA-assay}
+
+Anti-cemiplimab antibodies (anti-drug antibodies; ADA) were assessed in serum samples using a validated electrochemiluminescence bridging immunoassay (bioanalytical procedure PCL4635).
+
+The method potentially involves three steps for the evaluation of human samples: screening, confirmation, and titer determination. The screening assay identifies potentially positive samples. Samples that are positive in the screening assay are then analyzed in the confirmation (drug specificity) assay. Samples are considered negative for ADA if either the screening or confirmation tests are negative; samples that are positive (drug specific) in the confirmation assay are considered positive for ADA. A titration assay is then used to determine the ADA titer. The minimum reportable titer is 1:30. For ADA-positive samples found to be negative in the titer assay, the minimum titer value was imputed.
+
+The assay for anti-cemiplimab antibody is described in detail in the corresponding bioanalytical report. 
+
+
+### \@ref(nab-assay)	 Neutralizing Anti-cemiplimab Antibody Assay {#nab-assay}
+The presence of neutralizing anti-cemiplimab antibodies (NAb) was evaluated only in ADA-positive samples, using a validated competitive ligand-binding assay (bioanalytical procedure PCL4777). Samples whose %Inhibition is greater than the assay cut point are reported as positive for neutralizing antibodies.
+
+The assay for neutralizing anti-cemiplimab antibody is described in detail in the corresponding bioanalytical report.
+
+   
+ 
+ 
+ 
+ 
+## \@ref(data-handling) Data Handling  {#data-handling}
+All cemiplimab concentration measurements after the first dose, including below the limit of quantitation (BLQ) and outliers that were identified in the model development process, were included. However, any patients who have dosing records but without post-dose concentration measurements were excluded from the dataset.
+ 
+### \@ref(outliers) Identification  of Outliers  {#outliers}
+
+Outliers were identified by initial visual inspection of raw data, followed by inspection of the outputs from the base model, and inspection of diagnostic plots. Data were classified as outliers using the population conditional weighted residuals (CWRES) and individual weighted residuals (IWRES). Observations with |CWRES|>5 or |IWRES|>5 were considered potential outliers. 
+
+All outliers were included but not analyzed in the final Pop PK dataset; they were flagged and the reasons were specified.  In addition, the influence of these outliers was evaluated by comparing estimates of the key model parameters (i.e., CL and V2) from the base model fits on data with and without the outliers.
+
+
+### \@ref(imputations) Missing Data and Imputations  {#imputations}
+
+In general, cemiplimab concentration measurements associated with unknown or missing sampling date/time, dosing date/time, dosing amounts, or dosing intervals were excluded from this Pop PK analysis. However, when sampling is sparse or dosing interval is large, certain imputation was applied and the reason for imputation was provided. For instance, if sampling date/time is missing in the clinical records, but is available from the sample-labeling, then sampling date/time recorded on the sample label was used.  If sampling date is missing, but visit date is available, visit date is used. If a dose is given and a dosing date is missing, it was imputed manually based on evaluation of PK and remaining dosing records for a subject.
+
+Missing covariate data were handled depending on whether data were completely or partially missing for a subject. Partially missing covariate data were imputed using backward propagation for baseline observations and forward propagation for all other observations. Data with covariates missing at both screening and baseline were imputed using the median of the covariate across subjects, if the covariate is continuous. If the covariate is categorical, the value of the most frequent category was used. If appropriate, missing baseline covariates were replaced with screening values. 
+
+
+### \@ref(exclusions) Data Exclusions  {#exclusions}
+
+Cemiplimab concentration measurements that were occurring prior to first study dose were included in the analysis dataset but not analyzed in the Pop PK analysis. A complete list of reasons for data exclusion was provided.
+
+By default, cemiplimab concentrations below quantifiable limit (BLQ), were included in Pop PK analysis set. However, if the prevalence of BLQ samples are low (less than 1%) and not expected to have impacts on model development, they were flagged and excluded from Pop PK modeling analysis. Moreover, if keeping BLQ values in the model leads to unacceptable issues such as convergence problems, or $COV step estimation failures, or key parameter estimates differed by more than 15%, they were excluded from Pop PK modeling analysis. In NONMEM control stream, M3 method was generally implemented for these BLQ samples. The method M3 is based on simultaneous modeling of continuous and categorical data where the BQL observations were treated as categorical data. The likelihood for BQL observations were maximized with respect to the model parameters and the likelihood for an observation is taken to be the likelihood that it is indeed below LOQ (Bergstrand 2009). In the population PK analysis datasets, BLQ values was set to the half of lower limit of quantification (0.078/2=0.039 mg/L) and the flag (FBLQ) was set as 1.
+
+Cemiplimab concentrations that were severely impacted by Anti-cemiplimab Antibody (by visual inspection) were flagged and excluded from Pop PK analyses; if not, these concentration measurements remain in the analysis dataset and the covariates analysis of ADA positivity was used to quantify their impacts on the exposure of cemiplimab.
+
+In summary, the following rules were used to exclude subjects or samples from Pop PK analyses: 
+<!--* Placebo subjects were excluded;-->
+* Any subject for whom all post-baseline drug concentration were BLQ; 
+
+* Outliers defined in Section \@ref(outliers) were excluded from the analysis.  
+
+* If a missing covariate cannot be imputed, subjects were excluded from the covariate model for this specific covariate.  
+
+
+
+## \@ref(covariates) Covariates  {#covariates}
+    
+The covariates assessed in the Pop PK analysis included:    
+
+Demographics (at baseline):   
+* Body weight (WGT, kg),    
+* Gender (SEX, 1 for male, 2 for female),    
+* Age (AGE, year),    
+* Race:   
+    + RACEN=1, White,     
+    + RACEN=2, Black or African American,    
+    + RACEN=3, Asian,   
+    + Others  
+* BMI (body mass index)   
+    + BMI ($kg/m^{2}$) = weight (kg) / $height^{2}$ ($m^{2}$)   
+* BSA (body surface area, $m^{2}$)   
+* Ethnic   
+    + ETHNICN = 1, Not Hispanic or Latino,   
+    + ETHNICN = 2,  Hispanic or Latino,   
+* Country  
+* Lab parameters (at baseline):    
+    + Creatinine Concentration (CRCON),   
+    + Creatinine Clearance (CRCL, or CLCr), Creatinine clearance (CLCr) was calculated using the method of Crockcroft and Gault [Cockcroft 1976],   
+    + Albumin (g/L),   
+    + Alanine amino transferase (ALT, IU/L),   
+    + Aspartate amino transferase (AST, IU/L),   
+    + Alkaline phosphatase (ALP, IU/L),   
+    + Bilirubin (BIL),   
+* Tumor type (CSCC, NSCLC, HCC, GBM, etc)   
+    + Individual tumor type if there are a sufficient number of patients,   
+    + If not, then CSCC vs other tumor types, or CSCC patients vs. all population   
+* Baseline disease characteristics   
+    + Metastatic vs locally and/or regionally advanced,    
+    + Measurable lesion in maximal diameter,   
+    + Eastern Cooperative Oncology Group (ECOG, 0, 1 or 2),   
+    + Lactate dehydrogenase (LDH)    
+* Monotherapy and combination therapy    
+* Dose escalation cohort vs. expansion cohort   
+* Concomitant medications   
+    + cyclophosphamide , carboplatin, docetaxel, paclitaxel, GM-CSF, radiotherapy and their combinations   
+* Biomarkers:   
+    + Soluble PD-L1expression concentrations,   
+    + Baseline immunoglobulin G (IGG)   
+* Anti-drug antibody (ADA)   
+    + Time-varying ADA (per sample): 0 for negative, 1 for positive   
+    + Stationary ADA (per subject): the following four binary variables were used:   
+    + Negative : 0 for negative ADA at all time, 1 otherwise (positive at any time);   
+    + Pre-existing :  0 for Pre-existing ADA, 1 otherwise;   
+    + Treatment-emergent : 0 for Treatment-emergent ADA, 1 otherwise;   
+    + Treatment-boosted : 0 for Treatment-boosted ADA, 1 otherwise   
+* Other Factors   
+    + Different cell lines,   
+    + Formulation,   
+    + Manufacturing process   
+
+In case there are substantial differences in low and high laboratory values between different laboratories, normalization procedures may be used to adjust for the differences in data provided by different laboratories. The normalization procedure used was presented as follows:   
+Normalized Laboratory Value = (Analyte Value – LLN)/(ULN – LLN),     
+where LLN is the lower limit of the normal range and ULN is the upper limit of the normal range.  Note the normalization procedures will produce unitless numbers.
+
+In addition, time-variant body weight, albumin and immunoglobulin G (IGG) at each visit were evaluated.
+  
+  
+  
+
+## \@ref(create-nmdat) Creation of the Input Data File  {#create-nmdat}
+
+A NONMEM formatted data file was created from the clinical and bioanalytical databases. Typical variables include: study number; subject ID; visit number; demographic variables including gender, race, age, weight, height, and BMI; dosing time, amount and route of administration; actual and nominal sampling time; cemiplimab concentrations; relevant clinical laboratory measurements, etc. For subjects with missing observations, a null value '.' was assigned. Only serum samples with quantifiable cemiplimab concentrations (include BLQ) were included in the analysis.  All outliers remained in the analysis dataset but flagged as an outlier.
+
+NONMEM® formatted input data files were created from the clinical and LIMS databases using R version 3.3.1 or above and SAS 9.4.   Source data include information such as PK sample concentrations, PK sample dates and times, dose amounts with dates and times, and patient demographics and covariates. Pooled NONMEM® (Version 7.4) ready datasets were constructed using SAS 9.4. The definitions of the variables contained in the NONMEM ready dataset and final dataset were provided.
+
+
+
+## \@ref(software) Computer and Software  {#software}
+The population PK of cemiplimab was characterized by nonlinear mixed-effects modeling using NONMEM® (7.4, ICON Development Solutions, Ellicott City, Maryland). NONMEM® was accessed through PsN (4.6.0).  The NONMEM® run on Linux high performance cluster (HPC), based on Amazon cloud. Figures will be prepared with R version 3.3.1 or above (http://www.r-project.org). PsN 4.6.0 (Uppsala University, Sweden) and Xpose 4.5.3 (Uppsala University, Sweden) was utilized as supportive software for NONMEM.
+
+
+## \@ref(overview-analysis) Overview of Population Pharmacokinetic Analysis  {#overview-analysis}
+
+Data from two studies of R2810-ONC-1423 and R2810-ONC-1540 was used to build a population model for cemiplimab.    Model selection was based on physiological and pharmacological rationale and the principle of parsimony – simpler models were chosen over more complex models when statistically justified.
+
+The Pop PK model were developed in three stages, consisting of the base, full, and final models. First, a base model was developed to describe the PK of cemiplimab without consideration of covariate effects. Second, a full covariate model was developed by incorporating the effect of all pre-specified covariate parameter relationships. In the third stage, the final Pop PK model was developed by retaining covariates that improved a goodness-of-fit statistic (MOFV).   More specifically, the population PK analyses were conducted in the sequence shown in the left panel.
+
+Nonlinear mixed effects modeling methodology were implemented in this analysis using NONMEM (version 7.4) software (ICON Development Solutions, Ellicott City, MD).  The first-order conditional estimation (FOCE) with INTERACTION method was utilized.
+
+Model development was based on the following criteria:   
+* Successful minimization and completion of covariance steps in NONMEM;  
+
+*	Assessment of standard goodness-of-fit and other diagnostic plots;  
+
+*	Reductions in NONMEM minimum objective function value (MOFV) for hierarchical models; and
+
+* Overall predictive performance.   
+
+In addition, the stability of the models throughout the model development process was monitored. To avoid ill-conditioning, inspection of the covariance matrix of estimates at every stage of model development were performed in order to verify that extreme pairwise correlations (ρ > 0.95) of the parameters is not encountered. The condition number of the correlation matrix of the parameter estimates (i.e., the ratio of the largest to smallest eigenvalues) was also assessed to ensure values less than 1000. Values greater than 1000 are indicative of a severely ill-conditioned model.  If during the course of model development convergence or covariance estimation problems occurred, ad hoc NONMEM runs were performed to evaluate the nature of the ill-conditioning.
+
+Pre- and post-processing of data from each modeling step were performed using R (version 3.3.1 or above). Graphical analysis of the data or output from the models was performed using R.  
+  
+
+
+
+### \@ref(exploratory-analysis) Exploratory Data Analysis {#exploratory-analysis}
+An exploratory data analysis were first undertaken to characterize the data and evaluate assumptions and appropriateness regarding models to be developed. A series of graphs and tables summarizing the data were generated to examine the basic structure of the concentration-time data, covariate data, outliers, potential identification of trends in the data, and possible errors in data. To help identify functional relationships, concentration-time profile plots of all data were generated with a non-parametric locally weighted smoother (LOESS) line. Observations discordant from the bulk of the data within the same time interval and dose group would be identified as outliers. 
+
+
+
+### \@ref(structural-model) Structural Model Development and Rationale {#structural-model}
+  
+The first step of Pop PK analysis is base model development which consists of the development of a structural model, a residual error model, and inter-individual variability (IIV) model. 
+
+There is a body of evidence to suggest the pharmacokinetics of anti-PD1 antibodies including cemiplimab are governed in part by target-mediated processes, thus consisting of parallel linear and non-linear (target-mediated) elimination.  Support for this assertion is the known physiological and anatomical distribution of the antibody target; PD1 as a soluble membrane bound receptor expressed by activated T-Cells.  Additionally, for pembrolizumab, when studied over a broad range of dosing regimens, 0.005 mg/kg to 10 mg/kg every 2 or 3 weeks (Q2W or Q3W), the non-linearity and target-mediated phase became increasingly dominated in the overall profile as the dosing regimen decreasing below 0.3 mg/kg Q3W (Elassaiss-Schaap, 2016). 
+
+The pharmacokinetics of cemiplimab, when studied across a range of doses and duration in nonhuman primates was also characterized as non-linear with parallel linear and target-mediated elimination, even though the prevalence of ADA obscured the target-medicated clearance which would be expected at lower concentrations. A population PK model was built on monkey serum concentrations collected in studies shown in Table \@ref(tab:study-monkey)). The Michaelis-Menten model parameters were identified to be 0.00965 μg/mL and 0.446 μg/kg/h, for Km and Vmax respectively (see preclinical pharmacokinetics scaling report, REGN2810-MX-14136-SR-01V1).     
+
+Notable, beyond the initial early clinical development of anti-PD1 antibody therapeutics, clinical programs targeted dosing regimens that well maintained saturation of the target-mediated pathway over a dosing interval, as lower dosing regimens are likely to be sub-optimal.  Since the clinical doses used by many other PD1 inhibitors (pembrolizumab, nivolumab, ipilimumabare and atezolizumab) are well above 0.3 mg/kg Q3W, a two-compartment model with linear clearance was generally used for all these inhibitors, regardless their targeted patient population (Elassaiss-Schaap 2016, Bajaj 2017, Feng 2014).  In a similar manner, clinical trials of cemiplimab were conducted at dose regimens from 1 mg/kg to 10 mg/kg, in either Q2W or Q3W; the resulting cemiplimab concentrations are expected to be well above levels that would saturate the target-mediated elimination pathway.  As such, it is anticipated that the majority of the data will exhibit linear kinetics and nonlinear elimination may not be evident.  
+
+In an effort to identify the most appropriate Pop PK model (linear vs. nonlinear) for this analysis, the following approaches that address both the know physiology of PD1 and the confines of the existing data were investigated.  
+
+* Re-investigate three densely sampled preclinical PK/TX studies (Table 2) to estimate the nonlinear elimination of cemiplimab, and explore whether the nonlinear elimination model determined in monkey can be allometrically scaled to patients.   
+ 
+* Characterize the observed concentration vs TAD (time after the last dose) to determine whether there are enough/robust data to support nonlinear elimination. 
+
+* Incorporation both parallel linear and non-linear elimination to assess whether the additional non-linear term on CL could improve the model based on the goodness-of-fit plots and non-significant reduction of objective function values, relative to the model with linear clearance.  
+
+If neither approach supports the inclusion of a nonlinear elimination component in the Pop PK model for cemiplimab, linear kinetics will be used as an approximation of the nonlinear Pop PK of cemiplimab.  In other words, the simpler model that adequately describes the data will be chosen over more complex models.   However, a nonlinear model will be re-considered once there are enough data collected at the range of low concentrations (either in follow-up phase or patient early drop) in the current or subsequent studies. 
+Based on all these facts and limitations of study design, a two-compartment model with parallel linear and nonlinear (Michaelis-Menten) elimination was considered as a starting model structure.  
+
+Based on all these facts and limitations of study design, a two-compartment model with parallel linear and nonlinear (Michaelis-Menten) elimination was considered as a starting model structure.   Figure \@ref(fig:two-compartment-model-illustration) provides a schematic for the initial two-compartment structural PK model with parallel linear and nonlinear (Michaelis-Menten) elimination.  
+
+<!--Based on all these facts and limitations of study design, a two-compartment model with parallel linear and nonlinear (Michaelis-Menten) elimination was considered as a starting model structure.   Figure 1 provides a schematic for the initial two-compartment structural PK model with parallel linear and nonlinear (Michaelis-Menten) elimination.  -->
+
+
+
+```{r two-compartment-model-illustration, fig.cap='A General Structural Representation of a Two-compartment Model with Parallel Linear Elimination and Michaelis-Menten for both IV and SC Administration', fig.align='center', out.width='80%', fig.asp=.75}
+ 
+plot(pressure, type = 'b', pch = 19, main="placeholder")
+
+```
+
+SC = subcutaneous; IV = intravenous; F1 = F = bioavailability; ka = absorption rate constant; V2 = Vc = volume of distribution (central compartment); V3 = Vp = volume of distribution (peripheral compartment); Q = inter-compartmental clearance between the central and peripheral compartments; k23, k32 – inter-compartmental rate constants; ke – elimination rate constant; Vm – maximum target-mediated rate of elimination; km – Michaelis-Menten constant.  CL is plasma clearance, derived from ke*V2
+
+The primary structural model was parameterized in terms of clearance (CL), central volume of distribution (V2), peripheral volume of distribution (V3), inter-compartmental clearance (Q), with log-normal random effect distributions.  In the model with both parallel linear and nonlinear elimination, Vmax (maximum rate in nonlinear elimination) and Km (Michaelis-Menten constant) are introduced.  The absolute bioavailability (F1) was set to a typical value, 0.7, and first-order absorption rate constant (Ka) was set to 0.4. 
+This diagram representation can be mathematically expressed as the following ODE equations: 
+(dA_1)/dt=-k_a A_1
+(dA_2)/dt=-k_e A_2+k_a A_1-k_23 A_2+k_32 A_3+(V_max*C)/(k_m+C)
+(dA_3)/dt=k_23 A_2-k_32 A_3
+where A1 or Adepot is the amount of cemiplimab dosed via SC route and subject to bioavailability F, A2 is the amount of cemiplimab in the central compartment with a volume V2, A3 is the amount of cemiplimab in the peripheral compartment with a volume V3, ka ,  ke,  k23, k32,Vmax,  and km are explained in the footnote of Figure 1. 
+
+Structural model development also included the assessment of temporal changes in CL [Li 2017, Bajaj 2017], which consisted of the selection of the functional form of the temporal effect in comparison to the model with constant CL. In addition to the model with constant CL, two alternative functional forms which were used to describe time-dependent CL (hyperbolic-Emax and sigmoid-Emax, described below) were tested relative to the base model with constant CL,
+
+Equation 1		Hyperbolic- Emax: " exp" ((Emax∙T)/(T_50+T))	 
+Equation 2		Sigmoid- Emax:   "exp" ((Emax∙T^γ)/(T_50^γ+T^γ ))  				
+The Emax and T50 parameters of patient i is given by the following expression:  
+Equation 3		〖Emax〗_i=〖Emax〗_TV+_Emax					
+Equation 4		〖T50〗_i=〖T50〗_TV+_T50	
+
+where,  〖Emax〗_TV represents the population (typical value) estimate of the maximal change in CL; and _Emax ~N(0, ω_Emax^2) is a normally distributed random variable, with mean 0, and variance ω_Emax^2, that represents the inter-individual variability in E"max" . The T50 parameter represent the time at which the change in CL is 50% of E"max" , and γ represents the sigmoidicity of the relationship with time.  In addition, Equation 1 and Equation 2 were applied to Vmax (instead of CL) in the MM-nonlinear elimination.
+
+
+In addition, considering the nature of elimination mechanism (non-specific reticulo-endothelial system-mediated) of monoclonal antibodies [Mould, 2010, Keizer, 2010] and our common practice, body weight scaling on clearance and volume parameters was treated as a covariate during base model development, i.e.  
+P = P ref  ⋅[WGT/(M(WGT))]^(θ_ ),  
+where P  indicates the model parameters for CL/Q, and V2/V3, WGT is body weight, and θ_ is estimated effect of covariate WGT on PK parameter.   P_ref   is the typical value of the PK parameter (CL/Q, and V2/V3), and M(WGT) is the reference value of the covariate WGT.  
+
+
+
+
+### \@ref(statistical-model) Statistical Models {#statistical-model}
+   
+   
+   
+#### \@ref(residual-errors) Residual Errors {#residual-errors}
+
+Residual variability, a composite measure of assay error, dose/sample time collection errors, model misspecification, and any other unexplained variability within a subject, was modeled using the following error model:
+* Additive: 	Y = F + ERR(1)  
+* Proportional: 	Y = F + F x ERR(1)  
+* Combined: 	Y = F + F x ERR(1) + ERR(2)  
+where Y denotes the observed concentration, F denotes the corresponding predicted concentration based on the PK model and ERR denotes the residual random variable, which is assumed to have a normal distribution with a zero mean and variance 2.  Log-transformation of the error model was typically applied.  
+
+Other residual error models were explored if patterns are observed in the |IWRES| versus IPRED plot.   Standard goodness-of-fit and diagnostic plots were used to assess lack-of-fit. Different structural models were considered if the initial model does not adequately describe the cemiplimab concentration-time data.  
+ 
+
+
+
+#### \@ref(inter-individual-variability) Inter-Individual Variability {#inter-individual-variability}
+ 
+The variation among individuals was modeled through the individual parameters or covariates.  Lognormal assumptions of the basic PK parameters was initially made and evaluated graphically. The inter-individual variability was modeled using a log-normal (or multiplicative) model as described below:
+
+...   (will be replaced with word-based equation later)
+  
+where i is the individual value of the parameter (e.g., CL), TV is the typical value model parameter, and i denotes the inter-individual random effect accounting for the ith individual’s deviation from the typical value. The i's were assumed to have a normal distribution with a zero mean and variance 2. 
+
+In addition to the graphical approach, the arithmetic means of  estimate were computed and compared to zero (using the p value provided by NONMEM) to confirm the selection of the inter-individual variability error model.
+
+The full non diagonal matrix (-block) and the different combinations of  correlation and  fixed at zero 
+are evaluated. The selection of a omega-block, if any, was guided by the inspection of correlation plot of s) and the decrease of OFV. An objective of the Pop PK analysis is the estimation of the individual dupilumab exposure and hence the extent of the Bayesian shrinkage was evaluated for each PK parameter in the final model. Large values of the ‘Shrinkage’ are associated with generally poor individual estimates of that parameter. The appropriateness of the base structure model and variance model was assessed throughout and refined as necessary. 
+
+
+### \@ref(covariate-model-development) Covariate Model Development{#covariate-model-development}
+  
+After the selection of an appropriate base structural model, Pop PK covariate model development was undertaken using forward selection followed by a backward elimination procedure. The subject descriptors as described in Section 4.4 may be evaluated in an explanatory manner as potential covariates of PK variability. Covariate screening was conducted graphically using univariate plots of PK parameters versus covariates. Additionally, any parameter-covariate relationships visually apparent or of mechanistic and clinical relevance was tested statistically using methods described below. 
+
+
+#### \@ref(forward-selection) Forward Selection of Covariates {#forward-selection}
+   
+A univariate analysis of each patient covariate with an observable trend was performed using NONMEM. The relationships between continuous covariates and the relevant PK parameters was evaluated mainly but not limited to by following functions:   
+* TVP = (1) x ( COV / Median COV )(2)   
+* TVP = (1) + (2) x ( COV - Median C=V )  
+where TVP is the Typical Value (population parameter) of the PK parameter and COV is the considered continuous covariate (COV). The relationships between categorical covariates (CAT) and relevant PK parameters was evaluated mainly but not limited to by following functions  
+* TVP = (1) x (1 + (2)  x CAT)  
+* TVP = (1) x (2)  CAT
+  
+Covariates contributing at least a 6.63 unit change in the minimum value of objective function (MVOF) (α = 0.01, one degree of freedom) was considered statistically significant during forward selection. After the initial univariate analyses are completed, the covariate contributing the most significant change in the MVOF (smallest p value) was included in the next base covariate model. This process was repeated until there are no further covariates that produced significant changes in the MVOF. The resulting model was considered as the full multivariable model. The appropriateness of structure and statistical models was assessed throughout and refined as necessary.
+ 
+
+#### \@ref(backward-elimination) Backward Elimination Analysis of Covariates {#backward-elimination}
+  
+If more than two covariates are included in the full multivariable model, backward elimination was employed. In this process, each covariate was removed from the parameter equation separately. A covariate was considered significant if it contributes to at least a 10.83 change in the MVOF value (α = 0.001, one degree of freedom) when removed from the model.  The most non-significant covariate (the highest p-value greater than 0.001) were removed from the model and this reduced model was then serve as the next base multivariate model. The backward elimination procedure was repeated until all remaining covariates are statistically significant (p < 0.001). 
+
+
+
+### \@ref(model-evaluation) Population Pharmacokinetic Model Evaluation {#model-evaluation}
+   	
+During model development, the following criteria was used, but may not be limited to, for evaluation of the candidate Pop PK models: 
+
+* Graphical examination of standard diagnostic and population analysis goodness-of-fit plots;
+
+* Graphical examination of the agreement between the observed and individual post-hoc predicted concentration-time data;
+
+* Reduction in both residual variability and IIV (ω2); and
+
+* Comparison of MOFV for nested models.  
+
+In addition to these evaluation criteria, model selection were based upon physiological and pharmacological rationale as well as principle of parsimony – simpler model was chosen over complex models when statistically justified. 
+
+
+
+#### \@ref(model-validation) Model Validation by Bootstrapping  {#model-validation}
+ 
+Once a final PK model was identified, the robustness of the model and the accuracy of parameters estimates (indicated mainly by relative standard error (%RSE)) could be assessed using a bootstrap method. This step is optional if a successful covariance step was obtained for the final model, mandatory in case of non-successful covariance step. The entire procedure was achieved in an automated fashion. The main steps of bootstrap execution is planned as following steps:  
+
+1. Multiple (> 200) bootstrap datasets were generated by resampling with replacement from the original model development dataset; 
+
+2. Population PK parameters were estimated for each of the bootstrap dataset, and the corresponding mean, median, standard deviation, 2.5th / 97.5th percentiles were estimated for each PK parameters generated from bootstrapping; and 
+
+3. The point estimate of parameter obtained in the final model of the original dataset were compared with the mean parameters from bootstraps to assess the robustness of final model. 
+
+
+#### \@ref(model-vpc) Model Validation by Visual Predictive Checks {#model-vpc}
+ 
+Visual predicted checks (VPC) for selected studies or stratified by relevant covariates is planned to be conducted as model validation for verifying the adequacy of final model in specific subgroups if deemed as necessary. The main steps of constructing VPC is briefly described as below:  
+
+1. Multiple simulated datasets were generated and the PK profiles of cemiplimab were simulated by using these simulated datasets based upon the final Pop PK model; and  
+
+2. The distribution of the simulated observations was compared with real data observations to verify the appropriateness of final Pop PK model.
+
+Additional informative diagnostic tools like Prediction Corrected VPC (pcVPC) may be conducted if deemed as necessary. In a pcVPC, the variability coming from variations in independent variables (time, dose and covariates values) within a single bin is removed by normalizing the observed and simulated dependent variable (observed concentration) based on the typical population prediction. This approach may be preferred, but even if the independent variable is normalized, stratification by dose or specific relevant (data driven) covariate could be performed. 
+
+
+
+
+
