@@ -10,6 +10,7 @@ TO DO LIST
 2. use both rmarkdown report template or officer word-based template to include ALL;
 3. model-development tree structure, borrow pirana idea
 4. NEED EXTRT FROM ADEX, to cascade all to all rows? if not, some figure title need that information.
+5. add sigmoid curve fitting
 
 
 

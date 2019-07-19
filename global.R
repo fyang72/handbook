@@ -1,7 +1,7 @@
 
-HOME = paste0("~/YANG/")
+#HOME = paste0("~/YANG/")
 #HOME <- paste0(getwd(), "/")
-#HOME = paste0(normalizePath("."), "/")
+HOME = paste0(normalizePath("."), "/")
  
 ######################################################################
 # Load packages
