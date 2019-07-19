@@ -1,0 +1,397 @@
+  #----------------------------------------------------------------------------
+  # Version 0.1   Created on 11/08/2018, Feng Yang
+  # 
+  #----------------------------------------------------------------------------
+  # Input
+  # -----------------
+  # 1) nmdat:  meta data file, or 
+  #
+  # Output Tables: 
+  #------------------
+  # 1) Overall population and samples
+  #    a. overall accounting table for subject, 
+  #    b. overall accounting table for sample,
+  # 2) summary table for PK, target and PD response by ARMA
+  #    a. PK sample, and disposition table
+  #    b. Target/PD sample, and disposition table 
+  # 3) summary table for patient demographics
+  #----------------------------------------------------------------------------
+  # 
+
+  ##########################################################################################
+  # Overall population and samples 
+  ##########################################################################################
+   
+  #adpx = read_csv("./data/adpx.R3918.HV.1659.csv", 
+  #                col_type=cols(.default=col_character()))    # read as character as defualt
+  
+  
+  #"R3918-HV-1659-826-001-127"  removed
+  nmdat = read_csv("./data/nmdat_PKPD_1120_2018.csv", 
+                   col_type=cols(.default=col_character()))    # read as character as defualt   %>%
+  
+  arma.lst <- c("Placebo", "1 mg/kg IV" ,  "3 mg/kg IV",    "10 mg/kg IV" ,   "30 mg/kg IV" , 
+                "600 mg SC" ,  "300 mg SC" ,  
+                "400 mg SC QW" )
+  
+  # make ARMA as a ordered factor
+  nmdat = nmdat %>% mutate(ARMA = gsub("_", " ", ARMA, fix=TRUE), 
+                           ARMA = ordered(ARMA, levels=arma.lst), 
+                           ARMAN = as.integer(ARMA), 
+                           DVOR = as_numeric(DVOR), 
+                           TIME = as_numeric(TIME), 
+                           NTIM = as_numeric(NTIM),
+                           
+                           BLQ = as.integer(BLQ), 
+                           LLOQ = as_numeric(LLOQ)
+  ) %>% 
+    #filter(as_numeric(TIME)>=0) %>%    # Do we want to exclude all pre-dose sampels, as the default?
+    filter(TEST!=".", !is.na(DVOR))  %>% 
+    filter(TEST %in% c(PK.TEST.NAME, TARGET.TEST.NAME, PD.TEST.NAME))  
+ 
+ 
+  nmdat$CFLAG %>% unique()
+  #----------------------------------------------------------------------------
+  # Table accounting_subject:  Accounting of All Subjects by Analyte, Treatment Group, and Overall  
+  #----------------------------------------------------------------------------
+              
+  tabl = nmdat %>% group_by(TEST, ARMA) %>% summarise(N=length(unique(USUBJID)) ) %>% 
+    spread(ARMA, N) %>% ungroup()
+  
+  tabl = cbind(tabl,  TOTAL =  rowSums(tabl%>%select(-TEST)))
+  tabl
+  
+  
+  attr(tabl, 'title') <- paste0("Accounting of All Subjects by Analyte, Treatment Group, and Overall (", STUDY.NAME, ")") # 
+  TABLE_ALL[["accounting_subject"]]  = tabl 
+  
+  #----------------------------------------------------------------------------
+  # Table accounting_sample: Accounting of All Samples by Analyte, Treatment Group, and Overall
+  #----------------------------------------------------------------------------
+  tabl = nmdat %>% group_by(TEST, ARMA) %>% summarise(N=length(DVOR) ) %>% 
+    filter(TEST %in% c("REGN3918", "CH50H", "C5"))  %>% 
+    spread(ARMA, N) %>% ungroup()
+  
+  
+  t1 = nmdat %>% group_by(TEST) %>% summarise(N=length(DVOR), 
+                                              Quantifiable.samples = length(which(DVOR!=0))) %>% 
+    ungroup()
+  
+  
+  tabl = cbind(cbind(tabl,  TOTAL =  rowSums(tabl%>%select(-TEST))), Quantifiable=t1$Quantifiable.samples)
+  tabl = tabl %>% mutate(Quantifiable=paste0(Quantifiable, "(", u.signif(Quantifiable/TOTAL*100, digits=3), "%)"))
+  tabl
+  
+  
+  attr(tabl, 'title') <- paste0("Accounting of All Samples by Analyte, Treatment Group, and Overall (", STUDY.NAME, ")") # 
+  TABLE_ALL[["accounting_sample"]]  = tabl 
+  
+  
+  
+  ##########################################################################################
+  # summary_of_studies
+  ##########################################################################################
+  
+  #----------------------------------------------------------------------------
+  # Table summary_of_studies
+  #----------------------------------------------------------------------------
+  #namedVec2df <- function(x) {setNames(data.frame(lapply(x, type.convert), stringsAsFactors=FALSE), names(x))}
+  
+  summary_of_studies0 <- function(nmdat, group_by=c("STUDYID", "ARMA", "EXROUTE"), value="DVOR", id="USUBJID") {
+    # Note:   == "0",  mean  BLQ
+    #         == ".",  missing, not available.
+    
+    summ = nmdat %>% mutate(DVOR=as_numeric(DVOR)) %>% 
+      group_by_(.dots = group_by) %>% dplyr::summarise(
+        N = fun.uniqN(USUBJID), 
+        N_mininum_one_measurable_sample = fun.uniqN(USUBJID[!is.na(DVOR) & DVOR!=0]),
+        N_subject = paste0(N, "(", N_mininum_one_measurable_sample, ")"), 
+        
+        N_samples = length(DVOR),
+        
+        N_predose_samples = length(DVOR[TIME<0]), 
+        pct_predose_samples = paste0(N_predose_samples, "(", u.signif(N_predose_samples/N_samples*100, digits=3),"%)"),
+        
+        N_measurable_samples = length(DVOR[!is.na(DVOR) & DVOR!=0]), 
+        pct_measurable_samples = paste0(N_measurable_samples, "(", u.signif(N_measurable_samples/N_samples*100, digits=3),"%)"),
+        
+        N_postdose_BLQ_samples = length(DVOR[TIME>=0 & DVOR==0]),
+        #N_postdose_samples = length(DVOR[TIME>=0]),
+        pct_postdose_BLQ_samples = paste0(N_postdose_BLQ_samples, "(", u.signif(N_postdose_BLQ_samples/length(DVOR[TIME>=0])*100, digits=3), "%)")
+    ) %>% select(group_by, N_subject, N_samples, pct_predose_samples, pct_measurable_samples, pct_postdose_BLQ_samples)
+    
+    colnames(summ) <- c(group_by,  
+                        "Number of Subjects(*)",	 	
+                        "Number of Samples",
+                        "Number of Pre-dose Samples",
+                        "Number of Post-dose Quantifiable Samples (%)",	
+                        "Number of Post-dose BLQ Samples (%)" 
+    )
+    return(summ)
+    #   
+    #   footnote:
+    #   PK = pharmacokinetic; BLQ = below the level of quantification; IV = intravenous; SC = subcutaneous
+    #   a Percentages of BLQ samples were computed relative to the total (measurable  + BLQ) sums of PK samples
+    
+  }
+    
+  summary_of_studies <- function(tdata, group_by=c("STUDYID", "ARMA"), value="DVOR", id="USUBJID") {
+    tabl_1 = summary_of_studies0(tdata, group_by=c("STUDYID", "ARMA"), value="DVOR", id="USUBJID") 
+    tabl_2 = summary_of_studies0(tdata, group_by=NULL, value="DVOR", id="USUBJID") 
+    tabl = setNames(merge_all(list(tabl_1, tabl_2)), colnames(tabl_1))  %>% arrange(STUDYID, ARMA)  
+    tabl = tabl %>% mutate(STUDYID=as.character(STUDYID), ARMA=as.character(ARMA))
+    tabl_summary_study = tabl
+    
+    tabl[nrow(tabl), c("STUDYID","ARMA")] = "Total"
+    tabl[which(duplicated(tabl$STUDYID)), "STUDYID"] = ""
+    tabl = tabl %>% rename(Study=STUDYID, Group=ARMA)
+    tabl[is.na(tabl)] = ""  
+    return(tabl)
+  }
+   
+  #----------------------------------------------------------------------------
+  # Table summary_of_studies for pk
+  #----------------------------------------------------------------------------
+  
+  tdata = nmdat  %>% filter(TEST!=".", TEST=="REGN3918")  # , PCTEST=="REGN2810 Concentration") 
+  tabl = summary_of_studies(tdata, group_by=c("STUDYID", "ARMA"))
+  if (length(unique(tabl%>% filter(!Study %in% c("", "Total"))%>% pull(Study)))==1) {tabl = tabl %>% select(-Study)}
+  tabl
+                                
+  attr(tabl, 'title') <- paste0("Summary of Subjects and PK Samples by Study and Treatment Group (", STUDY.NAME, ")")
+  TABLE_ALL[["summary_studies_PK"]] = tabl 
+    
+  #knitr::kable(tabl, booktabs = TRUE, caption=caption, padding = 2)
+  
+  tabl = nmdat  %>% mutate(CFLAG=ifelse(is.na(CFLAG), ".", CFLAG)) %>% 
+     filter(as.integer(EVID)==0)   %>% 
+     group_by(STUDYID, CFLAG, TEST) %>% dplyr::summarise(n.subject=length(unique(USUBJID)), 
+                                                         n.sample =length(DVOR), 
+                                                         n.subject_n.sample = paste0(n.subject, "(", n.sample, ")"))  %>%
+     select(-n.subject, -n.sample) %>%
+     spread(TEST, n.subject_n.sample) %>% as.data.frame()
+  
+  attr(tabl, 'title') <- paste0("Summary of Subjects and PK Samples by Study and Treatment Group (", STUDY.NAME, ")")
+  TABLE_ALL[["disposition_tabl_PK"]] = tabl 
+  
+  #----------------------------------------------------------------------------
+  # Table summary_of_study for target
+  #----------------------------------------------------------------------------
+  tdata = nmdat  %>% filter(TEST!=".", TEST=="C5")  # , PCTEST=="REGN2810 Concentration") 
+  tabl = summary_of_studies(tdata, group_by=c("STUDYID", "ARMA"))
+  tabl
+  
+  attr(tabl, 'title') <- paste0("Summary of Subjects and C5 Samples by Study and Treatment Group (", STUDY.NAME, ")")
+  TABLE_ALL[["summary_studies_TARGET"]] = tabl 
+  
+  #knitr::kable(tabl, booktabs = TRUE, caption=caption, padding = 2)
+  
+  #----------------------------------------------------------------------------
+  # Table summary_of_study for CH50
+  #----------------------------------------------------------------------------
+  tdata = nmdat  %>% filter(TEST!=".", TEST=="CH50H")  # , PCTEST=="REGN2810 Concentration") 
+  tabl = summary_of_studies(tdata, group_by=c("STUDYID", "ARMA"))
+  tabl
+  
+  attr(tabl, 'title') <- paste0("Summary of Subjects and CH50 Samples by Study and Treatment Group (", STUDY.NAME, ")")
+  TABLE_ALL[["summary_studies_PD"]] = tabl 
+  
+  #knitr::kable(tabl, booktabs = TRUE, caption=caption, padding = 2)
+  
+  
+  
+  #----------------------------------------------------------------------------
+  # Table summary_of_studies for ADA   (May not be true assessment of ADA anymore)
+  #----------------------------------------------------------------------------
+  
+  # tdata = adpc  %>% filter(TEST!=".", TEST=="PCL5027 Screen")  #    "PCL5027 Screen" "PCL5027 Titer"
+  # tabl = summary_of_studies(tdata, group_by=c("STUDYID", "ARMA"))
+  # if (length(unique(tabl%>% filter(!Study %in% c("", "Total"))%>% pull(Study)))==1) {tabl = tabl %>% select(-Study)}
+  # tabl
+  
+  #attr(tabl, 'title') <- paste0("Accounting of Anti-REGN3918 Samples in Serum by ADA Status and Treatment Group (", STUDY.NAME, ")")
+  #TABLE_ALL[["summary_studies_ADA"]] = tabl 
+  
+   
+  
+  
+  #----------------------------------------------------------------------------
+  # summary stats for the continuous variables
+  #----------------------------------------------------------------------------
+  
+  summary_continuous_var <- function(nmdat, id="USUBJID", group_by="ARMA", 
+                                     COV_NAME=c( "AGE", "WGTBL", "HGTBL", "BMIBL"), 
+                                     STATS_NAME=c("N", "Mean_SD", "Median", "Range") ) {
+    
+    #nmdat = nmdat %>% mutate(GROUP=paste(one_of(group_by), "-"))
+    stopifnot(length(group_by)==1)
+    t0 = lapply(COV_NAME, function(value, nmdat, id, group_by  ) {
+      calc_stats(nmdat, id, group_by, value) %>% 
+        mutate(COV_NAME=value, 
+                Mean=u.signif(Mean, digits=3)%>%as.character(), 
+                SD = u.signif(SD, digits=3)%>%as.character(), 
+                SE = u.signif(SE, digits=3)%>%as.character()) }, nmdat, id, group_by)  %>%  
+     
+    bind_rows() %>% 
+      select(one_of(group_by), COV_NAME, one_of(STATS_NAME)) %>%   
+      gather("STATS_NAME", "value", one_of(STATS_NAME))  %>% 
+      spread_(group_by, "value" )
+    
+    # add the Overall column
+    t1 = nmdat  %>% gather("COV_NAME", "COV_VALUE",  one_of(COV_NAME) ) %>% 
+      calc_stats(id, group="COV_NAME", value="COV_VALUE") %>% 
+      mutate(Mean=u.signif(Mean, digits=3), 
+             SD = u.signif(SD, digits=3), 
+             SE = u.signif(SE, digits=3)) %>%        
+      select(COV_NAME, one_of(STATS_NAME)) %>%   
+      gather("STATS_NAME", "Overall", one_of(STATS_NAME)) 
+    #%>%
+    #rename(ARMA = COV_NAME)
+    
+    # merge 
+    tcon = t0 %>% left_join(t1, by=c("COV_NAME", "STATS_NAME"))
+    
+    tcon$COV_NAME = ordered(tcon$COV_NAME, levels=COV_NAME)
+    tcon$STATS_NAME = ordered(tcon$STATS_NAME, levels=STATS_NAME)      
+    
+    tcon <- tcon %>% arrange(COV_NAME, STATS_NAME)
+    return(tcon)
+  }
+  
+   
+  #----------------------------------------------------------------------------
+  # summary stats for the categorical variables
+  #----------------------------------------------------------------------------
+  summary_categorical_var <- function(tdata, id="USUBJID", group_by="ARMA", 
+                                      COV_NAME=c( "SEX", "RACE", "ETHNIC"), 
+                                      STATS_NAME=c("N_PCT") ) {
+    
+    calc_stats_cat <-  function(adsl, id="USUBJID", group_by="ARMA", value="SEX") {
+      #adsl = adsl %>% rename_(USUBJID=id, ARMA=group_by, COV_VALUE=value)
+      # adsl$USUBJID = adsl[, id]
+      # adsl$ARMA = adsl[, group_by]               
+      # adsl$COV_VALUE  = adsl[, value]
+      
+      t1 = adsl %>% group_by_(.dots = group_by) %>% dplyr::summarise(N_ALL=fun.uniqN(USUBJID))       
+      t2 = adsl %>% group_by_(.dots = c(group_by, value)) %>%  dplyr::summarise(N=fun.uniqN(USUBJID)) %>%       
+        left_join(t1, by=group_by) %>% 
+        mutate(PCT = as.character(u.signif(N/N_ALL*100, digits=3)), 
+               N_PCT = as.character(paste(N, "(", PCT, "%)", sep="")) 
+        ) %>% rename_(COV_VALUE=value)
+      t2 = as.data.frame(t2)     
+      
+      return(t2)
+    }
+    
+    t0 = lapply(COV_NAME, function(value, tdata, id, group_by ) {
+      calc_stats_cat(tdata, id, group_by, value )%>%mutate(COV_NAME=value, COV_VALUE=as.character(COV_VALUE))}, tdata, id, group_by)  %>% 
+      bind_rows() %>% 
+      select(one_of(group_by), one_of("COV_NAME", "COV_VALUE"),  one_of(STATS_NAME)) %>%   
+      #gather("STATS_NAME", "value",   CAT, N_PCT)  %>%  
+      spread_(group_by, "N_PCT")
+    
+    # add the Overall column   
+    tdata = tdata %>% rename_(USUBJID=id) # $USUBJID = tdata[, id]       
+    t1 = tdata %>% gather(COV_NAME, COV_VALUE, one_of(COV_NAME)) %>% group_by(COV_NAME, COV_VALUE) %>% summarise(Overall=as.character(fun.uniqN(USUBJID)))
+    
+    # merge
+    tcat = t0 %>% left_join(t1, by=c("COV_NAME", "COV_VALUE"))
+    
+    return(tcat)
+  }
+   
+     
+  CON_COV_NAME=c( "AGE", "WGTBL", "HGTBL", "BMIBL", "C5BL", "CH50HBL") 
+                 # "CREATBL",       "CRCLBL",        "ALTBL" ,        "ASTBL" ,        "BILIBL" ,      
+                  #"ALBBL",         "IGGBL" ,        "LDHBL" ,        "ALPBL")
+  CAT_COV_NAME=c("SEX", "RACE", "ETHNIC")
+  STATS_NAME=c("N", "Mean", "SD", "SE", "Median_Range")
+  
+  
+  tdata = nmdat  %>% distinct(USUBJID, .keep_all=TRUE)
+  tdata = tdata %>% arrange(STUDYID, ARMA) %>% mutate(STUDYID_ARMA = STUDYID)   # paste(STUDYID, ARMA, sep="~"))
+  tdata = tdata %>% mutate(STUDYID_ARMA=ordered(STUDYID_ARMA, level=unique(STUDYID_ARMA)))
+  
+  t1 = summary_continuous_var(tdata, id="USUBJID", group_by=c( "STUDYID_ARMA"), 
+                              COV_NAME=CON_COV_NAME, 
+                              STATS_NAME=STATS_NAME) %>% 
+    rename(COV_VALUE=STATS_NAME)
+  
+  
+  t2 = summary_categorical_var(tdata, id="USUBJID", group_by="STUDYID_ARMA", 
+                               COV_NAME=CAT_COV_NAME, 
+                               STATS_NAME=c("N_PCT") )  %>% 
+    mutate(COV_VALUE=as.character(COV_VALUE))
+  
+  tabl = bind_rows(t1, t2) %>% as.data.frame()
+ 
+  
+  tabl
+  
+  tabl =  tabl %>% mutate(COV_NAME = str_replace_all(COV_NAME, 
+                                                     c("AGE" = "Age\n(year)", 
+                                                       "RACE"= "Race", 
+                                                       "SEX"= "Sex", 
+                                                       "ETHNIC"= "Ethnicity", 
+                                                       "WGTBL"= "Weight\n(kg)", 
+                                                       "HGTBL"= "Height\n(m)", 
+                                                       "ALBBL"= "Albumin\n(g/L)", 
+                                                       "BMIBL"= "BMI\n(kg/m2)", 
+                                                       "CREATBL"= "Creatinine\n(umol/L)", 
+                                                       "CRCLBL"= "Creatinine \nClearance (mL/min)",     
+                                                       "ALTBL"= "ALT\n(IU/L)", 
+                                                       "ASTBL"= "AST\n(IU/L)", 
+                                                       "BILIBL"= "Bilirubin\n(umol/L)", 
+                                                       "IGGBL"= "IGG\n(g/L)", 
+                                                       "LDHBL"= "LDH\n(IU/L)", 
+                                                       "ALPBL"= "ALP\n(IU/L)", 
+                                                       
+                                                       "C5BL"= "Baseline C5\n(mg/L)", 
+                                                       "CH50HBL"="Baseline CH50\n(U/mL)"
+                                                     )),
+                          
+                          COV_VALUE = str_replace_all(COV_VALUE, 
+                                                    c("NOT HISPANIC OR LATINO"= "Not Hispanic/Latino", 
+                                                    "HISPANIC OR LATINO"= "Hispanic/Latino",     
+                                                    "NOT REPORTED"= "Not Reported", 
+                                                    "WHITE"= "White", 
+                                                    "ASIAN"= "Asian", 
+                                                    "BLACK OR AFRICAN AMERICAN"= "Black", 
+                                                    "OTHERS"= "Others", 
+                                                    "OTHER"= "Other", 
+                                                    "AMERICAN INDIAN OR ALASKA NATIVE"= "Alaska native/Indian", 
+                                                    "Median_Range"= "Median(range)"
+                                                    ))
+                          
+  )
+  
+  
+  
+  
+  # Remove duplicates
+  tabl = tabl %>% 
+    #group_by(PARAMS) %>%  
+    mutate(COV_NAME=ifelse(duplicated(COV_NAME), "", COV_NAME)) 
+  #tabl$PARAMS[duplicated(tabl$PARAMS)] = ""
+  
+  # extend colnames of tabl    
+  colnames(tabl) = colnames(tabl) %>% str_replace_all(
+    c("PARAMS" = "Metrics",  
+      "COV_NAME" = "Covariate",
+      "COV_VALUE" = "Stats/Category",
+      "Mean_SD"= "Mean(SD)" 
+    ))
+   
+  
+  
+  
+  #tabl[which(duplicated(tabl$COV_NAME)), "COV_NAME"] = ""
+  tabl[is.na(tabl)] = ""
+  colnames(tabl) <- gsub("COV_NAME", "Covariate", colnames(tabl), fix=TRUE)
+  colnames(tabl) <- gsub("COV_VALUE", "Statistics", colnames(tabl), fix=TRUE)
+  
+  
+  attr(tabl, 'title') <- paste0("Summary of Baseline Demographic Characteristics, Laboratory and Disease Status Variables (", STUDY.NAME, ")")
+  TABLE_ALL[["summary_demog"]] = tabl 
+   
+   
