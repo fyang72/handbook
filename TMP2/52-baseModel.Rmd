@@ -1,0 +1,609 @@
+---
+title: "Untitled"
+author: "Feng Yang"
+date: "December 8, 2017"
+output: word_document
+--- 
+
+
+
+ 
+ 
+  
+ 
+
+```{r load-base-model-result, include=FALSE, message=FALSE, eval=TRUE}
+  
+ln.lst =paste0("LN", u.add.prefix(c(1:4, 11:14),prefix="", add.number.zero=3))
+mm.lst = paste0("MM", u.add.prefix(c(1:3, 11:15),prefix="", add.number.zero=3))
+runno.lst = c(ln.lst,  mm.lst)
+
+PARAMS = noWarning(read_PARAMS(MODEL.HOME, subdir="/ctl/HPC/", runno.lst))
+summary_all_base_models = noWarning(get_summary_params(PARAMS, runno.lst))
+  
+   
+summary_all_base_models
+
+  
+  
+``` 
+  
+   
+
+
+
+## \@ref(result-base-model)	Base Model {#result-base-model}
+
+Base model development consists of the development of a structural model, inter-individual variability (IIV) model, and a residual error model.  The goal of this step is to develop a stable and parsimonious model to describe cemiplimab serum concentration–time data in patients with advanced malignancies, without considering covariate effects.
+
+
+### \@ref(result-structural-model)	Structural Model {#result-structural-model}
+
+As discussed in the Method Section \@ref(structural-model), a two-compartment model with zero-order IV infusion, parallel linear and nonlinear (Michaelis-Menten) elimination was initially chosen as the population PK structural model.   The first step is to determine whether there are enough data to estimate the nonlinear elimination of cemiplimab in the model.  
+
+
+
+#### \@ref(result-monkey-model)	Preclinical PK/TX studies {#result-monkey-model}
+ 
+Firstly, time profiles from three preclinical PK/TX studies in cynomolgus monkeys were re-investigated to estimate the nonlinear elimination of cemiplimab, and explore whether the nonlinear elimination model determined in monkey can be allometrically scaled to patients. 
+
+Time-profile of cemiplimab without ADA-impacted concentrations were presented in Figure \@ref(fig:plot-mkdata). Note, comparing to the dataset used in population model presented in preclinical scaling report (REGN2810-MX-14136-SR-01V1), additional 5 PK concentrations were included. They were determined by ADA positivity found in each individual cynomolgus monkey, followed by visual inspection of the time-profile (whether an abrupt drop in concentration was observed),
+
+As shown in Figure \@ref(fig:plot-mkdata), the pharmacokinetics of cemiplimab was characterized as non-linear with parallel linear and target-mediated elimination, especially in the low dose ranges (1 mg/kg). When MM model was used for the pooled monkey PK data, Km was estimated to be 0.05 mg/L, and Vmax as 0.02 mg/day. Since estimated Km is close to BLQ of the corresponding assay and Vmax was relatively small,  elimination through target-medicataed pathway was considered as insignificant at the dose levels studied (greater than 1 mg/kg).  The MM-based monkey model were able to allometrically scale up to adult, and the predicted results overlaid with observed clinical data reasonably well (data not shown).  Note the prevalence of ADA (See corresponding preclinical PK reports) obscured the target-medicated clearance which would be expected at lower concentrations. More detailed results can be found in Appendix \@ref(sec-appendix-A). 
+
+In conclusion, nonlinear elimination was observed in time-profiles of cemiplimab in cynomolgus monkeys. However, the charaterization of the nonlinear component was difficult due to the limited number of the subjects and significant ADA positivity found in the cynomolgus monkeys. Modeling results show elimination through target-medicataed clearance was insignificant at the dose levels studied.
+
+<!--The majority of the data exhibit linear kinetics and nonlinear elimination was not evident.  In conclusion, preclinical time-profiles in cynomolgus monkeys did not show enough evidence of nonlinear elimination in the dose range studied.-->
+
+ 
+```{r plot-mkdata, fig.cap='Observed time profiles from three preclinical PK/TX studies (ADA impacted samples were excluded)', fig.align='center', out.width='80%', fig.asp=.75}
+ 
+#plot(1:10, 1:10, main="placeholder")
+
+tdata = read_csv(file="./data/monkey_tdata.csv")
+ 
+x = tick_label(x=tdata$TIME, xmin=0, xmax=100, major.tick=7, minor.tick=7, log=FALSE)
+y = tick_label(x=tdata$DV, xmin=1E-2, xmax=1E+3,  log=TRUE) 
+
+fig = tdata %>% filter(DV!=0, DV!=0.039) %>%
+  ggplot(aes(x=as_numeric(TIME), y=as_numeric(DV), group=USUBJID, col=ARMA)) + 
+  geom_point() +  geom_line() +  #scale_y_log10()  + 
+  xlab("Time (day)") + 
+  ylab("Concentration (mg/L)") + 
+  base_theme(font.size=14) + 
+  scale_x_continuous(breaks=x$breaks, label=x$labels) + 
+  scale_y_log10(breaks=y$breaks, label=y$labels) + 
+  
+  coord_cartesian(xlim = range(tdata$TIME, na.rm=TRUE)) + 
+  coord_cartesian(ylim = range(tdata$DV, na.rm=TRUE)+ 1E-2) + 
+  
+  theme(#legend.title=element_text("EXSEQ"), 
+        #legend.position=c(0.95, 0.86), 
+         legend.text = ggplot2::element_text(size = 10),  
+        panel.grid.minor= element_line(colour = "gray97",size=0.1),
+        panel.grid.major= element_line(colour = "gray97",size=0.1),
+        panel.spacing = unit(0.2, "lines"), 
+        panel.border=element_rect(colour="black", fill=NA), 
+        strip.background = element_blank()   # element_rect(colour=NA, fill=NA),
+  ) #+scale_color_gradient(low="grey", high="black")
+
+
+FIGURE_ALL[["monkey_pk"]] = fig
+
+fig
+
+
+
+```
+
+
+
+
+#### \@ref(result-conc-TAD)	Concentration vs TAD {#result-conc-TAD}
+ 
+Secondly, the dose-normalized concentration vs TAD (time after the previous dose) was presented in Figure \@ref(fig:conc-TAD).  The goal is to determine whether there are enough/robust data to support nonlinear elimination of cemiplimab in patients.     
+
+As shown in Figure \@ref(fig:conc-TAD), the samples which TAD greater than 56 days is very limited. In particular, only a total of 
+`r tTAD %>% filter(TAD>=50) %>% pull(DVOR) %>% length()` samples observed in 
+`r tTAD %>% filter(TAD>=50) %>% pull(USUBJID) %>% unique() %>% length()` subjects could be useful to characterize the nonlinear component of cemiplimab elimination.  The vast majority of observations
+(`r paste0(format((1-tTAD %>% filter(TAD>=50) %>% pull(DVOR) %>% length()/ tTAD %>% pull(DVOR) %>% length()) * 100, digits=3), "%")`)
+ are within the 56 days after the previous dose.  Therefore, there is lack of enough/robust data to support nonlinear elimination of cemiplimab in the confines of the existing data; more data are required at the range of low concentrations in the current or subsequent studies.  
+
+To further support the adquency of the using linear model approximation, Figure \@ref(fig:conc-TAD-after-day56) shows that the  linear model (LN014) does not over-predict the concentration observed after 56 days of previous dosing. As a matte of fact, obsersed data is higher than the one predicted by using linear model at various times. 
+
+
+
+```{r conc-TAD, fig.cap = "Concentration vs TAD (time after the last dose) in both studies of 1423 and 1540", fig.height=6, fig.width=9, message=FALSE}
+ 
+
+ #tTAD = adpx  # %>% filter(EXSEQ<3 | EXSEQ>20)  %>% mutate(DVOR=as_numeric(DVOR))
+ #tdata = assign_Q(tdata, value="EXSEQ", quartile=NULL, breaks=c(-Inf, 3, 20, Inf))                # debug it
+ #tdata$Q_LABEL = gsub("[-Inf,2]", "First 2 doses", tdata$Q_LABEL, fix=TRUE)
+# tdata$Q_LABEL = gsub("(20, Inf]", "Dose 21th and beyond", tdata$Q_LABEL, fix=TRUE)
+ 
+ adpx = adpx0 %>% filter(C==".", EVID==0, TIME>0)
+
+ adpx = adpx %>% filter(USUBJID!="R2810-ONC-1423-840004-006")
+
+
+ tTAD = adpx  %>% mutate(TAD=as_numeric(TAD), 
+                          DVOR=as_numeric(DVOR)) %>% 
+               #filter(TAD <100) %>% 
+               mutate(DVOR=ifelse(DVOR<=0, 0.039, DVOR))  %>% 
+               filter(!is.na(DVOR), !is.na(TAD), TAD>0) %>% 
+               filter(ARMA != "3 mkg Q3W")
+ 
+  tTAD = tTAD %>% mutate(DVOR=ifelse(ARMA=="200 mg", DVOR/(200/WGTBL)*3, 
+                                       ifelse(ARMA=="1 mg/kg Q2W", DVOR/1*3, 
+                                              ifelse(ARMA=="3 mg/kg Q2W", DVOR/3*3, 
+                                                     ifelse(ARMA=="10 mg/kg Q2W", DVOR/10*3, DVOR)))))
+ 
+  
+ x = tick_label(x=tTAD$TAD, xmin=0, xmax=200, major.tick=28, minor.tick=7, log=FALSE)
+ y = tick_label(x=tTAD$DVOR, xmin=1E-2, xmax=1E+3,  log=TRUE) 
+
+ fig = ggplot(tTAD, aes(x=TAD, y=DVOR, group=EXSEQ, col=EXSEQ )) + geom_point()    + 
+   xlab("Time (day)") + 
+   ylab("Concentration (mg/L)") + 
+   base_theme(font.size=14) + 
+     scale_x_continuous(breaks=x$breaks, label=x$labels) + 
+     scale_y_log10(breaks=y$breaks, label=y$labels) + 
+  
+     coord_cartesian(xlim = range(tTAD$TAD, na.rm=TRUE)) + 
+     coord_cartesian(ylim = range(tTAD$DVOR, na.rm=TRUE)) + 
+   
+   geom_vline(xintercept=56, lty="dashed") + 
+     
+   theme(#legend.title=element_text("EXSEQ"), 
+         legend.position=c(0.93, 0.81), 
+         panel.grid.minor= element_line(colour = "gray95",size=0.5),
+         panel.grid.major= element_line(colour = "gray95",size=0.5),
+         panel.spacing = unit(0.2, "lines"), 
+         panel.border=element_rect(colour="black", fill=NA), 
+         strip.background = element_blank()   # element_rect(colour=NA, fill=NA),
+   ) 
+ #+scale_color_gradient(low="grey", high="black")
+ 
+  
+ FIGURE_ALL[["Conc_TAD"]] = fig
+ fig
+ 
+ 
+```
+
+Note: dose was normalized to 3 mg/kg Q2W;  PK samples from 3 mg/kg Q3W were excluded.  Color legend shows the dosing sequence number.
+
+
+
+```{r GOF-after-day56, fig.cap = "Goodness of fit for those samples collected after 56 days after previous dose (TAD)", fig.height=6, fig.width=9, message=FALSE}
+
+
+#########################################################################
+# to answer Tom's question: linear model overestimate the conc at day>28?
+#########################################################################
+ 
+OUTPUT = read_OUTPUT(MODEL.HOME="H:\\FYANG\\R2810_PD1\\MODEL\\", subdir="/ctl/HPC/", base.model.runno, adpx00)
+
+tdata = OUTPUT[[base.model.runno]] %>% mutate(TAD=as_numeric(TAD), 
+                                   DVOR=as_numeric(DVOR), 
+                                   PRED=as_numeric(PRED), 
+                                   IPRED=as_numeric(IPRED))
+tdata = tdata %>% filter(EVID==0, MDV==0, TAD>50, !is.na(PRED), !is.na(DVOR))  
+tdata$ARMA = gsub("-", " ", tdata$ARMA, fix=TRUE)
+
+
+limits = range( c(tdata$PRED, tdata$DVOR), na.rm=TRUE)
+  
+fig = ggplot(tdata, aes(x=DVOR, y=PRED, col=ARMA)) + geom_point() + 
+     xlab("Observed Concentration (mg/L)") + 
+   ylab("Population Predicted Concentration (mg/L)") + 
+  
+  geom_abline(show.legend = FALSE,intercept=0,slope=1, lty="dashed") + 
+  coord_fixed(ratio = 1, xlim = limits, ylim = limits) + 
+  #facet_wrap(~ARMA) + 
+  base_theme() + 
+  theme(#legend.position='none', 
+        panel.grid.minor= element_line(colour = "gray95",size=0.5),
+        panel.grid.major= element_line(colour = "gray95",size=0.5),
+        panel.spacing = unit(0.2, "lines"), 
+        panel.border=element_rect(colour="black", fill=NA), 
+        strip.background = element_blank()   # element_rect(colour=NA, fill=NA),
+  ) #+ 
+  #ggtitle("Goodness of Fit for Samples at Late Timepoint (TAD>28 days)")
+ 
+
+ FIGURE_ALL[["GOF_after_day56"]] = fig
+ fig
+ 
+ 
+
+```
+
+#### \@ref(result-comp-LN-MM)	MM-based Nonlinear Elimination Model {#result-comp-LN-MM}
+ 
+Thirdly, non-linear MM-based model were used to answer to what extent the additional non-linear term on CL could improve the model based on the goodness-of-fit plots and reduction of objective function values, relative to the model with linear clearance.  
+
+The results show a nonlinear model incorporating a Michaelis–Menten elimination term did not improve the goodness of fit compared to the corresponding linear model  (see Table \@ref(tab:mm-discussion) and \@ref(tab:LN-discussion) ). Instead, inculding time-varying clearance significantly improved the model fit and results in reduction of objective function values greater than 300 points. More results on time-varying clearance is presented in Section \@ref(result-time-varing-CL). 
+
+In summary, exisiting data did not support inlcuding non-linearity component in cemiplimab PK model. At therapeutic dose (>1 mg/kg, or 3 mg/kg), linear kinetics can be used as an approximation of the nonlinear PK of cemiplimab, i.e. the simpler model that adequately describes the data was chosen over more complex models.   However, a nonlinear model will be re-considered once there are enough data collected at the range of low concentrations (either in follow-up phase or patient early drop) in the current or subsequent studies.  
+
+<!-- Therefore, a two-compartment linear model with time-varying clearance will be considered as the basic model structure of the PK profile of cemiplimab in the subsequent analysis. More results on time-varying clearance is presented in Section \@ref(result-time-varing-CL).
+
+analysis of the dose proportionality also indicated that linear models adequately characterize the elimination of cemiplimab.-->
+
+ 
+
+#### \@ref(result-time-varing-CL)	Time-varying CL vs. fixed CL {#result-time-varing-CL}
+  
+The CL of cemiplimab was determined to be time-varying, as the OFV values of the time-varying CL model (LN014) was >300 points lower than the OFV values of the model with constant CL (LN001), as shown in Table \@ref(tab:LN-discussion). The OFV value for the sigmoid-Emax model was markedly lower than that of the model with constant CL (by 620 points) and hyperbolic (Emax) effect on CL (by 88 points). Therefore, time-varying CL with sigmoid-Emax function form in a linear model was selected for the subsequent model development. Note, applying time-varying sigmoid-Emax function on Vmax in MM-based nonlinear model (model MM015) did not show much improvement on the reduction of objective function values. Instead, large Vmax (greater than 2,000 mg/day) and large Km (~80,00 mg/L) were observed and essentially, the model (MM015) can be interpreted as a linear model. 
+
+Figure \@ref(fig:plot-time-varing-CL) shows individual time-varying clerance population predicted one. The results show that on average there are 30% decrease compared to the baseline clearance, i.e from 0.30 L/day down to 0.20 L/day.  The half-life of time-varying of clearance was estimated to be ~30 days.  
+
+     
+ 
+<br>
+<br>
+     
+```{r LN-discussion}
+    
+#-----------------------------------------------
+# determine whether use time-varying clearance
+#-----------------------------------------------
+
+tabl = summary_all_base_models %>% select(starts_with("LN"))   %>%  as.data.frame()
+tabl["RUVSD", ] = as_numeric(tabl["RUVSD", ])
+
+tabl = cbind("params"=rownames(tabl), tabl) ; 
+rownames(tabl)  = 1:nrow(tabl)
+ 
+tabl = tabl %>% filter(!params %in% c("model_run_time", "TVVMAX", "TVKSS", "IIV_VMAX", "IIV_KSS"))
+
+
+TABLE_ALL[["sum_LN_model_parms"]] = tabl
+   
+caption = "Estimates for model parameters for linear models with constant CL and time-varying CL"
+knitr::kable(tabl, booktabs = TRUE, caption = caption)
+ 
+ 
+
+```
+
+  
+```{r mm-discussion}
+  
+tabl = summary_all_base_models %>% select(LN001, starts_with("MM")) %>% as.data.frame()
+tabl["RUVSD", ] = as_numeric(tabl["RUVSD", ])
+
+tabl = cbind("params"=rownames(tabl), tabl) ; 
+rownames(tabl)  = 1:nrow(tabl)
+ 
+tabl = tabl %>% filter(!params %in% c("model_run_time"))
+TABLE_ALL[["sum_MM_model_parms"]] = tabl
+ 
+caption = "Comparison of model parameter estimate between the base linear kinetic model and non-linear MM-based models"
+knitr::kable(tabl, booktabs = TRUE, caption = caption)
+
+
+```
+
+
+
+ 
+```{r plot-time-varing-CL, fig.cap='Clearance decreases as ongoing treatment ', fig.align='center', out.width='80%', fig.asp=.75}
+ 
+  #tdata = OUTPUT[["LN014"]]
+runno.lst="LN014"
+
+
+# load all modeling result
+  PsN_HOME <- "H:\\FYANG\\R2810_PD1\\MODEL\\ctl\\PsN\\"
+  PARAMS = lapply(runno.lst, function(runno) {
+    library(readr)
+    file.name = paste0(PsN_HOME, runno, "/modelfit_dir1/raw_results_", runno, ".csv")
+    tt = read_csv(file.name)
+    colnames(tt) = trim(colnames(tt))
+    tt
+  })
+  names(PARAMS) = runno.lst
+  tabl = get_summary_params(PARAMS, runno.lst)
+    
+  
+# read adpx and xpdb
+  tt = read_runno(MODEL.HOME, subdir="ctl/HPC/", runno=runno.lst, postfix="")  
+  adpx = tt$adpx;    #unique(adpx$CFLAG)
+  xpdb = tt$xpdb
+  
+  
+ #tabl = summary_all_base_models %>% select(LN014)   
+ TVCL = tabl["TVCL",] %>% as_numeric() #0.301
+ 
+ xpdb = xpdb %>% mutate(CL=TVCL*exp(EMAX*TIME**HILL/(T50**HILL+TIME**HILL)) )
+ 
+ x = tick_label(x=as_numeric(xpdb$TIME), xmin=0, xmax=max(xpdb$TIME), major.tick=56, minor.tick=56, log=FALSE)
+ y = tick_label(x=as_numeric(xpdb$CL), xmin=1E-2, xmax=1E+3,  log=FALSE) 
+ 
+ 
+ fig = ggplot(xpdb, aes(x=TIME, y=CL, group=ID)) + geom_line() +base_theme(font.size = 14) + 
+   xlab("Time (day)") + ylab("Normalized Clearance (L/day)") + 
+   
+  scale_x_continuous(breaks=x$breaks, label=as.character(x$labels)) + 
+  #scale_y_continuous(breaks=y$breaks, label=as.character(y$labels)) + 
+   
+   theme(legend.position='none', 
+         panel.grid.minor= element_line(colour = "gray95",size=0.5),
+         panel.grid.major= element_line(colour = "gray95",size=0.5),
+         panel.spacing = unit(0.2, "lines"), 
+         panel.border=element_rect(colour="black", fill=NA), 
+         strip.background = element_blank()   # element_rect(colour=NA, fill=NA),
+   )  
+    
+ 
+ # add population mean #; Sigmoid Emax model
+ #tabl = summary_all_base_models %>% select(LN014)   
+ TVCL = tabl["TVCL",] %>% as_numeric() #0.301
+ EMAX=tabl["EMAX",] %>% as_numeric()#-0.432
+ T50= tabl["T50",] %>% as_numeric()#31.68
+ HILL= tabl["HILL",] %>% as_numeric() #2.489
+ TIME=seq(0, max(as_numeric(xpdb$TIME), na.rm=TRUE), by=1)
+ CL = TVCL*exp(EMAX*TIME**HILL/(T50**HILL+TIME**HILL)) 
+ fig = fig + geom_line(data=data.frame(ID=1, TIME, CL), aes(x=TIME, y=CL, group=ID), col="red", lwd=1)
+ 
+ FIGURE_ALL[["show_timeVarying_CL"]] = fig
+ 
+  
+ fig
+
+
+
+```
+
+
+
+
+
+
+
+
+### \@ref(result-base-model-IIV) Inter-Individual Variability and Residue Error Model {#result-base-model-IIV}
+
+```{r base-model}
+
+THETA = summary_all_base_models %>% select(LN014) 
+param.lst = c("TVCL","TVV2", "TVV3", "TVQ")
+THETA = as_numeric(THETA[param.lst, "LN014"]); 
+names(THETA) = param.lst
+
+THETA['TVCL']= 0.198
+
+alpha.half.life = calc.half.life(THETA) %>% select(alpha.half.life) %>% as.numeric()
+beta.half.life = calc.half.life(THETA) %>% select(beta.half.life) %>% as.numeric()
+
+```
+
+
+Various combinations of exponential Between Subject Variability (BSV) on CL, Q, V2 and V3, with or without off-diagonal correlation were used.  Testing of inter-individual variability on PK parameters led to the estimation of a shared inter-individual variability on clearance (CL) and inter-compartmental clearance (Q) and a shared inter-individual variability on central and peripheral volumes of distribution (V2 and V3, respectively), as well as the covariance between these two. This covariance structure reduces the over-parametrization and effectively characterized apparent correlations between the parameters with limited impact on OFV. It is also consistent with the principle of allometric scaling.
+ 
+Subsequently, exploration of various residual variability models led to the selection of the additive and proportional residual error on the log-scale model, which was considered as appropriate for the current data in the studied population.  The models evaluated during base model identification are summarized in Table \@ref(tab:tab-base-dev-LN) and Table \@ref(tab:tab-base-dev-MM).
+
+Following evaluation of all two-compartment models and based upon the OFVs, GOF plots, parameter estimates, precision of parameter estimates, BSV and residual error, LN014 model (two-compartment model with zero-order IV infusion, first-order elimination, and BSV expressed as exponential terms on CL/Q, V2/V3, with an off-diagonal correlation between them, residual error modeled as additive and proportional residual error on the log-scale model) was selected as an appropriate and adequate model. The OFV value of Model LN014 was `r summary_all_base_models["ofv", "LN014"]`.   Note this model was implemented with time-varying CL with sigmoid-Emax function form. 
+
+The PK parameter estimates of REGN2810 obtained from the final base model and corresponding 90% confidence intervals (CI) for the final PK base model are given in Table \@ref(tab:base-param). The results show that 
+CL=`r summary_all_base_models["TVCL", "LN014"]%>% as_numeric()*1000` [6.83%] ml/day, 
+V2=`r summary_all_base_models["TVV2", "LN014"]%>% as_numeric()*1000` [12.8%] ml, 
+V3=`r summary_all_base_models["TVV3", "LN014"]%>% as_numeric()*1000` [3.86%] ml, 
+Q=`r summary_all_base_models["TVQ", "LN014"]%>% as_numeric()*1000` [7.98%] ml/day, 
+were relatively precise and were consistent with typical PK parameters for a monoclonal antibody and those marketed PD1 inhibitors [key ref to those PD1 inhibitors]. Variance parameter estimates were also indicative of typical unexplained interindividual variability observed in mAbs, with estimates of 34.9% coefficient of variation (CV%) and 38.3 CV%, for CL/Q and V2/V3, respectively. Following intravenous (i.v.) administration, Cemiplimab undergoes biphasic elimination consisting of a rapid distribution phase with a geometric mean distribution half-life (t1/2,α) of `r alpha.half.life`  days and a slow elimination phase with a geometric mean elimination half-life (t1/2,β) of `r beta.half.life` days.
+
+The base model was stable upon perturbation of initial parameter estimates and had 
+a low condition number (`r summary_all_base_models["condition_number", "LN014"] %>% as_numeric() %>% round(., digits=3)`). Goodness-of-fit plots confirmed the adequacy of the base model to describe both the total population and the individual study populations without bias (Appendix-\@ref(sec-appendix-B) ). ETA distributions are close to a normal distribution, reflecting the adequacy of the exponential models for IIV. A plot of conditional weighted residuals vs. population-predicted residuals and a plot of conditional weighted residuals vs. time after first dose are shown in Appendix \@ref(sec-appendix-B). Even when there is some fluctuation of the smooth lines of the residuals around the horizontal line representing an average of zero (no bias), there is no indication of a systematic increasing trend under prediction by the model at later points in time.
+
+Goodness-of-fit plots including dependent variable (DVOR) versus population predicted value (PRED), DVOR versus individually predicted value (IPRED) by treatment group (from the final base model) were presented in Figure \@ref(fig:base-GOF-PRED) and Figure \@ref(fig:base-GOF-IPRED) respectively. Inspection of the VPC plots (Figure \@ref(fig:base-VPC)) suggested good agreement between geometric mean observed data and model predictions for most conditions. Similarly, good agreement was also observed between means of observed and model predicted concentrations (plots not shown).
+ 
+The NONMEM control stream and output along with the diagnostic plots for the final base model are located in Appendix \@ref(sec-appendix-B).  FOCE estimation method was used.
+
+ 
+<br>
+<br>
+ 
+```{r base-param}
+ 
+library(dplyr)
+ 
+runno.lst = base.model.runno
+ PARAMS = noWarning(read_PARAMS(MODEL.HOME, subdir="/ctl/HPC/", runno.lst))
+ 
+tabl = get_summary_params_kable(PARAMS, runno.lst =base.model.runno)
+
+colnames(tabl) = gsub(base.model.runno, "Estimate(RSE)", colnames(tabl), fix=TRUE)
+colnames(tabl) = gsub("params.name", "Name", colnames(tabl), fix=TRUE)
+colnames(tabl) = gsub("params.descp", "Description", colnames(tabl), fix=TRUE)
+colnames(tabl) = gsub("params.unit", "Unit", colnames(tabl), fix=TRUE)
+
+TABLE_ALL[["base_param"]] = tabl
+
+
+caption = paste0("The Parameter Estimates of Final Base Model (", base.model.runno, ")")
+knitr::kable(tabl, booktabs = TRUE, caption = caption)
+
+
+
+```
+
+* %RSE is percent relative standard error (100% x SE/EST)
+* Reference subject: 80 kg and, respectively.
+* Confidence interval values are taken from bootstrap calculations (xxxx successful out of a total of xxxx).
+ 
+<br>
+<br>
+
+```{r base-GOF-PRED, fig.cap='Population Predicted (PRED) versus Observed (DVOR) cemiplimab Concentration Obtained from the Final Base Model', fig.align='center', out.width='80%', fig.asp=.75}
+  
+#plot(pressure, type = 'b', pch = 19, main="placeholder")
+# 
+# runno = "LN014" # "LN001"
+# tt <- GOF_PD1(runno, OUTPUT[[runno]] ) 
+# 
+# FIGURE_ALL[[paste0(runno,"_DVOR_vs_PRED_LN")]] = tt[[paste0(runno,"_DVOR_vs_PRED_LN")]]
+# FIGURE_ALL[[paste0(runno,"_DVOR_vs_PRED_LOG")]] = tt[[paste0(runno,"_DVOR_vs_PRED_LOG")]]
+# 
+# FIGURE_ALL[[paste0(runno,"_DVOR_vs_IPRED_LN")]] = tt[[paste0(runno,"_DVOR_vs_IPRED_LN")]]
+# FIGURE_ALL[[paste0(runno,"_DVOR_vs_IPRED_LOG")]] = tt[[paste0(runno,"_DVOR_vs_IPRED_LOG")]]
+
+#ETA.lst = colnames(tdata)[which(substr(colnames(tdata), 1, 3)=="ETA")]  
+
+#ETAvsCOV(tdata, cov_name=c("AGE", "WGTBL",  "ALBBL" ),  eta_name=ETA.lst)  
+
+#ETAvsCOV(tdata, cov_name=c("ALBBL"),  eta_name=ETA.lst)  
+
+#tt[[paste0(runno,"_DVOR_vs_PRED_LN")]]
+# 
+# tdata = OUTPUT[["LN014"]] %>% filter(EVID==0, MDV==0) %>%
+#   mutate(DV=as_numeric(DVOR), 
+#                                      DVOR=as_numeric(DVOR), 
+#                                      IPRED=as_numeric(IPRED),
+#                                      PRED= as_numeric(PRED))
+# tdata = tdata %>% filter(!is.na(DV), DV!=0, is.finite(log(DV)), 
+#                          !is.na(IPRED), IPRED!=0, is.finite(log(IPRED)), 
+#                          !is.na(PRED), PRED!=0, is.finite(log(PRED))
+# )
+# suppressWarnings(suppressMessages(GOF1(tdata)))
+#  
+runno = base.model.runno # "LN001"
+
+OUTPUT = read_OUTPUT(MODEL.HOME="H:\\FYANG\\R2810_PD1\\MODEL\\", subdir="/ctl/HPC/", runno, adpx00)  
+tdata = OUTPUT[[runno]]  
+
+tdata = tdata %>% filter(EVID==0, MDV==0) %>%
+  mutate(ARMA= gsub("-", " ", ARMA, fix=TRUE),
+         DV=as_numeric(DVOR), 
+         DVOR=as_numeric(DVOR), 
+         IPRED=as_numeric(IPRED),
+         PRED= as_numeric(PRED)) %>% filter(DVOR<750)
+GOF <- GOF_PD1(runno, tdata ) 
+#GOF$DVOR_vs_PRED_LN
+
+FIGURE_ALL[["base_GOF_PRED"]] = GOF$DVOR_vs_PRED_LN
+
+
+GOF$DVOR_vs_PRED_LN
+
+```
+
+Note: the solid line is the unity line.
+
+<br>
+<br>
+ 
+```{r base-GOF-IPRED, fig.cap='Individual Predicted (IPRED) versus Observed (DVOR) Cemiplimab Concentration Obtained from the Final Base Model', fig.align='center', out.width='80%', fig.asp=.75}
+ 
+
+FIGURE_ALL[["base_GOF_IPRED"]] = GOF$DVOR_vs_IPRED_LN
+
+ GOF$DVOR_vs_IPRED_LN
+ 
+```
+
+Note: the solid line is the unity line.
+
+<br>
+<br>
+
+```{r base-VPC, fig.cap='VPC Plot for the Final Base Model by Study and Dose', fig.align='center', out.width='80%', fig.asp=.75}
+
+ 
+ #tTAD = adpx  # %>% filter(EXSEQ<3 | EXSEQ>20)  %>% mutate(DVOR=as_numeric(DVOR))
+ #tdata = assign_Q(tdata, value="EXSEQ", quartile=NULL, breaks=c(-Inf, 3, 20, Inf))                # debug it
+ #tdata$Q_LABEL = gsub("[-Inf,2]", "First 2 doses", tdata$Q_LABEL, fix=TRUE)
+# tdata$Q_LABEL = gsub("(20, Inf]", "Dose 21th and beyond", tdata$Q_LABEL, fix=TRUE)
+
+ 
+ adpx = adpx0 %>% filter(EVID==0, as_numeric(NTIM)<=56) 
+
+ adpx = adpx %>% filter(SUBJ!=1423840004006)
+
+ tdata = adpx  %>% mutate(TIME=as_numeric(TIME), 
+                          DVOR=as_numeric(DVOR)) %>% 
+               #filter(TAD <100) %>% 
+               mutate(DVOR=ifelse(DVOR<=0, 0.039, DVOR))  %>% 
+               filter(!is.na(DVOR), !is.na(TIME)) %>% 
+       mutate(ARMA=gsub("-", " ", ARMA, fix=TRUE))
+  
+ x = tick_label(x=tdata$TIME, xmin=0, xmax=60, major.tick=28, minor.tick=7, log=FALSE)
+ y = tick_label(x=tdata$DVOR, xmin=1E-2, xmax=1E+3,  log=TRUE) 
+
+ fig = ggplot(tdata, aes(x=TIME, y=DVOR, group=USUBJID )) + geom_point(col="black", pch=1)    + 
+   xlab("Time (day)") + 
+   ylab("Concentration (mg/L)") + 
+   base_theme(font.size=14) + 
+     scale_x_continuous(breaks=x$breaks, label=x$labels) + 
+     scale_y_log10(breaks=y$breaks, label=y$labels) + 
+  
+     coord_cartesian(xlim = range(tdata$TIME, na.rm=TRUE)) + 
+     coord_cartesian(ylim = range(tdata$DVOR, na.rm=TRUE)) + 
+     
+   theme(#legend.title=element_text("EXSEQ"), 
+         legend.position="none", 
+         panel.grid.minor= element_line(colour = "gray97",size=0.5),
+         panel.grid.major= element_line(colour = "gray97",size=0.5),
+         panel.spacing = unit(0.2, "lines"), 
+         panel.border=element_rect(colour="black", fill=NA), 
+         strip.background = element_blank()   # element_rect(colour=NA, fill=NA),
+   )  + 
+   facet_wrap(~ARMA, ncol = 3)
+ #+scale_color_gradient(low="grey", high="black")
+ #fig
+ 
+ 
+ # modeling resuls
+ #-----------------------------------------------
+ runno = base.model.runno     # "LN014" # "LN001"
+ OUTPUT = read_OUTPUT(MODEL.HOME, subdir="/ctl/HPC/", runno, adpx00)
+
+ tdata0 = OUTPUT[[runno]]  %>% 
+           filter(EVID==0, MDV==0, as_numeric(NTIM)<=56, SUBJ!=1423840004006)%>% 
+           mutate(ARMA=gsub("-", " ", ARMA, fix=TRUE)) %>% 
+           mutate(TIME=as_numeric(TIME))  
+ 
+ # DVOR
+ tdata = tdata0 %>% 
+           mutate(DVOR=as_numeric(DVOR)) %>% 
+           mutate(DVOR=ifelse(DVOR<=0, 0.039, DVOR))  %>% 
+           filter(!is.na(DVOR), !is.na(TIME))  
+ stats <-  tdata %>%                     #lazyeval::interp(~ adsl %>%
+           group_by_(.dots = c("ARMA", "NTIM")) %>%
+           dplyr::summarise(GMean = exp(mean(log(DVOR[is.finite(log(DVOR))]),na.rm=TRUE))) %>% 
+       mutate(NTIM=as_numeric(NTIM)) %>% arrange(ARMA, NTIM)  %>% filter(NTIM>=0)
+ fig = fig + geom_line(data=stats, aes(x=NTIM, y=GMean, group=ARMA), col='red', inherit.aes=FALSE)  
+  
+ # IPRED
+ tdata = tdata0 %>% 
+           mutate(DVOR=as_numeric(IPRED)) %>% 
+           mutate(DVOR=ifelse(DVOR<=0, 0.039, DVOR))  %>% 
+           filter(!is.na(DVOR), !is.na(TIME))  
+ stats <-  tdata %>%                     #lazyeval::interp(~ adsl %>%
+           group_by_(.dots = c("ARMA", "NTIM")) %>%
+           dplyr::summarise(GMean = exp(mean(log(DVOR[is.finite(log(DVOR))]),na.rm=TRUE))) %>% 
+       mutate(NTIM=as_numeric(NTIM)) %>% arrange(ARMA, NTIM)  %>% filter(NTIM>=0)
+ fig = fig + geom_line(data=stats, aes(x=NTIM, y=GMean, group=ARMA), col='green', inherit.aes=FALSE)  
+  
+ # PRED
+ tdata = tdata0 %>% 
+           mutate(DVOR=as_numeric(PRED)) %>% 
+           mutate(DVOR=ifelse(DVOR<=0, 0.039, DVOR))  %>% 
+           filter(!is.na(DVOR), !is.na(TIME))  
+ stats <-  tdata %>%                     #lazyeval::interp(~ adsl %>%
+           group_by_(.dots = c("ARMA", "NTIM")) %>%
+           dplyr::summarise(GMean = exp(mean(log(DVOR[is.finite(log(DVOR))]),na.rm=TRUE))) %>% 
+       mutate(NTIM=as_numeric(NTIM)) %>% arrange(ARMA, NTIM)  %>% filter(NTIM>=0)
+ fig = fig + geom_line(data=stats, aes(x=NTIM, y=GMean, group=ARMA), col='blue', inherit.aes=FALSE)  
+  
+ 
+ FIGURE_ALL[["base_VPC"]] = fig
+ fig
+ 
+
+  
+
+```
+
+Caption: black open circles correspond to individually observed concentrations, red solid lines, green and blue dashed lines correspond to geometric mean observed concentrations, geometric mean individually predicted concentrations (IPRED) and geometric mean typical predicted concentrations (PRED), respectively.

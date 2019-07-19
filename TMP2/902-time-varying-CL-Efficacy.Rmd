@@ -1,0 +1,158 @@
+---
+title: "Untitled"
+author: "Feng Yang"
+date: "January 26, 2018"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+ 
+ 
+
+ 
+```{r plot-time-varing-CL, fig.cap='Clearance decreases as ongoing treatment ', fig.align='center', out.width='80%', fig.asp=.75}
+ 
+
+pkpd = read_sas("./data/poppkpd.sas7bdat") 
+  colnames(pkpd)  = toupper(colnames(pkpd))
+  
+  #tdata = OUTPUT[["LN014"]]
+runno.lst="LN900"
+
+#----------------------------------------  
+# adsl
+#----------------------------------------
+MODEL.HOME <- "H:\\FYANG\\R2810_PD1\\MODEL\\"
+adpx = read_OUTPUT(MODEL.HOME, subdir="ctl/HPC/", runno.lst="LN900", adpx00)  
+
+adpx = adpx[["LN900"]] %>% filter(   C==".") #%>%
+
+
+
+# 
+ # load all modeling result
+   PsN_HOME <- "H:\\FYANG\\R2810_PD1\\MODEL\\ctl\\HPC\\"
+   PARAMS = lapply(runno.lst, function(runno) {
+     library(readr)
+     file.name = paste0(PsN_HOME, runno, "/modelfit_dir1/raw_results_", runno, ".csv")
+     tt = read_csv(file.name)
+     colnames(tt) = trim(colnames(tt))
+     tt
+   })
+   names(PARAMS) = runno.lst
+   tabl = get_summary_params(PARAMS, runno.lst)
+   
+TVCL = tabl["TVCL",] %>% as_numeric() 
+adpx = adpx %>% group_by(USUBJID) %>% mutate(CL = as_numeric(CL), 
+                                             CL0=as_numeric(CL[1]), 
+                                             NOM_CL = CL/CL0*TVCL ) 
+
+
+ #xpdb = adpx %>% left_join(pkpd[, c("USUBJID", "BORIND" )] %>% distinct(USUBJID, .keep_all=TRUE), by="USUBJID")
+ 
+
+ x = tick_label(x=as_numeric(adpx$TIME), xmin=0, xmax=max(adpx$TIME), major.tick=56, minor.tick=56, log=FALSE)
+ y = tick_label(x=as_numeric(adpx$NOM_CL), xmin=1E-2, xmax=1E+3,  log=FALSE) 
+ 
+ 
+ adpx = adpx %>% filter(PKEFCSCC==1)  %>% 
+        mutate(res = ifelse(BORIND==1, "Responder", "All Others"))
+ tt = adpx %>% group_by(res) %>% summarise(N=length(unique(USUBJID))) %>% 
+      mutate(label=paste0(res, "(N=", N, ")"))
+ adpx = adpx %>% left_join(tt, by="res")
+ 
+ 
+ #tdata = adpx %>% filter(BORIND==0)
+ fig = ggplot(adpx, aes(x=TIME, y=NOM_CL, group=ID)) +  # , col=factor(ID)
+   geom_line() + # geom_point() + 
+   base_theme(font.size = 14) + 
+   xlab("Time (day)") + ylab("Normalized Clearance (L/day)") + 
+   
+  scale_x_continuous(breaks=x$breaks, label=as.character(x$labels)) + 
+  #scale_y_continuous(breaks=y$breaks, label=as.character(y$labels)) + 
+   
+   theme(legend.position='bottom', 
+         panel.grid.minor= element_line(colour = "gray95",size=0.5),
+         panel.grid.major= element_line(colour = "gray95",size=0.5),
+         panel.spacing = unit(0.2, "lines"), 
+         panel.border=element_rect(colour="black", fill=NA), 
+         strip.background = element_blank()   # element_rect(colour=NA, fill=NA),
+   )   + facet_wrap(~label)
+  
+ 
+     
+     
+     
+     
+ # add population mean #; Sigmoid Emax model
+ #tabl = summary_all_base_models %>% select(LN014)   
+ # TVCL = tabl["TVCL",] %>% as_numeric() #0.301
+ # EMAX=tabl["EMAX",] %>% as_numeric()#-0.432
+ # T50= tabl["T50",] %>% as_numeric()#31.68
+ # HILL= tabl["HILL",] %>% as_numeric() #2.489
+ # TIME=seq(0, max(as_numeric(xpdb$TIME), na.rm=TRUE), by=1)
+ # CL = TVCL*exp(EMAX*TIME**HILL/(T50**HILL+TIME**HILL)) 
+ #fig = fig + geom_line(data=data.frame(ID=1, TIME, CL), aes(x=TIME, y=CL, group=ID), col="red", lwd=1)
+ 
+ FIGURE_ALL[["show_timeVarying_CL"]] = fig
+ 
+ #  
+ # tdata = adpx %>% mutate(NTIM=as_numeric(NTIM)) %>% 
+ #         calc_stats(id="USUBJID", group_by=c("BORIND", "NTIM"), value="NOM_CL") 
+ # 
+ # fig  = fig + geom_line(data=tdata, aes(x=NTIM, y=Median), col="blue", inherit.aes = FALSE)
+ #  
+ # 
+ # fig + facet_wrap(~BORIND)
+
+
+``` 
+
+
+```{r}
+
+
+ fig = ggplot(xpdb %>% filter(PKEFCSCC==1), 
+              aes(x=TIME, y=CL, group=ID)) + geom_line() +base_theme(font.size = 14) + 
+   xlab("Time (day)") + ylab("Normalized Clearance (L/day)") + 
+   
+  scale_x_continuous(breaks=x$breaks, label=as.character(x$labels)) + 
+  #scale_y_continuous(breaks=y$breaks, label=as.character(y$labels)) + 
+   
+   theme(legend.position='none', 
+         panel.grid.minor= element_line(colour = "gray95",size=0.5),
+         panel.grid.major= element_line(colour = "gray95",size=0.5),
+         panel.spacing = unit(0.2, "lines"), 
+         panel.border=element_rect(colour="black", fill=NA), 
+         strip.background = element_blank()   # element_rect(colour=NA, fill=NA),
+   )  
+    
+ 
+ # add population mean #; Sigmoid Emax model
+ #tabl = summary_all_base_models %>% select(LN014)   
+ TVCL = tabl["TVCL",] %>% as_numeric() #0.301
+ EMAX=tabl["EMAX",] %>% as_numeric()#-0.432
+ T50= tabl["T50",] %>% as_numeric()#31.68
+ HILL= tabl["HILL",] %>% as_numeric() #2.489
+ TIME=seq(0, max(as_numeric(xpdb$TIME), na.rm=TRUE), by=1)
+ CL = TVCL*exp(EMAX*TIME**HILL/(T50**HILL+TIME**HILL)) 
+ 
+ fig = fig + 
+   geom_line(data=data.frame(ID=1, TIME, CL), aes(x=TIME, y=CL, group=ID), col="red", lwd=1) + 
+   #geom_smooth(data=xpdb %>% filter(PKEFCSCC==1), aes(x=TIME,y=CL), inherit.aes = FALSE, 
+  #             method="loess", fill=NA)  + 
+   facet_wrap(~BORIND)
+     
+     
+ FIGURE_ALL[["show_timeVarying_CL"]] = fig
+ 
+  
+ fig
+
+
+
+
+```
+

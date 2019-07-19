@@ -1,0 +1,553 @@
+---
+title: "Untitled"
+author: "Feng Yang"
+date: "December 8, 2017"
+output: word_document
+---
+
+
+## \@ref(result-final-model)	Final Model {#result-final-model}
+
+
+
+ 
+```{r generate-LN110-model, eval=FALSE }
+
+#-------------------------------------------------------------------------------------------
+# generae a LN110 based on LN103 model (full model), to get ready for forward-addition step
+# Note for LN110, the order of cov.lst does matter; after LN110, the order does not matter.
+#-------------------------------------------------------------------------------------------
+
+  library("readr")
+  library("dplyr")
+  
+  runno = "LN110"
+  directory = "H:\\FYANG\\R2810_PD1\\MODEL\\ctl\\HPC\\"
+
+ 
+  # forward-addition-step-0
+  tt =  preliminary.selection.covariates2   # from model LN103 results
+  tt = tt %>% mutate(params.name =ordered(params.name, level=ordered.cov.lst)) %>% 
+    arrange(params.name) #%>% mutate(params.name=as.character(params.name))
+   
+  params.lst = tt %>% pull(params.name)
+  params.lst = setdiff(params.lst, c("WGT_ON_CLQ", "WGT_ON_VSS"))
+  params.lst
+  
+  # LN100 is the base ctl for all covariate model
+  directory = paste0(MODEL.HOME, subdir="/ctl/HPC/")
+  base.ctl = readLines(paste0(directory, "LN100.ctl"),warn=FALSE) 
+     
+  base.ID = 13  # the default number of parameers (not incuding cov parameters)
+  for (i in 1:length(params.lst)) {
+    params.name = params.lst[i]
+    
+    # SETUP THETA
+    ids = grep(paste0(params.name, " = 0"), base.ctl, fixed=TRUE)
+    base.ctl[ids] = paste0(" ", params.name, " = ", "THETA(", base.ID+i, ")")
+    
+    # INITIAL VALUE
+    ids = grep(paste0(";(.00001)  ;",params.name), base.ctl, fixed=TRUE)
+    base.ctl[ids] = paste0(" 0 FIX      ;",params.name)
+  }
+  writeLines(base.ctl, paste0(directory, "LN110.ctl"))
+
+
+
+```
+
+
+
+
+```{r forward-addition-step, eval=TRUE}  
+   
+  #PARAMS = PARAMS.HPC
+
+ # default cov.list from LN103 full model, with threshold >0.1
+  tt =  preliminary.selection.covariates2   # from model LN103 results
+  tt = tt %>% mutate(params.name =ordered(params.name, level=ordered.cov.lst)) %>% 
+    arrange(params.name) #%>% mutate(params.name=as.character(params.name))
+   
+  params.lst = tt %>% pull(params.name)
+  params.lst = setdiff(params.lst, c("WGT_ON_CLQ", "WGT_ON_VSS"))
+  params.lst
+  
+  
+  base.runno =  110  
+  idebug = 0
+  if (idebug) {write_forward_addition(directory, base.runno, params.lst, batch.run.name="run1.txt")}
+   
+  
+  # forward-addition-step-1
+  #-------------------------
+  tt_all = NULL
+  base.runno.lst = seq(110, 910, by=100)
+ 
+  for (iStep in seq(1,5, by=1))   {
+    print(iStep)
+    base.runno = base.runno.lst[iStep]
+    runno.lst = paste0("LN", u.add.prefix(seq(base.runno, base.runno+length(params.lst), by=1), prefix="", add.number.zero=3))
+    
+    PARAMS = read_PARAMS(MODEL.HOME, subdir="/ctl/HPC/", runno.lst)  
+    tt = process_forward_addition(PARAMS, runno.lst, c("NONE", params.lst)) 
+    params.lst = tt %>% pull(COV.name)  %>% as.character()
+    tt_all = noWarning(rbind(tt_all,  
+                            c(paste0("forward.iter=",iStep), "", ""),  tt%>% mutate(COV.name=paste0("+", COV.name))))
+  
+    params.lst = setdiff(params.lst, tt[1, "COV.name"])
+    base.runno = base.runno.lst[iStep+1] 
+    if (idebug) {file.copy(paste0(directory, tt[1, "model"], ".ctl"), paste0(directory, "LN", base.runno, ".ctl"))}
+    if (idebug) {write_forward_addition(directory, base.runno, params.lst, batch.run.name=paste0("run",iStep+1, ".txt"))}
+  
+  }
+      
+  tt_all %>% as.data.frame()
+  
+
+
+
+  ########################################################################
+  # backward elimination
+  ########################################################################
+  # the last covariate from forward addition step
+  paste0(tt[1, "model"], ".ctl")
+   
+  params.lst = c("ALB_ON_CLQ", "BMI_ON_VSS",  "IGG_ON_CLQ", "ALT_ON_CLQ",  "BLK_ON_T50")
+  
+  base.runno = 610
+  if (idebug) {file.copy(paste0(directory, tt[1, "model"], ".ctl"), paste0(directory, "LN", base.runno, ".ctl"))}
+  if (idebug) {write_backward_elimination(directory, base.runno, params.lst, batch.run.name="run6.txt") }
+ 
+    
+  # backward elimination-step-1
+  #------------------------------
+  j = 1
+  for (iStep in seq(6, 6, by=1))   {
+    print(iStep)
+    base.runno = base.runno.lst[iStep]
+ 
+    runno.lst = paste0("LN", u.add.prefix(seq(base.runno, base.runno+length(params.lst), by=1), prefix="", add.number.zero=3))
+   
+    PARAMS = read_PARAMS(MODEL.HOME, subdir="/ctl/HPC/", runno.lst) 
+    tt = process_backward_elimination(PARAMS, runno.lst, c("NONE", params.lst))  
+  
+    params.lst = tt %>% pull(COV.name)  %>% as.character()
+    tt_all = noWarning(rbind(tt_all, c(paste0("backward.iter=", j), "", ""),  tt%>% mutate(COV.name=paste0("-", COV.name))  ))
+   
+    params.lst = setdiff(params.lst, tt[1, "COV.name"])
+    base.runno = base.runno.lst[iStep+1] 
+    if (idebug) {file.copy(paste0(directory, tt[1, "model"], ".ctl"), paste0(directory, "LN", base.runno, ".ctl"))}
+    if (idebug) {write_backward_elimination(directory, base.runno, params.lst, batch.run.name=paste0("run",iStep+1, ".txt"))}
+  
+    j = j + 1
+  }
+   
+   
+  
+  forward_backward_steps = tt_all %>% as.data.frame()
+  
+  
+```
+  
+ 
+ 
+### \@ref(result-forward-backward)	Forward Addition and Backward Elimination  {#result-forward-backward}
+
+A summary of the step of covariate addition and backward eliminiation were presented in Table \@ref(tab:summary-forward-backward).  The results show that after six interaction of forward addition, model LN611 was identified as the full model and the covariates that were found to significantly (p<0.01) affect the PK parameters were albumin, IGG, monotherapy on CL/Q, BMI and BMI and albumin on VSS (V2/V3), and finally, ALT on T50.  All of the other lab effect parameters (LDH, ALT, Creatinine, etc) were small in magnitude and the 95% CI of each estimate contained the null value of one.  The typical subject in this studied patient population is a white subject with ADA negative and weight of 75 kg.
+
+Backward elimination was then employed to remove those non-significant covariates. After two iteraction, ALT_ON_T50,  MONO_ON_CLQ and ALB_ON_VSS were considered non-significant since they did not contributes to at least a 10.83 change in the OFV value (α = 0.001, one degree of freedom) when removed from the model.  The final model retains ALB_ON_CLQ, BMI_ON_VSS and IGG_ON_CLQ as the final covaraites. 
+
+Clearance parameters (CL and Q) were found to depend on body weight according to an allometric relationship, with an exponent of 0.43 [ ].  These data indicate that subjects with larger body weight tend to have larger clearance. Similarly, effect estimate of WGT-VSS was 0.97 with 95% CI, [0.603, 1.29], and is close to be linear proportional.   <!--whereas the exponent of both central and peripheral volumes was found to be 0.97-->
+
+The final PPK model contained baseline body weight, albumin, and IGG on clearance (CL/Q), and body weight and BMI on VSS; the parameter estimates from the final Pop PK model are provided in Table \@ref(tab:tab-final-param). The IIV on CL and VC of the final model were reduced by 30% and 21%, respectively, compared with the base model. The extent of shrinkage for IIV on CL, VC, and VP, and residual variability in the final and full model were within 30% except for the VP which was 41%, indicating the parameter estimates are reliable.
+
+The NONMEM® output of the final model run is summarized in Appendix \@ref(sec-appendix-D). Goodness-of-fit plots including dependent variable (DV) versus population predicted value (PRED), DV versus individually predicted value (IPRE), IPRE versus conditional weighted residual (CWRES), TIME versus CWRES, subject ID versus CWRES, histograms of the parameters, etas, distribution plot of the parameters and etas, and scatter plots of the parameters correlation and eta correlation matrix are presented. Covariates versus Bayesian parameter estimates are provided. The GOF plots were used in conjunction with the OFV during the selection of the final model.
+
+
+
+
+
+```{r summary-forward-backward, tidy=FALSE, message=FALSE, warning=FALSE}
+
+tabl = forward_backward_steps
+tabl = cbind("key.step"=as.character(""), tabl)
+
+ids = grep("iter=", tabl$COV.name)
+
+tabl$key.step = as.character(tabl$key.step)
+tabl$COV.name = as.character(tabl$COV.name)
+
+tabl[ids, "key.step"] = as.character(tabl[ids, "COV.name"])
+tabl[ids, "COV.name"] = ""
+tabl
+
+colnames(tabl) = gsub("key.step", "Key step", colnames(tabl), fix=TRUE)
+colnames(tabl) = gsub("COV.name", "Covariate", colnames(tabl), fix=TRUE)
+colnames(tabl) = gsub("diff.ofv", "Difference in MOFV", colnames(tabl), fix=TRUE)
+colnames(tabl) = gsub("model", "Model", colnames(tabl), fix=TRUE)
+
+
+TABLE_ALL[["summary_forward_backward"]] = tabl
+
+caption = "	Summary of Forward Addition and Backward Elimination Steps of Covariates in the Final Model"
+knitr::kable(tabl, booktabs = TRUE, caption = caption)
+
+
+
+```
+ 
+
+Note:   change in MOFV relative to the reference model.
+
+<br>  
+<br> 
+
+
+
+
+<!--The final model was as follows:
+Equation 7
+〖CL〗_i= 〖CL〗_(Base,REF)∙ (〖BW〗_i/〖BW〗_REF )^(〖CL〗_BW )∙ (〖eGFR〗_i/〖eGFR〗_REF )^(〖CL〗_eGFR )∙ (e^(〖CL〗_PS ) )^PS∙(e^(〖CL〗_SEX ) )^SEX∙(e^(〖CL〗_RAAS ) )^RAAS
+	
+Equation 8		〖CL〗_(t,i)= 〖CL〗_i∙expa((Emax_i*t^γ)/(〖〖T50〗_i〗^γ+t^γ ))  								
+Equation 9		〖CL〗_(SS,i)= 〖CL〗_i∙expa(〖E"max" 〗_i)								
+Equation 10		VC= 〖VC〗_REF∙(〖BW〗_i/〖BW〗_REF )^(〖VC〗_BW )∙(e^(〖VC〗_SEX ) )^SEX 	
+
+where 〖CL〗_(Base,REF) and 〖VC〗_REF are the typical values of baseline CL and VC at the reference values of BW, PS, sex, race (Asian), and eGFR, respectively, and 〖CL〗_BW, 〖CL〗_eGFR, 〖CL〗_PS, 〖CL〗_SEX, 〖CL〗_RAAS, 〖VC〗_BW, and 〖VC〗_SEX are model parameters. Emax represents the estimate of the maximal change in CL. The T_50 parameter represents the time at which the change in 〖CL〗_Base is 50% of E"max" , and γ represents the sigmoidicity of the relationship with time. 〖CL〗_i represents baseline CL of patient i; 〖CL〗_(t,i) represents the CL of patient i at a given time t and 〖CL〗_(ss,i) represents the steady-state CL of patient i. The reference values of covariates are shown in Figure 2a and were chosen close to median values in the PPK dataset.  -->
+
+
+ 
+```{r tab-final-param}
+library(dplyr)
+ 
+load("./data/PARAMS1000.Rdata")
+  
+  tdata = PARAMS1000  %>% filter(minimization_successful==1) %>% select(-TVF1, -TVKA)
+  
+   TVCL = as_numeric(tdata$TVCL)  # ",] %>% as_numeric() #0.301
+ EMAX=as_numeric(tdata$EMAX)  #%>% as_numeric()#-0.432
+ T50= as_numeric(tdata$T50) #%>% as_numeric()#31.68
+ HILL= as_numeric(tdata$HILL) #%>% as_numeric() #2.489
+ TIME= 24*7 
+ tdata$CLss = TVCL*exp(EMAX*TIME**HILL/(T50**HILL+TIME**HILL)) 
+ tdata$CL.reduction.pct =  (tdata$TVCL - tdata$CLss)/tdata$TVCL*100
+   
+ # half life
+ tdata$KE  = as_numeric(tdata$CLss)/as_numeric(tdata$TVV2)    # 1/day, 	Elimination rate constant     0.365
+  tdata$K32 = as_numeric(tdata$TVQ)/as_numeric(tdata$TVV3)# THETA['TVQ']/THETA['TVV3'];  
+  tdata$K23 = as_numeric(tdata$TVQ)/as_numeric(tdata$TVV2) #THETA['TVQ']/THETA['TVV2'];
+  alpha.plus.beta  <- tdata$KE + tdata$K23 + tdata$K32
+  alpha.multi.beta <- tdata$KE * tdata$K32
+  alpha <- (alpha.plus.beta + sqrt(alpha.plus.beta^2-4*alpha.multi.beta))/2
+  beta  <- (alpha.plus.beta - sqrt(alpha.plus.beta^2-4*alpha.multi.beta))/2
+  tdata$alpha.half.life <- 0.693/alpha
+  tdata$beta.half.life <- 0.693/beta
+  
+ col.lst = tdata %>% select(starts_with("TV"), 
+                             starts_with("RUV", ignore.case=FALSE), 
+                             EMAX,T50,HILL, 
+                             matches("_ON_"), 
+                             starts_with("IIV", ignore.case=FALSE), 
+                             OMEGA.2.1.
+                             #CLss, CL.reduction.pct, alpha.half.life, beta.half.life
+                            ) %>% 
+    select(-starts_with("se", ignore.case=FALSE))  %>% colnames()
+  
+  
+  params.name = col.lst[1] 
+  output_params = lapply(col.lst, function(params.name) {
+      calc_stats(tdata, id="model", group_by=NULL, value=params.name) %>% 
+        select(N, Mean_CV, Median, GEOmean, PCT2P5, PCT97P5) %>% 
+        mutate(CI95=paste0("[", u.signif(PCT2P5, digits=3), "-", u.signif(PCT97P5, digits=3), "]")) %>%
+        mutate("params.name"=params.name) %>%
+        select(-PCT2P5, -PCT97P5)
+  })  %>% bind_rows()  %>% as.data.frame()
+  
+#   
+# runno.lst = final.model.runno
+# 
+# subdir="/ctl/HPC/"
+# file.name=paste0(MODEL.HOME, subdir, runno.lst, "BST/", "bootstrap_dir1/raw_results_", runno.lst, ".csv")
+# tdata = read_csv(file.name)  %>% as.data.frame() 
+# colnames(tdata) = gsub("OMEGA(2,1)", "OMEGA.2.1.", colnames(tdata), fix=TRUE)
+# output_params = summary.bootstrap.results(tdata)
+#   
+   
+# # load all modeling result 
+ runno.lst = "LN901"  # final.model.runno
+ PARAMS = read_PARAMS(MODEL.HOME="H:\\FYANG\\R2810_PD1\\MODEL\\", subdir="/ctl/HPC/", runno.lst) 
+ tabl = get_summary_params_kable(PARAMS, runno.lst)
+  
+ tabl = tabl %>% left_join(output_params[, c("params.name", "CI95")], by="params.name")
+  
+ 
+ colnames(tabl) = gsub(final.model.runno, "Estimate(RSE)", colnames(tabl), fix=TRUE)
+colnames(tabl) = gsub("params.name", "Name", colnames(tabl), fix=TRUE)
+colnames(tabl) = gsub("params.descp", "Description", colnames(tabl), fix=TRUE)
+colnames(tabl) = gsub("params.unit", "Unit", colnames(tabl), fix=TRUE)
+
+
+TABLE_ALL[["final_param"]] = tabl
+
+
+caption = paste0("The Parameter Estimates of Final Model (", final.model.runno, ")")
+knitr::kable(tabl, booktabs = TRUE, caption = caption)
+ 
+ 
+
+
+```
+
+Standard deviations for estimated variances and correlations for estimated covariances.
+%RSE is percent relative standard error (100% x SE/EST)
+*Reference subject: 80 kg and 206 IU l−1, respectively. 
+†Confidence interval values are taken from bootstrap calculations (1970 successful out of a total of 2000).
+ 
+
+ 
+
+
+```{r final-GOF-PRED, fig.cap='Population Predicted (PRED) versus Observed (DVOR) cemiplimab Concentration Obtained from the Final Model', fig.align='center', out.width='80%', fig.asp=.75}
+  
+  
+# runno = "LN014" # "LN001"
+# tt <- GOF_PD1(runno, OUTPUT[[runno]] ) 
+# 
+# FIGURE_ALL[[paste0(runno,"_DVOR_vs_PRED_LN")]] = tt[[paste0(runno,"_DVOR_vs_PRED_LN")]]
+# FIGURE_ALL[[paste0(runno,"_DVOR_vs_PRED_LOG")]] = tt[[paste0(runno,"_DVOR_vs_PRED_LOG")]]
+# 
+# FIGURE_ALL[[paste0(runno,"_DVOR_vs_IPRED_LN")]] = tt[[paste0(runno,"_DVOR_vs_IPRED_LN")]]
+# FIGURE_ALL[[paste0(runno,"_DVOR_vs_IPRED_LOG")]] = tt[[paste0(runno,"_DVOR_vs_IPRED_LOG")]]
+
+#ETA.lst = colnames(tdata)[which(substr(colnames(tdata), 1, 3)=="ETA")]  
+
+#ETAvsCOV(tdata, cov_name=c("AGE", "WGTBL",  "ALBBL" ),  eta_name=ETA.lst)  
+
+#ETAvsCOV(tdata, cov_name=c("ALBBL"),  eta_name=ETA.lst)  
+
+#tt[[paste0(runno,"_DVOR_vs_PRED_LN")]]
+# 
+# tdata = OUTPUT[["LN014"]] %>% filter(EVID==0, MDV==0) %>%
+#   mutate(DV=as_numeric(DVOR), 
+#                                      DVOR=as_numeric(DVOR), 
+#                                      IPRED=as_numeric(IPRED),
+#                                      PRED= as_numeric(PRED))
+# tdata = tdata %>% filter(!is.na(DV), DV!=0, is.finite(log(DV)), 
+#                          !is.na(IPRED), IPRED!=0, is.finite(log(IPRED)), 
+#                          !is.na(PRED), PRED!=0, is.finite(log(PRED))
+# )
+# suppressWarnings(suppressMessages(GOF1(tdata)))
+#  
+runno = final.model.runno     # "LN014" # "LN001"
+OUTPUT = read_OUTPUT(MODEL.HOME="H:\\FYANG\\R2810_PD1\\MODEL\\", subdir="/ctl/HPC/", runno.lst, adpx00)
+
+tdata = OUTPUT[[runno]] %>% filter(EVID==0, MDV==0) %>%
+  mutate(ARMA= gsub("-", " ", ARMA, fix=TRUE),
+         DV=as_numeric(DVOR), 
+         DVOR=as_numeric(DVOR), 
+         IPRED=as_numeric(IPRED),
+         PRED= as_numeric(PRED)) %>% filter(DVOR<750)
+GOF <- GOF_PD1(runno, tdata ) 
+#GOF$DVOR_vs_PRED_LN
+
+
+FIGURE_ALL[["final_GOF_PRED"]] = GOF$DVOR_vs_PRED_LN
+  
+GOF$DVOR_vs_PRED_LN
+
+```
+
+Note: the solid line is the unity line.
+
+<br>
+<br>
+ 
+```{r final-GOF-IPRED, fig.cap='Individual Predicted (IPRED) versus Observed (DVOR) Cemiplimab Concentration Obtained from the Final Model', fig.align='center', out.width='80%', fig.asp=.75}
+ 
+FIGURE_ALL[["final_GOF_IPRED"]] = GOF$DVOR_vs_IPRED_LN
+
+ GOF$DVOR_vs_IPRED_LN 
+ 
+```
+
+Note: the solid line is the unity line.
+
+<br>
+<br>
+
+```{r final-VPC, fig.cap='VPC Plot for the Final Model by Study and Dose', fig.align='center', out.width='80%', fig.asp=.75}
+
+ 
+ #tTAD = adpx  # %>% filter(EXSEQ<3 | EXSEQ>20)  %>% mutate(DVOR=as_numeric(DVOR))
+ #tdata = assign_Q(tdata, value="EXSEQ", quartile=NULL, breaks=c(-Inf, 3, 20, Inf))                # debug it
+ #tdata$Q_LABEL = gsub("[-Inf,2]", "First 2 doses", tdata$Q_LABEL, fix=TRUE)
+# tdata$Q_LABEL = gsub("(20, Inf]", "Dose 21th and beyond", tdata$Q_LABEL, fix=TRUE)
+
+ adpx = adpx0 %>% filter(EVID==0, as_numeric(NTIM)<=56) 
+
+ adpx = adpx %>% filter(SUBJ!=1423840004006)
+
+ tdata = adpx  %>% mutate(TIME=as_numeric(TIME), 
+                          DVOR=as_numeric(DVOR)) %>% 
+               #filter(TAD <100) %>% 
+               mutate(DVOR=ifelse(DVOR<=0, 0.039, DVOR))  %>% 
+               filter(!is.na(DVOR), !is.na(TIME)) %>% 
+       mutate(ARMA=gsub("-", " ", ARMA, fix=TRUE))
+  
+ x = tick_label(x=tdata$TIME, xmin=0, xmax=60, major.tick=28, minor.tick=7, log=FALSE)
+ y = tick_label(x=tdata$DVOR, xmin=1E-2, xmax=1E+3,  log=TRUE) 
+
+ fig = ggplot(tdata, aes(x=TIME, y=DVOR, group=USUBJID )) + geom_point(col="black", pch=1)    + 
+   xlab("Time (day)") + 
+   ylab("Concentration (mg/L)") + 
+   base_theme(font.size=14) + 
+     scale_x_continuous(breaks=x$breaks, label=x$labels) + 
+     scale_y_log10(breaks=y$breaks, label=y$labels) + 
+  
+     coord_cartesian(xlim = range(tdata$TIME, na.rm=TRUE)) + 
+     coord_cartesian(ylim = range(tdata$DVOR, na.rm=TRUE)) + 
+     
+   theme(#legend.title=element_text("EXSEQ"), 
+         legend.position="none", 
+         panel.grid.minor= element_line(colour = "gray97",size=0.5),
+         panel.grid.major= element_line(colour = "gray97",size=0.5),
+         panel.spacing = unit(0.2, "lines"), 
+         panel.border=element_rect(colour="black", fill=NA), 
+         strip.background = element_blank()   # element_rect(colour=NA, fill=NA),
+   )  + 
+   facet_wrap(~ARMA, ncol = 3)
+ #+scale_color_gradient(low="grey", high="black")
+ #fig
+ 
+ 
+ # modeling resuls
+ #-----------------------------------------------
+ runno = final.model.runno     # "LN014" # "LN001"
+ OUTPUT = read_OUTPUT(MODEL.HOME, subdir="/ctl/HPC/", runno, adpx00)
+
+ tdata0 = OUTPUT[[ final.model.runno]]  %>% 
+           filter(EVID==0, MDV==0, as_numeric(NTIM)<=56, SUBJ!=1423840004006)%>% 
+           mutate(ARMA=gsub("-", " ", ARMA, fix=TRUE)) %>% 
+           mutate(TIME=as_numeric(TIME))  
+ 
+ # DVOR
+ tdata = tdata0 %>% 
+           mutate(DVOR=as_numeric(DVOR)) %>% 
+           mutate(DVOR=ifelse(DVOR<=0, 0.039, DVOR))  %>% 
+           filter(!is.na(DVOR), !is.na(TIME))  
+ stats <-  tdata %>%                     #lazyeval::interp(~ adsl %>%
+           group_by_(.dots = c("ARMA", "NTIM")) %>%
+           dplyr::summarise(GMean = exp(mean(log(DVOR[is.finite(log(DVOR))]),na.rm=TRUE))) %>% 
+       mutate(NTIM=as_numeric(NTIM)) %>% arrange(ARMA, NTIM)  %>% filter(NTIM>=0)
+ fig = fig + geom_line(data=stats, aes(x=NTIM, y=GMean, group=ARMA), col='red', inherit.aes=FALSE)  
+  
+ # IPRED
+ tdata = tdata0 %>% 
+           mutate(DVOR=as_numeric(IPRED)) %>% 
+           mutate(DVOR=ifelse(DVOR<=0, 0.039, DVOR))  %>% 
+           filter(!is.na(DVOR), !is.na(TIME))  
+ stats <-  tdata %>%                     #lazyeval::interp(~ adsl %>%
+           group_by_(.dots = c("ARMA", "NTIM")) %>%
+           dplyr::summarise(GMean = exp(mean(log(DVOR[is.finite(log(DVOR))]),na.rm=TRUE))) %>% 
+       mutate(NTIM=as_numeric(NTIM)) %>% arrange(ARMA, NTIM)  %>% filter(NTIM>=0)
+ fig = fig + geom_line(data=stats, aes(x=NTIM, y=GMean, group=ARMA), col='green', inherit.aes=FALSE)  
+  
+ # PRED
+ tdata = tdata0 %>% 
+           mutate(DVOR=as_numeric(PRED)) %>% 
+           mutate(DVOR=ifelse(DVOR<=0, 0.039, DVOR))  %>% 
+           filter(!is.na(DVOR), !is.na(TIME))  
+ stats <-  tdata %>%                     #lazyeval::interp(~ adsl %>%
+           group_by_(.dots = c("ARMA", "NTIM")) %>%
+           dplyr::summarise(GMean = exp(mean(log(DVOR[is.finite(log(DVOR))]),na.rm=TRUE))) %>% 
+       mutate(NTIM=as_numeric(NTIM)) %>% arrange(ARMA, NTIM)  %>% filter(NTIM>=0)
+ fig = fig + geom_line(data=stats, aes(x=NTIM, y=GMean, group=ARMA), col='blue', inherit.aes=FALSE)  
+  
+ 
+ FIGURE_ALL[["final_VPC"]] = fig
+ fig
+ 
+
+```
+
+Caption: black open circles correspond to individually observed concentrations, black solid lines, green and blue dashed lines correspond to geometric mean observed concentrations, geometric mean individually predicted concentrations (IPRED) and geometric mean typical predicted concentrations (PRED), respectively.
+
+
+ 
+    
+```{r  forest-plot-final-model}
+
+  load(file="./data/PARAMS1000.Rdata")
+
+tdata = PARAMS1000
+tdata = tdata %>% dplyr::select(dplyr::contains("_ON_")) %>% select(-starts_with("se", ignore.case=FALSE)) %>% gather(params.name, params.value,  WGT_ON_CLQ:BLK_ON_T50)
+
+ 
+
+tdata$ID = "ID"
+tdata = tdata %>% calc_stats(id="ID", group_by="params.name", value="params.value")  %>% 
+  select(params.name, N, Median, Mean, PCT2P5, PCT97P5 )
+
+ 
+
+#tt = filter(correlations, PARAM=="AUC.SS") %>% arrange(desc(VALUE))  
+#tt$COV = ordered(tt$COV, levels=unique(tt$COV))  
+fig = ggplot(tdata , aes(x=params.name, y=Mean, fill=params.name, label = Mean, col=params.name)) +
+  #ggtitle("Influence of relevant covariates on the model parameters") + 
+  ylab("Covariate Effects on Key Model Parameters") + xlab("") + 
+  coord_cartesian(ylim = c(-0.75, 0.75)) + 
+  geom_point(aes(col=params.name), position="identity", stat="identity")  +  coord_flip()  + 
+  geom_errorbar(aes(ymin=PCT2P5, ymax=PCT97P5),
+                  size=.3,    # Thinner lines
+                  width=.2,
+                  position=position_dodge(.9)) +
+  
+  #theme(legend.position="none")  + 
+  #geom_text(size = 3, position = position_stack(), col="black")   + 
+  theme(plot.margin=unit(c(0.5,0.75,0.5,0.5),"cm")) + 
+  base_theme() + 
+    theme(#legend.title=element_text("EXSEQ"), 
+        legend.position="none", 
+        panel.grid.minor= element_line(colour = "gray97",size=0.1),
+        panel.grid.major= element_line(colour = "gray97",size=0.1),
+        panel.spacing = unit(0.2, "lines"), 
+        
+        panel.border=element_rect(colour="black", fill=NA), 
+        strip.background = element_blank()   # element_rect(colour=NA, fill=NA),
+  ) #+scale_color_gradient(low="grey", high="black")
+
+fig = fig + geom_hline(yintercept= c(-0.2,0.2), lty="dashed", alpha=0.5)   
+fig = fig + geom_hline(yintercept= c(0), lty="solid", alpha=0.5)   
+
+fig
+
+
+FIGURE_ALL[["forest_plot_final_model"]] = fig
+
+
+```
+
+
+```{r }
+
+tabl =tdata %>%  
+  mutate(Median_CI95 = paste0(u.signif(Median,digits=3), "(",
+                            u.signif(PCT2P5, digits=3),",", 
+                            u.signif(PCT97P5,digits=3),")"))  %>% 
+
+select(params.name, Median_CI95)  
+
+
+colnames(tabl) = gsub("params.name", "Parameters", colnames(tabl), fix=TRUE)
+ colnames(tabl) = gsub("Median_CI95", "Median(CI95)", colnames(tabl), fix=TRUE)
+ 
+
+TABLE_ALL[["FOREST_TABLE_LN900"]] = tabl
+
+
+
+```
+
+
+
+

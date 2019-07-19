@@ -1,0 +1,29 @@
+documentclass: word_document2
+lot: yes
+lof: yes
+fontsize: 12pt
+book_filename: "R2810-PopPK-Report"
+rmd_files: ["index.Rmd",  
+            "10-summary.Rmd",
+            "20-introduction.Rmd", 
+            "30-objective.Rmd", 
+            "40-method.Rmd", 
+            "51-population.Rmd",
+            "52-baseModel.Rmd", 
+            "53-fullModel.Rmd", 
+            #"54-finalModel.Rmd", 
+            "55-modelEvaluation.Rmd", 
+            "56-modelApplication.Rmd", 
+            "60-discussion.Rmd",
+            "70-reference.Rmd", 
+            "80-appendixA-monkey-model.Rmd",
+            "80-appendixB-base-model.Rmd",
+            "80-appendixC-full-model.Rmd",
+            "80-appendixD-final-model.Rmd"
+            ]
+language:
+  ui:
+    chapter_name: "Chapter "
+delete_merged_file: true
+output_dir: "./docs"
+before_chapter_script: "_common.R"

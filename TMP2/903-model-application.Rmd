@@ -1,0 +1,417 @@
+---
+title: "Untitled"
+author: "Feng Yang"
+date: "January 28, 2018"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+ 
+ 
+```{r }
+  tdata = OUT.ALL.PK.PARAMS
+  tdata = tdata %>% left_join(adpx00 %>% distinct(USUBJID, .keep_all=TRUE) %>% select(-STUDYID, -ARMA, -DVOR), 
+                              by ="USUBJID")
+  
+tdata %>% filter(PARAMS=="AUCtau.ss", ARMA=="3 mg/kg Q2W IV") %>% group_by(ARMA, BORIND) %>% 
+  dplyr::summarise(N=length(unique(USUBJID)), 
+                   Mean.WGTBL=median(WGTBL, na.rm=TRUE),
+                   Mean.ALBBL=median(ALBBL, na.rm=TRUE), 
+                   Mean.IGGBL= median(IGGBL, na.rm=TRUE)
+                   )
+
+
+# Albumin level was balanced btw Responder and non0responder
+adsl %>% calc_stats(id="USUBJID", group_by=c("BORIND"), value="ALBBL")  %>% select(BORIND, N, Mean_CV, Median_Range)
+
+  
+  
+```
+
+
+ 
+
+```{r }
+
+
+ 
+library(dplyr)
+library("mrgsolve")
+source("./cpp/mod.R2810.LN900.cpp")
+mod <- mread("R2810", tempdir(),mymodel)     # ?mread , ?mcode
+ 
+ 
+  # used in primary modeling
+  #adpx = read_csv("H:\\FYANG\\R2810_PD1\\MODEL\\data\\nmdat.csv")  # after remove outliers
+ # adpx = adpx %>% rename(ALBBL=IALBBL, LDHBL=ILDHBL, ALTBL=IALTBL, IGGBL=IIGGBL, BILIBL=IBILIBL)
+ 
+#----------------------------------------  
+# adsl
+#----------------------------------------
+MODEL.HOME <- "H:\\FYANG\\R2810_PD1\\MODEL\\"
+adpx = read_OUTPUT(MODEL.HOME, subdir="ctl/HPC/", runno.lst="LN900", adpx00)  
+
+adpx = adpx[["LN900"]] %>% filter(   C==".") #%>%
+       #distinct(USUBJID, .keep_all=TRUE) %>% 
+       # select(USUBJID, ID,  WGTBL, HGTBL, BMIBL, BSABL, AGE, SEXN, RACEN, ETHNICN, MONOTFLN, CSCCP2FN, FASCSFLN, 
+       #        CREATBL,  CRCLBL, IALTBL, ASTBL, IBILIBL, IALBBL, IIGGBL, ILDHBL, ALPBL,
+       #         CL, V2,  Q, V3,  F1,  KA, EMAX, T50, HILL,  RUVCV,  RUVSD,   
+       #         WGT_ON_CLQ,  WGT_ON_VSS ,  ALT_ON_CLQ,   ALB_ON_CLQ ,  IGG_ON_CLQ,    BMI_ON_VSS,   BLK_ON_T50
+       #         )
+        
+ 
+adpx$POP = "SIM"
+adpx = adpx %>% rename(TVCL=CL, TVV2=V2, TVQ=Q, TVV3=V3, TVEMAX=EMAX,TVT50=T50) 
+                       #ALBBL=IALBBL, IGGBL=IIGGBL, ALTBL=IALTBL)
+                       
+# adsl$ALB_ON_CLQ=-1.00381
+# adsl$ALT_ON_CLQ=-0.0817805
+# adsl$IGG_ON_CLQ=0.182303    
+# adsl$BMI_ON_VSS=-0.552805
+# adsl$BLK_ON_T50=0.946409
+
+#adsl = adsl %>% select(POP, USUBJID, WGTBL, ALBBL, IGGBL,  BMIBL)  ########
+adpx = adpx %>% mutate(ID = as_numeric(ID), 
+                       WGTBL=as_numeric(WGTBL), 
+                       ALBBL=as_numeric(ALBBL), 
+                       IGGBL=as_numeric(IGGBL), 
+                       BMIBL=as_numeric(BMIBL))
+ 
+adpx = adpx %>% mutate(TVCL=as_numeric(TVCL), 
+                       TVV2=as_numeric(TVV2), 
+                       TVQ=as_numeric(TVQ), 
+                       TVV3=as_numeric(TVV3), 
+                       AMT = as_numeric(AMT),
+                       RATE = as_numeric(RATE),
+                       TIME=as_numeric(TIME),
+                       
+                       F1=as_numeric(F1), 
+                       KA=as_numeric(KA), 
+                       
+                       TVEMAX=as_numeric(TVEMAX), 
+                       TVT50=as_numeric(TVT50), 
+                       HILL=as_numeric(HILL), 
+                       
+                       RUVCV=as_numeric(RUVCV), 
+                       RUVSD=as_numeric(RUVSD), 
+                       
+                       WGT_ON_CLQ=as_numeric(WGT_ON_CLQ),
+                       WGT_ON_VSS=as_numeric(WGT_ON_VSS),
+                       ALT_ON_CLQ=as_numeric(ALT_ON_CLQ),
+                       ALB_ON_CLQ=as_numeric(ALB_ON_CLQ),
+                       IGG_ON_CLQ=as_numeric(IGG_ON_CLQ),
+                       BMI_ON_VSS=as_numeric(BMI_ON_VSS),
+                       BLK_ON_T50=as_numeric(BLK_ON_T50)
+)
+    
+ 
+adpx = adpx  %>% select(POP, ID, TIME, TVCL, TVV2,TVQ,TVV3,TVEMAX,TVT50,HILL,AMT,RATE,TIME,CMT,EVID,     IPRED, DVOR, NTIM)
+adpx = adpx %>% group_by(ID) %>% mutate(TVCL0= TVCL[1])
+
+ 
+
+#----------------------------------------
+# run simulation
+#---------------------------------------- 
+ 
+ 
+
+simPK = NULL
+ 
+  # setup simulation timept 
+  treat_end = 24*14;  sim_end = 28*14 
+  
+  tgrid = sim_timept(start=0, end=sim_end, delta=1, dtime=seq(0,treat_end, by=7))
+
+  # run simulation
+  out = mod %>%  param(POSTHOC=1, COVARIATE=0, SCALING=0) %>%  
+     omat(CLQ_VSS=dmat(0,0), IIV_EMAX=dmat(0), IIV_T50=dmat(0)) %>%  
+  data_set(adpx) %>% mrgsim(end=sim_end, delta=1, add=tgrid) %>% as.data.frame() #%>% capitalize_names()
+  
+  #out = out %>% left_join(adex %>% as.data.frame() %>% select(ID, POP, STUDYID, USUBJID, ARMA), by="ID") 
+  colnames(out) = toupper(colnames(out))
+  
+  # change back USUBJID
+  simPK = out
+ 
+
+head(out)
+
+
+  
+  
+  
+#----------------------------------------  
+# confirm
+#----------------------------------------
+ 
+tdata = left_join(adpx, simPK[, c("ID", "TIME", "IPRED")] %>% rename(SIMPK=IPRED),  by=c("ID", "TIME"))
+
+tdata = tdata %>% mutate(DVOR=as_numeric(DVOR), 
+                         IPRED=as_numeric(IPRED),
+                         SIMPK=as_numeric(SIMPK))
+
+tdata = tdata %>% filter(DVOR<300, SIMPK<300)
+ggplot(tdata, aes(x=IPRED, y=SIMPK)) + geom_point() + 
+   coord_cartesian(xlim = c(0, 200) ) + 
+     coord_cartesian(ylim = c(0, 200) )  + 
+  geom_abline(slope=1, intercept = 0, col="red")
+
+ 
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+```{r }
+
+
+ 
+library(dplyr)
+library("mrgsolve")
+source("./cpp/mod.R2810.LN900.cpp")
+mod <- mread("R2810", tempdir(),mymodel)     # ?mread , ?mcode
+ 
+ 
+  # used in primary modeling
+  #adpx = read_csv("H:\\FYANG\\R2810_PD1\\MODEL\\data\\nmdat.csv")  # after remove outliers
+ # adpx = adpx %>% rename(ALBBL=IALBBL, LDHBL=ILDHBL, ALTBL=IALTBL, IGGBL=IIGGBL, BILIBL=IBILIBL)
+ 
+#----------------------------------------  
+# adsl
+#----------------------------------------
+MODEL.HOME <- "H:\\FYANG\\R2810_PD1\\MODEL\\"
+adpx = read_OUTPUT(MODEL.HOME, subdir="ctl/HPC/", runno.lst="LN900", adpx00)  
+
+adpx = adpx[["LN900"]] %>% filter(   C==".") #%>%
+       #distinct(USUBJID, .keep_all=TRUE) %>% 
+       # select(USUBJID, ID,  WGTBL, HGTBL, BMIBL, BSABL, AGE, SEXN, RACEN, ETHNICN, MONOTFLN, CSCCP2FN, FASCSFLN, 
+       #        CREATBL,  CRCLBL, IALTBL, ASTBL, IBILIBL, IALBBL, IIGGBL, ILDHBL, ALPBL,
+       #         CL, V2,  Q, V3,  F1,  KA, EMAX, T50, HILL,  RUVCV,  RUVSD,   
+       #         WGT_ON_CLQ,  WGT_ON_VSS ,  ALT_ON_CLQ,   ALB_ON_CLQ ,  IGG_ON_CLQ,    BMI_ON_VSS,   BLK_ON_T50
+       #         )
+        
+ 
+adpx$POP = "SIM"
+adpx = adpx %>% rename(TVCL=CL, TVV2=V2, TVQ=Q, TVV3=V3, TVEMAX=EMAX,TVT50=T50) 
+                       #ALBBL=IALBBL, IGGBL=IIGGBL, ALTBL=IALTBL)
+                       
+# adsl$ALB_ON_CLQ=-1.00381
+# adsl$ALT_ON_CLQ=-0.0817805
+# adsl$IGG_ON_CLQ=0.182303    
+# adsl$BMI_ON_VSS=-0.552805
+# adsl$BLK_ON_T50=0.946409
+
+#adsl = adsl %>% select(POP, USUBJID, WGTBL, ALBBL, IGGBL,  BMIBL)  ########
+adpx = adpx %>% mutate(ID = as_numeric(ID), 
+                       WGTBL=as_numeric(WGTBL), 
+                       ALBBL=as_numeric(ALBBL), 
+                       IGGBL=as_numeric(IGGBL), 
+                       BMIBL=as_numeric(BMIBL))
+ 
+adpx = adpx %>% mutate(TVCL=as_numeric(TVCL), 
+                       TVV2=as_numeric(TVV2), 
+                       TVQ=as_numeric(TVQ), 
+                       TVV3=as_numeric(TVV3), 
+                       AMT = as_numeric(AMT),
+                       RATE = as_numeric(RATE),
+                       TIME=as_numeric(TIME),
+                       
+                       F1=as_numeric(F1), 
+                       KA=as_numeric(KA), 
+                       
+                       TVEMAX=as_numeric(TVEMAX), 
+                       TVT50=as_numeric(TVT50), 
+                       HILL=as_numeric(HILL), 
+                       
+                       RUVCV=as_numeric(RUVCV), 
+                       RUVSD=as_numeric(RUVSD), 
+                       
+                       WGT_ON_CLQ=as_numeric(WGT_ON_CLQ),
+                       WGT_ON_VSS=as_numeric(WGT_ON_VSS),
+                       ALT_ON_CLQ=as_numeric(ALT_ON_CLQ),
+                       ALB_ON_CLQ=as_numeric(ALB_ON_CLQ),
+                       IGG_ON_CLQ=as_numeric(IGG_ON_CLQ),
+                       BMI_ON_VSS=as_numeric(BMI_ON_VSS),
+                       BLK_ON_T50=as_numeric(BLK_ON_T50)
+)
+    
+adpx.0 = adpx
+
+#adpx = adpx  %>% select(POP, ID, TIME, TVCL, TVV2,TVQ,TVV3,TVEMAX,TVT50,HILL,AMT,RATE,TIME,CMT,EVID,     
+#                        WGTBL, IPRED, DVOR, NTIM)
+
+adpx = adpx %>% group_by(ID) %>% mutate(TVCL0= TVCL[1])
+
+
+adsl = adpx %>% distinct(ID, .keep_all=TRUE)  %>% mutate(USUBJID=USUBJID)  
+
+adsl = adsl %>% select(-AMT, -EVID, -CMT )
+
+
+
+#----------------------------------------
+# adex
+#----------------------------------------  
+#library('gdata')
+library('xlsx')    # do you have to open the file at least once?
+ADEX = data.frame(read.xlsx("./cpp/run_Rsim_input.xlsx", "Sheet1"), stringsAsFactors=FALSE)
+ADEX0 = ADEX[which(!is.na(as.numeric(ADEX$STUDYID))),  ]
+ 
+ADEX0$ARMA = trim(ADEX0$ARMA)
+
+adex = create_adex(adsl, ADEX0%>% filter(STUDYID==4))   #, GROUP %in% c(2,3)
+    
+
+#----------------------------------------
+# run simulation
+#---------------------------------------- 
+ 
+ 
+
+simPK = NULL
+ 
+  # setup simulation timept 
+  treat_end = 24*14;  sim_end = 28*14 
+  
+  tgrid = sim_timept(start=0, end=sim_end, delta=1, dtime=seq(0,treat_end, by=7))
+  tgrid = sort(unique(c(tgrid, unique(as_numeric(adpx$NTIM)))))
+
+  # run simulation
+  out = mod %>%  param(POSTHOC=1, COVARIATE=0, SCALING=0) %>%  
+     omat(CLQ_VSS=dmat(0,0), IIV_EMAX=dmat(0), IIV_T50=dmat(0)) %>%  
+    #data_set(adpx) %>% 
+    ev(as.ev(adex)) %>% 
+    mrgsim(end=sim_end, delta=1, add=tgrid) %>% as.data.frame() #%>% capitalize_names()
+  
+  out = out %>% left_join(adex %>% as.data.frame() %>% distinct(ID, .keep_all=TRUE) %>% select(ID, POP, STUDYID, USUBJID, ARMA), by="ID") 
+  colnames(out) = toupper(colnames(out))
+  
+  # change back USUBJID
+  simPK = out
+ 
+
+ simPK$USUBJID = gsub("SIM-", "", simPK$USUBJID, fix=TRUE)
+ simPK$USUBJID = substr(simPK$USUBJID, 1, 25)
+  
+
+ 
+ 
+ 
+ 
+  
+ 
+#----------------------------------------  
+# confirm  BY A SSINGLE SUBJECT
+#----------------------------------------
+ tt = adpx00%>% filter(ARMA %in% c("3 mg/kg Q2W" )) %>%
+   group_by(USUBJID) %>% dplyr::summarise(N=length(DVOR)) %>% ungroup() %>% arrange(-N)
+ subj.lst = tt$USUBJID[1:5]
+ 
+  
+  adex %>% filter(SUBJID %in% subj.lst)  %>% select(SUBJID, ARMA, amt, cmt, ii, evid, addl, time)
+  
+ simPK = simPK %>% mutate(DVOR=IPRED, NTIM=TIME)
+ 
+ tdata = simPK %>% filter(USUBJID %in% subj.lst) %>% 
+        filter(TIME<400) %>% 
+        filter(ARMA %in% c("3 mg/kg Q2W IV" ))
+ 
+ tdata$DVOR = tdata$DVOR + 0.039
+ fig = ggplot(tdata, aes(x=TIME, y=DVOR,group=USUBJID))  +geom_line() +  scale_y_log10()  + 
+     coord_cartesian(xlim = c(0, 56) ) + 
+     coord_cartesian(ylim = c(0.039, 450) )   
+   
+   
+   tt = adpx.0 %>%  filter(USUBJID %in% subj.lst) %>% 
+        mutate(TIME=as_numeric(TIME), DVOR=as_numeric(DVOR))
+   fig + geom_point(data=tt, aes(x=TIME, y=DVOR))  + 
+     facet_wrap(~USUBJID)
+   
+   
+   
+ 
+ 
+ 
+ 
+ 
+ 
+#----------------------------------------  
+# confirm
+#----------------------------------------
+ 
+ 
+ 
+ 
+tdata = left_join(adpx.0%>% mutate(NTIM=as_numeric(NTIM),TIME=as_numeric(TIME)) %>% 
+                    filter(ARMA %in% c("3 mg/kg Q2W" )), 
+                  
+                  simPK %>% filter(ARMA %in% c("3 mg/kg Q2W IV" )) %>%select(ARMA, USUBJID, TIME, IPRED) %>%  
+                       rename(SIMPK=IPRED, NTIM=TIME) %>% 
+                       mutate(ARMA=trim(gsub("IV", "", ARMA, fix=TRUE))),  
+                  by=c("ARMA", "USUBJID", "TIME"))
+ 
+ 
+ adpx.0 %>% filter(USUBJID %in% "R2810-ONC-1423-036001-001")  %>% select(USUBJID, ID, ARMA, TIME, NTIM, DVOR )
+
+  simPK%>% filter(USUBJID %in% "R2810-ONC-1423-036001-001") %>% select(USUBJID, ARMA, TIME,  IPRED)  %>% head(n=100)
+  
+  tdata%>% filter(USUBJID %in% "R2810-ONC-1423-036001-001") %>% select(USUBJID, ARMA, TIME, NTIM, IPRED)  %>% head()
+  
+
+tdata = tdata %>% mutate(DVOR=as_numeric(DVOR), 
+                         IPRED=as_numeric(IPRED),
+                         SIMPK=as_numeric(SIMPK))
+
+tdata = tdata %>% filter(DVOR<300, SIMPK<300)
+
+ggplot(tdata, aes(x=IPRED, y=SIMPK)) + geom_point() + 
+     coord_cartesian(xlim = c(0, 200) ) + 
+     coord_cartesian(ylim = c(0, 200) )  + 
+  geom_abline(slope=1, intercept = 0, col="red")
+
+ 
+
+
+tdata = tdata %>% mutate(DIFF=abs(IPRED-SIMPK)) %>% filter(DIFF>20)
+tdata %>% select(USUBJID, ARMA, TIME, IPRED, SIMPK)
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+

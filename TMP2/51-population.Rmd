@@ -1,0 +1,587 @@
+---
+output:
+  word_document: default
+  html_document: default
+---
+
+# \@ref(results) Results {#results}
+## \@ref(population)	PK Population and Samples {#population}
+
+
+
+
+
+```{r stats-adpx0, include=FALSE, message=FALSE}
+ 
+
+# all sample and subject
+# ----------------------------
+# PK observations
+n.USUBJID.ALL = adpx0 %>% filter(EVID==0)%>%pull(USUBJID) %>% unique() %>% length()
+n.ALL     = adpx0 %>% filter(EVID==0)%>%pull(DVOR) %>% length()
+n.USUBJID.ALL
+n.ALL 
+
+
+# PK observations
+n.USUBJID.ALL.CSCC = adpx0 %>% filter(CSCCP2FN==1)  %>% filter(EVID==0)%>%pull(USUBJID) %>% unique() %>% length()
+n.ALL.CSCC     = adpx0  %>% filter(CSCCP2FN==1) %>% filter(EVID==0)%>%pull(DVOR) %>% length()
+
+
+# post-dose sample and subject
+# ----------------------------
+
+# PK observations
+n.USUBJID.POSTDOSE = adpx0 %>% filter(EVID==0, !CFLAG%in%c("Predose.samples", "Pre 1st dose concentration > LLOQ"))%>%
+            pull(USUBJID) %>% unique() %>% length()
+n.POSTDOSE     = adpx0 %>% filter(EVID==0, TIME>0)%>%pull(DVOR) %>% length()
+
+ n.POSTDOSE     = adpx0 %>% filter(EVID==0, !CFLAG%in%c("Predose.samples", "Pre 1st dose concentration > LLOQ"))%>%pull(DVOR) %>% length()
+
+  n.POSTDOSE     = adpx0 %>% filter(EVID==0, !CFLAG%in%c("Predose.samples", "Pre 1st dose concentration > LLOQ"))%>%pull(CFLAG) %>% table()  %>% t()
+  
+  
+  
+ adpx0 %>% filter(EVID==0, CFLAG=="Outliers") %>% select(ROWID, TIME, C, CFLAG)
+
+ 
+  
+  
+  
+
+n.BLQ     = adpx0 %>% filter(EVID==0, TIME<=0) %>% pull(CFLAG)
+n.USUBJID.POSTDOSE   
+n.POSTDOSE
+
+
+
+# PK observations
+n.USUBJID.ALL.CSCC = adpx0 %>% filter(CSCCP2FN==1)  %>% filter(EVID==0, TIME>0)%>%pull(USUBJID) %>% unique() %>% length()
+n.ALL.CSCC     = adpx0 %>% filter(CSCCP2FN==1) %>% filter(EVID==0, TIME>0)%>%pull(DVOR) %>% length()
+
+
+
+
+
+# final index dataset
+# ----------------------------
+n.USUBJID.INDEX = adpx0 %>% filter(EVID==0, C==".", TIME>0)%>%pull(USUBJID) %>% unique() %>% length()
+n.INDEX     = adpx0 %>% filter(EVID==0, C==".", TIME>0)%>%pull(DVOR) %>% length()
+
+n.USUBJID.INDEX 
+n.INDEX
+
+
+adpx0 %>% filter(EVID==0, TIME>0, C!="." | CFLAG!=".")   %>% select(ROWID, C, CFLAG)
+
+
+
+```
+
+A total of `r n.ALL` post-dose concentrations were collected from `r n.USUBJID.ALL` subjects in two phase I/II studies (Study-1423 and Study-1540) for this interim analysis with the planned cut-off dates.  Some samples or subjects were removed from the original dataset, as outlined in Section \@ref(outliers). The specific reasons for removing these concentrations were given in Table \@ref(tab:summary-CFLAG). The resulting dataset was referred as *index dataset* thereafter, and was used for all subsequent Pop PK analysis.  Note in all `r n.ALL` post-dose PK samples, only `r n.BLQ` (`r paste0(format(n.BLQ/n.ALL*100, digits=3), '%')`) had concentrations below the limit of quantification (BLQ). Therefore, they were flagged out and not considered in the Pop PK analysis.   
+  
+<!--   
+pooled dataset from two studies;
+BLQ samples post dose were removed due to low percent. -->
+
+```{r stats-adpx, include=FALSE, message=FALSE}
+
+#stats of the PK population
+#-----------------------------
+adpx = adpx0 %>% filter(C==".")
+
+# PK observations
+#n.USUBJID = adpx %>% filter(EVID==0, TIME>0)%>%pull(USUBJID) %>% unique() %>% length()
+#n.ALL     = adpx %>% filter(EVID==0, TIME>0)%>%pull(DVOR) %>% length()
+  
+# dosing records
+#---------------------
+dose_rec = adpx %>% filter(EVID==1) %>% group_by(STUDYID, USUBJID) %>% dplyr::summarize(MAXDOSE=max(EXSEQ)) %>% 
+        group_by(STUDYID) %>% dplyr::summarise(NDOSE=median(MAXDOSE))
+  
+
+#head(tdata$PCDTC)
+
+```
+ 
+ 
+The cemiplimab Pop PK model was developed using the *index dataset* of `r n.samples` cemiplimab serum concentration values from `r n.USUBJID` patients, with the last sampling date of `r last.date`, respectively. All present analyses were restricted to the *index dataset*. 
+ 
+<!-- regular html The developed model was also validated with an additional data set of 999  serum concentration values from 20 patients with CSCC at the 350 mg Q3W dose level in study 1540.  except Section 6.7.3 in which the results of validation were discussed.   -->  
+ 
+Table \@ref(tab:summary-studies) indicates the number of included subjects and their serum samples by study, treatment group, and overall in the *index dataset*. Similar table for CSCC patients only was presented in Table \@ref(tab:summary-studies-cscc). Patients in study 1423 received biweekly dose of cemiplimab at the level of 1, 3, 10 mg/kg, and 200 mg flat IV, as well as 3 mg/kg every three weeks; patients in study 1540 received 3 mg/kg IV Q2W (Group 1 and 2) in the current dastaset. Most CSCC patients received 3 mg/kg Q2W except one who received 1 mg/kg Q2W IV of cemiplimab. 
+
+The patient demographic and baseline values for relevant covariates were summarized in Table \@ref(tab:summary-demog). The corresponding table for CSCC patients was presented in Table \@ref(tab:summary-demog-cscc).  The analysis population encompassed a wide distribution of body weight, with a median of `r tabl_summary_demog %>% filter(cov_name=="WGTBL", cov_value=="Median_Range") %>% pull(Overall)` kg. 
+The distribution of gender was male (n=`r total_M`, `r paste0(round(total_M/total_SEX*100, digits=1), '%')`) and 
+female (n=`r total_F`, `r paste0(round(total_F/total_SEX*100, digits=1), '%')`). 
+The distribution of ethnic was hispanic or latino (n=`r total_HISPANIC`, `r paste0(round(total_HISPANIC/total_ETHNIC*100, digits=1), '%')`), 
+not hispanic or latino (n=`r total_NOTHISPANIC`, `r paste0(round(total_NOTHISPANIC/total_ETHNIC*100, digits=1), '%')`).
+Most subjects were of white race (n=`r total_WHITE`, `r paste0(round(total_WHITE/total_RACE*100, digits=1), '%')`) 
+and `r paste0(total_BLACK, '(', round(total_BLACK/total_RACE*100, digits=1), '%)')` were black 
+and `r paste0(total_ASIAN, '(', round(total_ASIAN/total_RACE*100, digits=1), '%)')` were Asian. The mean age of subjects in the dataset 
+was `r tabl_summary_demog %>% filter(cov_name=="AGE", cov_value=="Median_Range") %>% pull(Overall)`  years, 
+and their median calculated creatinine clearance values `r tabl_summary_demog %>% filter(cov_name=="CRCLBL", cov_value=="Median_Range") %>% pull(Overall)` (g/L). In overall, the population of CSCC patient was similar as the whole study population, in term of age, body weight, race, and other lab results.
+
+On average, patients received `r dose_rec %>% filter(STUDYID=='Study-1423')%>%pull(NDOSE) ` and  `r dose_rec %>% filter(STUDYID=='Study-1540')%>%pull(NDOSE) ` cemiplimab doses over the treatments period for Study-1423 and Study-1540, respectively.  Relatively dense PK samples were typically collected after the first treatment cycle (56 days) following by sparse sampling on trough concentration and end of infusion in the subsequent treatment cycles. The detailed PK samples scheme was presented in Table \@ref(tab:study-design).  Cemiplimab serum concentrations were measured by a validated enzyme-linked immunosorbent assay, with a lower limit of quantification of 0.078 mg/L.  Since the number of post-dose samples below that limit was low (`r paste0(round(n.BLQ/n.ALL*100, digits=3),'%') ` of total observations), PK samples below BLQ was excluded from this analysis.   Overall, the level of missing continuous covariate information was limited and did not exceed xx.x%.   For categorical covariates, the level of missing information was determined to be less than x.x%.
+
+<!-- The assay was accurate to ± 9.40% and the inter-assay and intra-assay coefficients of variation were 6.82% and 5.21%, respectively [refer to assay report]. 
+•	Inspection of certain individual concentration-time profiles suggested implausible Ctrough and Ceoi values (ie. where Ctrough >> Ceoi) (52 Ctrough/Ceoi pairs). These samples (n=104) were excluded from PK analysis and descriptive statistics. 
+•	In a few patients, samples with exceptionally high concentrations compared to the individual’s concentration-time profile (total of 14 PK samples in 13 patients) were considered to be outliers. Concentrations that exceeded 5-times the average concentrations in these patients were identified by a flag to be excluded for the PK analysis and descriptive statistics.
+•	For the NCA analysis after the first dose, a few Ctrough samples on day 14 (8 samples in 8 patients) were excluded, due to implausibly high values.
+•	In the 10 mg/kg Q2W dose cohort (ESC3), one patient (840004006) mistakenly received a first dose (C1D1) of cemiplimab 1 mg/kg instead of 10 mg/kg Q2W and was correctly dosed thereafter with 10 mg/kg Q2W. The PK data in this patient after the first dose were therefore excluded from the NCA and descriptive statistics of concentrations and PK parameters, while concentrations at later time points were maintained.
+
+-->  
+
+<br> 
+
+```{r summary-CFLAG, tidy=FALSE, message=FALSE, warning=FALSE}
+
+# summary of all FLAG
+#adpx %>% ungroup() %>% filter(CFLAG!=".") %>% select(CFLAG) %>% table() %>% as.matrix()
+Num.of.observations = adpx0 %>% ungroup() %>% filter(EVID==0, CFLAG!=".") %>% select(CFLAG) %>% table() %>% as.matrix()
+Num.of.subjects.Impacted = adpx0 %>% ungroup() %>% filter(CFLAG!=".") %>% distinct(USUBJID, CFLAG, .keep_all=TRUE) %>% select(CFLAG) %>% table() %>% as.matrix()
+tabl = data.frame(Num.of.observations, Num.of.subjects.Impacted)
+
+tabl = cbind("Reasons"=rownames(tabl), tabl) %>% as.data.frame()
+rownames(tabl)= 1:nrow(tabl)
+
+
+TABLE_ALL[["summary_CFLAG"]] = tabl 
+  
+caption = 'Summary of PK Samples Removed from the Original Dataset and the Number of Subjects Impacted in Study 1423 and 1540'
+knitr::kable(tabl, booktabs = TRUE, caption=caption)      #, padding = 2
+   
+
+
+
+```
+
+Note: inversion=predose concentration is higher than the corresponding end of infusion concentration; Concentration outliers=concentration is 4 times higher than the mean concentration measured at the same nominal time within that study, or identified during the modeling development as shown in Section \@ref(outliers).
+
+
+
+```{r summary-CFLAG-CSCC, tidy=FALSE, message=FALSE, warning=FALSE}
+
+# summary of all FLAG
+#adpx %>% ungroup() %>% filter(CFLAG!=".") %>% select(CFLAG) %>% table() %>% as.matrix()
+adpx = adpx0 %>% filter(CSCCP2FN==1) 
+Num.of.observations = adpx %>% ungroup() %>% filter(EVID==0, CFLAG!=".") %>% select(CFLAG) %>% table() %>% as.matrix()
+Num.of.subjects.Impacted = adpx %>% ungroup() %>% filter(CFLAG!=".") %>% distinct(USUBJID, CFLAG, .keep_all=TRUE) %>% select(CFLAG) %>% table() %>% as.matrix()
+tabl = data.frame(Num.of.observations, Num.of.subjects.Impacted)
+
+tabl = cbind("Reasons"=rownames(tabl), tabl) %>% as.data.frame()
+rownames(tabl)= 1:nrow(tabl)
+
+
+TABLE_ALL[["summary_CFLAG_CSCC"]] = tabl 
+  
+caption = 'Summary of PK Samples Removed from the Original Dataset and the Number of CSCC Subjects Impacted in Study 1423 and 1540'
+knitr::kable(tabl, booktabs = TRUE, caption=caption)      #, padding = 2
+   
+
+
+
+```
+
+
+```{r fun-summary-of-studies, tidy=FALSE, message=FALSE, warning=FALSE}
+
+  namedVec2df <- function(x) {setNames(data.frame(lapply(x, type.convert), stringsAsFactors=FALSE), names(x))}
+  
+  summary_of_studies <- function(adpx, group_by=c("STUDYID", "ARMA", "EXROUTE"), value="DVOR", id="USUBJID") {
+    # Note:   == "0",  mean  BLQ
+    #         == ".",  missing, not available.
+    
+    summ = adpx %>% group_by_(.dots = group_by) %>% dplyr::summarise(
+      N = fun.uniqN(USUBJID), 
+      N_mininum_one_measurable_sample = fun.uniqN(USUBJID[DVOR!="." & DVOR!="0"]),
+      N_measurable_samples = length(DVOR[DVOR!="." & DVOR!="0"])
+      #N_postdose_BLQ_samples = length(DVOR[TIME>=0 & DVOR=="0"]),
+      #pct_postdose_BLQ_samples = round(N_postdose_BLQ_samples/(N_postdose_BLQ_samples+N_measurable_samples)*100, digits=2)
+      )
+    
+    colnames(summ) <- c(group_by,  
+                        "Number of Subjects Included in Analysis",	
+                        "Number of Subjects with at Least One Measurable PK Sample",	
+                        "Number of Measurable PK Samples"	
+                        #"Number of Post-dose BLQ Samples",	
+                        #"Percent (%) of Post-dose BLQ Samples"
+                        )
+    return(summ)
+    #   
+    #   footnote:
+    #   PK = pharmacokinetic; BLQ = below the level of quantification; IV = intravenous; SC = subcutaneous
+    #   a Percentages of BLQ samples were computed relative to the total (measurable  + BLQ) sums of PK samples
+    
+  }
+  
+```
+  
+<br> 
+  
+```{r summary-studies, tidy=FALSE, message=FALSE, warning=FALSE}
+
+  # summarise by STUDYID and ARMA
+  #---------------------------------------
+
+  adpx = adpx0 %>% filter(C==".", EVID==0)
+  tdata = adpx %>% filter(EVID==0)  # , PCTEST=="REGN2810 Concentration") 
+  tabl_1 = summary_of_studies(tdata, group_by=c("STUDYID", "ARMA"), value="DVOR", id="USUBJID") 
+  tabl_2 = summary_of_studies(tdata, group_by=NULL, value="DVOR", id="USUBJID") 
+  tabl = setNames(merge_all(list(tabl_1, tabl_2)), colnames(tabl_1))  %>% arrange(STUDYID, ARMA)  
+  tabl = tabl %>% mutate(STUDYID=as.character(STUDYID), ARMA=as.character(ARMA))
+  tabl_summary_study = tabl
+  
+  tabl[nrow(tabl), "STUDYID"] = "Total"
+  tabl[which(duplicated(tabl$STUDYID)), "STUDYID"] = ""
+  tabl = tabl %>% rename(Study=STUDYID, Group=ARMA)
+  tabl[is.na(tabl)] = ""  
+  
+  TABLE_ALL[["summary_studies"]] = tabl 
+  
+# kableExtra::add_footnote(x, 
+#              c("n = number of measurements", 
+#                "Note: percentage is based on the total (overall) number of measurements in each dose group.", 
+#                "a	Non-quantifiable samples include pre-dose samples."), 
+#              notation = "symbol")
+
+   caption = 'Summary of Subjects and PK Samples by Study and Treatment Group in the Pop PK Analysis (Index Dataset in Study 1423 and 1540)'
+ 
+knitr::kable(tabl, booktabs = TRUE, caption=caption, padding = 2)
+   
+```
+
+<!--Note: n = number of subjects or measurements. 
+ Note: percentage is based on the total (overall) number of measurements in each dose group. -->
+
+<br> 
+
+```{r summary-studies-cscc, tidy=FALSE, message=FALSE, warning=FALSE}
+  adpx = adpx0 %>% filter(C==".", EVID==0)
+
+  tdata = adpx %>% filter(CSCCP2F=="Y", EVID==0, TIME!=0)   # , PCTEST=="REGN2810 Concentration"
+  tabl_1 = summary_of_studies(tdata, group_by=c("STUDYID", "ARMA", "CSCCP2F"), value="DVOR", id="USUBJID") 
+  tabl_2 = summary_of_studies(tdata, group_by=c("CSCCP2F"), value="DVOR", id="USUBJID") 
+  tabl = setNames(merge_all(list(tabl_1, tabl_2)), colnames(tabl_1))  %>% arrange(STUDYID, ARMA)  
+  tabl = tabl %>% mutate(STUDYID=as.character(STUDYID), ARMA=as.character(ARMA))
+  tabl_summary_study_cscc = tabl
+  
+  tabl[nrow(tabl), "STUDYID"] = "Total by column"
+  tabl[which(duplicated(tabl$STUDYID)), "STUDYID"] = ""  
+  tabl = tabl %>% rename(Study=STUDYID, Group=ARMA)
+  tabl[is.na(tabl)] = " "
+  tabl <- tabl %>% select(-CSCCP2F)
+  
+ 
+  TABLE_ALL[["summary_studies_by_CSCC"]] = tabl  
+  
+  caption = "Summary of Subjects with Advanced CSCC and their PK Samples by Study and Treatment Group in the Pop PK Analysis (Index Dataset in Study 1423 and 1540)"
+
+  knitr::kable(tabl, booktabs = TRUE, caption = caption)
+ 
+    
+```
+
+<!--Note: n = number of subjects or measurements. -->
+
+
+ 
+  
+```{r fun-summary-continuous-var, message=FALSE}
+
+  # summary stats for the continuous variables
+  #----------------------------------------------------
+  
+  summary_continuous_var <- function(adpx, id="USUBJID", group_by="ARMA", 
+                                     cov_name=c( "AGE", "WEIGHTBL", "HEIGHTBL", "BMIBL"), 
+                                     stats_name=c("N", "Mean_SD", "Median", "Range") ) {
+    
+    #adpx = adpx %>% mutate(GROUP=paste(one_of(group_by), "-"))
+    stopifnot(length(group_by)==1)
+    t0 = lapply(cov_name, function(value, adpx, id, group_by  ) {
+      calc_stats(adpx, id, group_by, value) %>% mutate(cov_name=value)}, adpx, id, group_by)  %>%     ############
+    bind_rows() %>% 
+      select(one_of(group_by), cov_name, one_of(stats_name)) %>%   
+      gather("stats_name", "value", one_of(stats_name))  %>% 
+      spread_(group_by, "value" )
+    
+    # add the Overall column
+    
+    t1 = adpx  %>% gather("cov_name", "cov_value",  one_of(cov_name) ) %>% 
+      calc_stats(id, group="cov_name", value="cov_value") %>%        
+      select(cov_name, one_of(stats_name)) %>%   
+      gather("stats_name", "Overall", one_of(stats_name)) 
+    #%>%
+    #rename(ARMA = cov_name)
+    
+    # merge 
+    tcon = t0 %>% left_join(t1, by=c("cov_name", "stats_name"))
+    
+    tcon$cov_name = ordered(tcon$cov_name, levels=cov_name)
+    tcon$stats_name = ordered(tcon$stats_name, levels=stats_name)      
+    
+    tcon <- tcon %>% arrange(cov_name, stats_name)
+    return(tcon)
+  }
+  
+
+```
+
+ 
+```{r fun-summary-categorical-var, message=FALSE}
+
+  
+  # summary stats for the categorical variables
+  #----------------------------------------------------  
+  calc_stats_cat <-  function(adsl, id="USUBJID", group_by="ARMA", value="SEX") {
+    #adsl = adsl %>% rename_(USUBJID=id, ARMA=group_by, cov_value=value)
+    # adsl$USUBJID = adsl[, id]
+    # adsl$ARMA = adsl[, group_by]               
+    # adsl$cov_value  = adsl[, value]
+    
+    t1 = adsl %>% group_by_(.dots = group_by) %>% dplyr::summarise(N_ALL=fun.uniqN(USUBJID))       
+    t2 = adsl %>% group_by_(.dots = c(group_by, value)) %>%  dplyr::summarise(N=fun.uniqN(USUBJID)) %>%       
+      left_join(t1, by=group_by) %>% 
+      mutate(PCT = as.character(u.signif(N/N_ALL*100, digits=3)), 
+             N_PCT = as.character(paste(N, "(", PCT, "%)", sep="")) 
+      ) %>% rename_(cov_value=value)
+    t2 = as.data.frame(t2)     
+    
+    return(t2)
+  }
+  
+  summary_categorical_var <- function(tdata, id="USUBJID", group_by="ARMA", 
+                                      cov_name=c( "SEX", "RACE", "ETHNIC"), 
+                                      stats_name=c("N_PCT") ) {
+ 
+    t0 = lapply(cov_name, function(value, tdata, id, group_by ) {
+      calc_stats_cat(tdata, id, group_by, value )%>%mutate(cov_name=value, cov_value=as.character(cov_value))}, tdata, id, group_by)  %>% 
+      bind_rows() %>% 
+      select(one_of(group_by), one_of("cov_name", "cov_value"),  one_of(stats_name)) %>%   
+      #gather("stats_name", "value",   CAT, N_PCT)  %>%  
+      spread_(group_by, "N_PCT")
+    
+    # add the Overall column   
+    tdata = tdata %>% rename_(USUBJID=id) # $USUBJID = tdata[, id]       
+    t1 = tdata %>% gather(cov_name, cov_value, one_of(cov_name)) %>% group_by(cov_name, cov_value) %>% summarise(Overall=as.character(fun.uniqN(USUBJID)))
+    
+    # merge
+    tcat = t0 %>% left_join(t1, by=c("cov_name", "cov_value"))
+    
+    return(tcat)
+  }
+  
+```
+
+ 
+<br>  
+
+```{r summary-demog, tidy=FALSE, message=FALSE, warning=FALSE}
+    
+    con_cov_name=c( "AGE", "WGTBL", "HGTBL", "BMIBL", 
+                  "CREATBL",       "CRCLBL",        "ALTBL" ,        "ASTBL" ,        "BILIBL" ,      
+                  "ALBBL",         "IGGBL" ,        "LDHBL" ,        "ALPBL")
+    cat_cov_name=c("CSCCP2F", "SEX", "RACE", "ETHNIC")
+    stats_name=c("N", "Mean", "SD", "SE", "Median_Range")
+    
+    
+    adpx = adpx0 %>% filter(C==".", EVID==0) %>% distinct(USUBJID, .keep_all=TRUE)
+    tdata = adpx %>% arrange(STUDYID, ARMA) %>% mutate(STUDYID_ARMA = STUDYID)   # paste(STUDYID, ARMA, sep="~"))
+    tdata = tdata %>% mutate(STUDYID_ARMA=ordered(STUDYID_ARMA, level=unique(STUDYID_ARMA)))
+    
+    t1 = summary_continuous_var(tdata, id="USUBJID", group_by=c( "STUDYID_ARMA"), 
+                                     cov_name=con_cov_name, 
+                                     stats_name=stats_name) %>% 
+    rename(cov_value=stats_name)
+    
+    
+    t2 = summary_categorical_var(tdata, id="USUBJID", group_by="STUDYID_ARMA", 
+                                      cov_name=cat_cov_name, 
+                                      stats_name=c("N_PCT") )  %>% 
+        mutate(cov_value=as.character(cov_value))
+    
+    tabl = bind_rows(t1, t2) %>% as.data.frame()
+    tabl_summary_demog = tabl
+    
+    #--------------------------------------
+    # sex
+    total_F = tabl_summary_demog %>% filter(cov_name=="SEX", cov_value=="F") %>% pull(Overall)  %>% as_numeric()
+    total_M = tabl_summary_demog %>% filter(cov_name=="SEX", cov_value=="M") %>% pull(Overall)  %>% as_numeric()
+    total_SEX = total_F + total_M
+    
+    # ETHNIC
+    total_HISPANIC = tabl_summary_demog %>% filter(cov_name=="ETHNIC", cov_value=="HISPANIC OR LATINO") %>% pull(Overall)  %>% as_numeric()
+    total_NOTHISPANIC = tabl_summary_demog %>% filter(cov_name=="ETHNIC", cov_value=="NOT HISPANIC OR LATINO") %>% pull(Overall)  %>% as_numeric()
+    total_ETHNIC = total_NOTHISPANIC + total_HISPANIC
+     
+    # RACE
+    total_WHITE = tabl_summary_demog %>% filter(cov_name=="RACE", cov_value=="WHITE") %>% pull(Overall)  %>% as_numeric()
+    total_BLACK = tabl_summary_demog %>% filter(cov_name=="RACE", cov_value=="BLACK OR AFRICAN AMERICAN") %>% pull(Overall)  %>% as_numeric()
+    total_ASIAN = tabl_summary_demog %>% filter(cov_name=="RACE", cov_value=="ASIAN") %>% pull(Overall)  %>% as_numeric()
+    total_RACE = total_WHITE + total_BLACK + total_ASIAN
+    #--------------------------------------     
+     
+     
+ 
+    
+    tabl$cov_name = gsub("AGE", "Age\n(year)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("RACE", "Race", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("SEX", "Sex", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("ETHNIC", "Ethnicity", tabl$cov_name, fix=TRUE)
+        
+    tabl$cov_name = gsub("WGTBL", "Weight (kg)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("HGTBL", "Height\n(m)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("ALBBL", "Albumin\n(g/L)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("BMIBL", "BMI\n(kg/m2)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("CREATBL", "Creatinine\n(umol/L)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("CRCLBL", "Creatinine \nClearance (mL/min)", tabl$cov_name, fix=TRUE)    
+    tabl$cov_name = gsub("ALTBL", "ALT\n(IU/L)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("ASTBL", "AST\n(IU/L)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("BILIBL", "Bilirubin\n(umol/L)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("IGGBL", "IGG\n(g/L)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("LDHBL", "LDH\n(IU/L)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("ALPBL", "ALP\n(IU/L)", tabl$cov_name, fix=TRUE)
+    
+
+    tabl$cov_value = gsub("NOT HISPANIC OR LATINO", "Not Hispanic/Latino", tabl$cov_value, fix=TRUE)
+    tabl$cov_value = gsub("HISPANIC OR LATINO", "Hispanic/Latino", tabl$cov_value, fix=TRUE)    
+    tabl$cov_value = gsub("NOT REPORTED", "Not Reported", tabl$cov_value, fix=TRUE)
+    
+    tabl$cov_value = gsub("WHITE", "White", tabl$cov_value, fix=TRUE)
+    tabl$cov_value = gsub("ASIAN", "Asian", tabl$cov_value, fix=TRUE)
+    tabl$cov_value = gsub("BLACK OR AFRICAN AMERICAN", "Black", tabl$cov_value, fix=TRUE)
+    tabl$cov_value = gsub("OTHERS", "Others", tabl$cov_value, fix=TRUE)
+    
+    tabl$cov_value = gsub("Median_Range", " Median(range)", tabl$cov_value, fix=TRUE)
+    
+    ids = which(tabl$cov_value %in% c("Mean", "SD", "SE")) 
+    tabl[ids, c("Study 1423", "Study 1540", "Overall")] = u.signif(tabl[ids, c("Study 1423", "Study 1540", "Overall")])
+    
+    
+    
+    
+    tabl[which(duplicated(tabl$cov_name)), "cov_name"] = ""
+    tabl[is.na(tabl)] = ""
+    colnames(tabl) <- gsub("cov_name", "Covariate", colnames(tabl), fix=TRUE)
+    colnames(tabl) <- gsub("cov_value", "Statistics", colnames(tabl), fix=TRUE)
+    
+    TABLE_ALL[["summary_demog"]] = tabl
+    
+   caption = "Summary of Baseline Demographic Characteristics, Laboratory and Disease Status Variables in the Index Dataset in Study 1423 and 1540"
+
+knitr::kable(tabl, booktabs = TRUE, caption = caption)
+
+
+
+```
+ 
+<br>  
+ 
+```{r summary-demog-cscc, tidy=FALSE, message=FALSE, warning=FALSE}
+# uid_final_data %>% 
+#   select(GENDER, WT, AGE) %>%
+#   group_by(GENDER) %>% 
+#   summarize_all(funs(min, mean, max)) %>% 
+#   kable
+ 
+  
+  
+      con_cov_name=c( "AGE", "WGTBL", "HGTBL", "BMIBL", 
+                  "CREATBL",       "CRCLBL",        "ALTBL" ,        "ASTBL" ,        "BILIBL" ,      
+                  "ALBBL",         "IGGBL" ,        "LDHBL" ,        "ALPBL")
+    cat_cov_name=c("CSCCP2F", "SEX", "RACE", "ETHNIC")
+    stats_name=c("N", "Mean", "SD", "SE", "Median_Range")
+    
+    
+    adpx = adpx0 %>% filter(C==".", EVID==0) %>% distinct(USUBJID, .keep_all=TRUE)
+    tdata = adpx %>% arrange(STUDYID, ARMA) %>% mutate(STUDYID_ARMA = STUDYID)   # paste(STUDYID, ARMA, sep="~"))
+    tdata = tdata %>% mutate(STUDYID_ARMA=ordered(STUDYID_ARMA, level=unique(STUDYID_ARMA)))
+      tdata = tdata %>% filter(CSCCP2F=="Y")
+      
+      
+      
+    t1 = summary_continuous_var(tdata, id="USUBJID", group_by=c( "STUDYID_ARMA"), 
+                                     cov_name=con_cov_name, 
+                                     stats_name=stats_name) %>% 
+    rename(cov_value=stats_name)
+    
+    
+    t2 = summary_categorical_var(tdata, id="USUBJID", group_by="STUDYID_ARMA", 
+                                      cov_name=cat_cov_name, 
+                                      stats_name=c("N_PCT") )  %>% 
+        mutate(cov_value=as.character(cov_value))
+    
+    tabl = bind_rows(t1, t2) %>% as.data.frame()
+    tabl_summary_demog = tabl
+    
+    #--------------------------------------
+    # sex
+    total_F = tabl_summary_demog %>% filter(cov_name=="SEX", cov_value=="F") %>% pull(Overall)  %>% as_numeric()
+    total_M = tabl_summary_demog %>% filter(cov_name=="SEX", cov_value=="M") %>% pull(Overall)  %>% as_numeric()
+    total_SEX = total_F + total_M
+    
+    # ETHNIC
+    total_HISPANIC = tabl_summary_demog %>% filter(cov_name=="ETHNIC", cov_value=="HISPANIC OR LATINO") %>% pull(Overall)  %>% as_numeric()
+    total_NOTHISPANIC = tabl_summary_demog %>% filter(cov_name=="ETHNIC", cov_value=="NOT HISPANIC OR LATINO") %>% pull(Overall)  %>% as_numeric()
+    total_ETHNIC = total_NOTHISPANIC + total_HISPANIC
+     
+    # RACE
+    total_WHITE = tabl_summary_demog %>% filter(cov_name=="RACE", cov_value=="WHITE") %>% pull(Overall)  %>% as_numeric()
+    total_BLACK = tabl_summary_demog %>% filter(cov_name=="RACE", cov_value=="BLACK OR AFRICAN AMERICAN") %>% pull(Overall)  %>% as_numeric()
+    total_ASIAN = tabl_summary_demog %>% filter(cov_name=="RACE", cov_value=="ASIAN") %>% pull(Overall)  %>% as_numeric()
+    total_RACE = total_WHITE + total_BLACK + total_ASIAN
+    #--------------------------------------     
+     
+     
+ 
+    
+    tabl$cov_name = gsub("AGE", "Age\n(year)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("WGTBL", "Weight (kg)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("HGTBL", "Height\n(m)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("ALBBL", "Albumin\n(g/L)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("BMIBL", "BMI\n(kg/m2)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("CREATBL", "Creatinine\n(umol/L)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("CRCLBL", "Creatinine \nClearance (mL/min)", tabl$cov_name, fix=TRUE)    
+    tabl$cov_name = gsub("ALTBL", "ALT\n(IU/L)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("ASTBL", "AST\n(IU/L)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("BILIBL", "BILI\n(umol/L)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("IGGBL", "IGG\n(g/L)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("LDHBL", "LDH\n(IU/L)", tabl$cov_name, fix=TRUE)
+    tabl$cov_name = gsub("ALPBL", "ALP\n(IU/L)", tabl$cov_name, fix=TRUE)
+    
+    tabl$cov_value = gsub("HISPANIC OR LATINO", "Hispanic/Latino", tabl$cov_value, fix=TRUE)
+    tabl$cov_value = gsub("NOT HISPANIC OR LATINO", "Not Hispanic/Latino", tabl$cov_value, fix=TRUE)
+    tabl$cov_value = gsub("NOT REPORTED", "Not Reported", tabl$cov_value, fix=TRUE)
+    
+    tabl$cov_value = gsub("WHITE", "White", tabl$cov_value, fix=TRUE)
+    tabl$cov_value = gsub("ASIAN", "Asian", tabl$cov_value, fix=TRUE)
+    tabl$cov_value = gsub("BLACK OR AFRICAN AMERICAN", "Black", tabl$cov_value, fix=TRUE)
+    tabl$cov_value = gsub("OTHERS", "Others", tabl$cov_value, fix=TRUE)
+    
+    tabl$cov_value = gsub("Median_Range", " Median(range)", tabl$cov_value, fix=TRUE)
+    
+    ids = which(tabl$cov_value %in% c("Mean", "SD", "SE")) 
+    tabl[ids, c("Study 1423", "Study 1540", "Overall")] = u.signif(tabl[ids, c("Study 1423", "Study 1540", "Overall")])
+    
+    
+    
+    
+    tabl[which(duplicated(tabl$cov_name)), "cov_name"] = ""
+    tabl[is.na(tabl)] = ""
+    colnames(tabl) <- gsub("cov_name", "Covariate", colnames(tabl), fix=TRUE)
+    colnames(tabl) <- gsub("cov_value", "Statistics", colnames(tabl), fix=TRUE)
+     
+
+  TABLE_ALL[["summary_demog_by_CSCC"]] = tabl
+  
+caption = "Summary of Baseline Demographic Characteristics, Laboratory and Disease Status Variables for Patients with Advanced CSCC (Index Dataset in Study 1423 and 1540)"
+
+knitr::kable(tabl, booktabs = TRUE, caption = caption)
+
+  
+```
+
+<br> 
+
+
+

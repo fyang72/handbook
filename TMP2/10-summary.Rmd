@@ -1,0 +1,463 @@
+---
+title: "Untitled"
+author: "Feng Yang"
+date: "December 8, 2017"
+output: word_document
+---
+
+
+# \@ref(sec-executive-summary) Executive Summary {#sec-executive-summary}
+
+
+
+```{r create-adpx00, include=FALSE, message=FALSE, eval=FALSE}
+  
+#https://sharepoint2013/sites/CDRA/cpmo/medwriting/Collaboration%20Portal/ONC/R2810/BLA/2.7.2/Draft%201_2.7.2%20summary-clin-pharm-8Jan2018.docx?Web=1
+
+
+# https://rviews.rstudio.com/2017/10/04/wordr---a-new-r-package-for-rendering-documents-in-ms-word-format/
+ 
+setwd("H:\\Pharmacometrics\\r2810-poppk\\")
+# adapted raw data from Honog, have all meta information
+#adpx00 = read_csv(file=paste0("./data/", "adpx_1218_2017.csv"))  
+
+adpx_old = read_sas( "H:\\FYANG\\R2810_PD1\\MODEL\\data\\nmdat_0103_2018.sas7bdat")
+colnames(adpx_old) = toupper(colnames(adpx_old))
+
+
+
+
+colnames(adpx00) = toupper(colnames(adpx00))
+dim(adpx00)
+
+adpx00[is.na(adpx00)]<-"."
+adpx00[adpx00==""]<-"."
+
+adpx00 =adpx00 %>%  mutate(ROWID=as.integer(ROWID), C1=C, CFLAG1=CFLAG)   
+ #
+ 
+
+# adpx0
+#----------------------
+adpx0 = read_csv(file=paste0("./data/", "nmdat_1218A_2017.csv"))  # after remove outliers
+dim(adpx0)
+colnames(adpx0)
+
+# merge
+#-----------------------
+tdata = adpx0[, c("ROWID", "C", "CFLAG")] %>% 
+  mutate(ROWID=as.integer(ROWID), C2=C, CFLAG2=CFLAG) %>% 
+  select(ROWID, C2, CFLAG2)
+
+tdata = adpx00 %>% mutate(ROWID=as.integer(ROWID)) %>% left_join(tdata, by="ROWID")
+T1 = tdata %>% mutate(CFLAG=ifelse(CFLAG1==".", CFLAG2, CFLAG1 ), 
+                      C=ifelse(CFLAG !=".", "C", C)
+ )
+
+adpx00 = T1 %>% select(-C1, -C2, -CFLAG1, -CFLAG2) 
+
+# output
+write_csv(adpx00, path=paste0(HOME, "./data/metadata_2018.csv"))
+ 
+
+adpx00 %>% filter(C !="." )  %>% select(C, CFLAG)
+
+
+
+if (1==2) { 
+          #------------------------------
+          adpx00%>% filter(EVID==0, TIME==0, DVOR!=0)  %>% select(C, CFLAG, USUBJID, TIME, DVOR)
+          
+          adpx00 = adpx00 %>% 
+                            mutate(
+                                 ROWID=as.integer(ROWID),
+                                 ARMA=TR01PG4,
+                                 ARMAN=TR01PG4N,
+                                 TEST=PCTEST,
+                                 CSCCP2F=ifelse(CSCCP2FN==1, "Y", "N"), 
+                                 PCDTC = as.character(PCDTC)             
+                                 #EXSTDTC  = as.character(EXSTDTC),           
+                                 #EXENDTC = as.character(EXENDTC), 
+                                 #FSTDOSE = as.character(FSTDOSE) 
+                            )  
+          
+          unique(adpx00$ARMA)
+          
+          
+          #adpx00[is.nan(adpx00)]<-"."
+                                                    
+          # continous covariate variables
+          adpx = adpx00
+          
+          # use imputed varaibles if necessary
+          #------------------------------------------
+          col.lst = substr(colnames(adpx), 2, nchar(colnames(adpx)))[which(substr(colnames(adpx), 1,1)=="I")]
+          col.lst = col.lst[col.lst %in% colnames(adpx)]   # these are the columns that were imputed
+          # 
+          adpx = adpx %>% select(-one_of(col.lst))
+          adpx2 = adpx %>% rename2(oldnames=paste0("I", col.lst), newnames=col.lst)
+          changes( adpx, adpx2 )
+          
+          adpx00 = adpx2
+
+}
+
+###########################################################
+
+# DATE:  01/31/2018
+setwd("H:\\Pharmacometrics\\r2810-poppk\\")
+# adapted raw data from Honog, have all meta information
+#adpx00 = read_csv(file=paste0("./data/", "adpx_1218_2017.csv"))  
+
+adpx00 = read_sas( "H:\\FYANG\\R2810_PD1\\MODEL\\data\\nmfinal.sas7bdat")
+colnames(adpx00) = toupper(colnames(adpx00))
+
+adpx00[is.na(adpx00)]<-"."
+adpx00[adpx00==""]<-"."
+
+nmdat = adpx00 %>% mutate(STDYARMA=paste0(STDY, TR01PG4N))  %>% 
+         mutate(TR01PG4=gsub(" ", "-", TR01PG4, fix=TRUE), 
+                PCTEST = gsub(" ", "-", PCTEST, fix=TRUE),
+                CFLAG = gsub(" ", "-", CFLAG, fix=TRUE) 
+                )
+
+
+
+nmdat = build_nmdat(nmdat)   
+
+#nmdat = build_nmdat(test)   
+#nmdat[nmdat=="."] = ""
+#nmdat$ID = as.integer(as.factor(nmdat$ID))
+#  IALBBL    000000009fbdd1c0 <deleted>       
+# ILDHBL    000000009fc42410 <deleted>       
+# IALTBL    000000009fcc91d0 <deleted>       
+# IIGGBL    000000009fd0c8b0 <deleted>       
+# IBILIBL   000000009fd4ff90 <deleted> 
+
+nmdat.col.lst = c( "C", "CFLAG", "ROWID", "STDY", "USUBJID", "TR01PG4", "TR01PG4N", "ID", "NTIM", "TAD","TIME",
+                 "PCTEST", "DVOR", "DV","MDV", "CMT", "AMT", "RATE", "EVID" , "PCGRPID",   
+                 "WGTBL", "HGTBL",  "BMIBL",   "BSABL",   "AGE",  "SEXN", "RACEN", "ETHNICN", 
+                 "MONOTFLN", "CSCCP2FN", "FASCSFLN", 
+                 "ICREATBL",  "ICRCLBL",   "IALTBL", "IASTBL", "IBILIBL", "IALBBL","IIGGBL", "ILDHBL" , "IALPBL", 
+                 "STDYARMA")
+setdiff(nmdat.col.lst, colnames(nmdat))
+
+nmdat %>% select(one_of(nmdat.col.lst)) %>% head()
+nmdat = nmdat[, c(nmdat.col.lst  #, 
+                #setdiff(colnames(nmdat), nmdat.col.lst)
+                )]
+
+col.lst = c("CFLAG", "USUBJID", "TR01PG4","PCTEST")
+DATA_INPUT = ifelse(colnames(nmdat) %in% col.lst, paste0(colnames(nmdat),"=DROP"), colnames(nmdat))
+paste0("$INPUT ", paste0(DATA_INPUT, sep=" ", collapse=" "))  %>% print()
+
+
+# final check, any abnormal entries?
+anyAbnormal <- function(df) {
+nacols<- function(df) { 
+  colnames(df)[unlist(lapply(df, function(x) any(is.na(x)|is.nan(x)|x=="NA"|x=="NAN"|x=="NaN"|x==".")))] }
+
+df = data.frame(df, check.names = FALSE)      
+t.df = data.frame(t(df), check.names = FALSE)
+return(df[nacols(t.df), nacols(df)])  }
+
+#anyAbnormal(nmdat[, cov.col.lst]  )
+
+dim(nmdat)
+nmdat %>% filter(C!=".") %>% dim(.)
+nmdat %>% filter(CFLAG!=".") %>% dim(.) 
+
+# output
+
+  #MODEL.HOME <- "H:\\FYANG\\R2810_PD1\\MODEL\\
+write_csv(nmdat, path=paste0("./data/nmdatfinal.csv"))
+
+ 
+
+adpx00 = read_sas( "H:\\FYANG\\R2810_PD1\\MODEL\\data\\nmfinal.sas7bdat")
+
+adpx00 = read_sas("Y:\\R2810\\POOL_01\\NONMEM\\Derived_Data\\NM\\nmfinal.sas7bdat")
+adpx00 = read_csv("Y:\\R2810\\POOL_01\\NONMEM\\Derived_Data\\NM\\R2810NMfinal.csv")
+colnames(adpx00) = toupper(colnames(adpx00)) 
+
+subj.lst = c("R2810-ONC-1423-724001-021", 
+"R2810-ONC-1423-724006-001", 
+"R2810-ONC-1423-724006-015", 
+"R2810-ONC-1423-724006-018", 
+
+"R2810-ONC-1540-036001-002", 
+"R2810-ONC-1540-036001-009", 
+"R2810-ONC-1540-036002-007",     # not in pop PK dataset
+"R2810-ONC-1540-840002-003")
+ 
+
+OUT_final = adpx00 %>%filter(USUBJID %in% subj.lst) %>% distinct(USUBJID, .keep_all=TRUE) %>% 
+ select(USUBJID, CSCCP2FN, BORIND, IALBBL, ILDHBL, IALTBL,   IBILIBL,  IASTBL, ICREATBL,    ICRCLBL,     IALPBL)  %>% as.data.frame()
+OUT_final
+
+
+          
+adpx00%>% filter(USUBJID %in% "R2810-ONC-1423-724001-021")  %>% select(USUBJID, CSCCP2FN, BORIND, IALBBL, ILDHBL, IALTBL, IIGGBL, IBILIBL,  ASTBL, CREATBL,    CRCLBL,     ALPBL)  %>% as.data.frame()
+      
+
+
+adpx000 = read_sas( "H:\\FYANG\\R2810_PD1\\MODEL\\data\\nm.sas7bdat")
+OUT_final = adpx000 %>%filter(USUBJID %in% subj.lst) %>% distinct(USUBJID, .keep_all=TRUE) %>% 
+ select(USUBJID, CSCCP2FN, BORIND, IALBBL, ILDHBL, IALTBL,   IBILIBL,  ASTBL, CREATBL,    CRCLBL,     ALPBL)  %>% as.data.frame()
+OUT_final
+
+
+
+write_csv(OUT, "./data/lab-8-patients.csv")
+ 
+``` 
+
+
+
+
+```{r load-adpx00-adpx0, include=FALSE, message=FALSE, eval=TRUE}
+
+  adpx00 = read_sas( "H:\\FYANG\\R2810_PD1\\MODEL\\data\\nmfinal.sas7bdat")
+  colnames(adpx00) = toupper(colnames(adpx00)) 
+ 
+  adpx00 = adpx00 %>%   mutate( ROWID=as.integer(ROWID),
+                                 ARMA=TR01PG4,
+                                 ARMAN=TR01PG4N,
+                                 TEST=PCTEST,
+                                 CSCCP2F=ifelse(CSCCP2FN==1, "Y", "N"), 
+                                 PCDTC = as.character(PCDTC)             
+                                 #EXSTDTC  = as.character(EXSTDTC),           
+                                 #EXENDTC = as.character(EXENDTC), 
+                                 #FSTDOSE = as.character(FSTDOSE) 
+                            )  
+          
+          
+          
+  adpx00 = adpx00 %>% select(-ALBBL, -LDHBL, -ALTBL, -IGGBL, -BILIBL) %>% 
+          rename(ALBBL=IALBBL, LDHBL=ILDHBL, ALTBL=IALTBL, IGGBL=IIGGBL, BILIBL=IBILIBL)
+   
+  adpx00[is.na(adpx00)]<-"."
+  adpx00[adpx00==""]<-"."
+
+  dim(adpx00)
+
+  
+  # add pkpd to pkpd00 
+
+  pkpd = read_sas("./data/poppkpd.sas7bdat")
+  colnames(pkpd)  = toupper(colnames(pkpd))
+  
+#   "ETHNICN"  "ETHGR1"   "ETHGR1N"  "RFSTDTC"  "RFENDT"   "STDYPHSE" "METSTAT"  "METSTATN" "ECOGBL"   "ECOGGR"   "ECOGGRN" 
+# [151] "CMPRSYSN" "PRSYTHP"  "PRSYTHPN" "PRRAD"    "PRRADN"   "BORIND"   "BORINV"   "LSTEFDT"  "LSTEFDY"  "DURAC"    "PFS"      "EVNTDESC" "OS"       "TRSP"     "DURSP"   
+# [166] "BASE"      
+  #adpx00 = adpx00 %>% left_join(pkpd %>% distinct(USUBJID, .keep_all=TRUE) %>% select(USUBJID,  BORIND, BORINV), 
+     #                         by ="USUBJID")
+  
+    
+  # used in primary modeling
+  adpx0 = read_csv("H:\\FYANG\\R2810_PD1\\MODEL\\data\\nmdat.csv")  # after remove outliers
+  adpx0 = adpx0 %>% rename(ALBBL=IALBBL, LDHBL=ILDHBL, ALTBL=IALTBL, IGGBL=IIGGBL, BILIBL=IBILIBL)
+
+  adpx0[is.na(adpx0)]<-"."
+  adpx0[adpx0==""]<-"."
+
+  adpx0 = adpx0 %>% mutate(ARMA=TR01PG4, ARMAN= TR01PG4N)
+  adpx0 = adpx0 %>% mutate(ARMA=gsub("-", " ", ARMA, fix=TRUE))
+  adpx0 = adpx0 %>% mutate(ARMA = ordered(ARMA, levels=c("1 mg/kg Q2W", "3 mg/kg Q2W",  "10 mg/kg Q2W", "200 mg Q2W", "3 mg/kg Q3W", "350 mg Q3W")))
+  
+  adpx0 = adpx0 %>% mutate(TEST=PCTEST)
+  adpx0 = adpx0 %>% mutate(TEST=gsub("-", " ", TEST, fix=TRUE))
+  
+  adpx0 = adpx0 %>% mutate(EXSEQ=PCGRPID)    
+  adpx0 <- adpx0 %>% mutate(CSCCP2F = ifelse(CSCCP2FN==1, "Y", "N"))
+  
+  adpx0 = adpx0 %>% mutate(CFLAG=gsub("-", " ", CFLAG, fix=TRUE))
+  adpx0 <- adpx0 %>% mutate(CFLAG = gsub("INVERSION AND CONC OUTLIER", "Inversion and Outliers", CFLAG, fix=TRUE))
+  adpx0 <- adpx0 %>% mutate(CFLAG = gsub("CONC OUTLIER", "Outliers", CFLAG, fix=TRUE))
+  adpx0 <- adpx0 %>% mutate(CFLAG = gsub("INVERSION", "Inversion", CFLAG, fix=TRUE))
+  unique(adpx0$CFLAG)
+  
+  adpx0 %>% filter(EVID==0 & TIME==0 & DVOR!=0)
+  #adpx0 <- adpx0 %>% mutate(CFLAG = ifelse((EVID==0 & TIME==0 & DVOR=="0"), "Outliers", CFLAG))
+  #adpx0 <- adpx0 %>% mutate(C = ifelse((EVID==0 & TIME==0 & DVOR=="0"), "C", C))
+   
+  stopifnot(nrow(adpx0)==nrow(adpx00))
+  adpx00 = adpx00 %>% mutate(ROWID=as.integer(ROWID))
+  adpx0 = adpx0 %>% mutate(ROWID=as.integer(ROWID))  # has to be the same!!
+  
+  # make sure ROWID match in both datasets
+  stopifnot(adpx0 %>% select(ROWID, USUBJID, TIME, DVOR, AMT, EVID) == 
+            adpx00 %>% select(ROWID, USUBJID, TIME, DVOR, AMT, EVID) )
+   
+  
+  # attach adpx00 to adpx0
+  adpx0 = adpx0 %>% dplyr::left_join(adpx00[, c("ROWID", setdiff(colnames(adpx00), colnames(adpx0)))], by="ROWID")
+  adpx0 <- adpx0 %>% mutate(STUDYID=gsub("R2810-ONC-1423", "Study 1423", STUDYID, fix=TRUE))
+  adpx0 <- adpx0 %>% mutate(STUDYID=gsub("R2810-ONC-1540", "Study 1540", STUDYID, fix=TRUE))
+
+  
+  #  IALBBL    000000009fbdd1c0 <deleted>       
+  # ILDHBL    000000009fc42410 <deleted>       
+  # IALTBL    000000009fcc91d0 <deleted>       
+  # IIGGBL    000000009fd0c8b0 <deleted>       
+  # IBILIBL   000000009fd4ff90 <deleted>
+  #adpx0 = adpx0 %>% select(-ALBBL, -LDHBL, -ALTBL, -IGGBL, -BILIBL) %>% 
+  #        rename(ALBBL=IALBBL, LDHBL=ILDHBL, ALTBL=IALTBL, IGGBL=IIGGBL, BILIBL=IBILIBL)
+   
+  
+  alist = c("AMERICAN INDIAN OR ALASKA NATIVE", "OTHER", "UNKNOWN", "NOT REPORTED")
+  adpx0 = adpx0 %>% mutate(RACE=ifelse(RACE %in% alist, "OTHERS", RACE))  
+   
+  
+    
+  # summary of adpx0
+  #-------------------------
+  unique(adpx0$STUDYID)
+  unique(adpx0$ARMA)
+  unique(adpx0$CFLAG)
+  
+  #
+  # adpx %>% filter(USUBJID %in% "R2810-ONC-1540-840002-006")  %>% select(USUBJID, TIME, PCTEST, EVID, DVOR) 
+  
+  # how many outliers    ###########THERE ARE 3 dosing events in patiens R2810-ONC-1423-724004-020 1423061 were assigned as "outliers"
+  adpx  = adpx0 %>% filter(EVID==0, !CFLAG %in% c(".") )
+  table(adpx$CFLAG) %>% as.data.frame()
+  length(adpx$CFLAG)
+   
+  # total samples
+  adpx  = adpx0 %>% filter(C==".", EVID==0)
+  length(adpx$DVOR)
+   
+                        
+                               
+```
+
+ 
+```{r read_model_runno, eval=FALSE}
+ 
+
+ # placehold
+ if (1==2) { 
+  
+  runno.lst = "LN014"
+  #MODEL.HOME <- "H:\\FYANG\\R2810_PD1\\MODEL\\
+  
+  PARAMS = read_PARAMS(MODEL.HOME, subdir="/ctl/HPC/", runno.lst)  
+  OUTPUT = read_OUTPUT(MODEL.HOME, subdir="ctl/HPC/", runno.lst, adpx00) 
+    
+  # how to subset a list
+  # runno.lst <- c("LN001", "LN002")
+  # aa= lapply(runno.lst, function(runno) PARAMS[[runno]])
+  # names(PARAMS) = runno.lst
+ }
+
+
+# HPC
+folder.loc <- paste0("H:\\FYANG\\R2810_PD1\\MODEL\\ctl\\HPC\\")
+file.lst <-list.files(path = folder.loc, pattern = ".ctl",  all.files = FALSE,full.names = FALSE, include.dirs = FALSE)     
+
+file.lst = setdiff(file.lst, paste0(c("LN103_org", "LN001_FULL", "QMM001", "QSS001", "LN800000",  "MM_FULL"), ".ctl"))
+file.lst = setdiff(file.lst, paste0(c("LN100"), ".ctl"))
+#file.lst = setdiff(file.lst, paste0(c("LN100", "LN900BST", "LN900VPC"), ".ctl"))
+
+runno.lst = gsub(".ctl", "", file.lst, fix=TRUE)
+PARAMS.HPC = read_PARAMS(MODEL.HOME, subdir="/ctl/HPC/", runno.lst) 
+ 
+
+# PsN
+# folder.loc <- paste0("H:\\FYANG\\R2810_PD1\\MODEL\\ctl\\PsN\\")
+# file.lst <-list.files(path = folder.loc, pattern = ".ctl",  all.files = FALSE,full.names = FALSE, include.dirs = FALSE)     
+# file.lst = setdiff(file.lst, paste0(c("LN103_org", "LN001_FULL", "QMM001", "QSS001", "LN800000",  "MM_FULL"), ".ctl"))
+# runno.lst = gsub(".ctl", "", file.lst, fix=TRUE)
+# runno.lst = setdiff( runno.lst, c("LN900", "LN900BST", "LN900VPC"))
+# 
+# PARAMS.PsN = read_PARAMS(MODEL.HOME, subdir="/ctl/PsN/", runno.lst) 
+ 
+
+```
+
+
+```{r executive-summary, include=FALSE, message=FALSE}
+ 
+# FASCSFLN : 107 CSCC patients,   82 from 1540, 26 from 1423
+# CCSCFLN   based on 1423 criteria
+# CSCCP2FN based on 1540 criteria
+
+# post-dose samples
+n.BLQ = adpx0 %>% filter(EVID==0, TIME>0, CFLAG=="Post 1st dose concentration < LLOQ") %>% nrow()
+n.ALL = adpx0 %>% filter(EVID==0, TIME>0) %>% nrow()  
+  
+# PK observations
+adpx = adpx0 %>% filter(C==".", TIME>0) %>% filter(EVID==0) # without the outliers or missing data
+
+n.USUBJID      = adpx %>% filter(EVID==0)%>%pull(USUBJID) %>% unique() %>% length()
+n.USUBJID.CSCC = adpx %>% filter(EVID==0, CSCCP2FN==1) %>% pull(USUBJID) %>% unique() %>% length()
+n.USUBJID.CSCC.primary.endpoint = adpx %>% filter(EVID==0, FASCSFLN==1) %>% pull(USUBJID) %>% unique() %>% length()
+
+n.samples = adpx %>% filter(EVID==0)%>%pull(DVOR) %>% length()
+n.samples.CSCC = adpx %>% filter(EVID==0, CSCCP2FN==1)%>%pull(DVOR) %>% length()
+
+#stats of the PK population
+tdata = adpx %>% filter(EVID==0)   # only concentration
+tdata = tdata %>% mutate(PCDTC = as.POSIXct(PCDTC, format="%Y-%m-%dT%H:%M")) 
+last.sample.date = tdata %>% group_by(STUDYID) %>% dplyr::summarise(LAST.SAMPLE=max(PCDTC, na.rm=TRUE))
+last.date <- paste0(format((last.sample.date$LAST.SAMPLE), "%B %dth %Y"), collapse=" and ")
+ 
+
+```
+
+The population PK analysis included `r n.samples` post-dose PK samples obtained from `r n.USUBJID` subjects in two phase I/II studies (Study-1423 and Study-1540) for this interim analysis. The last sampling dates were `r last.date`  for Study-1423 and Study-1540, respectively. A total of  `r n.USUBJID.CSCC` CSCC patients and associated `r n.samples.CSCC` samples were included in this analysis. Note, the flag of *CSCCP2FN* was used as the definiton of CSCC patients throughout this analysis.
+
+The final base model consisted of two-compartment disposition with zero-order IV infusion and first-order elimination. Predictive checks showed that the model could adequately characterize the concentration-time profile following IV administration over the dose range of 1–10 mg/kg studied. PK exposure increased dose-proportionally at doses greater than or equal to 1 mg/kg. Steady-state concentration of cemiplimab was reached after two treatment cycles (~ 112 days) of repeated dosing based on the population PK analysis. The geometric mean (95% CI) steady-state volumes were 3.34 [3.28–3.40] L and 1.68 [1.53–1.85] L, for central compartment and peripheral compartments, respectively. There was evidence to suggest a decrease of cemiplimab clearance over time, with a geometric mean maximal reduction (95% CI) from baseline values of approximately 32.8% [27.9%–40.1%] resulting in a geometric mean (95% CI) steady state clearance (CLss) of 0.19 [0.182–0.204] L/day. The geometric mean (95% CI) terminal half-life at steady-state was approximately 18.5 [17.5–20.2] days.
+
+The final model was used to predict the magnitude of covariate effects on cemiplimab steady state exposure following IV dosing of cemiplimab every two or three weeks.  The results show that pretreatment serum albumin level and baseline body weight are the most significant covariates impacting on the clearance of cemiplimab. In particular, cemiplimab CL was greater in patients with lower albumin levels, and cemiplimab exposures in patients with lower than normal albumin were markedly lower than in patients with normal albumin levels. Estimates of the relationship between clearance and body weight revealed an allometric exponent (α) of 0.44 (95% CI, 0.285–0.599) for the clearance parameters and 0.91 (95% CI, 0.757–1.07) for the volumes of distribution. The estimated 53.0% decrease in volumes of distribution due to BMI was judged to not be clinically relevant, as it is highly coupled with body weight. In addition, IGG level in patients has a positive impact with clearance with an exponent of 0.189, which is also not considered as clinically relevant.
+
+Specific populations age (27-96 years), body weight (30.9-156 kg), race, sex, lactate dehydrogenase (LDH) levels, tumor type, local vs. metastatic CSCC, corticosteroid use, mild/moderate renal impairment (baseline creatinine clearance (CRCLBL) less than 89 mL/min), mild hepatic impairment (bilirubin or AST greater than 1.0 to 1.5 times ULN), or ECOG performance status had no clinically significant effect on the pharmacokinetics of cemiplimab. The effect of severe renal impairment (CRCL less than 30 mL/min) or moderate/ severe hepatic impairment (bilirubin greater than 1.5 times ULN) on the pharmacokinetics of cemiplimab is unknown. Limited baseline PD-L1 expression levels (less than 4% of overall population) prevent any meaningful assessment of its impacts on cemiplimab pharmacokinetics. The prevalence of ADA is low (less than 1%) and the presence of ADA did not appear to have a clinically significant impact on cemiplimab pharmacokinetics.
+
+The proposed recommended dose is 350 mg administered as an intravenous infusion over 30 minutes once every 2 weeks (Q3W) until disease progression or unacceptable toxicity. Simulation results using population pharmacokinetic model indicated that: 1) a 350 mg Q3W dose resulted in similar (≤20% difference) steady-state Ctrough,SS, CavgSS, Cmax,SS and AUC0-6wks,SS as compared to a 3 mg/kg Q2W dose in two phase I/II studies; and 2) the variability in cemiplimab exposure (CV% and 90% CI) was similar with body weight adjusted as compared to fixed doses.  At the 350 mg Q3W dose, Ctrough values at steady state generally exceed concentrations of approximately 5 mg/L to 20 mg/L, above which (based on animal data) saturation of PD-1 target occupancy is expected to occur.
+
+
+<!--
+
+The final model was used to predict the magnitude of covariate effects on cemiplimab steady state exposure following IV dosing of cemiplimab every two or three weeks. The covariate selection procedure identified a parsimonious final model which included weight, age, female gender, Black race, population (CSCC versus overall subjects) and baseline calculated creatinine clearance (CRCL) on clearance (CL), and on distribution volume of the central compartment (Vc).  Most of the covariate effects were modest in magnitude. Black subjects had a slightly greater than 20% decrease in steady state minimum plasma concentration (Cmin,ss) relative to White subjects, and subjects with low body weight (60 kg) had a slightly greater than 25% increase in Cmin,ss, steady state maximum plasma concentration (Cmax,ss) and steady state area under the plasma concentration-time curve from time zero to 14 days post dose (AUC0-14d,ss) relative to subjects with median weight of 88 kg. Combinations of covariates (low body weight with low CRCL; high body weight with high CRCL; low body weight and female; and high body weight and Black race) had greater impact on exposure (all outside the bounds of 0.8-1.25 in forest plots).
+; however, the decrease in CLss is not considered clinically relevant.
+
+The resuls show that pretreatment serum albumin level is the most significant covariate impacting on the clerance of cemiplimab. In particular, cemiplimab CL was greater in patients with lower albumin levels, and cemiplimab exposures in patients with lower than normal albumin were markedly lower than in patients with normal albumin levels. Further investigation of using serum albumin level as a prognostic tool is necessary in the future studies.
+
+Estimates of the relationship between clearance and body weight revealed an allometric exponent (α) of 0.43 (95% CI, 0.421–0.566) for the clearance parameters and 0.97 (95% CI, 0.90–1.1) for the volumes of distribution. The estimated 59.5% decrease in volumes of distribution due to BMI was judged to not be clinically relevant, as it is highly coupled with body weight. In addition, IGG level in patients has an positive impact with clearance with an exponent of 0.21, which is also not considered as clincially relevant.
+
+Specific populations age (`r adpx %>% select(AGE) %>% range() %>% paste0(collapse="-")` years), 
+body weight (`r adpx %>% select(WGTBL) %>% range() %>% paste0(collapse="-")` kg), sex, lactate dehydrogenase (LDH) levels, creatinine levels, soluble PD-L1, tumor type, race, 
+mild renal impairment (creatinine clearance (CLcr) 60 to 89 mL/min), 
+moderate renal impairment (CLcr 30 to 59 mL/min), 
+mild hepatic impairment (bilirubin less than or equal to ULN and AST greater than ULN or bilirubin greater than 1.0 to 1.5 times ULN and any AST), 
+or ECOG performance status had no clinically significant effect on the pharmacokinetics of cemiplimab. 
+The effect of severe renal impairment (CLcr 15 to 29 mL/min) or moderate hepatic impairment (bilirubin greater than 1.5 to 3.0 times ULN and any AST) or severe hepatic impairment (bilirubin greater than 3.0 times ULN and any AST) on the pharmacokinetics of cemiplimab is unknown.  The prevalence of ADA is low and the presence of ADA did not appear to have a clinically significant impact on cemiplimab pharmacokinetics.    
+ 
+The proposed recommended dose is 350 mg administered as an intravenous infusion over 30 minutes once every 2 weeks (Q3W) until disease progression or unacceptable toxicity.  Simulation results using population pharmacokinetic (PK) model indicated that: 1) the variability in cemiplimab exposure (CV%) was similar with body weight adjusted as compared to fixed doses; and 2) that a 350 mg Q3W dose resulted in similar (≤20% difference) steady-state Ctrough, CavgSS, Cmax and AUC12W as compared to a 3 mg/kg Q2W dose in two phase I/II studies. At the 350 mg Q3W dose, Ctrough values at steady state generally exceed concentrations of approximately 5 mg/L to 20 mg/L, above which (based on animal data) saturation of PD-1 target occupancy is expected to occur.  
+ 
+ 
+ 
+
+ <!-- Based on the population PK analysis, dose adjustments are not needed for gender, body weight, tumor burden, serum albumin level, anti-therapeutic antibody (ADA) status, and for mild or moderate renal impairment and mild hepatic impairment. 
+  
+As a cutoff date of 11/30/2017, the PK of cemiplimab has been determined using PopPK analysis. The results from the PopPK analysis are presented as follows:
+•	CL was estimated to be 0.0246 L/h (95% confidence interval (CI): 0.0239, 0.0252) for a typical subject.
+•	Geometric mean Vss was estimated to be 4.72 L (95% CI: 4.63, 4.82) for a typical subject.
+•	Geometric mean t1/2 was estimated to be 6.1 days (95% CI: 5.8, 6.3) for a typical subject.
+•	Based on PopPK model, the steady state is expected to be reached by the 3rd dosing cycle and the accumulation ratio is 1.25 which is consistent with the t1/2 of 6 days and 2-week dosing interval.
+•	Body weight was found to affect CL, central volume of distribution (V1) and peripheral volume of distribution (V2), with all 3 parameters increased as body weight increased.
+•	Male subjects had a 19.9% higher CL and 20.3% higher V1 than female subjects after correction for body weight. The changes in simulated AUCSS between the sexes are not clinically meaningful.
+•	The model predicted that patients with metastatic CSCC had a smaller CL of 22.4%, and a higher exposure than patients with other tumor types.
+•	There was an influence of baseline tumor size on cemiplimab CL. cemiplimab CL increased with increasing baseline tumor size. This change is considered not clinically meaningful.
+•	There was an influence of albumin concentrations on cemiplimab CL. cemiplimab CL decreased with increasing albumin concentration. Based on the simulated AUCss values, the change is considered not clinically meaningful.
+•	The influence of immunogenicity was only significant on V2. No change in the simulated AUCss values was observed.
+•	There was no influence of renal or hepatic impairment on CL and thus, no dose adjustment is needed in patients with renal or hepatic impairment.
+•	PopPK analysis did not find an influence on cemiplimab CL of any of the concomitant medications included in the analysis. cemiplimab is not expected to have an effect on the PK of other drugs.
+
+•	cemiplimab did not induce cytokines in vivo in human subjects to concentrations
+
+
+-->
+
+

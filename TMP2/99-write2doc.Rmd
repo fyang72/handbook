@@ -1,0 +1,155 @@
+---
+title: "Untitled"
+author: "Feng Yang"
+date: "December 22, 2017"
+output: word_document
+---
+
+
+```{r write2doc}
+
+# 
+# knit("10-summary.Rmd")
+# knit("51-population.Rmd")
+# knit("52-baseModel.Rmd")
+# knit("53-fullModel.Rmd")
+# knit("54-finalModel.Rmd")
+# knit("55-modelEvaluation.Rmd")  
+# knit("56-modelApplication.Rmd")
+# 
+# knit("80-appendixA-monkey-model.Rmd")
+# knit("80-appendixB-base-model.Rmd")
+# knit("80-appendixC-full-model.Rmd")
+# knit("80-appendixD-final-model.Rmd")  
+# 
+
+setwd("H:\\Pharmacometrics\\r2810-poppk\\")
+source("_common.R")
+runAllChunks("10-summary.Rmd")
+
+runAllChunks("51-population.Rmd")
+runAllChunks("52-baseModel.Rmd")
+
+runAllChunks("53-fullModel.Rmd")
+runAllChunks("54-finalModel.Rmd")
+
+runAllChunks("55-modelEvaluation.Rmd")  
+runAllChunks("56-modelApplication.Rmd")
+
+runAllChunks("80-appendixA-monkey-model.Rmd")
+runAllChunks("80-appendixB-base-model.Rmd")
+runAllChunks("80-appendixC-full-model.Rmd")
+runAllChunks("80-appendixD-final-model.Rmd")  
+
+
+
+mydoc <- NULL
+mydoc <- docx(template = './docs/R2810 PopPK Report Template.docx', empty_template = FALSE)
+# sort(list_bookmarks(mydoc))
+doc.bookmark.lst = list_bookmarks(mydoc)
+
+#print(styles(mydoc))
+
+# inform the doc object which styles we have
+#doc = declareTitlesStyles(doc, stylenames = styles(doc))  
+
+# as the shiny app doesn't know your system a priori we simply 
+# pick a style by index e.g. 25 instead of by name
+StyleIndex <- min(9,length(styles(mydoc)))
+
+
+
+#insert all FlexTables to doc object
+tabl.name.lst <- names(TABLE_ALL)
+tabl.name.lst <- intersect(tabl.name.lst, doc.bookmark.lst)
+NumOfTab <- length(tabl.name.lst)
+
+
+cat(file=stderr(), "##############Step: begin writing all table(s) to doc#################", "\n")
+
+for( i in seq(1, NumOfTab, by=1)) {
+
+tabl.name = tabl.name.lst[i]
+ print(tabl.name)
+ 
+if (tabl.name %in% c("LN_model_dev_step", "MM_model_dev_step" )) { next}
+#tab.bookmark <- names(TABLE_ALL$mTABLES)[i] # [[which_fig]]
+
+# make some room by adding an empty line
+# stylename: we need to use a valid style here
+doc = addParagraph(mydoc,"\n", stylename = styles(mydoc)[1])
+
+# extract table from log
+#newTitle <- TABLE_ALL$mTITLES[[i]] #%>% unlist())        
+newTab <- TABLE_ALL[[tabl.name]] 
+#newFootnote <- TABLE_ALL$mFOOTNOTES[[i]] #%>% unlist())        
+
+# add table to doc object
+   
+# update the body font to a smaller size
+#NewTable[,] =  textProperties(font.size = 8)       
+#addParagraph2(doc, value=newTitle, bookmark=paste0(tab.bookmark, "_title"))          
+addFlexTable(mydoc,  vanilla.table(newTab), bookmark=tabl.name)          
+#addParagraph2(doc, value=newFootnote, bookmark=paste0(tab.bookmark, "_footnote"))   
+
+
+}
+
+
+#insert all FlexTables to doc object
+
+fig.name.lst = names(FIGURE_ALL)
+fig.name.lst <- intersect(fig.name.lst, doc.bookmark.lst)
+NumOfFig <- length(FIGURE_ALL)
+
+width0=6.4
+height0=4.8
+
+cat(file=stderr(), "##############Step: begin writing all figure(s) to doc#################", "\n")
+
+for( i in seq(1, NumOfFig, by=1)) {
+  
+
+width = width0; 
+height =height0
+
+#fig.bookmark <- names(FIGURE_ALL$mFIGURES)[i] # [[which_fig]]
+fig.name = fig.name.lst[i]
+ print(fig.name)
+ 
+# make some room by adding an empty line
+# stylename: we need to use a valid style here
+#doc = addParagraph(doc,"\n", stylename = styles(doc)[1])
+
+# extract table from log
+#newTitle <- FIGURE_ALL$mTITLES[[i]] #%>% unlist())        
+newFig <- FIGURE_ALL[[fig.name]]
+#newFootnote <- FIGURE_ALL$mFOOTNOTES[[i]] #%>% unlist())        
+
+# update the body font to a smaller size
+#newFig[,] =  textProperties(font.size = 8)
+ 
+# add table to doc object
+ 
+  #addParagraph2(doc, value=newTitle, bookmark=paste0(fig.bookmark, "_title"))    
+#if (fig.name %in% c("LN101_LN102_covarites" )) {width = 4.8; height=8}
+#if (fig.name %in% c("AUCtauvsWGTBL")) {width = 6.4; heigh=3.5}
+
+
+
+addPlot2docx(mydoc, x=newFig, fun=print, pointsize=12, bookmark=fig.name, width=width, height=height) 
+
+#addPlot2docx <- function(mydoc, x, bookmark=NULL, fun=print, pointsize=12, width=6.4, heigh=4.8)
+  #addParagraph2(doc, value=newFootnote, bookmark=paste0(fig.bookmark, "_footnote"))   
+
+
+}
+
+
+closeAllConnections()
+writeDoc(mydoc, './docs/R2810 PopPK Report Template_Output001.docx')   
+
+  
+  
+      
+```      

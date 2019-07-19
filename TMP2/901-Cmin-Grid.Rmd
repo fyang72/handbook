@@ -1,0 +1,321 @@
+---
+title: "Untitled"
+author: "Feng Yang"
+date: "January 24, 2018"
+output: word_document
+---
+
+
+
+  
+```{r SIMDATA3, eval=FALSE }  
+   
+# Use to simulated grid of albumin and hody weight as Tom asked on 01/24/2018 
+# ---------------------------------------------
+
+setwd("H:\\Pharmacometrics\\r2810-poppk\\")
+
+library(dplyr)
+library("mrgsolve")
+source("./cpp/mod.R2810.LN900.cpp")
+mod <- mread("R2810", tempdir(),mymodel)     # ?mread , ?mcode
+ 
+#mod_MM = mod %>% param(THETA_MM)
+#param(mod_MM)  
+   
+
+seed =1234
+set.seed(seed);    
+
+#----------------------------------------  
+# adsl
+#----------------------------------------
+MODEL_HOME <- "H:\\FYANG\\R2810_PD1\\MODEL\\"
+tt = read_runno(MODEL_HOME, subdir="ctl/PsN/", runno="LN014", postfix="")  
+
+#adsl = create_adsl(POP="STD", nsubject=10, meanWt=80, seed=1234)  
+
+WGTBL = seq(30, 200, by=10)
+ALBBL = seq(15, 60, by=5)
+adsl = expand.grid(WGTBL=WGTBL, ALBBL=ALBBL)
+adsl = adsl %>% mutate(USUBJID = paste0("ID-", add_prefix(seq(1, nrow(adsl), by=1), digits=3)),
+                       IGGBL = 9.7, 
+                       BMIBL=26.5,
+                       POP = "SIM")
+
+
+
+
+if (1==2)  { 
+adsl =  adpx0 %>% dplyr::filter(C==".") %>% distinct(USUBJID, .keep_all=TRUE)     #, ID %in% tt$xpdb$ID)
+
+adsl$POP = "SIM"
+#adsl$WEIGHTBL = adsl$WGTBL  
+adsl = adsl %>% select(POP, USUBJID, WGTBL, ALBBL, IGGBL,  BMIBL)  ########
+adsl = adsl %>% mutate(WGTBL=as_numeric(WGTBL), 
+                       ALBBL=as_numeric(ALBBL), 
+                       IGGBL=as_numeric(IGGBL), 
+                       BMIBL=as_numeric(BMIBL))
+
+#adsl = sample_n(adsl, size=2000, replace=TRUE)
+#adsl$USUBJID = as.integer(as.factor(adsl$USUBJID))
+}
+
+
+
+#----------------------------------------
+# adex
+#----------------------------------------  
+#library('gdata')
+library('xlsx')    # do you have to open the file at least once?
+ADEX = data.frame(read.xlsx("./cpp/run_Rsim_input.xlsx", "Sheet1"), stringsAsFactors=FALSE)
+ADEX0 = ADEX[which(!is.na(as.numeric(ADEX$STUDYID))),  ]
+ 
+ADEX0$ARMA = trim(ADEX0$ARMA)
+
+adex = create_adex(adsl, ADEX0%>% filter(STUDYID==4))   #, GROUP %in% c(2,3)
+    
+adex = adex %>% filter(ARMA %in%  c("1 mg/kg Q2W IV" , "3 mg/kg Q2W IV",   "350 mg Q3W IV"))
+
+
+
+#----------------------------------------
+# run simulation
+#---------------------------------------- 
+
+# setup simulation timept 
+treat_end = 48*7
+sim_end = 48*7
+ 
+#treat_end = 24*7;  sim_end = 32*7
+tgrid = sim_timept(start=0, end=sim_end, delta=1, dtime=seq(0,treat_end, by=7))
+ 
+OUT = NULL
+ n.replicate = 500
+ for (ireplicate in 1:n.replicate)  {
+  
+   print(ireplicate)
+    
+  out = mod %>%   
+    #omat(CL_V2_Q=dmat(0,0,0), IIV_ETA=dmat(0), IIV_EV3=dmat(0), IIV_EVMAX=dmat(0), IIV_EKSS=dmat(0)) %>%  
+    ev(as.ev(adex)) %>% 
+    mrgsim(end=sim_end, delta=1, add=tgrid) %>%   #  , carry.out=c("ID", "POP", "STUDYID", "USUBJID","ARMA", "ALBBL", "WGTBL")
+    as.data.frame() #%>% capitalize_names()
+  
+  #out = out %>% left_join(adex %>% as.data.frame() %>% select(ID, POP, STUDYID, USUBJID, ARMA), by="ID") 
+  colnames(out) = toupper(colnames(out))
+  
+  out = out %>% filter(TIME<=treat_end, TIME>=treat_end-6*7)
+  out = out  %>% mutate(DVOR=IPRED,NTIM=TIME) %>%
+        group_by_(.dots =c("ID")) %>%   
+             dplyr::summarise(
+               CMIN = DVOR[n()],   # the last conc at this time interval
+               CMAX = max(DVOR),
+               AUCtau = auc_partial(NTIM, DVOR),
+               CavgSS = AUCtau/(6*7)   # 6 wks
+             )  %>% ungroup()
+  
+ 
+  OUT= rbind(OUT, cbind(replicate=ireplicate, out))
+ }
+ 
+ tdata.GRID = OUT %>% #select(-WGTBL) %>% 
+   left_join(adex %>% distinct(USUBJID, .keep_all=TRUE) %>% select(ID, POP, STUDYID, USUBJID, ARMA, WGTBL, ALBBL), by="ID") 
+  
+save(tdata.GRID, file="./data/tdata.GRID.Rdata")
+
+ 
+```
+
+
+
+```{r }
+
+
+load("./data/tdata.GRID.Rdata")
+
+
+tdata = tdata.GRID
+  
+tt = tdata %>% calc_stats(id="USUBJID", group_by=c("STUDYID","ARMA", "ALBBL", "WGTBL"), value="CMIN")  
+tt$ALBBL = as.factor(tt$ALBBL)
+tt = tt %>% filter(ARMA %in% c("350 mg Q3W IV"))
+
+
+font.size = 12 
+legend_position= "bottom"
+legend_box = "horizontal"
+ panel.background = ggplot2::element_blank()
+
+ fig = ggplot(tt, aes(x=WGTBL, y=Mean, group=(ALBBL), col=(ALBBL))) + 
+   geom_line() + 
+   xlab("Baseline Body Weight (Kg)") + 
+   ylab("Mean Steady-State Ctrough (mg/L)") + 
+     guides(col = guide_legend(title = "Albumin (g/L)", title.position = "left")) + 
+ 
+ 
+   #base_theme(font.size=14) + 
+   geom_hline(yintercept = 20, lty="dashed") + 
+   theme_bw() + 
+   
+    ggplot2::theme(    
+    
+    #legend.box = legend_box ,  # Horizontal legend box  
+    #legend.background = element_rect(fill="white", size=0.5, linetype="solid", colour ="white"),
+ 
+     
+    axis.title   = ggplot2::element_text(size = font.size, face="bold"),        
+    axis.title.x = ggplot2::element_text(size = font.size, face = "bold"), 
+    axis.title.y = ggplot2::element_text(size = font.size, face = "bold"), 
+    
+    axis.text   = ggplot2::element_text(color = "black", size = font.size), #axis tick text   
+    axis.text.x = ggplot2::element_text(color = "black", size = font.size), 
+    axis.text.y = ggplot2::element_text(color = "black", size = font.size), 
+
+    axis.line = ggplot2::element_line(color='black'), 
+    
+    strip.text = ggplot2::element_text(color = "black", size = font.size, face = "bold"),     # strip text in facetted plots.
+    strip.text.x = ggplot2::element_text(color = "black", size = font.size, face = "bold"), 
+    strip.text.y = ggplot2::element_text(color = "black", size = font.size, face = "bold"),
+    
+    panel.background = panel.background,
+    #panel.grid = ggplot2::element_blank(), 
+    panel.grid.minor = ggplot2::element_blank(), 
+    panel.grid.major = ggplot2::element_blank()   # element_line(colour = "gray90",size=0.75))      
+    )  + 
+      
+ 
+     #scale_x_continuous(breaks=x$breaks, label=x$labels) + 
+     #scale_y_log10(breaks=y$breaks, label=y$labels) + 
+  
+     #geom_smooth(method="loess", fill=NA) + 
+     #coord_cartesian(xlim = range(tdata$WGTBL, na.rm=TRUE)) + 
+     #coord_cartesian(ylim = range(tdata$DVOR, na.rm=TRUE)) + 
+     #guides(fill=guide_legend("my awesome title"))
+  # guide_legend(title="my awesome title") + 
+  
+   theme(#legend.title=element_text("EXSEQ"), 
+         legend.position="bottom", 
+         panel.grid.minor= element_line(colour = "gray95",size=0.5),
+         panel.grid.major= element_line(colour = "gray95",size=0.5),
+         panel.spacing = unit(0.2, "lines"), 
+         panel.border=element_rect(colour="black", fill=NA), 
+         strip.background = element_blank()   # element_rect(colour=NA, fill=NA),
+   )  
+ 
+ fig + facet_wrap(~ARMA, ncol = 2)  + 
+      geom_vline(xintercept = 150, lty="dashed")
+ 
+ 
+ # fig + guides(fill = guide_legend(title = "LEFT", title.position = "left"))
+  
+  
+  
+
+tdata = tdata.GRID %>% filter(ARMA %in% c("350 mg Q3W IV"))
+   
+
+
+tt = tdata %>% filter(WGTBL==150)
+tt$ALBBL = as.factor(ALBBL)
+
+tt = tt %>% group_by(ARMA, ALBBL) %>% mutate(N20 = ifelse(CMIN<=20,1, 0)) %>% 
+      dplyr::summarise(N=length( (USUBJID)),
+                       PCT = paste0(u.signif(sum(N20)/N*100, digits=3), "%"))
+
+tt %>% as.matrix()
+
+write_csv(tt, path="./data/CMIN.grid.csv")
+
+   
+    
+   
+   
+##############################################################################
+# use two-dimentional grid to show, as Duplimab
+ ##############################################################################
+load("./data/simPK.Rdata")
+tdata = simPK 
+tdata$ARMA = trim(tdata$ARMA)
+
+
+tdata = tdata %>% mutate(ID=USUBJID) %>% # mutate(USUBJID=substr(USUBJID, 5, 29)) %>% 
+                left_join(adpx00%>% distinct(USUBJID, .keep_all=TRUE) %>% 
+                                     select(USUBJID, WGTBL, ALBBL, IGGBL, ASTBL,CRCLBL,BILIBL), 
+                            by="USUBJID")
+   
+by.quantile = 0.125
+by.quantile = 0.25
+#	Typically the range for normal albumin is reported between 35 to 55 g/L 
+tdata = tdata %>% mutate(WGTBL=as_numeric(WGTBL)) %>% 
+            assign_Q(value="WGTBL", 
+                   quartile=seq(0,1, by=by.quantile),   # c(0, 0.25, 0.5, 0.75, 1), 
+                    breaks = NULL 
+                   ) %>% arrange(Quantile) %>% 
+         #mutate(Q_LABEL=ordered(Q_LABEL, levels=unique(Q_LABEL)))  %>% 
+         mutate(WGTBL_Q_LABEL= Q_LABEL) %>% 
+         mutate(WGTBL_Quantile = Quantile)
+
+ 
+tdata = tdata %>% mutate(ALBBL=as_numeric(ALBBL)) %>% 
+            assign_Q(value="ALBBL", 
+                   quartile=seq(0,1, by=by.quantile),   #c(0, 0.25, 0.5, 0.75, 1), 
+                    breaks = NULL 
+                   ) %>% arrange(Quantile) %>% 
+         #mutate(Q_LABEL=ordered(Q_LABEL, levels=unique(Q_LABEL)))  %>% 
+         mutate(ALBBL_Q_LABEL= Q_LABEL) %>% 
+         mutate(ALBBL_Quantile = Quantile)
+
+
+# "1 mg/kg Q2W IV"  "10 mg/kg Q2W IV" "200 mg Q2W IV"   "3 mg/kg Q2W IV"  "3 mg/kg Q3W IV"  "350 mg Q3W IV"
+
+#tdata %>% group_by(WGTBL_Q_LABEL, ALBBL_Q_LABEL) %>% 
+ tabl =  tdata %>% filter(PARAMS=="CMIN") %>% 
+   calc_stats(id="USUBJID", group_by=c("ARMA","WGTBL_Q_LABEL", "ALBBL_Q_LABEL"), value="DVOR")
+ tabl = tabl %>% mutate(label=paste0(u.signif(Mean,digits=3),"\n(",N,")"))  %>% 
+   select( ARMA, WGTBL_Q_LABEL, ALBBL_Q_LABEL,     N,    Mean, label)
+
+
+ # 
+ 
+fig = ggplot(tabl %>% filter(ARMA %in% c("1 mg/kg Q2W IV", "3 mg/kg Q2W IV", "350 mg Q3W IV")), 
+       aes(x=WGTBL_Q_LABEL, y=ALBBL_Q_LABEL ))+ #coord_equal()
+    xlab("Quantile of Baseline Body Weight (kg)") +   # Quantile   Octave
+    ylab("Quantile of Baseline Albumin (g/L)") + 
+    geom_tile(aes(fill = Mean)) + 
+    geom_text(aes(label = label), colour="White")   +
+    scale_fill_gradient(low="gray50",high="gray10") + 
+   # scale_fill_grey(start = 0, end = .9) + 
+  # scale_colour_manual( 
+  #                     values = c("#E69F00", "#56B4E9", "#009E73", 
+  #                                "#F0E442", "#0072B2", "#D55E00")) + 
+
+    theme(#legend.title=element_text("Ctrough,ss"), 
+         legend.position="none", 
+         panel.grid.minor= element_line(colour = "gray95",size=0.5),
+         panel.grid.major= element_line(colour = "gray95",size=0.5),
+         panel.spacing = unit(0.2, "lines"), 
+         panel.border=element_rect(colour="black", fill=NA), 
+         strip.background = element_blank()   # element_rect(colour=NA, fill=NA),
+   )   
+
+fig + facet_wrap(~ARMA)
+
+
+ 
+
+tdata %>% filter(ARMA %in% c("1 mg/kg Q2W IV"), PARAMS=="CMIN", DVOR<=20) %>% nrow() 
+
+
+tdata %>% filter(ARMA %in% c("3 mg/kg Q2W IV"), PARAMS=="CMIN", DVOR<=20) %>% nrow()
+
+
+
+tdata %>% filter(ARMA %in% c("350 mg Q3W IV"), PARAMS=="CMIN", DVOR<=20) %>% nrow()
+
+
+
+
+ 
+
+```
