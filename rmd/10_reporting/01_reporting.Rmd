@@ -70,6 +70,21 @@ tabBox(width=12, id = ("review_all"), title =NULL,
 use **ReporteRs** or **officer**
 
 
+```{r, eval=FALSE}
+# http://shiny.rstudio.com/articles/generating-reports.html
+# 
+# https://stackoverflow.com/questions/34816637/parameterized-rmarkdown-document-on-shiny-application
+# 
+# http://rmarkdown.rstudio.com/developer_parameterized_reports.html
+# 
+# 
+# http://shiny.rstudio.com/gallery/download-knitr-reports.html
+# 
+# How to link rmarkdown report with shinyapps to export webapp content in R?
+# https://stackoverflow.com/questions/33367154/how-to-link-rmarkdown-report-with-shinyapps-to-export-webapp-content-in-r
+
+
+```
 
 
 

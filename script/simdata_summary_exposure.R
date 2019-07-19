@@ -67,7 +67,7 @@ simdata_summary_exposure <-function(dataset, params=NULL) {
   group_by_at( vars(one_of(group_lst))) %>%  # 07_09_2019
     #top_n(n=1, wt=EXSEQ) %>% filter(TAD<=II)    # do it outside
   
-  tdata = tdata %>% group_by(.dots = group_lst) %>% 
+  #tdata = tdata %>% group_by(.dots = group_lst) %>% 
     dplyr::summarise(
       CMAX = round(max(DVOR, na.rm=TRUE), digits=3),
       CMIN = round(min(DVOR, na.rm=TRUE), digits=3),

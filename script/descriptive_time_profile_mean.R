@@ -138,18 +138,19 @@ descriptive_time_profile_mean <-function(dataset, params=NULL) {
   #------------------
   # log scale 
   #------------------
-  BLOQ = 0.078 # mg/L
+  loc_x <- 0  # location of line label 
+  BLQ = c(0.078)   #c(0.078, 65)
+  label_text = paste0(BLQ, " mg/L" )
+  
   fig = fig + 
     scale_y_log10(breaks = 10^(seq(-3,3,by=1)), #trans_breaks("log10", function(x) 10^x),
                   labels = 10^(seq(-3,3,by=1))) +  # trans_format("log10", math_format(10^.x))) +
     annotation_logticks(sides ="l")  +  # "trbl", for top, right, bottom, and left.
     
-    geom_hline(yintercept=c(BLOQ), lty="dashed") + 
-    geom_text(
-      y=log10(BLOQ*1.2), x=0.1, 
-      aes(label=paste0("BLQ=", BLOQ," mg/L"), hjust=0), 
-      size=4, 
-      color='black')  
+    geom_hline(yintercept=BLQ, lty="dashed") + 
+    geom_text(data=data.frame(x=loc_x, y=BLQ), 
+              aes(x, y, label=label_text,  hjust=0, vjust=-1), 
+              size=3,  inherit.aes = FALSE,  color='black') 
   
   attr(fig, 'title') <- paste0(
     "Mean(SE) Log-scaled ", test_label, 

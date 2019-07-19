@@ -1,7 +1,9 @@
+ 
 
-#HOME = paste0("~/YANG/")
-#HOME <- paste0(getwd(), "/")
+library(stringr)
 HOME = paste0(normalizePath("."), "/")
+if (str_sub(HOME, 1, 22) == "/home/feng.yang/FYANG/") {HOME=paste0("~/YANG/")}
+ 
  
 ######################################################################
 # Load packages
