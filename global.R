@@ -3,6 +3,7 @@
 library(stringr)
 HOME = paste0(normalizePath("."), "/")
 if (str_sub(HOME, 1, 22) == "/home/feng.yang/FYANG/") {HOME=paste0("~/YANG/")}
+if (str_sub(HOME, 1, 19) == "C:\\Users\\feng.yang\\") {HOME=paste0("~/handbook/")}
  
  
 ######################################################################
@@ -364,7 +365,7 @@ figLog <- figLn + scale_y_log10()
 
 fig <- figLn
 attr(fig, 'title') <- paste0(
-  "Mean(±SE) ", " in Serum vs Nominal Sampling Day Following Subcutaneous or Intravenous Dose(s) of ", ")")
+  "Mean(B1SE) ", " in Serum vs Nominal Sampling Day Following Subcutaneous or Intravenous Dose(s) of ", ")")
 
 attr(fig, 'width') <- 9
 attr(fig, 'height') <- 6                                
@@ -374,7 +375,7 @@ FIGURE[["pk_mean_profile_ln"]]$data =  tdata
 
 fig <- figLog
 attr(fig, 'title') <- paste0(
-  "Semi-Log Mean(±SE) ", " in Serum vs Nominal Sampling Day Following Subcutaneous or Intravenous Dose(s) of ", ")")
+  "Semi-Log Mean(B1SE) ", " in Serum vs Nominal Sampling Day Following Subcutaneous or Intravenous Dose(s) of ", ")")
 
 attr(fig, 'width') <- 9
 attr(fig, 'height') <- 6                                
@@ -383,20 +384,20 @@ FIGURE[["pk_mean_profile_log"]]$data =  tdata
 
 
 tabl = data.frame(x=1, y=1)
-attr(tabl, 'title') <-  "tst1"
-TABLE[["TSET1"]] = tabl
+attr(tabl, 'title') <-  "test1"
+TABLE[["TEST1"]] = tabl
 
 tabl = data.frame(x=10, y=10)
-attr(tabl, 'title') <-  "tst2"
-TABLE[["TSET2"]] = tabl
+attr(tabl, 'title') <-  "test2"
+TABLE[["TEST2"]] = tabl
 
-tabl = data.frame(x=1, y=1)
-attr(tabl, 'title') <-  "tst1"
-DATA[["TSET1"]] = tabl
+tabl = read_datafile(paste0(HOME, "/data/nmdatPK.csv"))
+attr(tabl, 'title') <-  "nmdatPK"
+DATA[["nmdatPK"]] = tabl
 
-tabl = data.frame(x=10, y=10)
-attr(tabl, 'title') <-  "tst2"
-DATA[["TSET2"]] = tabl
+tabl = read_datafile(paste0(HOME, "/data/adpc.csv"))
+attr(tabl, 'title') <-  "adpc"
+DATA[["adpc"]] = tabl
 
 cppModel1=mread(model='cppModel',
                 project=paste0(HOME, '/cpp/'),

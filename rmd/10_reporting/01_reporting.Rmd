@@ -86,19 +86,229 @@ use **ReporteRs** or **officer**
 
 ```
 
+```{r}
+
+ 
+#----------------------------------------------------
+# load_nmdat_container
+#----------------------------------------------------
+output$pk_report_data_selector <-renderUI({
+   
+  # callModule 
+    ALL = callModule(module_load_dataset, "load_nmdat_for_pk_report", 
+                     ALL, dataset_name="mYtEsT_for_pk_report")
+  
+  # UI  
+  fluidRow(column(6, 
+                   module_load_dataset_UI(id="load_nmdat_for_pk_report", label=NULL)
+                 )
+            )  
+  })
+  
+
+```
 
 
+```{r }
+output$select_pk_report_template_container <- renderUI({ 
+ script <- list.files(path=paste0(HOME, "/script/"), 
+                         full.names = TRUE,
+                         pattern="report_template_pk")
+  names(script) = basename(script)
+  
+  selectizeInput(("script_selector"),
+                               label    = NULL, #"select script:" ,
+                               choices  = names(script),
+                               multiple = FALSE,
+                               selected = names(script)[1]
+                             )
+  
+})
+```
 
 
-```{r, eval=FALSE}
-   navbarMenu(title="Global option",  #"", 
-              #tabsetPanel(type = "tabs",   
-              tabPanel(title="ColorSetting"#,  #icon = icon("database", lib = "font-awesome"),
-                       #scriptTabUI(id="myscriptTab", label="")  
-              ), 
-              tabPanel(title="themeSetting"  #icon = icon("database", lib = "font-awesome"),
-                       #scriptTabUI(id="myscriptTab", label="")  
-              ) 
-   )
+```{r }
+output$download_report_container <- renderUI({ 
 
-``` 
+    
+  # callModule
+
+  regFormula <- reactive({
+    as.formula(paste('mpg ~', input$x))
+  })
+  
+  # output$regPlot <- renderPlot({
+  #   par(mar = c(4, 4, .1, .1))
+  #   plot(regFormula(), data = mtcars, pch = 19)
+  # })
+  
+  output$downloadReport <- downloadHandler(
+    filename = function() {
+      paste('my-report', sep = '.', switch(
+        input$format, PDF = 'pdf', HTML = 'html', Word = 'docx'
+      ))
+    },
+    
+    content = function(file) {
+      src <- normalizePath(paste0(HOME, "/rmd/10_reporting/report_template_pk.Rmd"))
+      
+      # temporarily switch to the temp dir, in case you do not have write
+      # permission to the current working directory
+      owd <- setwd(tempdir())
+      on.exit(setwd(owd))
+      file.copy(src, 'report_template.Rmd', overwrite = TRUE)
+      
+      library(rmarkdown)
+      
+      #out <- render_report("report_template.Rmd", input, regFormula, 'sf', 134)
+      out <- rmarkdown::render(
+        input = 'report_template.Rmd', 
+        params = list(
+          ALL = ALL, 
+          region = "Europe",
+          year = 2019
+        ),
+        output_format = switch(
+         input$format,
+         PDF = pdf_document(), HTML = html_document(), Word = word_document()
+       ))
+      
+      file.rename(out, file)
+    }
+  )
+    
+  # UI
+  fluidRow(
+    column(6, 
+      helpText(),
+      selectInput('x', 'Build a regression model of mpg against:',
+                  choices = names(mtcars)[-1]),
+      radioButtons('format', 'Document format', c( 'Word', 'PDF', 'HTML'),
+                   inline = TRUE),
+      downloadButton('downloadReport')
+    )#,
+    #column(9,
+    #  plotOutput('regPlot')
+    #)
+) 
+     
+})
+
+```
+
+```{r}
+output$rmd_content_container <- renderUI({
+  validate(need(globalVars$login$status, message=FALSE))
+  
+  aceEditor(("script_content"), 
+            mode="r", 
+            value= "sfwsfsfsf", #if (is.null(names(script))) {script} else {script[input$script_selector]}, 
+            theme = "crimson_editor",   # chrome
+            autoComplete = "enabled",
+            height = "1000px", 
+            fontSize = 15 
+  )
+  
+})
+
+```
+
+
+```{r}
+
+tabBox(width=12, id = ("generate_report"), title =NULL, 
+    
+   # dataset_container 
+   tabPanel(width=12, title="pk report ", value = "pk_report", collapsible = TRUE, 
+            collapsed = TRUE, solidHeader = TRUE,
+            
+            fluidRow(column(12, uiOutput(("generate_pk_report_container"))))
+            
+            # fluidRow(
+            #          HTML(colFmt(
+            #            "Note, 1) select dataset, 
+            #                   2) select report template, 
+            #                   3) select report parameters if any, 
+            #                   4) optional, modify report template, 
+            #                   5) download report ", color="gray")
+            #          ),
+            #   fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+            #   fluidRow(
+            #     column(width=6, uiOutput(("pk_report_data_selector"))),
+            #     column(width=6, uiOutput(("select_pk_report_template_container")))
+            #     ), 
+            #    
+            #   fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+            #   
+            #   fluidRow(column(12, uiOutput(("download_report_container")))),
+            #   
+            #   fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+            #   
+            #   fluidRow(column(12, uiOutput(("rmd_content_container")))), 
+            #   
+            #   #fluidRow(column(12, uiOutput(ns("render_dataset_container")))), 
+            #   style='margin-bottom:30px;  border:1px solid; padding: 10px;'
+            # )
+   ),
+         
+    # cppModel_container 
+    tabPanel(width=12, title="simulation memo", value = "simulation_memo", collapsible = TRUE, 
+            collapsed = TRUE, solidHeader = TRUE,
+            fluidRow(
+              #fluidRow(column(12, uiOutput(ns("load_cppModel_container")))), 
+            style='margin-bottom:30px;  border:1px solid; padding: 10px;'
+            )
+    ),       
+   
+       # cppModel_container 
+    tabPanel(width=12, title="diagnostic memo", value = "diagnostic_memo", collapsible = TRUE, 
+            collapsed = TRUE, solidHeader = TRUE,
+            fluidRow(
+              #fluidRow(column(12, uiOutput(ns("load_cppModel_container")))), 
+            style='margin-bottom:30px;  border:1px solid; padding: 10px;'
+            )
+    ),       
+   
+       # cppModel_container 
+    tabPanel(width=12, title="popPK report", value = "popPK_report", collapsible = TRUE, 
+            collapsed = TRUE, solidHeader = TRUE,
+            fluidRow(
+              #fluidRow(column(12, uiOutput(ns("load_cppModel_container")))), 
+            style='margin-bottom:30px;  border:1px solid; padding: 10px;'
+            )
+    )  
+)
+```
+
+
+ 
+    
+
+```{r}  
+ 
+output$generate_pk_report_container <- renderUI({ 
+
+  #validate(need(drug_descriptive_analysis_inputData(), message="no data found yet"))
+ 
+  # scripts
+  script <- list.files(path=paste0(HOME, "/script/"), 
+                         full.names = TRUE,
+                         pattern="report_template_pk")
+  names(script) = basename(script)
+    
+  # callModule
+  ALL = callModule(module_generate_report, "generate_pk_report", 
+                   ALL, key = "report_template_pk")
+  
+  #, dataset, script, params=NULL
+    
+  # UI
+  module_generate_report_UI(("generate_pk_report"), label = NULL) 
+     
+})
+
+ fluidRow(column(12, uiOutput(("generate_pk_report_container"))))
+
+```
+
+

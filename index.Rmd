@@ -201,6 +201,31 @@ pdf_document:
 
 
 ```{r, eval=FALSE}
+
+# https://stackoverflow.com/questions/20596902/r-avoiding-restarting-interrupted-promise-evaluation-warning
+
+
+#https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet
+
+# https://stackoverflow.com/questions/45302540/shiny-how-to-reset-refresh-the-form
+# library(shinyjs)
+# library(shiny)
+# runApp(shinyApp(
+#   ui = fluidPage(
+#     shinyjs::useShinyjs(),
+#     div(
+#       id = "form",
+#       textInput("text", "Text", ""),
+#       selectInput("select", "Select", 1:5),
+#       actionButton("refresh", "Refresh")
+#     )
+#   ),
+#   server = function(input, output, session) {
+#     observeEvent(input$refresh, {
+#       shinyjs::reset("form")
+#     })
+#   }
+# ))
 #----------------------------------------
 # to create the list of resource_files
 #----------------------------------------

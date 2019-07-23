@@ -21,7 +21,7 @@ sink(zz, type="message")
 
 # source the function
 try(
-  eval(parse(text=text)) #, silent = TRUE
+  eval(parse(text=text)), silent = TRUE
 )  
 
 ## reset message sink and close the file connection

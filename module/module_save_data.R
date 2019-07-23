@@ -4,6 +4,15 @@ module_save_data_UI <- function(id, label="") {
 ns <- NS(id)
 
 tagList( 
+
+  fluidRow(column(width=12, DT::dataTableOutput(ns("mydatatable")))),
+  
+  fluidRow(
+    column(width=12,                                                                                                                                                                   
+           uiOutput(ns("column_selector"))                                                                                                                                            
+    )     
+  ),
+  
   fluidRow( 
     column(width=3, 
            uiOutput(ns("data_name_container"))),                                                                                                                             
@@ -24,13 +33,6 @@ tagList(
                        choices = seq(1, 100, by=1),                                                                                                                                   
                        selected = 3)                                                                                                                                                  
     )
-  ), 
-  
-  fluidRow(column(width=12, DT::dataTableOutput(ns("mydatatable")))),
-  fluidRow(
-    column(width=12,                                                                                                                                                                   
-           uiOutput(ns("column_selector"))                                                                                                                                            
-    )     
   )
 )
 

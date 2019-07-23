@@ -13,6 +13,9 @@ TO DO LIST
 5. add sigmoid curve fitting
 
 
+R avoiding “restarting interrupted promise evaluation” warning
+ https://stackoverflow.com/questions/20596902/r-avoiding-restarting-interrupted-promise-evaluation-warning
+
 
 
 
