@@ -11,7 +11,7 @@ module_run_script_UI <- function(id, label = "") {
     fluidRow(
       column(width=12,  
              HTML(colFmt("Note, the following tabset is used to 
-                         1) load the source dataset (dataset tab), 
+                         1) render the source dataset if provided (dataset tab), 
                          2) apply scripts upon the source dataset (script tab), 
                          3) render the derived data (data tab), final table (table tab) and figure (figure tab).", 
                          color="gray")))
@@ -22,8 +22,22 @@ module_run_script_UI <- function(id, label = "") {
        # dataset_container 
        tabPanel(width=12, title="dataset", value = "dataset", collapsible = TRUE, 
                 collapsed = TRUE, solidHeader = TRUE,
-                fluidRow(column(12, uiOutput(ns("dataset_container"))))
-                
+                  tagList( 
+                      
+                    fluidRow(
+                      HTML(colFmt("The following commonly used filters can be used to narrow down your dataset<br>", color="gray")
+                      ),
+                      uiOutput(ns("select_TEST_container")), 
+                      uiOutput(ns("select_ARMA_container")),
+                      style='margin-bottom:30px;  border:1px solid; padding: 10px;'
+                     ),
+                    fluidRow(
+                      column(12, 
+                             uiOutput(ns("dataset_container")), 
+                             style='margin-bottom:30px;  border:1px solid; padding: 10px;'
+                             )
+                      ) 
+                  )
        ),       
        
        # script_container 
@@ -60,7 +74,7 @@ module_run_script_UI <- function(id, label = "") {
 ################################################################################ 
 
 module_run_script <- function(input, output, session, 
-                              ALL, dataset, dataset_name="", script="", params=NULL
+                              ALL, dataset, script, params=NULL
                               )  {
 
   # script is a list of file names containing the "script"
@@ -69,122 +83,12 @@ module_run_script <- function(input, output, session,
   ns <- session$ns
   values <- reactiveValues(data=NULL, figure=NULL, table = NULL)
 
-  ################################
-  # Load dataset
-  ################################ 
-  load_dataset <- reactive({
-    ALL$DATA[[dataset_name]]
-    
-  })
-  
-  filtered_dataset <- reactive({
-    
-    dataset = load_dataset()
-    validate(need(dataset, message="no dataset"))
-    
-    if (class(dataset) == "xpose.data") {
-      tdata = dataset %>% slot("Data")
-    }else if (class(dataset) == "list"  & all(c("adsl", "adex", "adpc") %in% names(dataset))) {
-      tdata = dataset[["adsl"]]
-    }else {
-      tdata = dataset
-    }
-    
-    if ("STUDYID" %in% colnames(tdata) && !is.null(input$which_studyid)) {
-      tdata = tdata %>% filter(STUDYID %in% input$which_arma)
-    } 
-    
-    if ("TEST" %in% colnames(tdata) && !is.null(input$which_test)) {
-      tdata = tdata %>% filter(TEST %in% input$which_test)
-    }
-    
-    if ("ARMA" %in% colnames(tdata) && !is.null(input$which_arma)) {
-      tdata = tdata %>% filter(ARMA %in% input$which_arma)
-    } 
-    
-    tdata
-  })
-  
-  
-  
-  ################################
-  # UI for dataset_container
-  ################################ 
-  output$dataset_container <-renderUI({
-    
-    fluidRow(
-      # dataset
-      HTML(colFmt("Step 1: Load the dataset<br>", color="darkblue")
-      ),
-      uiOutput(ns("load_dataset_container")),
-      fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
-      
-      # filters
-      HTML(colFmt("Step 2: Apply following filter(s), if needed, to narrow down the dataset<br>", color="darkblue")
-      ),
-      #uiOutput(ns("filter_dataset_container")), 
-       fluidRow(column(width=12,
-                       fluidRow(column(width=6, uiOutput(ns("select_STUDYID_container")))), 
-                       fluidRow(column(width=6, uiOutput(ns("select_TEST_container")))), 
-                       fluidRow(column(width=12, uiOutput(ns("select_ARMA_container"))))
-       )),
-      fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
-      
-      #style='margin-bottom:30px;  border:1px solid; padding: 10px;'
-  
-      HTML(colFmt("Step 3: Review the (filtered) dataset <br>", color="darkblue")
-      ),
-      uiOutput(ns("render_filtered_dataset_container")), 
-      style='margin-bottom:30px;  border:1px solid; padding: 10px;'
-   
-    ) 
-    
-  })
-  
-  output$load_dataset_container <-renderUI({
-    
-    # callModule 
-    ALL = callModule(module_load_dataset, "load_dataset_for_run_script", 
-                     ALL, dataset_name=dataset_name)
-    
-    # UI  
-    fluidRow(column(6, 
-                    module_load_dataset_UI(id=ns("load_dataset_for_run_script"), label=NULL) 
-                    ), 
-              column(6, 
-                   HTML(colFmt("internal library: build-in dataset <br>
-                        within session: secondary data derived from the original <br> 
-                        external file: external file", color="gray")
-                   )
-             )
-    )
-   
-  })
-  
-  
-  output$filter_dataset_container <-renderUI({
-    
-    # callModule 
-    values$filtered_dataset2 = callModule(module_filtered_dataset, "load_dataset_for_run_script", 
-                     load_dataset()
-                     )
-    
-    #isolate({ values$filtered_dataset2 = filtered_dataset2 })
-    
-    # UI  
-     
-    module_filtered_dataset_UI(id=ns("load_dataset_for_run_script"), label=NULL) 
-    
-    
-  })
-  
-  
-  
-  
-  
+################################
+# UI for dataset_container
+################################
   output$select_STUDYID_container <- renderUI({ 
-    tdata = load_dataset()
-    validate(need(tdata, message=FALSE),  
+    tdata = dataset
+    validate(need(tdata, message="no dataset found yet"),  
              need("STUDYID" %in% colnames(tdata), message=FALSE) 
     )
     
@@ -196,7 +100,7 @@ module_run_script <- function(input, output, session,
     }
     
     #fluidRow(
-    # column(6,
+    #  column(6,
     inline(
       selectizeInput(ns("which_studyid"), 
                      label    = "select which study", 
@@ -206,15 +110,15 @@ module_run_script <- function(input, output, session,
                      selected = studyid_lst[1]
       )
     )
+    #  )
     # )
-   # )
     
   })
   
   
   output$select_TEST_container <- renderUI({ 
-    tdata = load_dataset()
-    validate(need(tdata, message=FALSE),  
+    tdata = dataset
+    validate(need(tdata, message="no dataset found yet"),  
              need("TEST" %in% colnames(tdata), message=FALSE) 
     )
     
@@ -226,72 +130,72 @@ module_run_script <- function(input, output, session,
     }
     
     #fluidRow(
-    # column(6,
+    #  column(6,
     inline(
-      selectizeInput(ns("which_test"), 
-                     label    = "select which analyte", 
-                     choices  = test_lst, 
-                     multiple = FALSE,
-                     width="100%", 
-                     selected = test_lst[1]
-      )
+        selectizeInput(ns("which_test"), 
+                  label    = "select which analyte", 
+                  choices  = test_lst, 
+                  multiple = FALSE,
+                  width="100%", 
+                  selected = test_lst[1]
+                  )
     )
-    # )
-    # )
-    
-  })
-  
-  
-  output$select_ARMA_container <- renderUI({ 
-    tdata = load_dataset()
-    validate(need(tdata, message=FALSE), 
-             need("ARMA" %in% colnames(tdata), message=FALSE) 
-    )
-    
-    arma_lst = c(unique(tdata%>%drop_na(ARMA)%>%pull(ARMA)))
-    validate(need(length(arma_lst)>1, message=FALSE)) 
-    
-    inline = function (x) {
-      tags$div(style="display:inline-block;", x)
-    }
-    
-   # fluidRow(
-    #column(8, 
-    inline(
-      selectizeInput(ns("which_arma"), 
-                     label    = "select which dose group(s)", 
-                     choices  = arma_lst, 
-                     multiple = TRUE,
-                     width="100%", 
-                     selected = arma_lst
-      )
-    )
-    #)
+    #  )
    # )
+        
   })
   
   
-  output$render_filtered_dataset_container <- renderUI({  
-    
-    tdata = filtered_dataset()
-    validate(need(tdata, message="no data found yet")  
-    )
-    
-    callModule(module_save_data, "loaded_dataset", ALL, 
-               data=tdata, 
-               data_name="")
-    
-    fluidRow(
-      column(12, module_save_data_UI(ns("loaded_dataset"), label = "loaded_dataset"))
-    )
-  }) 
+output$select_ARMA_container <- renderUI({ 
+  tdata = dataset
+  validate(need(tdata, message="no dataset found yet"), 
+           need("ARMA" %in% colnames(tdata), message=FALSE) 
+  )
+   
+  arma_lst = c(unique(tdata%>%drop_na(ARMA)%>%pull(ARMA)))
+  validate(need(length(arma_lst)>1, message=FALSE)) 
   
+  inline = function (x) {
+    tags$div(style="display:inline-block;", x)
+  }
+  
+  #fluidRow(
+  #  column(6, 
+  inline(
+      selectizeInput(ns("which_arma"), 
+                    label    = "select which dose group(s)", 
+                    choices  = arma_lst, 
+                    multiple = TRUE,
+                    width="100%", 
+                    selected = arma_lst
+                    )
+  )
+   # )
+  #)
+})
+  
+  
+output$dataset_container <- renderUI({  
  
+  tdata = filtered_dataset()
+  validate(need(tdata, message="no data found yet")  
+  )
+  
+  callModule(module_save_data, "loaded_dataset", ALL, 
+             data=tdata, 
+             data_name="")
+  
+  fluidRow(
+    column(12, module_save_data_UI(ns("loaded_dataset"), label = "loaded_dataset"))
+  )
+}) 
+
 
 ################################
 # UI for script_content_container
 ################################
-output$script_container <- renderUI({ 
+output$script_container <- renderUI({
+  validate(need(globalVars$login$status, message=FALSE))
  
   tagList(
     fluidRow(column(12,
@@ -320,7 +224,8 @@ output$script_container <- renderUI({
 })
   
 
-output$script_content_container <- renderUI({ 
+output$script_content_container <- renderUI({
+  validate(need(globalVars$login$status, message=FALSE))
   
   aceEditor(ns("script_content"), 
             mode="r", 
@@ -432,6 +337,33 @@ output$figure_container <- renderUI({
 })
 
 
+filtered_dataset <- reactive({
+
+  validate(need(dataset, message="no dataset"))
+  
+  if (class(dataset) == "xpose.data") {
+    tdata = dataset %>% slot("Data")
+  }else if (class(dataset) == "list"  & all(c("adsl", "adex", "adpc") %in% names(dataset))) {
+    tdata = dataset[["adsl"]]
+  }else {
+    tdata = dataset
+  }
+  
+  if ("STUDYID" %in% colnames(tdata) && !is.null(input$which_studyid)) {
+    tdata = tdata %>% filter(STUDYID %in% input$which_arma)
+  } 
+  
+  if ("TEST" %in% colnames(tdata) && !is.null(input$which_test)) {
+    tdata = tdata %>% filter(TEST %in% input$which_test)
+  }
+  
+  if ("ARMA" %in% colnames(tdata) && !is.null(input$which_arma)) {
+    tdata = tdata %>% filter(ARMA %in% input$which_arma)
+  } 
+   
+  tdata
+})
+
 
 
 
@@ -443,7 +375,6 @@ observeEvent(input$run_script, {
   )
 
   ihandbook = 1
-  dataset = filtered_dataset() # 
   
   environment(try_eval) <- environment()
   env = try_eval(text=input$script_content)
@@ -475,7 +406,7 @@ observeEvent({input$save_all_table}, {
   validate(need(length(values$table), message="no table found") )
   
   #lapply(1:length(values$table), function(i) ALL$TABLE[[names(values$table)[i]]] = values$table[[i]])
-  ALL$TABLE = c(ALL$TABLE, values$table)
+  ALL$TABLE = (c(ALL$TABLE, values$table))
   showNotification("all tables saved", type="message") 
  
 })
@@ -485,7 +416,7 @@ observeEvent({input$save_all_data}, {
   validate(need(length(values$data), message="no data found") ) 
  
   #lapply(1:length(values$data), function(i) ALL$DATA[[names(values$data)[i]]] = values$data[[i]])
-  ALL$DATA = c(ALL$DATA, values$data)
+  ALL$DATA = (c(ALL$DATA, values$data))
   showNotification("all data saved", type="message") 
  
 })
@@ -495,7 +426,7 @@ observeEvent({input$save_all_figure}, {
   validate(need(length(values$figure), message="no figure found") )
   isolate({ 
   #lapply(1:length(values$figure), function(i) ALL$FIGURE[[names(values$figure)[i]]] = values$figure[[i]])
-    ALL$FIGURE = c(ALL$FIGURE, values$figure)
+    ALL$FIGURE = (c(ALL$FIGURE, values$figure))
      
   showNotification("all figures saved", type="message") 
   })

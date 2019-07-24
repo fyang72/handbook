@@ -6,16 +6,16 @@ module_generate_report_UI <- function(id, label = "") {
   ns <- NS(id)
   
   tagList(
-    fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+    #fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
     
-    fluidRow(
-      column(width=12,  
-             HTML(colFmt("Note, the following tabset is used to 
-1) select dataset (dataset tab), 
-2) select report template or modify it if needed, select report parameters if any, finally download the report (script tab), 
-3) render the derived data (data tab), final table (table tab) and figure (figure tab) during report generating.", 
-                         color="gray")))
-      ),
+#     fluidRow(
+#       column(width=12,  
+#              HTML(colFmt("Note, the following tabset is used to 
+# 1) select dataset (dataset tab), 
+# 2) select report template or modify it if needed, select report parameters if any, finally download the report (script tab), 
+# 3) render the derived data (data tab), final table (table tab) and figure (figure tab) during report generating.", 
+#                          color="gray")))
+#       ),
     
     tabBox(width=12, id = ns("run_script_for_data_figure_table"), title =NULL, 
            
@@ -26,7 +26,7 @@ module_generate_report_UI <- function(id, label = "") {
            ),       
            
            # script_container 
-           tabPanel(width=12, title="script", value = "script", collapsible = TRUE, 
+           tabPanel(width=12, title="template", value = "template", collapsible = TRUE, 
                     collapsed = TRUE, solidHeader = TRUE,
                     fluidRow(column(12, uiOutput(ns("script_container"))))
            ),     
@@ -290,6 +290,14 @@ output$rmd_content_container <- renderUI({
   ################################
   # UI for download_report_container
   ################################
+  
+  company_document <- function(TABLE, FIGURE, docx)  {
+    print2_word_ppt(FIGURE, TABLE,mydoc=NULL, myppt=NULL)
+    return(docx)
+  }
+  
+  
+  
   output$download_report_container <- renderUI({ 
     
     validate(need(input$script_selector, message=FALSE))
@@ -302,7 +310,11 @@ output$rmd_content_container <- renderUI({
     output$downloadReport <- downloadHandler(
       filename = function() {
         paste('my-report', sep = '.', switch(
-          input$format, PDF = 'pdf', HTML = 'html', Word = 'docx'
+          input$format, 
+            PDF = 'pdf', 
+            HTML = 'html', 
+            Rmarkdown_Word = 'docx', 
+            Template_Word='docx'
         ))
       },
       
@@ -333,7 +345,10 @@ output$rmd_content_container <- renderUI({
           ),
           output_format = switch(
             input$format,
-            PDF = pdf_document(), HTML = html_document(), Word = word_document()
+            PDF = pdf_document(), 
+            HTML = html_document(), 
+            Rmarkdown_Word = word_document(),
+            Template_Word = company_document()
           ))
         
         file.rename(out, file)
@@ -346,7 +361,9 @@ output$rmd_content_container <- renderUI({
              helpText(),
              selectInput(ns('x'), 'Build a regression model of mpg against:',
                          choices = names(mtcars)[-1]),
-             radioButtons(ns('format'), label='Document format', choices= c( 'Word', 'PDF', 'HTML'),
+             radioButtons(ns('format'), 
+                          label='Document format', 
+                          choices= c('PDF', 'HTML', 'Rmarkdown_Word', 'Template_Word'),
                           inline = TRUE),
              downloadButton(ns('downloadReport'))
       ) 

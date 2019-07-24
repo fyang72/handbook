@@ -8,7 +8,7 @@ in both log- and linear-scale (see section [Time profile](#time_profile)).  A va
 First of all, a dataset (see below) needs to be loaded by using three different approaches mentioned earlier. If load sucessfully, the dataset will be populated in the subsequent sections in this chapter.  
  
  
-```{r}
+```{r, eval=FALSE}
 #----------------------------------------------------
 # load_nmdat_container
 #----------------------------------------------------
@@ -77,7 +77,7 @@ drug_descriptive_analysis_inputData <- reactive({
  
 output$descriptive_time_profile <- renderUI({ 
 
-  validate(need(drug_descriptive_analysis_inputData(), message="no data found yet"))
+  #validate(need(drug_descriptive_analysis_inputData(), message="no data found yet"))
  
   # scripts
   script <- list.files(path=paste0(HOME, "/script/"), 
@@ -89,6 +89,7 @@ output$descriptive_time_profile <- renderUI({
   ALL = callModule(module_run_script, "descriptive_time_profile", 
                    ALL, 
                    dataset=drug_descriptive_analysis_inputData(), 
+                   dataset_name = "mYtEsT_for_descriptive_analysis",
                    script=script)
     
   # UI

@@ -27,10 +27,7 @@ module_build_dataset_UI <- function(id, label = "") {
         # dataset_container 
         tabPanel(width=12, title="dataset", value = "dataset", collapsible = TRUE, 
                  collapsed = TRUE, solidHeader = TRUE,
-                 tagList(
-                    fluidRow(column(12, uiOutput(ns("load_dataset_container")))), 
-                    fluidRow(column(12, uiOutput(ns("render_dataset_container"))))
-                 )
+                 fluidRow(column(12, uiOutput(ns("dataset_container")))) 
         ),
        
        # checkInCols_container 
@@ -78,59 +75,61 @@ values <- reactiveValues(data=NULL,figure=NULL,table = NULL)
 # script is a list of file names containing the "script"
 script <- sapply(script, function(i) paste0(readLines(i), collapse="\n")) %>% unlist()
 
- 
+
+
 ################################
-# UI for dataset_container
-################################
-output$load_dataset_container <- renderUI({ 
-   
-  #validate(need(ALL$DATA[[dataset_name]], message="no data found yet"))
-  #  
-  # #0312_2019, NEED to return the data to ALL.  
-  # ALL = callModule(module_filtered_dataset, "dataset_to_be_built", 
-  #                  ALL,  
-  #                  dataset_name=dataset_name 
-  #                  )
-  #  
-  # module_filtered_dataset_UI(ns("dataset_to_be_built"), label = NULL) 
+# Load dataset
+################################ 
+load_dataset <- reactive({
+  ALL$DATA[[dataset_name]]
   
+})
+
+filtered_dataset <- reactive({
   
+  dataset = load_dataset()
+  validate(need(dataset, message="no dataset"))
   
-  # callModule 
-  ALL = callModule(module_load_dataset, "load_dataset_for_run_script", 
-                   ALL, dataset_name=dataset_name)
+  if (class(dataset) == "xpose.data") {
+    tdata = dataset %>% slot("Data")
+  }else if (class(dataset) == "list"  & all(c("adsl", "adex", "adpc") %in% names(dataset))) {
+    tdata = dataset[["adsl"]]
+  }else {
+    tdata = dataset
+  }
   
-  # UI  
-  fluidRow(column(6, 
-                  module_load_dataset_UI(id=ns("load_dataset_for_run_script"), label=NULL) 
-  ), 
-  column(6, 
-         HTML(colFmt("internal library: build-in dataset <br>
-                        within session: secondary data derived from the original <br> 
-                        external file: external file", color="gray")
-         )
-  )
-  )
+  if ("STUDYID" %in% colnames(tdata) && !is.null(input$which_studyid)) {
+    tdata = tdata %>% filter(STUDYID %in% input$which_arma)
+  } 
+  
+  if ("TEST" %in% colnames(tdata) && !is.null(input$which_test)) {
+    tdata = tdata %>% filter(TEST %in% input$which_test)
+  }
+  
+  if ("ARMA" %in% colnames(tdata) && !is.null(input$which_arma)) {
+    tdata = tdata %>% filter(ARMA %in% input$which_arma)
+  } 
+  
+  tdata
 })
 
 
-
-output$render_dataset_container <- renderUI({  
+################################
+# UI for dataset_container
+################################
+output$dataset_container <- renderUI({ 
+   
+  validate(need(ALL$DATA[[dataset_name]], message="no data found yet"))
+   
+  #0312_2019, NEED to return the data to ALL.  
+  ALL = callModule(module_save_data, "dataset_to_be_built", 
+                     ALL, 
+                     data =ALL$DATA[[dataset_name]], 
+                     data_name=dataset_name)
   
-  tdata = ALL$DATA[[dataset_name]]
-  validate(need(tdata, message="no data found yet")  
-  )
+  module_save_data_UI(ns("dataset_to_be_built"), label = NULL) 
   
-  callModule(module_save_data, "loaded_dataset", ALL, 
-             data=tdata, 
-             data_name="")
-  
-  fluidRow(
-    column(12, module_save_data_UI(ns("loaded_dataset"), label = "loaded_dataset"))
-  )
-}) 
-
- 
+})
 
   
 

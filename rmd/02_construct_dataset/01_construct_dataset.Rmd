@@ -118,18 +118,34 @@ output$standardize_adsl <-renderUI({
   names(script) = basename(script)
   
   # callModule 
-  ALL = callModule(module_build_dataset_wrapper, "standardize_adsl", 
-                   ALL, 
-                   dataset_name="mYtEsT_for_standardize_adsl",
-                   script=script,
-                   default_checkin = default_adsl_checkin()
+  # ALL = callModule(module_build_dataset, "standardize_adsl", 
+  #                  ALL, 
+  #                  dataset_name="mYtEsT_for_standardize_adsl",
+  #                  script=script,
+  #                  default_checkin = default_adsl_checkin()
+  # )
+  # 
+  # # UI  
+  # fluidRow(column(12, 
+  #                 module_build_dataset_UI(id="standardize_adsl", label=NULL)
+  #                 ) 
+  # )
+  
+  callModule(module_build_dataset, "standardize_adsl",  
+             ALL, 
+             dataset_name="mYtEsT_for_standardize_adsl",   
+             script = script,   
+             params = NULL, 
+             default_checkin = default_adsl_checkin()  
+  ) 
+  
+  fluidRow(
+    column(12, 
+           module_build_dataset_UI(("standardize_adsl"), label = NULL)
+    )
   )
-
-  # UI  
-  fluidRow(column(12, 
-                  module_build_dataset_wrapper_UI(id="standardize_adsl", label=NULL)
-                  ) 
-  )  
+  
+  
 })
 
 tagList(
@@ -138,6 +154,8 @@ tagList(
 )
 
 ```
+
+
 
 ### adex  <a name="standardize_adex"></a>
 
@@ -174,7 +192,7 @@ output$standardize_adex <-renderUI({
   names(script) = basename(script)
   
   # callModule 
-  ALL = callModule(module_build_dataset_wrapper, "standardize_adex", 
+  ALL = callModule(module_build_dataset, "standardize_adex", 
                    ALL, 
                    dataset_name="mYtEsT_for_standardize_adex",
                    script=script,
@@ -183,7 +201,7 @@ output$standardize_adex <-renderUI({
   
   # UI  
   fluidRow(column(12, 
-                  module_build_dataset_wrapper_UI(id="standardize_adex", label=NULL)
+                  module_build_dataset_UI(id="standardize_adex", label=NULL)
                   ) 
   )  
 })
@@ -224,7 +242,7 @@ output$standardize_adpc <-renderUI({
   names(script) = basename(script)
     
   # callModule 
-  ALL = callModule(module_build_dataset_wrapper, "standardize_adpc", 
+  ALL = callModule(module_build_dataset, "standardize_adpc", 
                    ALL, 
                    dataset_name="mYtEsT_for_standardize_adpc",
                    script=script,
@@ -234,7 +252,7 @@ output$standardize_adpc <-renderUI({
   
   # UI  
   fluidRow(column(12, 
-                  module_build_dataset_wrapper_UI(id="standardize_adpc", label=NULL)
+                  module_build_dataset_UI(id="standardize_adpc", label=NULL)
                   ) 
           )  
 })
@@ -280,7 +298,7 @@ output$standardize_adpd <-renderUI({
   names(script) = basename(script)
   
   # callModule 
-  ALL = callModule(module_build_dataset_wrapper, "standardize_adpd", 
+  ALL = callModule(module_build_dataset, "standardize_adpd", 
                    ALL, 
                    dataset_name="mYtEsT_for_standardize_adpd",
                    script=script,
@@ -290,7 +308,7 @@ output$standardize_adpd <-renderUI({
   
   # UI  
   fluidRow(column(12, 
-                  module_build_dataset_wrapper_UI(id="standardize_adpd", label=NULL)
+                  module_build_dataset_UI(id="standardize_adpd", label=NULL)
                   ) 
           )  
 })
@@ -490,7 +508,7 @@ output$standardize_nmdat <-renderUI({
   names(script) = basename(script)
   
   # callModule 
-  ALL = callModule(module_build_dataset_wrapper, "standardize_nmdat", 
+  ALL = callModule(module_build_dataset, "standardize_nmdat", 
                    ALL, 
                    dataset_name="mYtEsT_for_standardize_nmdat",
                    script=script,
@@ -500,7 +518,7 @@ output$standardize_nmdat <-renderUI({
 
   # UI  
   fluidRow(column(12, 
-                   module_build_dataset_wrapper_UI(id="standardize_nmdat", label=NULL)
+                   module_build_dataset_UI(id="standardize_nmdat", label=NULL)
                  ) 
           )  
 })

@@ -201,10 +201,19 @@ pdf_document:
 
 
 ```{r, eval=FALSE}
+library(extrafont); library(ggplot2)
+#font_import() only do this one time - it takes a while
+loadfonts(device = "win")
+windowsFonts(Times = windowsFont("TT Times New Roman"))
+
+theme_set(theme_bw(base_size=12,base_family='Times New Roman')+
+             theme(panel.grid.major = element_blank(), 
+                   panel.grid.minor = element_blank()))
+
+# ggplot
+# https://ben-williams.github.io/updated_ggplot_figures.html
 
 # https://stackoverflow.com/questions/20596902/r-avoiding-restarting-interrupted-promise-evaluation-warning
-
-
 #https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet
 
 # https://stackoverflow.com/questions/45302540/shiny-how-to-reset-refresh-the-form
@@ -294,7 +303,6 @@ for (ifile in 1:length(file.lst)) {source(file=file.lst[ifile])  }
  
  
 ```{r}
-
 ALL <- reactiveValues(
   DATA   = default_DATA, 
   FIGURE = default_FIGURE, 
@@ -349,7 +357,6 @@ cat(chunks, sep = '\n')
 
 ```{r child = './rmd/06_run_ctl/02_model_diagnostic.Rmd'}
 ```
-
 
 ```{r child = './rmd/07_run_cpp/01_run_sim.Rmd'}
 ```
@@ -448,6 +455,7 @@ Figures and tables with captions will be placed in `figure` and `table` environm
 
 ```{r pressureplot,  fig.cap='Inteactive histogram plot!'}
 plotOutput("pressureplot")
+
 ```
 
  

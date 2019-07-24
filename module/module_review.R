@@ -28,7 +28,7 @@ module_review_figure <- function(input, output, session,  ALL) {
   # fig_selector
   output$fig_selector <- renderUI({  
     name_lst <- names(ALL$FIGURE)
-    selectInput(ns("selectFig"), label = "Select Figure(s):",                                                                                                        
+    selectInput(ns("select_figure"), label = "Select Figure(s):",                                                                                                        
                 width="100%",    
                 multiple = TRUE, 
                 choices = name_lst,                                                                                                                                   
@@ -37,20 +37,22 @@ module_review_figure <- function(input, output, session,  ALL) {
   
   # fig_container
   output$fig_container <- renderUI({ 
-    validate(need(input$selectFig, message=FALSE))
+    validate(need(input$select_figure, message=FALSE))
     
-    lapply(1:length(input$selectFig), function(i) {
-      validate(need(ALL$FIGURE[[i]], message="no figure found"), 
-               need(is.ggplot(ALL$FIGURE[[i]]), message="only ggpot object allowed")
+    lapply(1:length(input$select_figure), function(i) {
+      figure_name <- input$select_figure[i]
+      
+      validate(need(ALL$FIGURE[[figure_name]], message="no figure found"), 
+               need(is.ggplot(ALL$FIGURE[[figure_name]]), message="only ggpot object allowed")
       )
       
       # callModule(module_save_figure
       ALL = callModule(module_save_figure, paste0("module_save_figure_", i), 
                        ALL, 
-                       figure = ALL$FIGURE[[i]], 
+                       figure = ALL$FIGURE[[figure_name]], 
                        figure_index = i, 
-                       figure_name = names(ALL$FIGURE[i]), 
-                       figure_data = ALL$FIGURE[[i]]$data
+                       figure_name = names(ALL$FIGURE[figure_name]), 
+                       figure_data = ALL$FIGURE[[figure_name]]$data
       )
       
       module_save_figure_UI(ns(paste0("module_save_figure_", i)), label = NULL) 
@@ -96,16 +98,18 @@ module_review_table <- function(input, output, session, ALL) {
     validate(need(input$select_table, message=FALSE))
     
     lapply(1:length(input$select_table), function(i) {
-      validate(need(ALL$TABLE[[i]], message="no table found"), 
-               need(is.data.frame(ALL$TABLE[[i]]), message="only data.frame allowed")
+      
+      table_name <- input$select_table[i]
+      validate(need(ALL$TABLE[[table_name]], message="no table found"), 
+               need(is.data.frame(ALL$TABLE[[table_name]]), message="only data.frame allowed")
       )
       
       # callModule(module_save_table
       ALL = callModule(module_save_table, paste0("module_save_table_", i), 
                        ALL,
-                       table = ALL$TABLE[[i]], 
+                       table = ALL$TABLE[[table_name]], 
                        table_index = i, 
-                       table_name = names(ALL$TABLE[i])
+                       table_name = names(ALL$TABLE[table_name])
       )
       
       module_save_table_UI(ns(paste0("module_save_table_", i)), label = NULL) 
@@ -155,16 +159,18 @@ module_review_data <- function(input, output, session, ALL) {
     validate(need(input$select_data, message=FALSE))
     
     lapply(1:length(input$select_data), function(i) {
-      validate(need(ALL$DATA[[i]], message="no data found"), 
-               need(is.data.frame(ALL$DATA[[i]]), message="only data.frame allowed")
+      data_name <- input$select_data[i]
+      
+      validate(need(ALL$DATA[[data_name]], message="no data found"), 
+               need(is.data.frame(ALL$DATA[[data_name]]), message="only data.frame allowed")
       )
       
       # callModule(module_save_data
       ALL = callModule(module_save_data, paste0("module_save_data_", i), 
                        ALL,
-                       data = ALL$DATA[[i]], 
+                       data = ALL$DATA[[data_name]], 
                        data_index = i, 
-                       data_name = names(ALL$DATA[i])
+                       data_name = names(ALL$DATA[data_name])
       )
       
       module_save_data_UI(ns(paste0("module_save_data_", i)), label = NULL) 

@@ -4,6 +4,41 @@
 This chapter is to summarise the input dataset in term of the samples, the patient demographic, 
 laboratory information, and their corresponding statistics.  
 
+
+
+```{r, summary_population_samples}
+#----------------------------------------------------
+# standardize_adex
+#----------------------------------------------------
+
+output$summary_population_samples <-renderUI({
+  validate(need(globalVars$login$status, message=FALSE))
+  
+  script <- list.files(path=paste0(HOME, "/script/"), 
+                         full.names = TRUE,
+                         pattern="accouting")
+  names(script) = basename(script)
+  
+  # callModule 
+  ALL = callModule(module_run_script, "summary_population_samples", 
+                   ALL, 
+                   dataset_name="mYtEsT_for_summary_population_samples",
+                   script=script,
+                   params = NULL
+  )
+  
+  # UI  
+  fluidRow(column(12, 
+                  module_run_script_UI(id="summary_population_samples", label=NULL)
+                  ) 
+  )  
+})
+
+fluidRow(column(12, uiOutput(("summary_population_samples"))))
+```
+
+
+
 ## Population
 
 to summarize the population for each analyte (concentration, target, biomarker, efficacy, etc)
@@ -17,7 +52,9 @@ tabl <- summary_of_studies(adpc,
                    id="USUBJID"
 )
 
-
+caption = 'Summary of Population Included in the Study'
+knitr::kable(tabl, booktabs = TRUE, caption=caption)      #, padding = 2
+   
 ```
 
 ## Samples

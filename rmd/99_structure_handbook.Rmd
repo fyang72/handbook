@@ -12,7 +12,6 @@ TO DO LIST
 4. NEED EXTRT FROM ADEX, to cascade all to all rows? if not, some figure title need that information.
 5. add sigmoid curve fitting
 
-
 R avoiding “restarting interrupted promise evaluation” warning
  https://stackoverflow.com/questions/20596902/r-avoiding-restarting-interrupted-promise-evaluation-warning
 

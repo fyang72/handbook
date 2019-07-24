@@ -12,7 +12,6 @@ First, review all dataset, figure, table, cppModel, ctlModel and script, modify/
 
 renderUI({ 
     
-
   callModule(module_review_data, "mydataReview", ALL)
   
   callModule(module_review_figure, "myfigureReview",  ALL)
@@ -27,8 +26,6 @@ renderUI({
     
   callModule(module_check_out, "mycheckOut", ALL)  
 
-
-  
 tabBox(width=12, id = ("review_all"), title =NULL, 
   
   tabPanel(title="Data",  icon = icon("database", lib = "font-awesome"),
@@ -69,6 +66,11 @@ tabBox(width=12, id = ("review_all"), title =NULL,
 
 use **ReporteRs** or **officer**
 
+Note, the following tabset is used to
+1) select dataset (dataset tab),
+2) select report template or modify it if needed, select report parameters if any, finally download the report (script tab),
+3) render the derived data (data tab), final table (table tab) and figure (figure tab) during report generating.".
+ 
 
 ```{r, eval=FALSE}
 # http://shiny.rstudio.com/articles/generating-reports.html
@@ -95,7 +97,7 @@ use **ReporteRs** or **officer**
 output$pk_report_data_selector <-renderUI({
    
   # callModule 
-    ALL = callModule(module_load_dataset, "load_nmdat_for_pk_report", 
+  ALL = callModule(module_load_dataset, "load_nmdat_for_pk_report", 
                      ALL, dataset_name="mYtEsT_for_pk_report")
   
   # UI  
@@ -214,7 +216,7 @@ output$rmd_content_container <- renderUI({
 ```
 
 
-```{r}
+```{r, eval=FALSE}
 
 tabBox(width=12, id = ("generate_report"), title =NULL, 
     
@@ -307,7 +309,7 @@ output$generate_pk_report_container <- renderUI({
      
 })
 
- fluidRow(column(12, uiOutput(("generate_pk_report_container"))))
+fluidRow(column(12, uiOutput(("generate_pk_report_container"))))
 
 ```
 

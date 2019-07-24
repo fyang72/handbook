@@ -177,7 +177,7 @@ check_adsl <- function(adsl, topN=20) {
   attr(tabl, "key") = "SEX_ORG"
   attr(tabl, "value") = "SEX"
   
-  attr(tabl, "footnote") = paste0("Note, the standarad names for gender are ", paste0(sex.lst, collapse=", "), ". ")  
+  attr(tabl, "footnote") = paste0("Note, the standarad names for gender are ", paste0(sex_var_lst, collapse=", "), ". ")  
   if (nrow(tabl)>topN) {attr(tabl, "footnote") = paste0(attr(tabl, "footnote"), "The default is to display top ", topN, " rows.")}
   table[["SEX"]] = tabl
   
@@ -193,7 +193,7 @@ check_adsl <- function(adsl, topN=20) {
   attr(tabl, "key") = "ETHNIC_ORG"
   attr(tabl, "value") = "ETHNIC"
 
-  attr(tabl, "footnote") = paste0("Note, the standarad names for ethnic are ", paste0(ethnic.lst, collapse=", "), ". ")  
+  attr(tabl, "footnote") = paste0("Note, the standarad names for ethnic are ", paste0(ethnic_var_lst, collapse=", "), ". ")  
   if (nrow(tabl)>topN) {attr(tabl, "footnote") = paste0(attr(tabl, "footnote"), "The default is to display top ", topN, " rows.")}
   table[["ETHNIC"]] = tabl
   
@@ -209,7 +209,7 @@ check_adsl <- function(adsl, topN=20) {
   attr(tabl, "key") = "RACE_ORG"
   attr(tabl, "value") = "RACE"
   
-  attr(tabl, "footnote") = paste0("Note, the standarad names for race are ", paste0(race.lst, collapse=", "), ". ")  
+  attr(tabl, "footnote") = paste0("Note, the standarad names for race are ", paste0(race_var_lst, collapse=", "), ". ")  
   if (nrow(tabl)>topN) {attr(tabl, "footnote") = paste0(attr(tabl, "footnote"), "The default is to display top ", topN, " rows.")}
   table[["RACE"]] = tabl
   
