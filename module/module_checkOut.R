@@ -11,47 +11,16 @@ module_check_out_UI <- function(id, label = "") {
   
        column(width=6,    
         
-              uiOutput(ns("loadTemplate_container")),
-           
-              fluidRow(
-                column(12, style='padding:0px;', 
-                       actionButton(ns("GenerateReport"),"Generate it", 
-                             style=actionButton_style
-                           )
-                )),  
-              
-              fluidRow(
-                column(width=6,  style='padding:0px;', 
-                  downloadButton(ns("download_doc"), 
-                                 label="Download docx", 
-                                 icon=icon("download"), 
-                                 style=actionButton_style )
-                  ),   #, icon("download")
-                
-                column(width=6, style='padding:0px;', 
-                  downloadButton(ns("download_ppt"), 
-                                 label="Download pptx", 
-                                 icon=icon("download"), 
-                                 style=actionButton_style )
-                  )   # icon("paper-plane")
-              )
-       ), 
-       
-       column(6,              
-              
               #h5("Number of figures:"),
               h5(textOutput(ns("finalFigCount"))),
               
               #h5("Number of tables:"),
-              h5(textOutput(ns("finalTabCount")))
+              h5(textOutput(ns("finalTabCount"))), 
               
-              # fluidRow(
-              #   column(width=12, valueBoxOutput(ns("finalFigCount")))),
-              # 
-              #   fluidRow(
-              #   column(width=12, valueBoxOutput(ns("finalTabCount")))
-              # )
-       )
+              uiOutput(ns("loadTemplate_container"))
+
+       ) 
+        
     )
   
 }
@@ -67,17 +36,28 @@ module_check_out <- function(input, output, session, ALL) {
   output$loadTemplate_container <- renderUI({
     
     fluidRow(
-      column(12, style='padding:0px;', 
+      column(6, style='padding:0px;', 
              fileInput(ns("doc_template"), label = h5("load your docx template"), 
-                       accept=c('.docx')),
-   
+                       accept=c('.docx')), 
+             
+             downloadButton(ns("download_doc"), 
+                            label="Download docx", 
+                            icon=icon("download"), 
+                            style=actionButton_style )
+      ), 
+      column(6, style='padding:0px;', 
              fileInput(ns("ppt_template"), label = h5("load your pptx template"), 
-                       accept=c('.pptx'))   
+                       accept=c('.pptx')), 
+             
+             downloadButton(ns("download_ppt"), 
+                            label="Download pptx", 
+                            icon=icon("download"), 
+                            style=actionButton_style )
+      )
     )
-    )
-     
+      
   })
-  
+ 
   
   #----------------------------------------------
   # server side [Checkout]

@@ -351,7 +351,28 @@ output$rmd_content_container <- renderUI({
             Template_Word = company_document()
           ))
         
-        file.rename(out, file)
+        #file.rename(out, file)
+        
+        
+        
+        tdata = data.frame(xvar=1:10, yvar=1:10)
+        figLn <- ggplot(tdata, aes(x=xvar, y=yvar)) + geom_point() + geom_line()
+        figLog <- figLn + scale_y_log10()
+        
+        FIGURE <- NULL
+        FIGURE[["SFS"]] = figLog
+        
+        TABLE = NULL
+        TABLE[["SGSDS"]]  = tdata
+        
+        mydocx <- read_docx(path= 'C://Users//feng.yang//Documents//handbook//lib//docTemplate.docx')
+        mydocx <- mydocx %>% print2_docx(FIGURE, TABLE)  # docx_input()
+        
+        #tmpdir <- setwd(tempdir())
+        #on.exit(setwd(tmpdir))
+        mydocx %>% print(target = file) 
+        
+        
       }
     )
     

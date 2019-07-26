@@ -24,7 +24,7 @@ renderUI({
   
   callModule(module_review_script, "myscriptReview", ALL)  
     
-  callModule(module_check_out, "mycheckOut", ALL)  
+  callModule(module_review_checkout, "mycheckOut", ALL)  
 
 tabBox(width=12, id = ("review_all"), title =NULL, 
   
@@ -53,7 +53,7 @@ tabBox(width=12, id = ("review_all"), title =NULL,
   ),
  
    tabPanel(title="Checkout", 
-           module_check_out_UI(id="mycheckOut", label="") 
+           module_review_checkout_UI(id="mycheckOut", label="") 
    )
 )  
    

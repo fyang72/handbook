@@ -41,6 +41,7 @@ library(officer)
 #-------------------- 
 library(shiny)
 library(shinyAce)
+library(shinyjs)
 library(shinydashboard)
 library(rhandsontable)
 library(DT) 

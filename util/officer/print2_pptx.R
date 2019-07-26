@@ -20,7 +20,7 @@
 
 
 
-print2_pptx <- function(myppt=NULL, 
+print2_pptx <- function(mypptx=NULL, 
                         FIGURE=NULL, TABLE=NULL,  
                         width_default=6.4,     # 8
                         height_default=4.8,    # 6
@@ -43,28 +43,28 @@ print2_pptx <- function(myppt=NULL,
   #             theme(panel.grid.major = element_blank(), 
   #                   panel.grid.minor = element_blank()))
   
-  if (is.null(myppt)) {myppt <- read_pptx("./lib/pptTemplate.pptx")}  
-  mylab <- layout_summary(myppt)[[1]] # Slide Layout Name
-  mytmp <- layout_summary(myppt)[[2]][1] # Show Slide Master Name
+  if (is.null(mypptx)) {mypptx <- read_pptx("./lib/pptTemplate.pptx")}  
+  mylab <- layout_summary(mypptx)[[1]] # Slide Layout Name
+  mytmp <- layout_summary(mypptx)[[2]][1] # Show Slide Master Name
   
-  # myppt %>%
+  # mypptx %>%
   #    layout_properties(layout="Title and Content", master=mytmp)%>%
   #   knitr::kable(digits=2) 
   # 
   # for (i in 1:length(mylab)) {
-  #   layout_properties(myppt, mylab[i], master=mytmp) %>% kable(digits=2) %>% print()
+  #   layout_properties(mypptx, mylab[i], master=mytmp) %>% kable(digits=2) %>% print()
   # }
   
   ############################
   # Title, subtitle, date
   ############################  
-  myppt <- myppt %>%
+  mypptx <- mypptx %>%
      add_slide(layout="Title Slide", master=mytmp) %>%
      ph_with_text(type="ctrTitle", str="Iris Data") %>%
      ph_with_text(type="subTitle", str="Table & Figure") %>%
      ph_with_text(type="dt", str=format(Sys.Date()))  
     
-  #print(myppt, target="./sample.pptx")
+  #print(mypptx, target="./sample.pptx")
   ########################################################################################
   ########################################################################################
   # to word and ppt
@@ -92,22 +92,22 @@ print2_pptx <- function(myppt=NULL,
     #ggsave("fig.pdf", new_figure,  width=12, height=6, scale=0.5, dpi="retina", device="pdf")
     #ggsave(file, new_figure,  width=12, height=6, scale=0.5, dpi="retina", device="png")
     
-    grDevices::png(filename = "fig1.png",
-                    width = width, height = height,
-                    units = 'in', pointsize = fontsize, bg = "white",
-                    res = 300
-    )
-    new_figure
-    fig1
-    dev.off()
-    
-    unlink(filename)
+    # grDevices::png(filename = "fig1.png",
+    #                 width = width, height = height,
+    #                 units = 'in', pointsize = fontsize, bg = "white",
+    #                 res = 300
+    # )
+    # new_figure
+    # fig1
+    # dev.off()
+    # 
+    # unlink(filename)
     
     # add figure 
     # -----------------------
     # style_list %>% filter(style_type %in% "figure")   
    
-    myppt <- myppt %>% 
+    mypptx <- mypptx %>% 
       # Add Figures (image file / ggplot object)
       # ---------------------------------------------
        add_slide(layout="Title and Content", master=mytmp) %>%
@@ -116,7 +116,7 @@ print2_pptx <- function(myppt=NULL,
        ph_with_text(type="ftr", str="A footnote") %>%
        ph_with_text(type="dt", str=format(Sys.Date())) %>%
        
-         ph_with_gg(value=new_figure)  %>% 
+       ph_with_gg(value=new_figure)  %>% 
       #ph_with_img(src = "fig1.png", type = "body", width = width, height = height)
       #ph_with_img_at(src="C:/temp/myplot.png", left=2, top=2, width=5, height=5)
     
@@ -157,7 +157,7 @@ print2_pptx <- function(myppt=NULL,
     #  myft <- theme_booktabs(myft) # Change "flextable" theme
     #   myft <- autofit(myft) # Adjust Cell Width and Height
     
-    myppt <- myppt %>% 
+    mypptx <- mypptx %>% 
       add_slide(layout="Title and Content", master=mytmp) %>%
       ph_with_text(type="title", str=title) %>%
       ph_with_table(value=new_table) 
@@ -170,7 +170,7 @@ print2_pptx <- function(myppt=NULL,
       #   + ph_with_text(type="body", str="Iris data", index=2)
   
   }  
-  return(myppt)
+  return(mypptx)
 }
 
 
@@ -200,8 +200,8 @@ if (idebug == 1) {
   TABLE[["tab1"]] = tab1
   TABLE[["tab2"]] = tab2
   
-  myppt <- read_pptx("./lib/pptTemplate_long_format.pptx")
-  myppt <- myppt %>% print2_pptx(FIGURE, TABLE)
+  mypptx <- read_pptx("./lib/pptTemplate_long_format.pptx")
+  mypptx <- mypptx %>% print2_pptx(FIGURE, TABLE)
   print(myppt, target = "./toc_and_captions.pptx")
    
 

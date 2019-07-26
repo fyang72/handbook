@@ -6,7 +6,7 @@
 # http://lenkiefer.com/2017/09/23/crafting-a-powerpoint-presentation-with-r/
 
 
-print2_docx <- function(mydoc=NULL, 
+print2_docx <- function(mydocx=NULL, 
                         FIGURE=NULL, TABLE=NULL,  
                         width_default=6.4,     # 8
                         height_default=4.8,    # 6
@@ -20,15 +20,15 @@ print2_docx <- function(mydoc=NULL,
   library(extrafont)
   library(flextable)
   
-  loadfonts(device = "win")
-  windowsFonts(Times = windowsFont("TT Times New Roman"))
+  # loadfonts(device = "win")
+  # windowsFonts(Times = windowsFont("TT Times New Roman"))
+  # 
+  # theme_set(theme_bw(base_size=12,base_family='Times New Roman')+
+  #             theme(panel.grid.major = element_blank(), 
+  #                   panel.grid.minor = element_blank()))
   
-  theme_set(theme_bw(base_size=12,base_family='Times New Roman')+
-              theme(panel.grid.major = element_blank(), 
-                    panel.grid.minor = element_blank()))
-  
-  if (is.null(mydoc)) {
-    mydoc <- read_docx("./lib/docTemplate.docx")
+  if (is.null(mydocx)) {
+    mydocx <- read_docx("./lib/docTemplate.docx")
   }  
   
   ########################################################################################
@@ -37,8 +37,8 @@ print2_docx <- function(mydoc=NULL,
   ########################################################################################
   ########################################################################################
   
-  style_list <- styles_info(mydoc)  
-  bookmark_list <- docx_bookmarks(mydoc)
+  style_list <- styles_info(mydocx)  
+  bookmark_list <- docx_bookmarks(mydocx)
    
   #--------------------------------------
   # figure
@@ -75,7 +75,7 @@ print2_docx <- function(mydoc=NULL,
     # -----------------------
     # style_list %>% filter(style_type %in% "figure")   
     if (figure_name %in% bookmark_list) {
-      mydoc <- mydoc %>% 
+      mydocx <- mydocx %>% 
         cursor_begin() %>%  
         cursor_bookmark(figure_name) %>%
         body_add_par(value = title, style = "Caption1") %>% 
@@ -84,7 +84,7 @@ print2_docx <- function(mydoc=NULL,
         #body_add_img(src = "fig.png", width = 5, height = 6, style = "Figure")
         
     }else{
-      mydoc <- mydoc %>% 
+      mydocx <- mydocx %>% 
         cursor_end() %>%   
         body_add_par(value = title, style = "Caption1") %>% 
         #shortcuts$slip_in_plotref(depth = 1) %>%
@@ -116,14 +116,14 @@ print2_docx <- function(mydoc=NULL,
     # -----------------------
     # style_list %>% filter(style_type %in% "table")  
     if (table_name %in% bookmark_list) {    
-      mydoc <- mydoc %>% 
+      mydocx <- mydocx %>% 
         cursor_begin() %>%  
         cursor_bookmark(table_name) %>%
         body_add_par(value = title, style = "Caption1") %>% 
         #shortcuts$slip_in_plotref(depth = 1) %>%
         body_add_table(value = new_table, style = "Body Table")  
     }else{
-      mydoc <- mydoc %>% 
+      mydocx <- mydocx %>% 
         cursor_end() %>%   
         body_add_par(value = title, style = "Caption1") %>% 
         #shortcuts$slip_in_plotref(depth = 1) %>%
@@ -131,7 +131,7 @@ print2_docx <- function(mydoc=NULL,
     }
     
   }  
-  return(mydoc)
+  return(mydocx)
 }
   
    
@@ -160,9 +160,9 @@ if (idebug == 1) {
   TABLE[["tab1"]] = tab1
   TABLE[["tab2"]] = tab2
   
-  mydoc <- read_docx("./lib/docTemplate.docx")
-  mydoc <- mydoc %>% print2_word(FIGURE, TABLE)
-  print(mydoc, target = "./toc_and_captions.docx")
+  mydocx <- read_docx("./lib/docTemplate.docx")
+  mydocx <- mydocx %>% print2_docx(FIGURE, TABLE)
+  print(mydocx, target = "./toc_and_captions.docx")
   
     # add paragraph,  
     # -----------------------  
