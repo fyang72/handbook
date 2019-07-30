@@ -66,6 +66,9 @@ tabBox(width=12, id = ("review_all"), title =NULL,
 
 use **ReporteRs** or **officer**
 
+https://rmarkdown.rstudio.com/articles_docx.html
+ 
+
 Note, the following tabset is used to
 1) select dataset (dataset tab),
 2) select report template or modify it if needed, select report parameters if any, finally download the report (script tab),

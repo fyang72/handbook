@@ -1,4 +1,10 @@
-#-----------------------------------------
+
+
+#Tips and tricks for working with images and figures in R Markdown documents
+# http://zevross.com/blog/2017/06/19/tips-and-tricks-for-working-with-images-and-figures-in-r-markdown-documents/
+  
+  
+  #-----------------------------------------
 # xxxUI, xxxInput, xxxOutput, xxxControl 
 #-----------------------------------------
 module_generate_report_UI <- function(id, label = "") {
@@ -291,30 +297,19 @@ output$rmd_content_container <- renderUI({
   # UI for download_report_container
   ################################
   
-  company_document <- function(TABLE, FIGURE, docx)  {
-    print2_word_ppt(FIGURE, TABLE,mydoc=NULL, myppt=NULL)
-    return(docx)
-  }
-  
-  
   
   output$download_report_container <- renderUI({ 
     
     validate(need(input$script_selector, message=FALSE))
-    
-    # callModule
-    regFormula <- reactive({
-      as.formula(paste('mpg ~', input$x))
-    }) 
-    
+     
     output$downloadReport <- downloadHandler(
       filename = function() {
         paste('my-report', sep = '.', switch(
           input$format, 
             PDF = 'pdf', 
             HTML = 'html', 
-            Rmarkdown_Word = 'docx', 
-            Template_Word='docx'
+            Word = 'docx' 
+            #Template_Word='docx'
         ))
       },
       
@@ -335,6 +330,7 @@ output$rmd_content_container <- renderUI({
         
         #out <- render_report("report_template.Rmd", input, regFormula, 'sf', 134)
         out <- rmarkdown::render(
+        #out <- bookdown::render_book(
           input = 'report_template.Rmd', 
           params = list(
             dataset = filtered_dataset(), 
@@ -347,46 +343,69 @@ output$rmd_content_container <- renderUI({
             input$format,
             PDF = pdf_document(), 
             HTML = html_document(), 
-            Rmarkdown_Word = word_document(),
-            Template_Word = company_document()
+            Word = word_document()
           ))
         
-        #file.rename(out, file)
-        
-        
-        
-        tdata = data.frame(xvar=1:10, yvar=1:10)
-        figLn <- ggplot(tdata, aes(x=xvar, y=yvar)) + geom_point() + geom_line()
-        figLog <- figLn + scale_y_log10()
-        
-        FIGURE <- NULL
-        FIGURE[["SFS"]] = figLog
-        
-        TABLE = NULL
-        TABLE[["SGSDS"]]  = tdata
-        
-        mydocx <- read_docx(path= 'C://Users//feng.yang//Documents//handbook//lib//docTemplate.docx')
-        mydocx <- mydocx %>% print2_docx(FIGURE, TABLE)  # docx_input()
-        
-        #tmpdir <- setwd(tempdir())
-        #on.exit(setwd(tmpdir))
-        mydocx %>% print(target = file) 
-        
-        
+        #if (input$format %in% c('pdf', 'html', 'docx'))  {
+            file.rename(out, file)
+         # }else if (input$format %in% c('pptx'))  {
+          #  mypptx=NULL
+          #  mypptx %>% print2_pptx(FIGURE=values$figure, TABLE=values$table) %>% 
+          #    print(target = file) 
+          # }
+      
       }
     )
+    
+    
+    
+    output$download_pptx <- downloadHandler(
+      filename = function() {
+        paste('my-report.pptx') 
+      },
+      
+      content = function(file) {
+        # temporarily switch to the temp dir, in case you do not have write
+        # permission to the current working directory
+        owd <- setwd(tempdir())
+        on.exit(setwd(owd))
+        
+        # Create a Progress object
+        progress <- shiny::Progress$new()
+        # Make sure it closes when we exit this reactive, even if there's an error
+        on.exit(progress$close())
+        progress$set(message = "Building Content...Please Wait", value = 0)
+        
+        #if (file.exists(file)) {file.remove(file)} #Delete file if it exists
+        #pptx_input() %>% 
+        print2_pptx(mypptx=NULL, FIGURE=VALUES$figure, TABLE=VALUES$table) %>% print(target = file) 
+        
+        # https://groups.google.com/forum/#!topic/shiny-discuss/zATYJCdSTwk
+        # http://stackoverflow.com/questions/40314582/how-to-download-multiple-reports-created-using-r-markdown-and-r-shiny-in-a-zip-f/40324750#40324750
+        #zip(zipfile=file, files=c(fileDOC, filePPT) )
+        #browseURL(fileDOC)
+        
+      }#, 
+      #contentType = "application/zip"
+      #contentType = "application/octet-stream"  #ms-word
+      #contentType = "application/ms-word"  #ms-word
+    )
+    
     
     # UI
     fluidRow(
       column(6, 
-             helpText(),
-             selectInput(ns('x'), 'Build a regression model of mpg against:',
-                         choices = names(mtcars)[-1]),
+             helpText(), 
+              #selectInput(ns('x'), 'Build a regression model of mpg against:',
+               #           choices = names(mtcars)[-1]),
+              
              radioButtons(ns('format'), 
                           label='Document format', 
-                          choices= c('PDF', 'HTML', 'Rmarkdown_Word', 'Template_Word'),
+                          choices= c('PDF', 'HTML', 'Word'),
                           inline = TRUE),
-             downloadButton(ns('downloadReport'))
+             downloadButton(ns('downloadReport'), label="Download", style=actionButton_style)#,
+             #downloadButton(ns('download_pptx'), label="Download PPT", style=actionButton_style)
+             
       ) 
     ) 
     

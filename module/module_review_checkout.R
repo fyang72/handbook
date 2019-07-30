@@ -192,24 +192,31 @@ module_review_checkout <- function(input, output, session, ALL) {
       # Make sure it closes when we exit this reactive, even if there's an error
       on.exit(progress$close())
       progress$set(message = "Building Content...Please Wait", value = 0)
-      
-      # doc/ppt template  
-      environment(try_eval) <- environment()
-      env = try_eval(text="mypptx <- pptx_input() %>% print2_pptx(ALL$FIGURE, ALL$TABLE)")
-      
-      output=NULL; error_message=NULL
-      if ("mypptx" %in% ls(env)) {mypptx = get("mypptx", env)}
-      if ("message" %in% ls(env)) {error_message = get("message", env)}
-      
-      #removeNotification("myid")
-      if ((length(error_message)==0 & !is.null(mypptx))) {
-        showNotification("Printing...", type="message", id="myid") 
-        mypptx %>% print(target = file) 
 
-      }else{
-        showNotification(paste0(error_message, collapse="\n"), type="error", id="myid")
-        NULL
-      }   
+      #if (file.exists(file)) {file.remove(file)} #Delete file if it exists
+      #pptx_input() %>% 
+      print2_pptx(mypptx=NULL, FIGURE=ALL$FIGURE, TABLE=ALL$TABLE) %>% print(target = file) 
+      
+      if (1==2)  {
+        # doc/ppt template  
+        environment(try_eval) <- environment()
+        env = try_eval(text="mypptx <- pptx_input() %>% print2_pptx(ALL$FIGURE, ALL$TABLE)")
+        
+        output=NULL; error_message=NULL
+        if ("mypptx" %in% ls(env)) {mypptx = get("mypptx", env)}
+        if ("message" %in% ls(env)) {error_message = get("message", env)}
+        
+        #removeNotification("myid")
+        if ((length(error_message)==0 & !is.null(mypptx))) {
+          showNotification("Printing...", type="message", id="myid") 
+          mypptx %>% print(target = file) 
+  
+        }else{
+          showNotification(paste0(error_message, collapse="\n"), type="error", id="myid")
+          NULL
+        }   
+        
+      }
       # https://groups.google.com/forum/#!topic/shiny-discuss/zATYJCdSTwk
       # http://stackoverflow.com/questions/40314582/how-to-download-multiple-reports-created-using-r-markdown-and-r-shiny-in-a-zip-f/40324750#40324750
       #zip(zipfile=file, files=c(fileDOC, filePPT) )

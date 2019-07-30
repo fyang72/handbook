@@ -2,18 +2,23 @@
 title: "My first rmarkdown report using handbook"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
+  html_document:
+    toc: yes
+    toc_depth: 3    
+    number_sections: yes
+    keep_md: no
+    code_folding: show
+    fig_caption: yes
   pdf_document:
     fig_caption: yes
     keep_tex: yes
     number_sections: yes
     toc: yes
     toc_depth: '3'
-  html_document:
-    toc: yes
-    toc_depth: '3'
   word_document: 
     toc: yes
     toc_depth: '3'   
+    number_sections: yes
 params:
   year:
     label: "Year"
@@ -39,7 +44,6 @@ params:
   dataset: !r data.frame()
   title: ""
   subtitle: ""
-
 ---
 
 ---
@@ -53,11 +57,13 @@ title: `r params$title `
 ```{r setup, include=FALSE}
 
 #date: "`r format(Sys.time(), '%d %B, %Y')`"
-   
+# not used newpage   2019-07-27
+library(knitr)
 knitr::opts_chunk$set(fig.width=9, 
                       fig.height=6, 
                       fig.path='figures/', 
                       fig.align='center',
+                      
                       comment = "#>",
                       include=TRUE,
                       collapse = TRUE,
@@ -68,24 +74,34 @@ knitr::opts_chunk$set(fig.width=9,
                       autodep=TRUE, 
                       echo=FALSE)
 
-
+opts_knit$set(eval.after = "fig.cap")
 
 ```
 
 
 
 
-# Summary {#sec-summary}
+# Abstract {#sec-abstract}
 
 
 ```{r summary}
 
+# https://scriptsandstatistics.wordpress.com/2016/08/29/how-to-number-and-reference-tables-and-figures-in-r-markdown-files/
+
+#values = list(data=NULL, figure=NULL, table=NULL)
+#params = NULL
+#params$dataset  = read_datafile(paste0(HOME, "/data/nmdatPKPD.csv"))
+
+
 dataset = params$dataset  # read_datafile(paste0(HOME, "/data/nmdatPK.csv"))
-dataset = dataset %>% convert_vars_type(nmdat_data_type)
+tdata = dataset %>% convert_vars_type(nmdat_data_type)
+ 
 
-tdata = dataset
+study_id = paste0(tdata %>% drop_na(STUDYID) %>% pull(STUDYID)%>%unique(), collapse=",")
 
-studyid = paste0(tdata%>% pull(STUDYID)%>%unique(), collapse=",")
+study_drug = paste0(tdata %>% drop_na(EXTRT) %>% pull(EXTRT)%>%unique(), collapse=",")
+ 
+
 # post-dose samples
 n.BLQ = tdata %>% filter(EVID==0, TIME>0, DVOR<0) %>% nrow()
 n.ALL = tdata %>% filter(EVID==0, TIME>0) %>% nrow()  
@@ -106,11 +122,8 @@ last.date <- paste0(format((last.sample.date$LAST.SAMPLE), "%B %dth %Y"), collap
 
 ```
 
-The population PK analysis included `r n.samples` post-dose PK samples obtained from `r n.USUBJID` subjects in the studies (Study ) for this interim analysis. The last sampling dates were `r last.date`  for `r studyid` , respectively.  
+The population PK analysis included `r n.samples` post-dose PK samples obtained from `r n.USUBJID` subjects in the studies for this interim analysis. The last sample was/were collected on `r last.date`  in study`r study_id`, respectively.  
 
-The final base model consisted of two-compartment disposition with zero-order IV infusion and first-order elimination. Predictive checks showed that the model could adequately characterize the concentration-time profile following IV administration over the dose range studied. 
-  
-more...
 
 <!--
 
@@ -118,22 +131,178 @@ more...
 
 
 # Introduction {#sec-introduction}
- 
-someting about the context of analysis. click section population: [population](#population)
+  
+Study `r study_id` was a phase I randomized, double-blind, placebo-controlled, single ascending dose and multiple dose study of the safety, tolerability, pharmacokinetics, and pharmacodynamics of intravenously and subcutaneously administered human monoclonal antibody `r study_drug` in healthy volunteers.  `r study_drug` is intended to inhibit xxxx pathway and is being developed for the treatment of xxxx diseases.
 
 
 # Materials and Methods {#sec-method}
+
+Descriptive representation and summary statistics were used to assess the characteristics of PK of `r study_drug`.  Exposure-response relationships were also explored.
  
-## Overall Study Design {#sec-study-design}
+## Overall Study Design  {#subsec-overall-study-design}
+The PK data collected from `r study_id` were combined for this PK report. The combined population is referred to as `overall population` hereafter.
+
+Pertinent details regarding the design and pharmacokinetic sampling scheme for each study are provided in Table 1. Henceforth, these studies are identified by the last 4 digits of the study number.  
+
+<br>
+
+```{r, summary-study-sampling-time }
+ 
+dataset = params$dataset  # read_datafile(paste0(HOME, "/data/nmdatPK.csv"))
+tdata = dataset %>% convert_vars_type(nmdat_data_type)
+
+tabl = dataset %>% 
+  filter(EVID==0) %>% 
+  group_by(STUDYID, ARMA) %>% 
+  dplyr::summarise(
+    N=length(unique(USUBJID)), 
+    sampling_time = paste0(unique(TIMEPT), collapse=", ")
+    )
+
+
+values$table[["tab:summary-study-sampling-time"]] = tabl
+
+pander(tabl)
+
+# not work for all formats (html, word, PDF) except pander
+#------------------------------------------------
+#caption = 'Summary of Studies and Sampling Time'
+#knitr::kable(tabl, booktabs = TRUE, caption=caption)      #, padding = 2
+   
+ #xtable(tabl, label = "tab:summary-study-sampling-time", 
+  #           caption = "Summary of Studies and Sampling Time")
+#print(tabl, comment = F)
+
+```
+
+<br>
+
+## Bioanalytical Assays {#subsec-bioanalytical-assays}
+
+###	Functional Assay  
+
+Serum samples were analyzed for functional `r study_drug` concentrations, using a validated enzyme-linked immunosorbent assay (ELISA). Captured `r study_drug` is detected using a biotinylated anti-human IgG4 monoclonal antibody. In this functional assay, `r study_drug` with at least one unoccupied binding site is detected. The lower limit of quantification (LLOQ) is 0.078 mg/L of functional `r study_drug` in neat human serum. The bioanalytical assay for functional `r study_drug` is described in detail in the Bioanalytical Report xxxx.
+
+
+### Anti-`r study_drug` Antibody Assay  
+
+Anti-`r study_drug` antibodies (anti-drug antibodies; ADA) were assessed in serum samples using a validated electrochemiluminescence bridging immunoassay.
+
+The method involved 3 steps for the evaluation of human serum samples: screening, confirmation, and titer determination.  The screening assay identified potentially positive samples.  Samples that had a positive response in the screening assay were then analyzed in the confirmation (drug specificity) assay.  Samples were considered negative for ADA if either the screening or confirmation tests were negative; samples that exhibited a positive response in the confirmation assay were considered positive for ADA.  A titration assay with a minimum dilution of 1:30 was then used to determine the ADA titer.  For samples that were confirmed ADA positive (in the confirmatory step), but found to have a titer below the assay titer cut-off at the minimum dilution (ie, <30), a titer value of 30 was imputed.
+
+The assay for anti-`r study_drug` antibody is described in detail in the Bioanalytical Report xxxx.
+
+
+
+### Neutralizing Anti-`r study_drug` Antibody Assay  
+The presence of neutralizing anti-`r study_drug` antibodies (NAb) was evaluated in ADA-positive serum samples using a validated competitive ligand-binding assay. The assay procedure employed a mouse anti `r study_drug` monoclonal antibody as the positive control, biotinylated `r study_drug` as the capture reagent, ruthenium-labeled PD-1 receptor as the detection reagent, and a human anti PD 1 receptor monoclonal antibody to mitigate ligand interference.
+
+The assay for neutralizing anti-`r study_drug` antibody is described in detail in the Bioanalytical Report xxxx. 
 
 
 # Results {#sec-results}
 
-## PK Population and Samples {#subsec-population}
+## PK Population and Samples {#subsec-population-samples}
 
 
-## Base Model {#result-base-model}
 
+```{r, summary-population-samples }
+ 
+dataset = params$dataset  # read_datafile(paste0(HOME, "/data/nmdatPK.csv"))
+tdata = dataset %>% convert_vars_type(nmdat_data_type)
+
+tabl <- tdata  %>% summary_of_studies(
+  group_by=c("STUDYID", "ARMA"), 
+  value="DVOR", 
+  id="USUBJID") 
+
+values$table[["tab:summary-population-samples"]] = tabl
+
+
+pander(tabl)
+
+# caption = 'Summary of PK Samples Removed from the Original Dataset  '
+# knitr::kable(tabl, booktabs = TRUE, caption=caption)      #, padding = 2
+   
+#tabl <- xtable(tabl, label = "tab:summary-population-samples", 
+#             caption = "Summary of Studies and Samples")
+#print(tabl, comment = F)
+
+```
+
+
+## Descriptive analysis
+
+###	Concentrations of Functional `r study_drug`
+
+Mean and individual functional `r study_drug` concentrations in serum versus nominal/actual sampling week are presented by treatment group and by subject in Figure 1 through Figure 4. 
+
+The PK profiles of `r study_drug` exhibited a short distribution phase and a linear elimination phase followed by a concentration-dependent elimination phase, consistent with target-mediated elimination.   `r study_drug` concentrations increased in a greater than dose-proportional manner.  
+
+
+```{r, eval=TRUE}
+# Error in mapply: zero-length inputs cannot be mixed with those of non-zero length
+ 
+dataset = params$dataset  # read_datafile(paste0(HOME, "/data/nmdatPK.csv"))
+tdata = dataset %>% convert_vars_type(nmdat_data_type)
+
+tdata = tdata %>% filter(TESTCAT == "PK")
+output1 <- tdata %>% descriptive_time_profile_mean(params=NULL)
+output2 <- tdata %>% descriptive_time_profile_indiv(params=NULL)
+output <- mapply(c, output1, output2, SIMPLIFY=FALSE)
+
+#values = mapply(c, values, output, SIMPLIFY=FALSE)
+
+```
+
+```{r, eval=TRUE}
+FIGURE = output$figure
+
+out_figure = NULL
+if (is.null(FIGURE)) {out_figure = "no figure found"}
+
+for (figure_name in  names(FIGURE)) {
+   add_figure <- knit_expand(paste0(HOME, '/rmd/10_reporting/child_figure.Rmd'))
+
+   add_figure <- gsub("figure_name",  figure_name,   add_figure)
+   add_figure <- gsub("figure_label",   paste0("figure_",figure_name),   add_figure)
+   add_figure <- gsub("figure_align",  "center",  add_figure)
+   add_figure <- gsub("figure_caption",  attributes(FIGURE[[figure_name]])$title,   add_figure)
+  
+  out_figure = c(out_figure,add_figure )
+  
+}
+```
+
+`r paste(knit(text = out_figure), collapse = '\n')`
+
+
+
+
+```{r, eval=TRUE, include=FALSE}
+ 
+TABLE = output$table
+
+out_table = NULL
+if (is.null(TABLE)) {out_table = "no table found"}
+
+
+for (table_name in  names(TABLE)) {
+  add_table <- knit_expand(paste0(HOME, '/rmd/10_reporting/child_table.Rmd')) 
+  
+   add_table <- gsub("table_name", table_name, add_table )
+   add_table <- gsub("table_label",  paste0("table_",table_name),  add_table )
+   add_table <- gsub("table_caption",  attributes(TABLE[[table_name]])$title, add_table )
+   
+  out_table = c(out_table, add_table )
+}
+```
+
+`r paste(knit(text = out_table), collapse = '\n')`
+
+
+ 
+ 
 
 ## R Markdown
 
@@ -141,66 +310,24 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
-\newpage
-
-```{r, eval=TRUE}
-#summary(cars)
-#,fig.align="center",fig.height=5, fig.width=6, message=FALSE,
-
-#tabl = ALL$TABLE[[1]]
-tabl = dataset %>% group_by(ARMA) %>% 
-  dplyr::summarise(N=length(unique(USUBJID)))
-
-caption = 'Summary of PK Samples Removed from the Original Dataset  '
-knitr::kable(tabl, booktabs = TRUE, caption=caption)      #, padding = 2
-   
-# xt <- xtable(head(out), label = "tab:pmx_mandatory", caption = "Mandatory arguments of pmx() function")
-# print(xt, comment = F)
-
-```
-
-
-```{r, eval=TRUE, fig.align='center', fig.cap="my first figure in Rmd using handbook"}
-
-#fig = ALL$FIGURE[[1]]
-fig = ggplot(dataset, aes(x=TIME, y=DVOR, group=USUBJID, color=ARMA)) + 
-  geom_point() + geom_line() + scale_y_log10()
+  
  
-fig
 
-```
+```{r model, eval=FALSE, collapse=TRUE}
+# callModule
+# regFormula <- reactive({
+#   as.formula(paste('mpg ~', input$x))
+# }) 
 
-
-
-
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
-
-
-Here is my regression model:
-
-```{r model, collapse=TRUE}
 options(digits = 4)
 fit <- lm(regFormula(), data = mtcars)
 b   <- coef(fit)
 summary(fit)
+# 
+# The fitting result is $mpg = `r b[1]` + `r b[2]``r input$x`$.  
+#  `r paste0(params$region, params$year)` 
+#  
 ```
 
-The fitting result is $mpg = `r b[1]` + `r b[2]``r input$x`$.  
- `r paste0(params$region, params$year)`  
-
-Below is a scatter plot with the regression line.
-
-```{r plot, fig.height=5}
-par(mar = c(4, 4, 1, 1))
-plot(regFormula(), data = mtcars, pch = 19, col = 'gray')
-abline(fit, col = 'red', lwd = 2)
-```
+ 
+ 

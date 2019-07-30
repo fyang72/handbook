@@ -6,9 +6,11 @@ This chapter is dedicated for simulation and post-process of the simulated data.
 In particular, R package *mrgsolve* is used as the simulation engine. 
 For more details on using *mrgsolve* see <https://mrgsolve.github.io/>.
 
-1. To run simulations, see section [run simulation](#sec_run_sim); 
+not good \@ref(sec-summaris-eexposure). 
+
+1. To run simulations, see section \@ref(sec-summaris-eexposure) [run simulation](#sec_run_sim);  
 2. To post-processing a simulated data, including 
-    + derive exposure matrices, see section [summarise exposure metrices](#sec_summarise_exposure); 
+    + derive exposure matrices, see section \@ref(sec-summaris-eexposure);  
     + calculate percent of population above certain threshold, 
       see section [calculate pct threshold](#sec_pct_threshold); 
     + plot VPC, see section [plot VPC](#sec_plot_VPC); 
@@ -40,8 +42,11 @@ output$run_simulation <- renderUI({
 fluidRow(column(12, uiOutput("run_simulation")))
 ```
 
- 
-## Summarise exposure <a name="sec_summarise_exposure"></a>
+## Summarise exposure {#sec-summaris-eexposure}  
+
+### Figures with images {#discussion}
+
+
 In this section, you can calculate the individual exposure metrics 
 based on the simulated data, and then summarise them, typically based on their dose groups, 
 to generate a variety of summary tables and appropriate visualizations. 

@@ -43,7 +43,7 @@ print2_pptx <- function(mypptx=NULL,
   #             theme(panel.grid.major = element_blank(), 
   #                   panel.grid.minor = element_blank()))
   
-  if (is.null(mypptx)) {mypptx <- read_pptx("./lib/pptTemplate.pptx")}  
+  if (is.null(mypptx)) {mypptx <- read_pptx(paste0(HOME, "/lib/pptTemplate_long_format.pptx"))}  
   mylab <- layout_summary(mypptx)[[1]] # Slide Layout Name
   mytmp <- layout_summary(mypptx)[[2]][1] # Show Slide Master Name
   

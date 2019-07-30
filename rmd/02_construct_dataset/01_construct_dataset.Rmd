@@ -9,7 +9,7 @@
 
 Having a standardized dataset is the key to use this handbook. Without it, you may experience more bugs or instabilities. Two approaches to construct a dataset were presented in this handbook,     
 
-1. construct a preliminary nonmem dataset from scratch, i.e. from patient demographic information (*adsl*), dosing record information (*adex*), concentration information (*adpc*), etc. see section [Assemble nmdat](#assemble_nmdat); 
+1. construct a preliminary nonmem dataset from scratch, i.e. from patient demographic information (`adsl`), dosing record information (`adex`), concentration information (`adpc`), etc. see section [Assemble nmdat](#assemble_nmdat); 
     + standardize patient demographic information, see section [adsl](#standardize_adsl); 
     + standardize dosing record information, see section [adex](#standardize_adex); 
     + standardize concentration information, see section [adpc](#standardize_adpc); 

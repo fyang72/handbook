@@ -3,7 +3,7 @@
 library(stringr)
 HOME = paste0(normalizePath("."), "/")
 if (str_sub(HOME, 1, 22) == "/home/feng.yang/FYANG/") {HOME=paste0("~/YANG/")}
-if (str_sub(HOME, 1, 19) == "C:\\Users\\feng.yang\\") {HOME=paste0("~/handbook/")}
+if (str_sub(HOME, 1, 19) == "C:\\Users\\feng.yang\\") {HOME=paste0("~/bookdown/")}
  
  
 ######################################################################
@@ -35,7 +35,7 @@ library(knitr)
 library(rmarkdown)
 library(ReporteRs) 
 library(officer)
-
+library(pander)
  
 # Shiny, Rmarkdown
 #-------------------- 
@@ -244,14 +244,12 @@ options(dplyr.print_min = 6, dplyr.print_max = 6)
 # default options in pander
 ######################################################################
 # set pander table-layout options
-# library(pander)
-# panderOptions('table.alignment.default', function(df)
-#   ifelse(sapply(df, is.numeric), 'right', 'left'))
-# panderOptions('table.split.table', Inf)
-# panderOptions('big.mark', ",")
-# panderOptions('keep.trailing.zeros', TRUE)
- 
-
+library(pander)
+panderOptions('table.alignment.default', function(df)
+  ifelse(sapply(df, is.numeric), 'right', 'left'))
+panderOptions('table.split.table', Inf)
+panderOptions('big.mark', ",")
+panderOptions('keep.trailing.zeros', TRUE)
 
 
 

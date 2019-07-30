@@ -173,7 +173,12 @@ module_review_data <- function(input, output, session, ALL) {
                        data_name = names(ALL$DATA[data_name])
       )
       
-      module_save_data_UI(ns(paste0("module_save_data_", i)), label = NULL) 
+      fluidRow(
+        column(width=12,  
+            module_save_data_UI(ns(paste0("module_save_data_", i)), label = NULL),
+            style='margin-bottom:30px;  border:1px solid; padding: 10px;'
+        )
+      )
     })
     
   })

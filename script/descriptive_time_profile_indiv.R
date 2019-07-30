@@ -138,7 +138,7 @@ descriptive_time_profile_indiv <-function(dataset, params=NULL) {
   figure[[paste0("indiv_profile_log_", test_name)]] = fig 
   figure[[paste0("indiv_profile_log_", test_name)]]$data =  tdata
    
-  return(list(figure=figure, table=table ))
+  return(list(data=data, figure=figure, table=table))  # do keep it as this way, 07-28-2019
   }
   
 #################################################################

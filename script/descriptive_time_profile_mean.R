@@ -191,7 +191,7 @@ descriptive_time_profile_mean <-function(dataset, params=NULL) {
   
   table[[paste0("stats_tab_", test_name)]] = tabl
   
-  return(list(figure=figure, table=table, message=message))
+  return(list(data=data, figure=figure, table=table))  # do keep it as this way, 07-28-2019
 }
 
 #################################################################
