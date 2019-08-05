@@ -82,8 +82,9 @@ module_run_script <- function(input, output, session,
     dataset = load_dataset()
     validate(need(dataset, message="no dataset"))
     
-    if (class(dataset) == "xpose.data") {
-      tdata = dataset %>% slot("Data")
+    if (class(dataset)[1] == "xpose_data") {
+      #tdata = dataset %>% slot("Data")  # xpose4
+      tdata = xpose::get_data(dataset)  # xpose
     }else if (class(dataset) == "list"  & all(c("adsl", "adex", "adpc") %in% names(dataset))) {
       tdata = dataset[["adsl"]]
     }else {

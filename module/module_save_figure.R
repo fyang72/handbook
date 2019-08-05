@@ -95,19 +95,21 @@ output$figure_container <-renderUI({
           )  
 })  
 
+
+
 #   
-#   output$figure_container <- renderUI({ 
-#     validate(need(figure, message="no figure found")
-#     )
-#     
-#     output$figure2 <- renderPlot({  
-#       
-#       cat(file=stderr(), "##############Step: render myPlot #################", "\n")
-#       isolate(figure)
-#     })
-#     
-#     plotOutput(ns("figure2"), width = "100%", height = "500px")
-# })
+output$figure_container2 <- renderUI({ 
+ validate(need(figure, message="no figure found")
+ ) 
+  
+  library(plotly)
+  # renderPlotly() also understands ggplot2 objects!
+  output$figure2 <- renderPlotly({
+    figure %>% plotly::ggplotly()
+  })
+ 
+  plotlyOutput(ns("figure2"), width = "100%", height = "500px")
+ })
 
 
 #-------------------------------------------------------------

@@ -3,58 +3,40 @@
 
 This section is to perform any diagnostic analysis of a given nonmem run. 
 
+TUTORIAL
+Model Evaluation of Continuous Data Pharmacometric
+Models: Metrics and Graphics
+
+https://ascpt.onlinelibrary.wiley.com/doi/pdf/10.1002/psp4.12161
+
  
+ Shiny applications for pharmacometrics
+ https://rdrr.io/github/pnolain/popkinr/
+  
+  RichardHooijmaijers/shinyMixR: Shiny dashboard interface for nlmixr
+ https://rdrr.io/github/RichardHooijmaijers/shinyMixR/src/R/gof_plot.r
+ 
+ https://ascpt.onlinelibrary.wiley.com/doi/pdf/10.1002/psp4.12445
+ Nonlinear Mixed-Effects Model Development and
+Simulation Using nlmixr and Related R Open-Source
+Packages
+
+
+
+
 ```{r}
 user.name = tolower(Sys.info()["user"])  # determineCurrentUser()
 values4xpdb = reactiveValues(diagnostic=NULL) 
 ```
 
-
-```{r}
-output$which_program_runno_UI <- renderUI({    
- fluidRow(
-    column(width=4, uiOutput(("select_which_program_container"))), 
-    column(width=4, uiOutput(("select_which_runno_container")))  
-)
-}) 
-fluidRow(column(12, uiOutput(("which_program_runno_UI"))))
-```
-
-
-```{r}
-output$select_which_program_container <- renderUI({
-  dir_lst = list.files(path = paste0(HOME, "/output/", user.name, "/"), 
-                         full.names = FALSE, recursive = FALSE)
-  dir_lst = c("", dir_lst)
-  selectizeInput(("which_program"), 
-                 label    = "Select program:", 
-                 choices  = dir_lst, 
-                 multiple = FALSE,
-                 selected = dir_lst[1]) 
-
-})
-
-output$select_which_runno_container <- renderUI({
-  dir_lst = list.files(path = paste0(HOME, "/output/", 
-                                       user.name, "/", 
-                                       input$which_program, "/ctl/"), 
-                         full.names = FALSE, recursive = FALSE)
-  dir_lst = c("", dir_lst)
-  selectizeInput(("which_runno"), 
-                 label    = "Select run:", 
-                 choices  = dir_lst, 
-                 multiple = FALSE,
-                 selected = dir_lst[1]) 
-
-})
  
 
-```
+ 
 
 
 
 
-```{r}
+```{r, eval=FALSE}
 # read xpdb using xpose.data
 
  xpdb_inputData <- reactive({
@@ -106,6 +88,9 @@ output$select_which_runno_container <- renderUI({
  
 ```
 
+ 
+
+
 
 ### Predefined plots <a name="predefined_diagnostic_plot"></a>
 
@@ -125,7 +110,7 @@ See section [model diagnostic](#model_diagnostic).
 6. ETAvsETA:  <br>
 
 
-```{r}
+```{r, eval=FALSE}
 # once have xpdb, generate all pre-defined plots
 
 observeEvent({xpdb_inputData()}, {
@@ -189,7 +174,7 @@ See section [model diagnostic](#model_diagnostic).
  
 output$user_specified_diagnostic_plot <- renderUI({ 
   
-  validate(need(xpdb_inputData(), message="no data found yet"))
+  #validate(need(xpdb_inputData(), message="no data found yet"))
    
   # script
   script <- list.files(path=paste0(HOME, "/script/"), 
@@ -198,17 +183,23 @@ output$user_specified_diagnostic_plot <- renderUI({
   names(script) = basename(script)
   
   # module_run_script
-  ALL = callModule(module_run_script, "user_specified_diagnostic_plot", 
+  ALL = callModule(module_run_xpdb, "user_specified_diagnostic_plot", 
                    ALL, 
-                   dataset=xpdb_inputData(),
-                   script=script)
+                   dataset=xpdb_inputData(), 
+                   dataset_name="", 
+                   script=script, 
+                    params=NULL)
 
-  module_run_script_UI(("user_specified_diagnostic_plot"), label = NULL) 
+  module_run_xpdb_UI(("user_specified_diagnostic_plot"), label = NULL) 
      
 })
 
 fluidRow(column(12, uiOutput(("user_specified_diagnostic_plot"))))
 
 ```
+ 
+  
+
+
  
  

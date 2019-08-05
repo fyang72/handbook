@@ -36,14 +36,30 @@ module_ggplot_brush_UI2 <- function(id, label="") {
 # log in and load data (sidebar)
 ################################################################################
 
-module_ggplot_brush <- function(input, output, session, fig, mydata, xvar="xvar", yvar="yvar") {
+module_ggplot_brush <- function(input, output, session, fig, 
+                                mydata, xvar="xvar", yvar="yvar") {
   
   ns <- session$ns
 
   ranges <- reactiveValues(x = NULL, y = NULL)
   
+  mydata = fig$data 
+  
+  
+  if(!is.null(fig$mapping)) { 
+    xvar = rlang::get_expr(fig$mapping[[1]])%>% as.character()
+    if (length(fig$mapping)==2) {
+      yvar = rlang::get_expr(fig$mapping[[2]])%>% as.character()
+    }
+    
+    #xscale = 1/max(mydata[, xvar], na.rm=TRUE)
+    #yscale = 1/max(mydata[, yvar], na.rm=TRUE)
+  }
+  
   # selected_brush_data
-  selected_brush_data <- reactive({                 
+  selected_brush_data <- reactive({     
+    print(input$plot_brush)
+    
     brushedPoints(mydata, input$plot_brush, xvar, yvar, allRows = FALSE)  %>% as.data.frame()
   })
   
@@ -79,7 +95,10 @@ module_ggplot_brush <- function(input, output, session, fig, mydata, xvar="xvar"
   # ggplot_container
   output$ggplot_container <- renderUI({
     output$ggplot <-renderPlot({
-       fig + coord_cartesian(xlim = ranges$x, ylim = ranges$y, expand = TRUE)
+       fig + coord_cartesian(xlim = ranges$x, 
+                             ylim = ranges$y, 
+                             expand = TRUE
+                             )
     }#, deleteFile = TRUE 
     #outputArgs = list(brush = brushOpts(id = ns("plot_brush")),
     #                  click = clickOpts(id = ns("plot_click"))

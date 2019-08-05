@@ -27,7 +27,7 @@ xpdb_diagnostic_GOF2 <- function(xpdb, values4xpdb)  {
     theme(legend.position="none") +
     labs(caption = paste0("source:", runno, ".lst")) + 
     xlab(xpdb@Prefs@Labels$TIME) + 
-    ylab( xpdb@Prefs@Labels$CWRES)
+    ylab(xpdb@Prefs@Labels$CWRES)
   
   values4xpdb$diagnostic$CWRES.TIME$fig = fig_CWRES_TIME 
   values4xpdb$diagnostic$CWRES.TIME$data = tdata

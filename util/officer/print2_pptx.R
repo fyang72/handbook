@@ -77,6 +77,7 @@ print2_pptx <- function(mypptx=NULL,
   figure_name_lst = names(FIGURE)
   
   for(i in 1:length(FIGURE)) {
+    if (length(FIGURE)==0) {break}
     
     figure_name = figure_name_lst[i]
     print(figure_name)
@@ -138,6 +139,7 @@ print2_pptx <- function(mypptx=NULL,
   table_name_lst = names(TABLE)
   
   for(i in 1:length(TABLE)) {
+    if (length(TABLE)==0) {break}
     
     table_name = table_name_lst[i]
     print(table_name)

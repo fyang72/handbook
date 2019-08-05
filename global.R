@@ -3,7 +3,7 @@
 library(stringr)
 HOME = paste0(normalizePath("."), "/")
 if (str_sub(HOME, 1, 22) == "/home/feng.yang/FYANG/") {HOME=paste0("~/YANG/")}
-if (str_sub(HOME, 1, 19) == "C:\\Users\\feng.yang\\") {HOME=paste0("~/bookdown/")}
+if (str_sub(HOME, 1, 19) == "C:\\Users\\feng.yang\\") {HOME=paste0("~/handbook/")}
  
  
 ######################################################################
@@ -91,6 +91,8 @@ library(VennDiagram)
 library("mrgsolve") 
 library("PKPDmisc")         #
 library("xpose4")
+library("xpose") # ggplot based
+
 #library(vpc)
 
 
@@ -434,4 +436,39 @@ default_script = script
 
 
 
+basic_gof_plots_lst <- c("dv_vs_pred",   
+                   "dv_vs_ipred",
+                   
+                   "dv_vs_idv",
+                   "ipred_vs_idv",
+                   "pred_vs_idv",
+                   "dv_preds_vs_idv",
+                   
+                   "res_vs_idv",
+                   "res_vs_pred",
+                   "absval_res_vs_idv",
+                   "absval_res_vs_pred",
+                   "absval_res_vs_pred")
+
+indiv_plots_lst <- c("ind_plots")
+
+
+distribution_plots_lst <- c("prm_distrib",
+"eta_distrib", 
+"res_distrib",  
+"cov_distrib", 
+"prm_qq", 
+"eta_qq",
+"res_qq", 
+"cov_qq")
+
+vpc_plots_lst <- c(
+  "vpc_stratify_sex",   
+  "vpc_type_censored",   
+  "vpc_type_categorical")
+
+other_plots_lst <- c(
+  "amt_vs_idv",  
+  "prm_vs_iteration",  
+  "grd_vs_iteration")
 

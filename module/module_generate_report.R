@@ -91,7 +91,7 @@ module_generate_report <- function(input, output, session,
         HTML(colFmt("Step 1: Load the dataset<br>", color="darkblue")
         ),
         uiOutput(ns("pk_report_data_selector")),
-        fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+        #fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
         
         # filters
         HTML(colFmt("Step 2: Apply following filter(s), if needed, to narrow down the dataset<br>", color="darkblue")
@@ -99,7 +99,7 @@ module_generate_report <- function(input, output, session,
         uiOutput(ns("select_STUDYID_container")), 
         uiOutput(ns("select_TEST_container")), 
         uiOutput(ns("select_ARMA_container")),
-        fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+        #fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
         
         #style='margin-bottom:30px;  border:1px solid; padding: 10px;'
         
@@ -241,36 +241,48 @@ module_generate_report <- function(input, output, session,
     
     script_lst <- c("", names(script))
     tagList(
-      HTML(colFmt("Step 1: select which script template<br>", color="darkblue")
-      ),
       
       fluidRow(
-        column(9,
-               selectizeInput(ns("script_selector"),
-                              label    = NULL, #"select script:" ,
-                              choices  = script_lst,
-                              multiple = FALSE,
-                              selected = script_lst[1]
-               )
-        )
-        # column(3,
-        #        actionButton(ns("run_script"), label="Run script", style=actionButton_style )
-        # ) 
-      ), 
+        column(6, 
+            HTML(colFmt("Step 1: select which script template<br>", color="darkblue")
+            ),
+            
+            fluidRow(
+              column(12,
+                     selectizeInput(ns("script_selector"),
+                                    label    = NULL, #"select script:" ,
+                                    choices  = script_lst,
+                                    multiple = FALSE,
+                                    selected = script_lst[1]
+                     )
+              )
+              # column(3,
+              #        actionButton(ns("run_script"), label="Run script", style=actionButton_style )
+              # ) 
+            ), 
+            
+            # download_report_container
+            #fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+            HTML(colFmt("Step 2: choose the options provided, then download it <br>", color="darkblue")
+            ),
+            fluidRow(column(12, uiOutput(ns("download_report_container"))))
+        ), 
+        
+        column(6, uiOutput(ns("ppt_word_checkout_container")))
+        ), 
       
-      # download_report_container
-      fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
-      HTML(colFmt("Step 2: choose the options provided, then download it <br>", color="darkblue")
-      ),
-      fluidRow(column(12, uiOutput(ns("download_report_container")))),
+      
+      
       
       # rmd_content_container
-      fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+      #fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
       HTML(colFmt("Step 3: optionally, modify the script, then re-download it.<br>", color="darkblue")
       ),
       fluidRow(column(12, uiOutput(ns("rmd_content_container"))))
       
       )
+      
+    
   })
   
   
@@ -357,44 +369,12 @@ output$rmd_content_container <- renderUI({
       }
     )
     
-    
-    
-    output$download_pptx <- downloadHandler(
-      filename = function() {
-        paste('my-report.pptx') 
-      },
-      
-      content = function(file) {
-        # temporarily switch to the temp dir, in case you do not have write
-        # permission to the current working directory
-        owd <- setwd(tempdir())
-        on.exit(setwd(owd))
-        
-        # Create a Progress object
-        progress <- shiny::Progress$new()
-        # Make sure it closes when we exit this reactive, even if there's an error
-        on.exit(progress$close())
-        progress$set(message = "Building Content...Please Wait", value = 0)
-        
-        #if (file.exists(file)) {file.remove(file)} #Delete file if it exists
-        #pptx_input() %>% 
-        print2_pptx(mypptx=NULL, FIGURE=VALUES$figure, TABLE=VALUES$table) %>% print(target = file) 
-        
-        # https://groups.google.com/forum/#!topic/shiny-discuss/zATYJCdSTwk
-        # http://stackoverflow.com/questions/40314582/how-to-download-multiple-reports-created-using-r-markdown-and-r-shiny-in-a-zip-f/40324750#40324750
-        #zip(zipfile=file, files=c(fileDOC, filePPT) )
-        #browseURL(fileDOC)
-        
-      }#, 
-      #contentType = "application/zip"
-      #contentType = "application/octet-stream"  #ms-word
-      #contentType = "application/ms-word"  #ms-word
-    )
+     
     
     
     # UI
     fluidRow(
-      column(6, 
+      column(12, 
              helpText(), 
               #selectInput(ns('x'), 'Build a regression model of mpg against:',
                #           choices = names(mtcars)[-1]),
@@ -404,10 +384,30 @@ output$rmd_content_container <- renderUI({
                           choices= c('PDF', 'HTML', 'Word'),
                           inline = TRUE),
              downloadButton(ns('downloadReport'), label="Download", style=actionButton_style)#,
-             #downloadButton(ns('download_pptx'), label="Download PPT", style=actionButton_style)
-             
+              
       ) 
     ) 
+    
+  })
+  
+  
+  output$ppt_word_checkout_container <- renderUI({ 
+    
+    #validate(need(drug_descriptive_analysis_inputData(), message="no data found yet"))
+    validate(need(!is.null(values$table) | 
+                  !is.null(values$figure), 
+                  message="no table or figure found"))
+    
+    values2 = values
+    values2$TABLE = values$table
+    values2$FIGURE = values$figure
+    
+    # callModule
+    callModule(module_review_checkout, "mycheckOut", values2)  
+    #, dataset, script, params=NULL
+    
+    # UI
+    module_review_checkout_UI(ns("mycheckOut"), label="") 
     
   })
   

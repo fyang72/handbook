@@ -222,6 +222,8 @@ resource_files:
 # a bookdown template that works perfectly!  07-28-2019
 # https://francoisbirgand.github.io/template-bookdown-article.html
 
+# https://adv-r.hadley.nz/evaluation.html
+
 
 #HOME <- paste0(getwd(), "/")
 HOME = paste0(normalizePath("."), "/")
@@ -401,6 +403,43 @@ You can also use the `shinyApp` function to define an application inline rather 
 In all of R code chunks above the `echo = FALSE` attribute is used. This is to prevent the R code within the chunk from rendering in the document alongside the Shiny components.
 
 
+http://discuss.go-isop.org/t/building-pharmacometric-applications-using-r-an-online-r-shiny-tutorial/57
+
+
+https://www.page-meeting.org/pdf_assets/7336-PAGE%20Poster%20PopkinR%20-%20Final%20version.pdf
+
+
+http://go-isop.org/isop-shiny-server/
+
+http://webpopix.org/shiny/ShinyExamples.html
+
+Application of ggplot2 to Pharmacometric Graphics
+https://ascpt.onlinelibrary.wiley.com/doi/full/10.1038/psp.2013.56
+ 
+https://www.go-acop.org/assets/Legacy_ACOPs/ACOP8/Abstracts/M-011.pdf
+
+
+# sas pdf shiny
+https://www.go-acop.org/assets/Legacy_ACOPs/ACOP8/Abstracts/M-034.pdf
+
+https://www.go-acop.org/assets/Legacy_ACOPs/ACOP8/Abstracts/M-060.pdf
+
+
+Systems Pharmacology Modeling in R, powered by Shiny 
+https://www.go-acop.org/assets/Legacy_ACOPs/ACOP8/Abstracts/M-097.pdf
+
+
+https://www.go-acop.org/previous-acop-meetings-acop8-posters
+
+# a company
+https://www.qpharmetra.com/company/pharmacometrics/
+
+IntiQuan GmbH – Unlocking the power of data for better decision making
+https://www.intiquan.com/
+
+
+Interactive Pharmacometric Applications Using R and the Shiny Package
+https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4394611/
 
 
 
