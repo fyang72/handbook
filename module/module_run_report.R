@@ -7,7 +7,7 @@
   #-----------------------------------------
 # xxxUI, xxxInput, xxxOutput, xxxControl 
 #-----------------------------------------
-module_generate_report_UI <- function(id, label = "") {
+module_run_report_UI <- function(id, label = "") {
   # Create a namespace function using the provided id
   ns <- NS(id)
   
@@ -64,7 +64,7 @@ module_generate_report_UI <- function(id, label = "") {
 ################################################################################
 ################################################################################ 
 
-module_generate_report <- function(input, output, session, 
+module_run_report <- function(input, output, session, 
                               ALL, key="report_template_pk",  params=NULL
 )  {
   

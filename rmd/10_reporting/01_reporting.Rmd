@@ -302,13 +302,13 @@ output$generate_pk_report_container <- renderUI({
   names(script) = basename(script)
     
   # callModule
-  ALL = callModule(module_generate_report, "generate_pk_report", 
+  ALL = callModule(module_run_report, "generate_pk_report", 
                    ALL, key = "report_template_pk")
   
   #, dataset, script, params=NULL
     
   # UI
-  module_generate_report_UI(("generate_pk_report"), label = NULL) 
+  module_run_report_UI(("generate_pk_report"), label = NULL) 
      
 })
 

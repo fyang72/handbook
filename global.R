@@ -332,6 +332,10 @@ route_var_lst <- std_convention %>% filter(domain=="DATA", name=="ROUTE") %>% pu
 testcat_var_lst <- std_convention %>% filter(domain=="DATA", name=="TESTCAT") %>% pull(value)
 timefmt_var_lst <- std_convention %>% filter(domain=="DATA", name=="TIMEFMT") %>% pull(value)
 
+#nm_reserved_names <- c( "ID"   "L2"   "DV"   "MDV"  "TIME" "EVID" "AMT"  "RATE" "SS"   "II"   "ADDL" "CMT"  "PCMT" "CALL" "CONT" "DATE"
+# "DAT1" "DAT2" "DAT3" "L1"   "PRED" "RES"  "WRES")
+
+
 topN = 20
 fuzzy_match_method = "jw"
 fuzzy_match_threshold = 0.5
