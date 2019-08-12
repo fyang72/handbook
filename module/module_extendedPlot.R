@@ -1,47 +1,6 @@
 
 # https://shiny.rstudio.com/reference/shiny/0.14/modalDialog.html
-
-
-
-
-
-ui <- function(id, label = "") {
   
-  
-  uiOutput("figure_container")
-  
-}
-
-
-server <- function(input, output, session) {
-  source("~/handbook/module/module_extendedPlot.R")
-  # source("~/handbook/module/module_extendedPlot_UI.R")
-  
-  plot_id = "test"
-  rv = list(run="123", info=list(run_id="1234"))
-  
-  
-  
-  p = ggplot(data.frame(x=1, y=1), aes(x=x, y=y)) + geom_point()
-  plot_name= "stestsf"
-  
-  output$figure_container <- renderUI({
-    
-    callModule(module_extendedPlot, 
-               plot_id, 
-               reactive_run = reactive(rv$run), 
-               reactive_plot = reactive(p), 
-               r_code = FALSE)
-    
-    module_extendedPlot_UI(plot_id, title = plot_name, height = 500, width  = 500, 
-                           customizable = TRUE, exportable = TRUE)
-    
-  })
-  
-}
-
-shinyApp(ui, server)
-
 #-----------------------------------------
 # xxxUI, xxxInput, xxxOutput, xxxControl 
 #-----------------------------------------
@@ -86,14 +45,20 @@ module_extendedPlot_UI <- function(id, title = "plot", exportable = TRUE, zoomab
 
       div(id = ns("r_code_section"),
           h4("R code"),
-          shinyAce::aceEditor(ns("r_code"), mode = "r", height = "80px", readOnly = TRUE, wordWrap = TRUE)))
+          shinyAce::aceEditor(ns("r_code"), mode = "r", height = "80px", readOnly = TRUE, wordWrap = TRUE)
+          )
+      )
   }
 
   div(
-    withSpinner(zplot, color = "#008d4c"),
+    #withSpinner(zplot, color = "#008d4c"),
+    
+    zplot,
     fluidRow(column(4, textInput(ns("sfsf"), "File sfsfsf", value = "title", width = "100%"))),
     verb_text,
-    export)
+    export, 
+    DT::dataTableOutput(ns("selected_dv_vs_pred_data"))
+    )
 }
 
 ################################################################################ 
@@ -493,6 +458,65 @@ module_extendedPlot <- function(input, output, session,
     )
   }
 
+  
+  
+  output$selected_dv_vs_pred_data <- DT::renderDataTable({
+    
+    #data <- req(run_dv_vs_pred_plot()$data)
+    
+    #ns <- NS("dv_vs_pred_plot")
+    
+    #brush <- input[[ns("brush")]]
+    
+    my_plot <- req(zoomed_plot()$plot)
+    #print(my_plot)
+    
+    data <- my_plot$data
+    brush <- input$brush  
+    
+    brush$xmin = brush$xmin * brush$img_css_ratio$x
+    brush$xmax = brush$xmax * brush$img_css_ratio$x
+    
+    brush$ymin = brush$ymin * brush$img_css_ratio$y
+    brush$ymax = brush$ymax * brush$img_css_ratio$y
+    
+    print(brush)
+    print("brush$mapping")
+    print(brush$mapping)
+    
+    n_var <- 2 + 0 #length(input$diagnostic_split_by)
+    panel_names <- paste0("panelvar", seq_len(n_var))
+    lhs <- "PRED"  #(brush$mapping)[panel_names] %>% unlist
+    rhs <- "DV"  #brush[panel_names] %>% unlist
+    
+    # browser()
+    # data <- data %>%
+    #   filter_(.dots = sapply(sprintf("~ %s == \"%s\"", lhs, rhs), as.formula) %>% unname)
+    
+    
+    exprs <- map(sprintf("~ %s == \"%s\"", lhs, rhs), as.formula) %>% map(as_quosure) %>%  unname()
+    
+    data <- data %>%
+      filter(!!!exprs)
+    
+    brush$mapping[panel_names] <- NULL
+    
+    
+    df <- brushedPoints(data, brush)
+    
+    # if(nrow(df) > 0) {
+    #   df <- df %>% mutate(n = row_number()) %>%  spread(X, X_Value) %>% spread(Y, Y_Value) %>% select(-n)
+    # } else {
+    #   df <- tibble(ID = numeric(), TIME = numeric(), CMT = numeric())
+    # }
+    
+    DT::datatable(df, options = list(pageLength = 20, dom = 'rtip'))
+    
+  })
+  
+  
+  
+  
   # n_facets_test <- reactive({
   #   my_plot <- req(zoomed_plot())$plot
   #
@@ -533,3 +557,96 @@ module_extendedPlot <- function(input, output, session,
   #   })
   # })
 }
+
+
+
+
+
+
+ui <- basicPage( #(id, label = "") {
+  
+  tagList(
+    uiOutput("figure_container")  
+    
+  )
+  
+)
+
+
+server <- function(input, output, session) {
+  
+
+  #source("~/handbook/module/module_extendedPlot.R")
+  
+  source("~/handbook/module/module_save_figure.R")
+  source("~/handbook/module/module_ggplot_brush.R")
+  
+  # source("~/handbook/module/module_extendedPlot_UI.R")
+  
+  plot_id = "test"
+  rv = list(run="123", info=list(run_id="1234"))
+   
+  library(xpose)
+  figure=NULL
+  table =NULL
+  data = NULL
+  
+   
+  #xpdb_ex_pk
+  xpdb <- xpdb_ex_pk 
+  #xpdb <- dataset
+  
+  xpdb <- xpdb %>% 
+    update_themes(gg_theme = theme_bw(), #+ base_theme(font.size = 12),
+                  xp_theme = list(point_color = 'blue',
+                                  line_color  = 'black'))  
+  
+  
+  
+  #Basic goodness-of-fit plots
+  #----------------------------------
+  # DV vs. PREDs plots
+  p <- xpdb %>% dv_vs_pred(quiet=TRUE) + 
+    coord_cartesian(xlim=c(0, 1.5), ylim=c(0, 2.0))
+  
+  #p = ggplot(data.frame(x=1:10, y=1:10), aes(x=x, y=y)) + geom_point()
+  plot_name= "stestsf"
+  
+  
+  # output$figure_container <- renderUI({
+  #   
+  #   callModule(module_extendedPlot, 
+  #              plot_id, 
+  #              reactive_run = reactive(rv$run), 
+  #              reactive_plot = reactive(p), 
+  #              r_code = FALSE)
+  #   
+  #   module_extendedPlot_UI(plot_id, title = plot_name, height = 500, width  = 500, 
+  #                          customizable = TRUE, exportable = TRUE)
+  #   
+  # })
+   
+  
+  
+  output$figure_container <- renderUI({
+    
+    callModule(module_save_figure, "sfstest", 
+               ALL= NULL,
+               figure= p, 
+               figure_index = 1, 
+               figure_name="fig-", 
+               figure_data =NULL)
+    
+    module_save_figure_UI(("sfstest"))
+    
+  })
+  
+  
+}
+
+
+
+#source("./handbook/global.R")
+shinyApp(ui, server)
+
+

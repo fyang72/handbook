@@ -1,4 +1,5 @@
 
+#http://shiny.rstudio.com/reference/shiny/latest/plotOutput.html
 
 module_ggplot_brush_UI <- function(id, label="") {
   
@@ -46,21 +47,34 @@ module_ggplot_brush <- function(input, output, session, fig,
   mydata = fig$data 
   
   
-  if(!is.null(fig$mapping)) { 
+  #if(!is.null(fig$mapping)) { 
     xvar = rlang::get_expr(fig$mapping[[1]])%>% as.character()
-    if (length(fig$mapping)==2) {
+   # if (length(fig$mapping)==2) {
       yvar = rlang::get_expr(fig$mapping[[2]])%>% as.character()
-    }
+   # }
     
     #xscale = 1/max(mydata[, xvar], na.rm=TRUE)
     #yscale = 1/max(mydata[, yvar], na.rm=TRUE)
-  }
+  #}
   
   # selected_brush_data
-  selected_brush_data <- reactive({     
+  selected_brush_data <- reactive({   
+    validate(need(input$plot_brush, message=FALSE))
+    
     print(input$plot_brush)
     
-    brushedPoints(mydata, input$plot_brush, xvar, yvar, allRows = FALSE)  %>% as.data.frame()
+    print("start at line 65: ")
+    brush <- input$plot_brush
+    
+    brush$xmin = brush$xmin * brush$img_css_ratio$x
+    brush$xmax = brush$xmax * brush$img_css_ratio$x
+    
+    brush$ymin = brush$ymin * brush$img_css_ratio$y
+    brush$ymax = brush$ymax * brush$img_css_ratio$y
+    
+    print(brush)
+    
+    brushedPoints(mydata, brush, xvar, yvar, allRows = FALSE)  %>% as.data.frame()
   })
   
   # selected_click_data
@@ -146,4 +160,6 @@ module_ggplot_brush <- function(input, output, session, fig,
       ranges$y <- NULL
     }
   })
+  
+  
 }

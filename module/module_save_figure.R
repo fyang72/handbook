@@ -23,12 +23,17 @@ module_save_figure_UI <- function(id, label = "") {
       )
     ), 
     
-    fluidRow(
-      column(width=6, #status = "primary",  #class = 'rightAlign', #background ="aqua",
+    fluidRow(  #column(width=12, div(align = "center",
+      
+      column(width=2, offset = 1, #status = "primary",  #class = 'rightAlign',#background ="aqua",
+             actionButton(ns("figure_options"),label="Options", style=actionButton_style)
+      ), 
+      
+      column(width=3, #status = "primary",  #class = 'rightAlign', #background ="aqua",
              uiOutput(ns("figure_name_container"))
              
       ),
-      
+       
       column(width=2, #status = "primary",  #class = 'rightAlign',#background ="aqua",
              actionButton(ns("figure_saveit"),label="Save it", style=actionButton_style)
       ), 
@@ -40,7 +45,7 @@ module_save_figure_UI <- function(id, label = "") {
       column(width=2,                                                                                                                                                                   
              downloadButton(ns("downloadppt"),label="ppt", icon=icon("download"), style=actionButton_style)                                                                        
       )
-    ), 
+    ), #)), 
     
     style='margin-bottom:30px;  border:1px solid; padding: 10px;'
   )
@@ -60,10 +65,11 @@ module_save_figure <- function(input, output, session, ALL,
                                ){
   
 ns <- session$ns 
-#values <- reactiveValues()
+values <- reactiveValues()
 
 # figure_title_container
 output$figure_title_container <- renderUI(renderText({
+  figure <- ggplot_figure()
   paste0("<b>Figure ", figure_index, ": ", attributes(figure)$title, "</b>")
 })() %>% HTML()
 )
@@ -76,16 +82,53 @@ output$figure_name_container <- renderUI({
 textInput(ns("figure_name"), value=figure_name, label=NULL)
 })
  
+ggplot_figure <- reactive({
+   
+  # title
+  if (!is.null(values$title)) {   
+    attr(figure, "title") = values$title
+  }
+  
+  
+  if (!is.null(values$xlabel)) {  
+  figure  <- figure  + labs(x = values$xlabel)
+  }
+  
+  #validate(values$plot_y_label, message=FALSE)
+  if (!is.null(values$ylabel)) { 
+  figure  <- figure  + labs(y = values$ylabel)
+  }
+  
+  #
+  # width and height
+  if (!is.null(values$width)) {   
+    attr(figure, "width") = as.numeric(values$width)
+  }
+  if (!is.null(values$height)) {   
+    attr(figure, "height") = as.numeric(values$height)
+  }
+  
+  # fontsize
+  if (!is.null(values$fontsize)) {   
+    attr(figure, "fontsize") = as.numeric(values$fontsize)
+  }
+  
+  figure
+})
+
+
+
+
 #----------------------------------------------------
 # figure_container
 #----------------------------------------------------
 output$figure_container <-renderUI({
-  validate(need(figure, message="no figure found")
+  validate(need(ggplot_figure(), message="no figure found")
   )
   
   #call module  
   callModule(module_ggplot_brush, "module_ggplot_brush_for_save_figure", 
-                   fig=figure, mydata=figure_data, xvar="xvar", yvar="yvar"
+                   fig=ggplot_figure(), mydata=figure_data, xvar="xvar", yvar="yvar"
              )
  
   # UI  
@@ -143,7 +186,7 @@ output$downloaddoc <- downloadHandler(
     #mydoc <-docx()    # D$documents[[1]]
      
     myfig <- NULL
-    myfig[[input$figure_name]] <- figure  
+    myfig[[input$figure_name]] <- ggplot_figure()  
     
     tt <- print2_word_ppt(myfig, TABLE_ALL=NULL,   
                              mydoc=NULL, myppt=NULL, 
@@ -174,7 +217,7 @@ output$downloadppt <- downloadHandler(
     
     #myppt <-pptx()    
     myfig <- NULL
-    myfig[[input$figure_name]] <- figure
+    myfig[[input$figure_name]] <- ggplot_figure() 
     
     tt <- print2_word_ppt(myfig, TABLE_ALL=NULL,   
                              mydoc=NULL, myppt=NULL, 
@@ -200,6 +243,63 @@ output$downloadppt <- downloadHandler(
 ) 
  
 
+observeEvent(input$figure_options, {
+  showModal(plotModel())
+})
+
+
+plotModel <- function(){
+  my_plot <- ggplot_figure()  #req(zoomed_plot())$plot
+   
+  modalDialog(
+    fluidRow(column(12, textInput(ns("title"), "title", width = "100%", value = my_plot$labels$title))),
+    fluidRow(column(12, textInput(ns("subtitle"), "sub-title", width = "100%", value =  my_plot$labels$subtitle))),
+    
+    fluidRow(column(6, textInput(ns("xlabel"), "x-axis label", width = "100%", value = my_plot$labels$x)),
+             column(6, textInput(ns("ylabel"), "y-axis label", width = "100%", value = my_plot$labels$y))),
+    
+    fluidRow(
+      column(6, numericInput(ns("width"), "width",
+        width = "100%", 
+        value = ifelse(is.null(attr(my_plot, "width")), 9, attr(my_plot, "width")))),
+             
+      column(6, numericInput(ns("height"), "height", 
+        width = "100%", 
+        value = ifelse(is.null(attr(my_plot, "height")), 6, attr(my_plot, "height"))))
+      ),
+    
+    fluidRow(
+      column(6, numericInput(
+        ns("fontsize"), "fontsize", 
+        width = "100%", 
+        value = ifelse(is.null(attr(my_plot, "fontsize")), 12, attr(my_plot, "fontsize"))))), 
+    
+    #fluidRow(column(3, selectInput(ns("theme"), "Theme", choices = c("Default", "Grey", "White", "Minimal"), selected = "Default"))),
+    #fluidRow(column(6,
+    #                numericInput(ns("axis_label_rotation"), "Axis labels rotation (°)", value = 0))),
+    
+    br(),
+    fluidRow(column(12, actionButton(ns("save"), "save", style=actionButton_style))),
+    footer = NULL,
+    easyClose = TRUE
+  )
+}
+
+observeEvent(input$save, {
+  values$title<- input$title
+  values$subtitle<- input$subtitle
+  
+  
+  values$xlabel<- input$xlabel
+  values$ylabel<- input$ylabel
+  
+  values$width <- input$width
+  values$height<- input$height
+  values$fontsize<- input$fontsize
+  
+})
+
+ 
 # We can run observers in here if we want to
 # observe({
 #   msg <- sprintf("figure review accordingly.")

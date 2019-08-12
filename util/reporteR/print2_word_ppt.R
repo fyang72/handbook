@@ -94,7 +94,7 @@ print2_word_ppt <- function(FIGURE_ALL, TABLE_ALL,
       width =  attr(newFig, "width"); width = ifelse(is.null(width), width_default, width)
       height =  attr(newFig, "height"); height = ifelse(is.null(height), height_default, height)
       fontsize =  attr(newFig, "fontsize"); fontsize = ifelse(is.null(fontsize), fontsize_default, fontsize)
-        
+      
       if (paste0(fig.name, "_title") %in% doc.bookmark.lst)  addParagraph2(mydoc, value=title, bookmark=paste0(fig.name, "_title")) 
       if (fig.name %in% doc.bookmark.lst)  addPlot2docx(mydoc, x=newFig, fun=print, pointsize=fontsize, bookmark=fig.name, width=width, height=height) 
       if (paste0(fig.name, "_footnote") %in% doc.bookmark.lst)   addParagraph2(mydoc, value=footnote, bookmark=paste0(fig.name, "_footnote"))    
@@ -144,7 +144,7 @@ addPlot2docx <- function(mydoc, x, bookmark=NULL, fun=print, pointsize=12, width
   #  fontname_mono = "Courier New", fontname_symbol = "Symbol",
   #  editable = TRUE, offx, offy, width, height, bg = "transparent", ...)
   #   
-  addPlot(mydoc, x=x, fun=print, pointsize=12, bookmark=bookmark, vector.graphic = FALSE, width = width, height = height
+  addPlot(mydoc, x=x, fun=print, pointsize=pointsize, bookmark=bookmark, vector.graphic = FALSE, width = width, height = height
           , fontname_serif = "Times New Roman", fontname_sans = "Calibri"  # "Calibri" 
           , par.properties = parProperties(text.align = "center", padding = 5)
   )
@@ -168,7 +168,7 @@ addPlot2pptx <- function(mydoc, x,   fun=print, pointsize=12, width = 6.4, heigh
   offy = ifelse(width==6.4 & height==4.8, 1.8, 
                 ifelse(width==8 & height==6, 1.35, 1.8))
   
-  addPlot(mydoc, x=x, fun=print, pointsize=12, vector.graphic = FALSE, width = width, height =height    
+  addPlot(mydoc, x=x, fun=print, pointsize=pointsize, vector.graphic = FALSE, width = width, height =height    
           , fontname_serif = "Times New Roman", fontname_sans = "Calibri" 
           , offx =offx, offy=offy 
           , par.properties = parProperties(text.align = "center", padding = 5)  # not useful
