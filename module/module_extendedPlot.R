@@ -560,7 +560,7 @@ module_extendedPlot <- function(input, output, session,
 
 
 
-idegug = 1
+idegug = 0
 #source("~/handbook/global.R")
 
 if (idegug) { 

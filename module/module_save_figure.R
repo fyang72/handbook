@@ -122,6 +122,33 @@ ggplot_figure <- reactive({
     figure <- figure + theme_regn(font_size = as.numeric(values$fontsize))
   }
   
+  # hline
+  if (!is.null(values$hline)) {   
+    #attr(figure, "fontsize") = as.numeric(values$fontsize)
+    
+    hline <- eval(parse(text=paste0("c(", values$hline, ")")))
+    hline_location = eval(parse(text=paste0("c(", values$hline_location, ")")))
+    #hline_label <- eval(parse(text=paste0("c(", values$hline_label, ")")))
+    
+    hline <- str_split(values$hline, ", ") %>% unlist() %>% as_numeric()  
+    hline_location = str_split(values$hline_location, ", ") %>% unlist() %>% as_numeric()   #eval(parse(text=paste0("c(", values$hline_location, ")")))
+    hline_label <- str_split(values$hline_label, ", ") %>% unlist() %>% as.character()
+    
+    figure <- figure + 
+      geom_hline(yintercept = hline, lty="dashed") + 
+      annotate("text", hline_location, hline,
+               vjust = -1,  label =  hline_label  
+               )   
+  }
+  
+  # # vline
+  # if (!is.null(values$vline)) {   
+  #   #attr(figure, "fontsize") = as.numeric(values$fontsize)
+  #   figure <- figure + geom_vline(xintercept = values$vline, lty="dashed") + 
+  #     annotate("text", values$vline_location, values$vline, vjust = -1, label = values$vline_label)   
+  # }
+  
+   
   figure
 })
 
@@ -250,10 +277,19 @@ plotModel <- function(){
    
   modalDialog(
     fluidRow(column(12, textInput(ns("title"), "title", width = "100%", value = my_plot$labels$title))),
-    fluidRow(column(12, textInput(ns("subtitle"), "sub-title", width = "100%", value =  my_plot$labels$subtitle))),
+    #fluidRow(column(12, textInput(ns("subtitle"), "sub-title", width = "100%", value =  my_plot$labels$subtitle))),
     
     fluidRow(column(6, textInput(ns("xlabel"), "x-axis label", width = "100%", value = my_plot$labels$x)),
              column(6, textInput(ns("ylabel"), "y-axis label", width = "100%", value = my_plot$labels$y))),
+    
+    fluidRow(column(3, textInput(ns("hline"), "hline(s)", width = "100%", value = NULL, placeholder="0.078, 10" )),
+             column(3, textInput(ns("hline_location"), "location(s)", width = "100%", value = NULL, placeholder="0, 0" )), 
+             column(6, textInput(ns("hline_label"), "label(s)", width = "100%", value = NULL, placeholder="0.078 mg/L, 10 mg/L" ))
+             
+             # column(2, textInput(ns("vline"), "vline(s)", width = "100%", value = NULL, placeholder="28, 56" )),
+             # column(2, textInput(ns("vline_label"), "vlabel(s)", width = "100%", value = NULL, placeholder="Day 28, Day 56" )),
+             # column(2, textInput(ns("vline_location"), "hlocation(s)", width = "100%", value = NULL, placeholder="10, 10" ))
+             ),
     
     fluidRow(
       column(3, numericInput(ns("docx_width"), "width(docx)",
@@ -303,6 +339,13 @@ observeEvent(input$save, {
   
   values$pptx_width <- input$pptx_width
   values$pptx_height<- input$pptx_height
+  
+  values$hline<- input$hline
+  #values$vline<- input$vline
+  values$hline_label <- input$hline_label
+  #values$vline_label <- input$vline_label
+  values$hline_location <- input$hline_location
+  #values$vline_location <- input$vline_location  
   
   values$fontsize<- input$fontsize
   
