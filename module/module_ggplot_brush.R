@@ -60,19 +60,16 @@ module_ggplot_brush <- function(input, output, session, fig,
   # selected_brush_data
   selected_brush_data <- reactive({   
     validate(need(input$plot_brush, message=FALSE))
-    
-    print(input$plot_brush)
-    
-    print("start at line 65: ")
+     
     brush <- input$plot_brush
-    
-    brush$xmin = brush$xmin * brush$img_css_ratio$x
-    brush$xmax = brush$xmax * brush$img_css_ratio$x
-    
-    brush$ymin = brush$ymin * brush$img_css_ratio$y
-    brush$ymax = brush$ymax * brush$img_css_ratio$y
-    
-    print(brush)
+    # 
+    # brush$xmin = brush$xmin * brush$img_css_ratio$x
+    # brush$xmax = brush$xmax * brush$img_css_ratio$x
+    # 
+    # brush$ymin = brush$ymin * brush$img_css_ratio$y
+    # brush$ymax = brush$ymax * brush$img_css_ratio$y
+    # 
+    # print(brush)
     
     brushedPoints(mydata, brush, xvar, yvar, allRows = FALSE)  %>% as.data.frame()
   })

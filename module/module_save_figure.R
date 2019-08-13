@@ -100,17 +100,26 @@ ggplot_figure <- reactive({
   }
   
   #
-  # width and height
-  if (!is.null(values$width)) {   
-    attr(figure, "width") = as.numeric(values$width)
+  # width and height (pptx)
+  if (!is.null(values$pptx_width)) {   
+    attr(figure, "pptx_width") = as.numeric(values$pptx_width)
   }
-  if (!is.null(values$height)) {   
-    attr(figure, "height") = as.numeric(values$height)
+  if (!is.null(values$pptx_height)) {   
+    attr(figure, "pptx_height") = as.numeric(values$pptx_height)
   }
+  
+  # width and height (docx)
+  if (!is.null(values$docx_width)) {   
+    attr(figure, "docx_width") = as.numeric(values$docx_width)
+  }
+  if (!is.null(values$docx_height)) {   
+    attr(figure, "docx_height") = as.numeric(values$docx_height)
+  }  
   
   # fontsize
   if (!is.null(values$fontsize)) {   
-    attr(figure, "fontsize") = as.numeric(values$fontsize)
+    #attr(figure, "fontsize") = as.numeric(values$fontsize)
+    figure <- figure + theme_regn(font_size = as.numeric(values$fontsize))
   }
   
   figure
@@ -188,13 +197,7 @@ output$downloaddoc <- downloadHandler(
     myfig <- NULL
     myfig[[input$figure_name]] <- ggplot_figure()  
     
-    tt <- print2_word_ppt(myfig, TABLE_ALL=NULL,   
-                             mydoc=NULL, myppt=NULL, 
-                             width_default=6.4,     # 8
-                             height_default=4.8,    # 6
-                             fontsize_default=12, 
-                             title_default = "Type in title"
-    )
+    tt <- print2_word_ppt2(myfig, TABLE_ALL=NULL, mydoc=NULL, myppt=NULL)
     
     validate(
       need(!is.null(tt$mydoc), "no doc found")
@@ -219,13 +222,7 @@ output$downloadppt <- downloadHandler(
     myfig <- NULL
     myfig[[input$figure_name]] <- ggplot_figure() 
     
-    tt <- print2_word_ppt(myfig, TABLE_ALL=NULL,   
-                             mydoc=NULL, myppt=NULL, 
-                             width_default=6.4,     # 8
-                             height_default=4.8,    # 6
-                             fontsize_default=12, 
-                             title_default = "Type in title"
-    )
+    tt <- print2_word_ppt2(myfig, TABLE_ALL=NULL, mydoc=NULL, myppt=NULL)
     
     validate(
       need(!is.null(tt$myppt), "no pptx found")
@@ -259,17 +256,25 @@ plotModel <- function(){
              column(6, textInput(ns("ylabel"), "y-axis label", width = "100%", value = my_plot$labels$y))),
     
     fluidRow(
-      column(6, numericInput(ns("width"), "width",
+      column(3, numericInput(ns("docx_width"), "width(docx)",
         width = "100%", 
-        value = ifelse(is.null(attr(my_plot, "width")), 9, attr(my_plot, "width")))),
+        value = ifelse(is.null(attr(my_plot, "docx_width")), 6.4, attr(my_plot, "docx_width")))),
              
-      column(6, numericInput(ns("height"), "height", 
+      column(3, numericInput(ns("docx_height"), "height(docx)", 
         width = "100%", 
-        value = ifelse(is.null(attr(my_plot, "height")), 6, attr(my_plot, "height"))))
+        value = ifelse(is.null(attr(my_plot, "docx_height")), 4.8, attr(my_plot, "docx_height")))),
+      
+      column(3, numericInput(ns("pptx_width"), "width(pptx)",
+                             width = "100%", 
+                             value = ifelse(is.null(attr(my_plot, "pptx_width")), 9, attr(my_plot, "pptx_width")))),
+      
+      column(3, numericInput(ns("pptx_height"), "height(pptx)", 
+                             width = "100%", 
+                             value = ifelse(is.null(attr(my_plot, "pptx_height")), 6, attr(my_plot, "pptx_height"))))      
       ),
     
     fluidRow(
-      column(6, numericInput(
+      column(3, numericInput(
         ns("fontsize"), "fontsize", 
         width = "100%", 
         value = ifelse(is.null(attr(my_plot, "fontsize")), 12, attr(my_plot, "fontsize"))))), 
@@ -293,8 +298,12 @@ observeEvent(input$save, {
   values$xlabel<- input$xlabel
   values$ylabel<- input$ylabel
   
-  values$width <- input$width
-  values$height<- input$height
+  values$docx_width <- input$docx_width
+  values$docx_height<- input$docx_height
+  
+  values$pptx_width <- input$pptx_width
+  values$pptx_height<- input$pptx_height
+  
   values$fontsize<- input$fontsize
   
 })

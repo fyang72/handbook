@@ -474,15 +474,15 @@ module_extendedPlot <- function(input, output, session,
     data <- my_plot$data
     brush <- input$brush  
     
-    brush$xmin = brush$xmin * brush$img_css_ratio$x
-    brush$xmax = brush$xmax * brush$img_css_ratio$x
-    
-    brush$ymin = brush$ymin * brush$img_css_ratio$y
-    brush$ymax = brush$ymax * brush$img_css_ratio$y
-    
-    print(brush)
-    print("brush$mapping")
-    print(brush$mapping)
+    # brush$xmin = brush$xmin * brush$img_css_ratio$x
+    # brush$xmax = brush$xmax * brush$img_css_ratio$x
+    # 
+    # brush$ymin = brush$ymin * brush$img_css_ratio$y
+    # brush$ymax = brush$ymax * brush$img_css_ratio$y
+    # 
+    # print(brush)
+    # print("brush$mapping")
+    # print(brush$mapping)
     
     n_var <- 2 + 0 #length(input$diagnostic_split_by)
     panel_names <- paste0("panelvar", seq_len(n_var))
@@ -560,8 +560,10 @@ module_extendedPlot <- function(input, output, session,
 
 
 
+idegug = 1
+#source("~/handbook/global.R")
 
-
+if (idegug) { 
 
 ui <- basicPage( #(id, label = "") {
   
@@ -606,11 +608,14 @@ server <- function(input, output, session) {
   #Basic goodness-of-fit plots
   #----------------------------------
   # DV vs. PREDs plots
-  p <- xpdb %>% dv_vs_pred(quiet=TRUE) + 
-    coord_cartesian(xlim=c(0, 1.5), ylim=c(0, 2.0))
+   #figure<- xpdb %>% dv_vs_pred(quiet=TRUE) #+ 
+   figure <- xpdb_ex_pk %>% my_dv_vs_pred()
+    #coord_cartesian(xlim=c(0, 1.5), ylim=c(0, 2.0))
+  
+  #p <-p + theme_regn(font_size = 24) #as.numeric(values$fontsize))
   
   #p = ggplot(data.frame(x=1:10, y=1:10), aes(x=x, y=y)) + geom_point()
-  plot_name= "stestsf"
+  figure_name= "stestsf"
   
   
   # output$figure_container <- renderUI({
@@ -632,7 +637,7 @@ server <- function(input, output, session) {
     
     callModule(module_save_figure, "sfstest", 
                ALL= NULL,
-               figure= p, 
+               figure= figure, 
                figure_index = 1, 
                figure_name="fig-", 
                figure_data =NULL)
@@ -649,4 +654,5 @@ server <- function(input, output, session) {
 #source("./handbook/global.R")
 shinyApp(ui, server)
 
+}
 
