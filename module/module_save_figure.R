@@ -39,11 +39,11 @@ module_save_figure_UI <- function(id, label = "") {
       ), 
       
       column(width=2,                                                                                                                                                                   
-             downloadButton(ns("downloaddoc"),label="doc", icon=icon("download"), style=actionButton_style)                                                                        
+             downloadButton(ns("downloaddoc"),label="docx", icon=icon("download"), style=actionButton_style)                                                                        
       ), 
       
       column(width=2,                                                                                                                                                                   
-             downloadButton(ns("downloadppt"),label="ppt", icon=icon("download"), style=actionButton_style)                                                                        
+             downloadButton(ns("downloadppt"),label="pptx", icon=icon("download"), style=actionButton_style)                                                                        
       )
     ), #)), 
     
@@ -276,7 +276,7 @@ plotModel <- function(){
   my_plot <- ggplot_figure()  #req(zoomed_plot())$plot
    
   modalDialog(
-    fluidRow(column(12, textInput(ns("title"), "title", width = "100%", value = my_plot$labels$title))),
+    fluidRow(column(12, textInput(ns("title"), "title", width = "100%", value = attr(my_plot, "title")))),
     #fluidRow(column(12, textInput(ns("subtitle"), "sub-title", width = "100%", value =  my_plot$labels$subtitle))),
     
     fluidRow(column(6, textInput(ns("xlabel"), "x-axis label", width = "100%", value = my_plot$labels$x)),
@@ -302,11 +302,11 @@ plotModel <- function(){
       
       column(3, numericInput(ns("pptx_width"), "width(pptx)",
                              width = "100%", 
-                             value = ifelse(is.null(attr(my_plot, "pptx_width")), 9, attr(my_plot, "pptx_width")))),
+                             value = ifelse(is.null(attr(my_plot, "pptx_width")), 8, attr(my_plot, "pptx_width")))),
       
       column(3, numericInput(ns("pptx_height"), "height(pptx)", 
                              width = "100%", 
-                             value = ifelse(is.null(attr(my_plot, "pptx_height")), 6, attr(my_plot, "pptx_height"))))      
+                             value = ifelse(is.null(attr(my_plot, "pptx_height")), 5.2, attr(my_plot, "pptx_height"))))      
       ),
     
     fluidRow(

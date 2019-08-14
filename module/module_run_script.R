@@ -402,15 +402,23 @@ output$table_container <- renderUI({
 ################################
 output$figure_container <- renderUI({  
   validate(need(is.list(values$figure), message="no figure found, or output$figure needs to be a list"))
-  
-  
-  
+ 
   tagList(
+    br(),
+    
     fluidRow(
-      column(12,  offset=10,
+      column(2,  offset=6,
              actionButton(ns("save_all_figure"),label="Save all", style=actionButton_style)
+      ),
+      column(2,  #offset=10,
+             downloadButton(ns("docx_all_figure"),label="docx all", icon=icon("download"), style=actionButton_style)
+      ),
+      column(2,  #offset=10,
+             downloadButton(ns("pptx_all_figure"),label="pptx all", icon=icon("download"), style=actionButton_style)
       )
     ), 
+    
+    br(),
     
     lapply(1:length((values$figure)), function(i) {
       validate(need(values$figure[[i]], message="no figure found"), 
@@ -502,6 +510,65 @@ observeEvent({input$save_all_figure}, {
   })
     
 })
+
+
+output$docx_all_figure <- downloadHandler(
+  filename = function() {     
+    paste0("output", ".docx")                                                                                                                                                                       
+  },
+  
+  content = function(file) {
+    # temporarily switch to the temp dir, in case you do not have write
+    # permission to the current working directory
+    #owd <- setwd(tempdir())
+    #on.exit(setwd(owd))
+    #mydoc <-docx()    # D$documents[[1]]
+    
+    #myfig <- NULL
+    myfig <- values$figure   #[[input$figure_name]] <- ggplot_figure()  
+    
+    tt <- print2_word_ppt2(myfig, TABLE_ALL=NULL, mydoc=NULL, myppt=NULL)
+    
+    validate(
+      need(!is.null(tt$mydoc), "no doc found")
+    )
+    writeDoc(tt$mydoc,file)
+  })
+
+
+output$pptx_all_figure <- downloadHandler(
+  
+  filename = function() { 
+    paste0("output", ".pptx")    
+  },
+  
+  content = function(file) {
+    #if (is.null(inputData()))  {return(NULL)   }
+    
+    #tmpdir <- setwd(tempdir())
+    #on.exit(setwd(tmpdir))
+    
+    #myppt <-pptx()    
+    #myfig <- NULL
+    #myfig[[input$figure_name]] <- ggplot_figure() 
+    myfig <- values$figure
+    
+    tt <- print2_word_ppt2(myfig, TABLE_ALL=NULL, mydoc=NULL, myppt=NULL)
+    
+    validate(
+      need(!is.null(tt$myppt), "no pptx found")
+    )
+    
+    writeDoc(tt$myppt,file=file)
+    
+    # http://stackoverflow.com/questions/40314582/how-to-download-multiple-reports-created-using-r-markdown-and-r-shiny-in-a-zip-f/40324750#40324750
+    #zip(zipfile=file, files=c(fileDOC, filePPT) )
+    #browseURL(fileDOC)
+  }
+  #contentType = "application/zip"
+  #contentType="application/octet-stream"  #ms-word
+  #contentType="application/ms-word"  #ms-word
+)
   
 return(ALL)
 }

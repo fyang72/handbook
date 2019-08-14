@@ -17,11 +17,11 @@
 #'   theData <- dataCheck(theData)
 #'   concTime(data = theData)
 #'   concTime(data = theData, adjust = TRUE)
-base_theme <- function (font_size = 10,
-                        plot_title=font_size+2, legend_text = font_size, legend_title = font_size,
-                        axis_title=font_size, axis_title_x = axis_title, axis_title_y = axis_title, 
-                        axis_text=font_size, axis_text_x = axis_text, axis_text_y = axis_text, 
-                        strip_text = font_size, strip_text_x = strip_text, strip_text_y = strip_text, 
+base_theme <- function (font.size = 10,
+                        plot_title=font.size+2, legend_text = font.size, legend_title = font.size,
+                        axis_title=font.size, axis_title_x = axis_title, axis_title_y = axis_title, 
+                        axis_text=font.size, axis_text_x = axis_text, axis_text_y = axis_text, 
+                        strip_text = font.size, strip_text_x = strip_text, strip_text_y = strip_text, 
                         legend_position= "bottom",  legend_box = "horizontal",
                         panel.background = ggplot2::element_blank() 
 )  {

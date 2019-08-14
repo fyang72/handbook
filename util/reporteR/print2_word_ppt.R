@@ -16,8 +16,8 @@ print2_word_ppt2 <- function(FIGURE_ALL, TABLE_ALL,
   default_docx_width=6.4;     # 8
   default_docx_height=4.8;    # 6
   
-  default_pptx_width=9;     # 8
-  default_pptx_height=6;    # 6
+  default_pptx_width=8;     # 8
+  default_pptx_height=5.2;    # 6
   
   fontsize_default=12; 
   title_default = "Type in title"
@@ -286,7 +286,7 @@ addPlot2docx <- function(mydoc, x, bookmark=NULL, fun=print, pointsize=12, width
 
 
 
-addPlot2pptx <- function(mydoc, x,   fun=print, pointsize=12, width = 6.4, height = 4.8) {
+addPlot2pptx <- function(mydoc, x,   fun=print, pointsize=12, width = 8, height = 5.2) {
   
   ## S3 method for class 'pptx'
   #addPlot(doc, fun, pointsize = 11, vector.graphic = TRUE,
@@ -295,12 +295,14 @@ addPlot2pptx <- function(mydoc, x,   fun=print, pointsize=12, width = 6.4, heigh
   #  fontname_mono = "Courier New", fontname_symbol = "Symbol",
   #  editable = TRUE, offx, offy, width, height, bg = "transparent", ...)
   #   
+
+  offx = 2.4
+  offy = 2.0
   
-  offx = ifelse(width==6.4 & height==4.8, 3.5, 
-             ifelse(width==8 & height==6, 2.15, 3.5))
-  
-  offy = ifelse(width==6.4 & height==4.8, 1.8, 
-                ifelse(width==8 & height==6, 1.35, 1.8))
+  if(width==8 & height==5.23643476) { 
+    offx = 2.4
+    offy = 2.0
+  } 
   
   addPlot(mydoc, x=x, fun=print, pointsize=pointsize, vector.graphic = FALSE, width = width, height =height    
           , fontname_serif = "Times New Roman", fontname_sans = "Calibri" 
