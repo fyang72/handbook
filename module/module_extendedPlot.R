@@ -560,7 +560,7 @@ module_extendedPlot <- function(input, output, session,
 
 
 
-idegug = 0
+idegug = 1
 #source("~/handbook/global.R")
 
 if (idegug) { 
@@ -580,8 +580,8 @@ server <- function(input, output, session) {
 
   #source("~/handbook/module/module_extendedPlot.R")
   
-  source("~/handbook/module/module_save_figure.R")
-  source("~/handbook/module/module_ggplot_brush.R")
+  source(paste0(HOME, "/module/module_save_figure.R"))
+  source(paste0(HOME, "/module/module_ggplot_brush.R"))
   
   # source("~/handbook/module/module_extendedPlot_UI.R")
   
