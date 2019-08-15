@@ -20,21 +20,20 @@
 
 
 
-print2_pptx <- function(mypptx=NULL, 
-                        FIGURE=NULL, TABLE=NULL,  
-                        width_default=6.4,     # 8
-                        height_default=4.8,    # 6
-                        fontsize_default=12, 
-                        title_default = "Type in title"
-) { 
+print2pptx <- function(mypptx=NULL, FIGURE=NULL, TABLE=NULL ) { 
   
   library(magrittr)
   library(officer)
   library(ggplot2)
-  library(extrafont)
+  #library(extrafont)
   library(flextable)
   library(knitr)
   
+  default_pptx_width=8;     # 8
+  default_pptx_height=5.2;    # 6
+  
+  default_fontsize = 16; 
+  default_title = "Type in title"
   
   # loadfonts(device = "win")
   # windowsFonts(Times = windowsFont("TT Times New Roman"))
@@ -60,7 +59,7 @@ print2_pptx <- function(mypptx=NULL,
   ############################  
   mypptx <- mypptx %>%
      add_slide(layout="Title Slide", master=mytmp) %>%
-     ph_with_text(type="ctrTitle", str="Iris Data") %>%
+     ph_with_text(type="ctrTitle", str="Key Result Memo") %>%
      ph_with_text(type="subTitle", str="Table & Figure") %>%
      ph_with_text(type="dt", str=format(Sys.Date()))  
     
@@ -76,6 +75,7 @@ print2_pptx <- function(mypptx=NULL,
   #--------------------------------------  
   figure_name_lst = names(FIGURE)
   
+  if (length(figure_name_lst)>0) {
   for(i in 1:length(FIGURE)) {
     if (length(FIGURE)==0) {break}
     
@@ -85,11 +85,13 @@ print2_pptx <- function(mypptx=NULL,
     new_figure <- FIGURE[[figure_name]]
     title = attr(new_figure, "title"); title = ifelse(is.null(title), "No title yet", title) 
     footnote = attr(new_figure, "footnote") ; footnote = ifelse(is.null(footnote), "", footnote)
-    width =  attr(new_figure, "width"); width = ifelse(is.null(width), width_default, width)
-    height =  attr(new_figure, "height"); height = ifelse(is.null(height), height_default, height)
-    fontsize =  attr(new_figure, "fontsize"); fontsize = ifelse(is.null(fontsize), fontsize_default, fontsize)
+    
+    pptx_width =  attr(new_figure, "pptx_width"); pptx_width = ifelse(is.null(pptx_width), default_pptx_width, pptx_width)
+    pptx_height =  attr(new_figure, "pptx_height"); pptx_height = ifelse(is.null(pptx_height), default_pptx_height, pptx_height)
+    
+    fontsize =  attr(new_figure, "fontsize"); fontsize = ifelse(is.null(fontsize), default_fontsize, fontsize)
      
-    filename <- tempfile()
+    #filename <- tempfile()
     #ggsave("fig.pdf", new_figure,  width=12, height=6, scale=0.5, dpi="retina", device="pdf")
     #ggsave(file, new_figure,  width=12, height=6, scale=0.5, dpi="retina", device="png")
     
@@ -114,30 +116,31 @@ print2_pptx <- function(mypptx=NULL,
        add_slide(layout="Title and Content", master=mytmp) %>%
        ph_with_text(type="title", str=title) %>%
        
-       ph_with_text(type="ftr", str="A footnote") %>%
-       ph_with_text(type="dt", str=format(Sys.Date())) %>%
+       #ph_with_text(type="ftr", str="A footnote") %>%
+       #ph_with_text(type="dt", str=format(Sys.Date())) %>%
        
-       ph_with_gg(value=new_figure)  %>% 
+       ph_with_gg_at(value=new_figure, width = pptx_width, height = pptx_height, left=2.5, top=2)   
       #ph_with_img(src = "fig1.png", type = "body", width = width, height = height)
       #ph_with_img_at(src="C:/temp/myplot.png", left=2, top=2, width=5, height=5)
     
       #  add unordered lists to a slide with some format.
       # -----------------------------------------------------
-       add_slide(layout="Title and Content", master=mytmp) %>%
-       ph_with_text(type="title", str="A title") %>%
-       ph_with_ul(type="body", level_list=c(1,2), str_list=c("aaa","bbb"),
-                  style=fp_text(font.size=0, color="red")) #%>%
+       # add_slide(layout="Title and Content", master=mytmp) %>%
+       # ph_with_text(type="title", str="A title") %>%
+       # ph_with_ul(type="body", level_list=c(1,2), str_list=c("aaa","bbb"),
+       #            style=fp_text(font.size=0, color="red")) #%>%
        #ph_add_par(type="body", level=3) %>%
        #ph_add_text(type="body", str="ccc", style=fp_text(color="blue"))
     
     
-  }
+  }}
   
   #--------------------------------------
   # table
   #--------------------------------------
   table_name_lst = names(TABLE)
   
+  if (length(table_name_lst)>0) {
   for(i in 1:length(TABLE)) {
     if (length(TABLE)==0) {break}
     
@@ -147,11 +150,10 @@ print2_pptx <- function(mypptx=NULL,
     new_table <- TABLE[[table_name]]
     title = attr(new_table, "title"); title = ifelse(is.null(title), "No title yet", title) 
     footnote = attr(new_table, "footnote") ; footnote = ifelse(is.null(footnote), "", footnote)
-    width =  attr(new_table, "width"); width = ifelse(is.null(width), width_default, width)
-    height =  attr(new_table, "height"); height = ifelse(is.null(height), height_default, height)
-    fontsize =  attr(new_table, "fontsize"); fontsize = ifelse(is.null(fontsize), fontsize_default, fontsize)
+    fontsize =  attr(new_table, "fontsize"); fontsize = ifelse(is.null(fontsize), default_fontsize, fontsize)
     
     # add table 
+    # https://davidgohel.github.io/officer/articles/offcran/tables.html
     # -----------------------
     # style_list %>% filter(style_type %in% "table")  
     library(flextable)
@@ -159,10 +161,34 @@ print2_pptx <- function(mypptx=NULL,
     #  myft <- theme_booktabs(myft) # Change "flextable" theme
     #   myft <- autofit(myft) # Adjust Cell Width and Height
     
+    #Both flextable() and regulartable() functions produce a     flextable. The first one is resource consuming.
+    ft_new_table <- regulartable(data = new_table) %>%  #Create "flextable" object
+      theme_zebra() %>% # Change "flextable" theme
+      
+      # theme_booktabs() %>% # Change "flextable" theme
+      # theme_box() %>% # Change "flextable" theme
+      # theme_tron()%>% # Change "flextable" theme
+      # theme_tron_legacy()%>% # Change "flextable" theme
+      # theme_vanilla()%>% # Change "flextable" theme
+      # theme_zebra()%>% # Change "flextable" theme
+      # empty_blanks() %>% # Change "flextable" theme
+    
+      #set_header_labels( n = "#", Mean = "\u03D1", SD = "\u03C3") %>% 
+      #color(i = ~ n < 4, color = "wheat") %>% 
+      fontsize(size = fontsize, part = "all") %>%    #'all', 'body', 'header', 'footer')
+      autofit()  # Adjust Cell Width and Height
+    
     mypptx <- mypptx %>% 
       add_slide(layout="Title and Content", master=mytmp) %>%
       ph_with_text(type="title", str=title) %>%
-      ph_with_table(value=new_table) 
+      #ph_with_table(value=new_table)   %>% 
+      #ph_with_table_at(value=new_table, left=1, top=2, width=8, height=5)
+    
+      ph_with_flextable_at(ft_new_table, left=3, top=3) #%>% 
+      
+      #add_slide(layout = "Title Only", master = "Office Theme") %>% 
+      #ph_with_flextable(ft_new_table, location = ph_location(left = 3, top = 3)) 
+    
       # ph_with_table_at(value=iris[1:5,], left=1, top=2, width=8, height=5)
       # ph_with_flextable(myft, type="body")
     
@@ -171,7 +197,8 @@ print2_pptx <- function(mypptx=NULL,
       #   + ph_with_table(type="body", value=iris[1:5,], index=1) %>%
       #   + ph_with_text(type="body", str="Iris data", index=2)
   
-  }  
+  }}
+  
   return(mypptx)
 }
 
@@ -194,17 +221,21 @@ if (idebug == 1) {
   tab2 <- head(mtcars)[, 1:4]
   
   FIGURE <- NULL
+  
+  attr(fig1, "title") = "sfsfssssssssssssssssssssssssssssssssssssssssssssssgsdf"
   FIGURE[["fig1"]] = fig1
   FIGURE[["fig2"]] = fig2
   FIGURE[["fig3"]] = fig2
   
   TABLE <- NULL
+  attr(tab1, "title") = "sfsfssssssssssssssssssssssssssssssssssssssssssssssgsdf"
+  
   TABLE[["tab1"]] = tab1
   TABLE[["tab2"]] = tab2
   
-  mypptx <- read_pptx("./lib/pptTemplate_long_format.pptx")
-  mypptx <- mypptx %>% print2_pptx(FIGURE, TABLE)
-  print(myppt, target = "./toc_and_captions.pptx")
+  mypptx <- read_pptx(paste0(HOME, "/lib/pptTemplate_long_format.pptx"))
+  mypptx <- mypptx %>% print2pptx(FIGURE, TABLE)
+  print(mypptx, target = "./aoutput.pptx")
    
 
 }

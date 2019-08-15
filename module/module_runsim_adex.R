@@ -19,7 +19,9 @@ module_runsim_adex_UI <- function(id, label = "") {
            fluidRow(column(width=6,uiOutput(ns("load_session_adex_container")))),
            fluidRow(column(width=6,uiOutput(ns("load_external_adex_container")))),
            
-           uiOutput(ns("adex_tab_container"))
+           fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+           fluidRow(column(width=12, HTML(colFmt("adex will be rendered here:",color="gray")))), 
+           fluidRow(column(width=12, uiOutput(ns("adex_tab_container"))))
     )
   )
 }
@@ -200,14 +202,20 @@ adex <- data.frame(
     validate(need(globalVars$login$status, message=FALSE), 
              need(adex(), message=FALSE)
     )
-
-    ALL = callModule(module_save_data, "adex_table", 
-                     ALL,
-                     data = adex(),   
-                     data_name = "adex"
-    )
-    
-    module_save_data_UI(ns("adex_table"), label = NULL) 
+# 
+#     ALL = callModule(module_save_data, "adex_table", 
+#                      ALL,
+#                      data = adex(),   
+#                      data_name = "adex"
+#     )
+#     
+#     module_save_data_UI(ns("adex_table"), label = NULL) 
+#     
+    #--------------------------------------  
+    # table_container # https://shiny.rstudio.com/articles/render-table.html
+    #-------------------------------------- 
+    output$table_output <- renderTable(adex(), na = "")
+    tableOutput(ns('table_output'))
     
   }) 
   

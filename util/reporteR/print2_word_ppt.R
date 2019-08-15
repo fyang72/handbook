@@ -260,29 +260,6 @@ print2_word_ppt <- function(FIGURE_ALL, TABLE_ALL,
 
 
 
-addPlot2docx <- function(mydoc, x, bookmark=NULL, fun=print, pointsize=12, width=6.4, height=4.8) {
-  ## S3 method for class 'docx'
-  #addPlot(doc, fun, pointsize = getOption("ReporteRs-fontsize"),
-  #  vector.graphic = FALSE, width = 6, height = 6,
-  #  fontname = getOption("ReporteRs-default-font"),
-  #  fontname_serif = "Times New Roman", fontname_sans = "Calibri",
-  #  fontname_mono = "Courier New", fontname_symbol = "Symbol",
-  #  editable = TRUE, bookmark, par.properties = parProperties(text.align =
-  #  "center", padding = 5), bg = "transparent", ...)
-  # 
-  
-  ## S3 method for class 'pptx'
-  #addPlot(doc, fun, pointsize = 11, vector.graphic = TRUE,
-  #  fontname = getOption("ReporteRs-default-font"),
-  #  fontname_serif = "Times New Roman", fontname_sans = "Calibri",
-  #  fontname_mono = "Courier New", fontname_symbol = "Symbol",
-  #  editable = TRUE, offx, offy, width, height, bg = "transparent", ...)
-  #   
-  addPlot(mydoc, x=x, fun=print, pointsize=pointsize, bookmark=bookmark, vector.graphic = FALSE, width = width, height = height
-          , fontname_serif = "Times New Roman", fontname_sans = "Calibri"  # "Calibri" 
-          , par.properties = parProperties(text.align = "center", padding = 5)
-  )
-}
 
 
 

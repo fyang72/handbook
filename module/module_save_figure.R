@@ -221,15 +221,16 @@ output$downloaddoc <- downloadHandler(
     #on.exit(setwd(owd))
     #mydoc <-docx()    # D$documents[[1]]
      
-    myfig <- NULL
-    myfig[[input$figure_name]] <- ggplot_figure()  
+    #myfig <- NULL
+    #myfig[[input$figure_name]] <-   
     
-    tt <- print2_word_ppt2(myfig, TABLE_ALL=NULL, mydoc=NULL, myppt=NULL)
+    #tt <- print2_word_ppt2(myfig, TABLE_ALL=NULL, mydoc=NULL, myppt=NULL)
+    mydocx <- read_docx(paste0(HOME, "/lib/docTemplate.docx")) %>% 
+              print2docx(FIGURE=list("myfig"=ggplot_figure()))
+    validate(need(!is.null(mydocx), "no docx found"))
     
-    validate(
-      need(!is.null(tt$mydoc), "no doc found")
-    )
-    writeDoc(tt$mydoc,file)
+    #writeDoc(mydocx,file)
+    print(mydocx, target = file)
   })
 
 
@@ -244,18 +245,14 @@ output$downloadppt <- downloadHandler(
     
     #tmpdir <- setwd(tempdir())
     #on.exit(setwd(tmpdir))
-    
-    #myppt <-pptx()    
-    myfig <- NULL
-    myfig[[input$figure_name]] <- ggplot_figure() 
-    
-    tt <- print2_word_ppt2(myfig, TABLE_ALL=NULL, mydoc=NULL, myppt=NULL)
-    
-    validate(
-      need(!is.null(tt$myppt), "no pptx found")
-    )
+      
+    #tt <- print2_word_ppt2(myfig, TABLE_ALL=NULL, mydoc=NULL, myppt=NULL)
+    mypptx <- read_pptx(paste0(HOME, "/lib/pptTemplate_long_format.pptx")) %>%  
+      print2pptx(FIGURE=list("myfig"=ggplot_figure()))
+    validate(need(!is.null(mypptx), "no pptx found"))
      
-    writeDoc(tt$myppt,file=file)
+    #writeDoc(mypptx, file=file)
+    print(mypptx, target = file)
     
     # http://stackoverflow.com/questions/40314582/how-to-download-multiple-reports-created-using-r-markdown-and-r-shiny-in-a-zip-f/40324750#40324750
     #zip(zipfile=file, files=c(fileDOC, filePPT) )

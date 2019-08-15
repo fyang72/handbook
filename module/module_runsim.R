@@ -11,24 +11,24 @@ module_runsim_UI <- function(id, label = "") {
    
   tabBox(width=12, id = ("run_cppModel"), title =NULL, 
     
-   # dataset_container 
-   tabPanel(width=12, title="Load dataset ", value = "load_dataset", collapsible = TRUE, 
-            collapsed = TRUE, solidHeader = TRUE,
-            fluidRow(
-                     HTML(colFmt(
-                       "Note, you may use this tab to <br>
-                        1. load a dataset to overlay a simulted profile, or <br>
-                        2. load the original nonmem dataset from which the model
-                           was developed, to verify the cppModel,  <br>
-                        Otherwise, you may skip this tab.", color="gray")
-                     ),
-              fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
-              
-              fluidRow(column(12, uiOutput(ns("load_dataset_container")))), 
-              fluidRow(column(12, uiOutput(ns("render_dataset_container")))), 
-              style='margin-bottom:30px;  border:1px solid; padding: 10px;'
-            )
-   ),
+   # # dataset_container 
+   # tabPanel(width=12, title="Load dataset ", value = "load_dataset", collapsible = TRUE, 
+   #          collapsed = TRUE, solidHeader = TRUE,
+   #          fluidRow(
+   #                   HTML(colFmt(
+   #                     "Note, you may use this tab to <br>
+   #                      1. load a dataset to overlay a simulted profile, or <br>
+   #                      2. load the original nonmem dataset from which the model
+   #                         was developed, to verify the cppModel,  <br>
+   #                      Otherwise, you may skip this tab.", color="gray")
+   #                   ),
+   #            fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+   #            
+   #            fluidRow(column(12, uiOutput(ns("load_dataset_container")))), 
+   #            fluidRow(column(12, uiOutput(ns("render_dataset_container")))), 
+   #            style='margin-bottom:30px;  border:1px solid; padding: 10px;'
+   #          )
+   # ),
          
     # cppModel_container 
     tabPanel(width=12, title="Load cppModel ", value = "load_cppModel", collapsible = TRUE, 
@@ -85,37 +85,37 @@ values <- reactiveValues(simData=NULL)
 ################################
 # UI for load_dataset_container
 ################################
-output$load_dataset_container <-renderUI({
-  
-  # callModule  
-  ALL = callModule(module_load_dataset, "load_dataset_for_runSim_dataset", 
-                   ALL, dataset_name="mYtEsT_for_runSim_dataset")
-  
-  # UI  
-  fluidRow(
-    column(6, 
-         module_load_dataset_UI(ns("load_dataset_for_runSim_dataset"), label=NULL)
-  ), 
-  column(6, 
-         HTML(colFmt("internal library: build-in dataset <br>
-                      within session: derived data <br> 
-                      external file: external file", color="gray")
-         )
-  )
-  )  
-})
-
-output$render_dataset_container <- renderUI({  
-  validate(need(ALL$DATA[["mYtEsT_for_runSim_dataset"]], message=FALSE))
-  
-  ALL = callModule(module_save_data, "render_dataset_container", 
-                   ALL,
-                   data = ALL$DATA[["mYtEsT_for_runSim_dataset"]],   
-                   data_name = "runSim_dataset"
-  )
-  
-  module_save_data_UI(ns("render_dataset_container"), label = NULL)
-})
+# output$load_dataset_container <-renderUI({
+#   
+#   # callModule  
+#   ALL = callModule(module_load_dataset, "load_dataset_for_runSim_dataset", 
+#                    ALL, dataset_name="mYtEsT_for_runSim_dataset")
+#   
+#   # UI  
+#   fluidRow(
+#     column(6, 
+#          module_load_dataset_UI(ns("load_dataset_for_runSim_dataset"), label=NULL)
+#   ), 
+#   column(6, 
+#          HTML(colFmt("internal library: build-in dataset <br>
+#                       within session: derived data <br> 
+#                       external file: external file", color="gray")
+#          )
+#   )
+#   )  
+# })
+# 
+# output$render_dataset_container <- renderUI({  
+#   validate(need(ALL$DATA[["mYtEsT_for_runSim_dataset"]], message=FALSE))
+#   
+#   ALL = callModule(module_save_data, "render_dataset_container", 
+#                    ALL,
+#                    data = ALL$DATA[["mYtEsT_for_runSim_dataset"]],   
+#                    data_name = "runSim_dataset"
+#   )
+#   
+#   module_save_data_UI(ns("render_dataset_container"), label = NULL)
+# })
 
 ################################
 # UI for load cpp model

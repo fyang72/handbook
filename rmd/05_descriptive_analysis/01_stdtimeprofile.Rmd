@@ -88,8 +88,8 @@ output$descriptive_time_profile <- renderUI({
   # callModule
   ALL = callModule(module_run_script, "descriptive_time_profile", 
                    ALL, 
-                   dataset=drug_descriptive_analysis_inputData(), 
-                   dataset_name = "mYtEsT_for_descriptive_analysis",
+                   dataset=NULL, #drug_descriptive_analysis_inputData(), 
+                   #dataset_name = "mYtEsT_for_descriptive_analysis",
                    script=script)
     
   # UI

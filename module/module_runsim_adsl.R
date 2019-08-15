@@ -18,7 +18,9 @@ fluidRow(
          fluidRow(column(width=6, uiOutput(ns("load_session_adsl_container")))),
          fluidRow(column(width=6, uiOutput(ns("load_external_adsl_container")))),
          
-         uiOutput(ns("adsl_table_container"))
+         fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+         fluidRow(column(width=12, HTML(colFmt("adsl will be rendered here:",color="gray")))), 
+         fluidRow(column(width=12, uiOutput(ns("adsl_table_container"))))
   )
 )
 }
@@ -199,18 +201,25 @@ output$load_external_adsl_container <- renderUI({
 #-------------------------------------- 
 output$adsl_table_container <- renderUI({
   
-  validate(need(globalVars$login$status, message=FALSE), 
-           need(adsl(), message=FALSE)
-  )
- 
-  ALL = callModule(module_save_data, "adsl_table", 
-                   ALL,
-                   data = adsl(),   
-                   data_name = "adsl"
-  )
-  
-  module_save_data_UI(ns("adsl_table"), label = NULL)
-  
+   validate(need(globalVars$login$status, message=FALSE), 
+            need(adsl(), message=FALSE)
+   )
+  # 
+  # ALL = callModule(module_save_data, "adsl_table", 
+  #                  ALL,
+  #                  data = adsl(),   
+  #                  data_name = "adsl"
+  # )
+  # 
+  # module_save_data_UI(ns("adsl_table"), label = NULL)
+  # 
+  # 
+  #--------------------------------------  
+  # table_container # https://shiny.rstudio.com/articles/render-table.html
+  #-------------------------------------- 
+  output$table_output <- renderTable(adsl(), na = "")
+  tableOutput(ns('table_output'))
+     
 }) 
 
 

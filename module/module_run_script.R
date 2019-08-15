@@ -60,7 +60,7 @@ module_run_script_UI <- function(id, label = "") {
 ################################################################################ 
 
 module_run_script <- function(input, output, session, 
-                              ALL, dataset, dataset_name="", script="", params=NULL
+                              ALL, dataset, script="", params=NULL
                               )  {
 
   # script is a list of file names containing the "script"
@@ -73,7 +73,8 @@ module_run_script <- function(input, output, session,
   # Load dataset
   ################################ 
   load_dataset <- reactive({
-    ALL$DATA[[dataset_name]]
+    #dataset
+    ALL$DATA[["mYtEsT_for_run_script"]]
     
   })
   
@@ -146,7 +147,7 @@ module_run_script <- function(input, output, session,
     
     # callModule 
     ALL = callModule(module_load_dataset, "load_dataset_for_run_script", 
-                     ALL, dataset_name=dataset_name)
+                     ALL, dataset_name="mYtEsT_for_run_script")
     
     # UI  
     fluidRow(column(6, 
@@ -371,11 +372,22 @@ output$table_container <- renderUI({
   validate(need(is.list(values$table), message="No table found, or values$table needs to be a list"))
   
   tagList(
+    br(),
+    
     fluidRow(
-      column(12, offset=10,
+      column(2,  offset=6,
              actionButton(ns("save_all_table"),label="Save all", style=actionButton_style)
+      ),
+      column(2,  #offset=10,
+             downloadButton(ns("docx_all_table"),label="docx all", icon=icon("download"), style=actionButton_style)
+      ),
+      column(2,  #offset=10,
+             downloadButton(ns("pptx_all_table"),label="pptx all", icon=icon("download"), style=actionButton_style)
       )
-    ),
+    ), 
+    
+    br(),
+    
     
     lapply(1:length(names(values$table)), function(i) {
       validate(need(values$table[[i]], message="no table found"), 
@@ -479,17 +491,6 @@ observeEvent(input$run_script, {
 # observeEvent  
 #-------------------------------------- 
 # https://groups.google.com/forum/#!topic/shiny-discuss/vd_nB-BH8sw
-
-observeEvent({input$save_all_table}, {
-  validate(need(length(values$table), message="no table found") )
-  
-  #lapply(1:length(values$table), function(i) ALL$TABLE[[names(values$table)[i]]] = values$table[[i]])
-  ALL$TABLE = c(ALL$TABLE, values$table)
-  showNotification("all tables saved", type="message") 
- 
-})
-
-
 observeEvent({input$save_all_data}, {
   validate(need(length(values$data), message="no data found") ) 
  
@@ -500,6 +501,96 @@ observeEvent({input$save_all_data}, {
 })
 
 
+
+
+
+####################################################################
+# save all tables
+####################################################################
+
+# save_all_table
+#------------------
+observeEvent({input$save_all_table}, {
+  validate(need(length(values$table), message="no table found") )
+  
+  #lapply(1:length(values$table), function(i) ALL$TABLE[[names(values$table)[i]]] = values$table[[i]])
+  ALL$TABLE = c(ALL$TABLE, values$table)
+  showNotification("all tables saved", type="message") 
+  
+})
+
+# docx_all_table
+#------------------
+output$docx_all_table <- downloadHandler(
+  filename = function() {     
+    paste0("output", ".docx")                                                                                                                                                                       
+  },
+  
+  content = function(file) {
+    # temporarily switch to the temp dir, in case you do not have write
+    # permission to the current working directory
+    #owd <- setwd(tempdir())
+    #on.exit(setwd(owd))
+    #mydoc <-docx()    # D$documents[[1]]
+    
+    #myfig <- NULL
+    #mytabl <- values$table   #[[input$figure_name]] <- ggplot_figure()  
+    
+    #tt <- print2_word_ppt2(FIGURE_ALL=NULL,  TABLE_ALL=mytabl, mydoc=NULL, myppt=NULL)
+    # mydocx <- docx() 
+    mydocx <- read_docx(paste0(HOME, "/lib/docTemplate.docx")) %>% 
+      print2docx(TABLE=values$table)
+    
+    validate(need(!is.null(mydocx), "no docx found"))
+    
+    #writeDoc(mydocx, file)
+    print(mydocx, target = file)
+    
+  })
+
+# pptx_all_figure
+#------------------
+output$pptx_all_table <- downloadHandler(
+  
+  filename = function() { 
+    paste0("output", ".pptx")    
+  },
+  
+  content = function(file) {
+    #if (is.null(inputData()))  {return(NULL)   }
+    
+    #tmpdir <- setwd(tempdir())
+    #on.exit(setwd(tmpdir))
+    
+    #myppt <-pptx()    
+    #myfig <- NULL
+    #myfig[[input$figure_name]] <- ggplot_figure() 
+    #mytabl <- values$table
+    
+    #tt <- print2_word_ppt2(FIGURE_ALL=NULL, TABLE_ALL=mytabl, mydoc=NULL, myppt=NULL)
+    mypptx <- read_pptx(paste0(HOME, "/lib/pptTemplate_long_format.pptx")) %>% 
+      print2docx(TABLE=values$table)
+    
+    validate(need(!is.null(mypptx), "no pptx found"))
+    
+    #writeDoc(mypptx,file=file)
+    print(mypptx, target = file)
+    
+    # http://stackoverflow.com/questions/40314582/how-to-download-multiple-reports-created-using-r-markdown-and-r-shiny-in-a-zip-f/40324750#40324750
+    #zip(zipfile=file, files=c(fileDOC, filePPT) )
+    #browseURL(fileDOC)
+  }
+  #contentType = "application/zip"
+  #contentType="application/octet-stream"  #ms-word
+  #contentType="application/ms-word"  #ms-word
+)
+
+####################################################################
+# save all figures
+####################################################################
+
+# save_all_figure
+#------------------
 observeEvent({input$save_all_figure}, {
   validate(need(length(values$figure), message="no figure found") )
   isolate({ 
@@ -511,7 +602,8 @@ observeEvent({input$save_all_figure}, {
     
 })
 
-
+# docx_all_figure
+#------------------
 output$docx_all_figure <- downloadHandler(
   filename = function() {     
     paste0("output", ".docx")                                                                                                                                                                       
@@ -525,17 +617,19 @@ output$docx_all_figure <- downloadHandler(
     #mydoc <-docx()    # D$documents[[1]]
     
     #myfig <- NULL
-    myfig <- values$figure   #[[input$figure_name]] <- ggplot_figure()  
+    #myfig <- values$figure   #[[input$figure_name]] <- ggplot_figure()  
     
-    tt <- print2_word_ppt2(myfig, TABLE_ALL=NULL, mydoc=NULL, myppt=NULL)
+    #tt <- print2_word_ppt2(myfig, TABLE_ALL=NULL, mydoc=NULL, myppt=NULL)
+    mydocx <- read_docx(paste0(HOME, "/lib/docTemplate.docx"))  %>% 
+      print2docx(FIGURE=values$figure)
     
-    validate(
-      need(!is.null(tt$mydoc), "no doc found")
-    )
-    writeDoc(tt$mydoc,file)
+    validate(need(!is.null(mydocx), "no doc found"))
+    print(mydocx, target =file)
+    #writeDoc(mydocx, file)
   })
 
-
+# pptx_all_figure
+#------------------
 output$pptx_all_figure <- downloadHandler(
   
   filename = function() { 
@@ -551,15 +645,19 @@ output$pptx_all_figure <- downloadHandler(
     #myppt <-pptx()    
     #myfig <- NULL
     #myfig[[input$figure_name]] <- ggplot_figure() 
-    myfig <- values$figure
+    #myfig <- values$figure
     
-    tt <- print2_word_ppt2(myfig, TABLE_ALL=NULL, mydoc=NULL, myppt=NULL)
+    #tt <- print2_word_ppt2(myfig, TABLE_ALL=NULL, mydoc=NULL, myppt=NULL)
+    #mypptx <- pptx() %>% print2docx(FIGURE=values$figure)
+    mypptx <- read_pptx(paste0(HOME, "/lib/pptTemplate_long_format.pptx")) %>% 
+      print2docx(FIGURE=values$figure)
     
     validate(
-      need(!is.null(tt$myppt), "no pptx found")
+      need(!is.null(mypptx), "no pptx found")
     )
     
-    writeDoc(tt$myppt,file=file)
+    #writeDoc(mypptx,file=file)
+    print(mypptx, target = file)
     
     # http://stackoverflow.com/questions/40314582/how-to-download-multiple-reports-created-using-r-markdown-and-r-shiny-in-a-zip-f/40324750#40324750
     #zip(zipfile=file, files=c(fileDOC, filePPT) )

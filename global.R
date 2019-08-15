@@ -2,8 +2,8 @@
 
 library(stringr)
 HOME = paste0(normalizePath("."), "/")
-if (str_sub(HOME, 1, 22) == "/home/feng.yang/FYANG/") {HOME=paste0("~/YANG/")}
-if (str_sub(HOME, 1, 19) == "C:\\Users\\feng.yang\\") {HOME=paste0("~/handbook/")}
+if (str_sub(HOME, 1, 22) == "/home/feng.yang/FYANG/") {HOME=paste0("/home/feng.yang/FYANG/YANG/")}
+if (str_sub(HOME, 1, 19) == "C:\\Users\\feng.yang\\") {HOME=paste0("C:\\Users\\feng.yang\\handbook/")}
  
  
 ######################################################################

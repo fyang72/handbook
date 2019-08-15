@@ -47,12 +47,15 @@ postProcess_simData <-function(simData, params=NULL) {
   #-----------------------
   # fig1: Linear profile
   #-----------------------
-  loc_x <- 0  # location of line label 
-  BLOQ = 0.078
+  hline = 0.078
+  hline_location <- 2  # location of line label 
   fig = figLn + 
-    geom_hline(yintercept=c(BLOQ), lty="dashed") + 
-    geom_text(y=BLOQ*100, x=loc_x, aes(label=paste0("BLQ=", BLOQ, " mg/L"), hjust=0), size=3, color='black')   
+    #geom_hline(yintercept=c(BLOQ), lty="dashed") + 
+    #geom_text(y=BLOQ*100, x=loc_x, aes(label=paste0("BLQ=", BLOQ, " mg/L"), hjust=0), size=3, color='black')   
 
+    geom_hline(yintercept = hline, lty="dashed") + 
+    annotate("text", hline_location, hline, vjust = -1, label=paste0("BLQ=", hline, " mg/L")) 
+             
   attr(fig, 'title') <-   "Predicted Individual Concentration-time Profiles for Proposed Dosing Regimens"
   attr(fig, 'width') <- 8
   attr(fig, 'height') <- 6
@@ -61,17 +64,19 @@ postProcess_simData <-function(simData, params=NULL) {
   #-----------------------
   # fig2: semi-log profile
   #-----------------------  
-  loc_x <- 0  # location of line label 
-  BLOQ = 0.078
-  
+  hline = 0.078
+  hline_location <- 2  # location of line label 
   fig = figLn +   
     scale_y_log10(breaks = 10^(seq(-3,3,by=1)),      #trans_breaks("log10", function(x) 10^x),
                   labels = 10^(seq(-3,3,by=1))) +      # trans_format("log10", math_format(10^.x))) +
     annotation_logticks(sides ="l")  +   # "trbl", for top, right, bottom, and left.
     
-    geom_hline(yintercept=c(BLOQ), lty="dashed") + 
-    geom_text(y=log10(BLOQ*1.25), x=loc_x, aes(label=paste0("BLQ=", BLOQ, " mg/L"), hjust=0), size=3, color='black')   
-    
+    # geom_hline(yintercept=c(BLOQ), lty="dashed") + 
+    # geom_text(y=log10(BLOQ*1.25), x=loc_x, aes(label=paste0("BLQ=", BLOQ, " mg/L"), hjust=0), size=3, color='black')   
+    # 
+    geom_hline(yintercept = hline, lty="dashed") + 
+    annotate("text", hline_location, hline, vjust = -1, label=paste0("BLQ=", hline, " mg/L"))
+  
   attr(fig, 'title') <-   "Predicted Semi-log Concentration-time Profiles for Proposed Dosing Regimens"
   attr(fig, 'width') <- 8
   attr(fig, 'height') <- 6

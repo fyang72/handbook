@@ -241,8 +241,8 @@ ipak <- function(pkg){
 }
 
 # usage
-packages <- c("knitr", "captioner", "stringr", "devtools", "bookdown","kableExtra")
-ipak(packages)
+# packages <- c("knitr", "captioner", "stringr", "devtools", "bookdown","kableExtra")
+# ipak(packages)
  
 file.lst <- list_files_in_a_folder(folder.loc=paste0(HOME, "/util/"), file.extension=c(".r", ".R"))
 for (ifile in 1:length(file.lst)) {source(file=file.lst[ifile]) }     
@@ -756,8 +756,7 @@ The best way is to have the values for a table stored in a dataframe or in a .cs
 
 If you knitted to pdf or word, you will not see the table I am describing in html here. To produce Table \@ref(tab:RemovalTable1), I used the code below:
 
-```
-{r "RemovalTable1", echo=FALSE, warning=FALSE}
+```{r "RemovalTable1", echo=FALSE, warning=FALSE, eval=FALSE}
 RemovalTab1<-read.csv("table1.csv", header = TRUE)
 fmt <- rmarkdown::default_output_format(knitr::current_input())$name #find the output format when knitting
 if (fmt == "bookdown::html_document2"){
@@ -774,7 +773,7 @@ kableExtra::kable(RemovalTab1, align = "c", "html",
 ```
 
 
-```{r "RemovalTable1", echo=FALSE, warning=FALSE}
+```{r "RemovalTable2", echo=FALSE, warning=FALSE, eval=FALSE}
 RemovalTab1<-read.csv("table1.csv", header = TRUE)
 fmt <- rmarkdown::default_output_format(knitr::current_input())$name #find the output format when knitting
 if (fmt == "bookdown::html_document2"){
@@ -815,8 +814,7 @@ The best way to get tables in word is to actually render the document in html, c
 This is not as smooth for pdf. It turns out that as I was writing this tutorial, I just could not find a way to make `kableExtra` work here... So I spent a lot of time trying to find ways around it to make it work. If you are reading an html document, you will not see the table, only the code. The problem with `kableExtra`
 is that, as far as I can tell, the markup text and reference citations are not rendered within the table... After reading quite a bit, I found that the package `pander` would work well, although it had one major drawback, which is that it would not allow the cross referencing by default... After a lot of time, I did find a way to make it work and this is the code that you see below:
 
-```
-{r "RemovalTablepdf", echo=FALSE, warning=FALSE}
+```{r "RemovalTablepdf1", echo=FALSE, warning=FALSE, eval=FALSE}
 fmt <- rmarkdown::default_output_format(knitr::current_input())$name #find the output format when knitting
 if (fmt == "bookdown::pdf_document2"){
 RemovalTab1<-read.csv("table1.csv", header = TRUE)
@@ -830,7 +828,7 @@ pander(RemovalTab1, align = "c", "latex",
 
 If you are using pdf as an output, you should be able to see Table \@ref(tab:RemovalTablepdf) just below this paragraph.
 
-```{r "RemovalTablepdf", echo=FALSE, warning=FALSE}
+```{r "RemovalTablepdf2", echo=FALSE, warning=FALSE, eval=FALSE}
 fmt <- rmarkdown::default_output_format(knitr::current_input())$name #find the output format when knitting
 if (fmt == "bookdown::pdf_document2"){
 RemovalTab1<-read.csv("table1.csv", header = TRUE)
