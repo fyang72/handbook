@@ -42,7 +42,7 @@ print2pptx <- function(mypptx=NULL, FIGURE=NULL, TABLE=NULL ) {
   #             theme(panel.grid.major = element_blank(), 
   #                   panel.grid.minor = element_blank()))
   
-  if (is.null(mypptx)) {mypptx <- read_pptx(paste0(HOME, "/lib/pptTemplate_long_format.pptx"))}  
+  if (is.null(mypptx)) {mypptx <- read_pptx(paste0(HOME, "/lib/pptTemplate.pptx"))}  
   mylab <- layout_summary(mypptx)[[1]] # Slide Layout Name
   mytmp <- layout_summary(mypptx)[[2]][1] # Show Slide Master Name
   
@@ -57,12 +57,19 @@ print2pptx <- function(mypptx=NULL, FIGURE=NULL, TABLE=NULL ) {
   ############################
   # Title, subtitle, date
   ############################  
-  mypptx <- mypptx %>%
-     add_slide(layout="Title Slide", master=mytmp) %>%
-     ph_with_text(type="ctrTitle", str="Key Result Memo") %>%
-     ph_with_text(type="subTitle", str="Table & Figure") %>%
-     ph_with_text(type="dt", str=format(Sys.Date()))  
+  # mypptx <- mypptx %>%
+  #    add_slide(layout="Title Slide", master=mytmp) %>%
+  #    ph_with_text(type="ctrTitle", str="Key Result Memo") #%>%
+     #ph_with_text(type="subTitle", str="Table & Figure") %>%
+     #ph_with_text(type="dt", str=format(Sys.Date()))  
     
+  
+  
+  #https://stackoverflow.com/questions/50726187/how-can-i-change-in-r-the-font-family-of-a-title-with-officer
+  format_main_title <- fp_text(font.family='Rage Italic', font.size=72)
+  format_page_title <- fp_text(font.family='Calibri Light', font.size=32)
+  
+  
   #print(mypptx, target="./sample.pptx")
   ########################################################################################
   ########################################################################################
@@ -109,12 +116,17 @@ print2pptx <- function(mypptx=NULL, FIGURE=NULL, TABLE=NULL ) {
     # add figure 
     # -----------------------
     # style_list %>% filter(style_type %in% "figure")   
-   
+    
+    
+     
     mypptx <- mypptx %>% 
       # Add Figures (image file / ggplot object)
       # ---------------------------------------------
        add_slide(layout="Title and Content", master=mytmp) %>%
-       ph_with_text(type="title", str=title) %>%
+      
+       ph_empty(type='title') %>%
+       ph_add_fpar(fpar(ftext(title, prop=format_page_title)))  %>%
+       #ph_with_text(type="title", str=title) %>%
        
        #ph_with_text(type="ftr", str="A footnote") %>%
        #ph_with_text(type="dt", str=format(Sys.Date())) %>%
@@ -180,7 +192,11 @@ print2pptx <- function(mypptx=NULL, FIGURE=NULL, TABLE=NULL ) {
     
     mypptx <- mypptx %>% 
       add_slide(layout="Title and Content", master=mytmp) %>%
-      ph_with_text(type="title", str=title) %>%
+      #ph_with_text(type="title", str=title) %>%
+      
+      ph_empty(type='title') %>%
+      ph_add_fpar(fpar(ftext(title, prop=format_page_title)))  %>%
+      
       #ph_with_table(value=new_table)   %>% 
       #ph_with_table_at(value=new_table, left=1, top=2, width=8, height=5)
     

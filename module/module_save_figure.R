@@ -247,7 +247,7 @@ output$downloadppt <- downloadHandler(
     #on.exit(setwd(tmpdir))
       
     #tt <- print2_word_ppt2(myfig, TABLE_ALL=NULL, mydoc=NULL, myppt=NULL)
-    mypptx <- read_pptx(paste0(HOME, "/lib/pptTemplate_long_format.pptx")) %>%  
+    mypptx <- read_pptx(paste0(HOME, "/lib/pptTemplate.pptx")) %>%  
       print2pptx(FIGURE=list("myfig"=ggplot_figure()))
     validate(need(!is.null(mypptx), "no pptx found"))
      

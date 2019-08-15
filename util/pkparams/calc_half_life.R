@@ -12,12 +12,12 @@
 ############################################################################## 
 # calculate half life
 ############################################################################## 
-calc.half.life <- function(THETA) {
+calc_half_life <- function(THETA) {
   # alpha and beta
   parms=NULL
-  parms$KE  = THETA[['TVCL']]/THETA[['TVV2']]    # 1/day, 	Elimination rate constant     0.365
-  parms$K32 = THETA[['TVQ']]/THETA[['TVV3']];  
-  parms$K23 = THETA[['TVQ']]/THETA[['TVV2']]; 
+  parms$KE  = THETA[['CL']]/THETA[['V2']]    # 1/day, 	Elimination rate constant     0.365
+  parms$K32 = THETA[['Q']]/THETA[['V3']];  
+  parms$K23 = THETA[['Q']]/THETA[['V2']]; 
   
   # parms=NULL
   # parms$KE  = 0.125676/2.67038   # THETA[['TVCL']]/THETA[['TVV2']]    # 1/day, 	Elimination rate constant     0.365

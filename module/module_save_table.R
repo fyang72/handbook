@@ -32,11 +32,11 @@ module_save_table_UI <- function(id, label = "") {
       ) , 
       
       column(width=2,                                                                                                                                                                   
-             downloadButton(ns("downloaddoc"),label="doc", icon=icon("download"), style=actionButton_style)                                                                        
+             downloadButton(ns("downloaddoc"),label="docx", icon=icon("download"), style=actionButton_style)                                                                        
       ), 
       
       column(width=2,                                                                                                                                                                   
-             downloadButton(ns("downloadppt"),label="ppt", icon=icon("download"), style=actionButton_style)                                                                        
+             downloadButton(ns("downloadppt"),label="pptx", icon=icon("download"), style=actionButton_style)                                                                        
       )
       
     ), 
@@ -137,22 +137,35 @@ module_save_table <- function(input, output, session, ALL, table,
       #mydoc <-docx()    # D$documents[[1]]
       
       #myfig <- ALL$FIGURE[input$figure_name]
-      mytab <- NULL
-      mytab[[input$table_name]] <- table  # ALL$FIGURE[[input$figure_name]]
+      # mytab <- NULL
+      # mytab[[input$table_name]] <- table  # ALL$FIGURE[[input$figure_name]]
+      # 
+      # tt <- print2_word_ppt(FIGURE_ALL=NULL, TABLE_ALL=mytab,   
+      #                       mydoc=NULL, myppt=NULL, 
+      #                       width_default=6.4,     # 8
+      #                       height_default=4.8,    # 6
+      #                       fontsize_default=12, 
+      #                       title_default = "Type in title"
+      # )
+      # 
+      # 
+      # validate(
+      #   need(!is.null(tt$mydoc), "no doc found")
+      # )
+      # writeDoc(tt$mydoc,file)
       
-      tt <- print2_word_ppt(FIGURE_ALL=NULL, TABLE_ALL=mytab,   
-                            mydoc=NULL, myppt=NULL, 
-                            width_default=6.4,     # 8
-                            height_default=4.8,    # 6
-                            fontsize_default=12, 
-                            title_default = "Type in title"
-      )
+      mydocx <- read_docx(paste0(HOME, "/lib/docTemplate.docx")) %>% 
+        print2docx(TABLE=list("mytab"=table))
+      
+      validate(need(!is.null(mydocx), "no docx found"))
+      
+      #writeDoc(mydocx, file)
+      print(mydocx, target = file)
       
       
-      validate(
-        need(!is.null(tt$mydoc), "no doc found")
-      )
-      writeDoc(tt$mydoc,file)
+      
+      
+      
     })
   
   
@@ -172,22 +185,30 @@ module_save_table <- function(input, output, session, ALL, table,
       
       #myppt <-pptx()    
       
-      mytab <- NULL
-      mytab[[input$table_name]] <- table  # ALL$FIGURE[[input$figure_name]]
+      # mytab <- NULL
+      # mytab[[input$table_name]] <- table  # ALL$FIGURE[[input$figure_name]]
+      # 
+      # tt <- print2_word_ppt(FIGURE_ALL=NULL, TABLE_ALL=mytab,    
+      #                       mydoc=NULL, myppt=NULL, 
+      #                       width_default=6.4,     # 8
+      #                       height_default=4.8,    # 6
+      #                       fontsize_default=12, 
+      #                       title_default = "Type in title"
+      # )
+      # 
+      # validate(
+      #   need(!is.null(tt$myppt), "no pptx found")
+      # )
+      # 
+      # writeDoc(tt$myppt,file=file)
+      mypptx <- read_pptx(paste0(HOME, "/lib/pptTemplate.pptx")) %>% 
+        print2pptx(TABLE=list("mytab"=table))
+        
+      validate(need(!is.null(mypptx), "no docx found"))
       
-      tt <- print2_word_ppt(FIGURE_ALL=NULL, TABLE_ALL=mytab,    
-                            mydoc=NULL, myppt=NULL, 
-                            width_default=6.4,     # 8
-                            height_default=4.8,    # 6
-                            fontsize_default=12, 
-                            title_default = "Type in title"
-      )
+      #writeDoc(mydocx, file)
+      print(mypptx, target = file)
       
-      validate(
-        need(!is.null(tt$myppt), "no pptx found")
-      )
-      
-      writeDoc(tt$myppt,file=file)
       
       # http://stackoverflow.com/questions/40314582/how-to-download-multiple-reports-created-using-r-markdown-and-r-shiny-in-a-zip-f/40324750#40324750
       #zip(zipfile=file, files=c(fileDOC, filePPT) )

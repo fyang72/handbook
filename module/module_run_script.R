@@ -538,8 +538,12 @@ output$docx_all_table <- downloadHandler(
     
     #tt <- print2_word_ppt2(FIGURE_ALL=NULL,  TABLE_ALL=mytabl, mydoc=NULL, myppt=NULL)
     # mydocx <- docx() 
+    
+    print("values$table")
+    print(values$table)
+    
     mydocx <- read_docx(paste0(HOME, "/lib/docTemplate.docx")) %>% 
-      print2docx(TABLE=values$table)
+      print2docx(FIGURE=NULL, TABLE=values$table)
     
     validate(need(!is.null(mydocx), "no docx found"))
     
@@ -548,7 +552,7 @@ output$docx_all_table <- downloadHandler(
     
   })
 
-# pptx_all_figure
+# pptx_all_table
 #------------------
 output$pptx_all_table <- downloadHandler(
   
@@ -568,8 +572,8 @@ output$pptx_all_table <- downloadHandler(
     #mytabl <- values$table
     
     #tt <- print2_word_ppt2(FIGURE_ALL=NULL, TABLE_ALL=mytabl, mydoc=NULL, myppt=NULL)
-    mypptx <- read_pptx(paste0(HOME, "/lib/pptTemplate_long_format.pptx")) %>% 
-      print2docx(TABLE=values$table)
+    mypptx <- read_pptx(paste0(HOME, "/lib/pptTemplate.pptx")) %>% 
+      print2pptx(TABLE=values$table)
     
     validate(need(!is.null(mypptx), "no pptx found"))
     
@@ -649,12 +653,9 @@ output$pptx_all_figure <- downloadHandler(
     
     #tt <- print2_word_ppt2(myfig, TABLE_ALL=NULL, mydoc=NULL, myppt=NULL)
     #mypptx <- pptx() %>% print2docx(FIGURE=values$figure)
-    mypptx <- read_pptx(paste0(HOME, "/lib/pptTemplate_long_format.pptx")) %>% 
-      print2docx(FIGURE=values$figure)
-    
-    validate(
-      need(!is.null(mypptx), "no pptx found")
-    )
+    mypptx <- read_pptx(paste0(HOME, "/lib/pptTemplate.pptx")) 
+    mypptx <- mypptx %>% print2pptx(FIGURE=values$figure)
+    validate(need(!is.null(mypptx), "no pptx found"))
     
     #writeDoc(mypptx,file=file)
     print(mypptx, target = file)
