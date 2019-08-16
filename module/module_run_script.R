@@ -41,13 +41,15 @@ module_run_script_UI <- function(id, label = "") {
        # table_container
        tabPanel(width=12, title="table", value = "table", collapsible = TRUE, 
                 collapsed = TRUE, solidHeader = TRUE,
-                fluidRow(column(width=12, uiOutput(ns("table_container"))))
+                #fluidRow(column(width=12, uiOutput(ns("table_container"))))
+                fluidRow(column(width=12, uiOutput(ns("multiple_tables_container"))))
        ),
        
        #figure_container
        tabPanel(width=12, title="figure", value = "figure", collapsible = TRUE, 
-                collapsed = TRUE, solidHeader = TRUE,
-                  fluidRow(column(12, uiOutput(ns("figure_container"))))   
+                collapsed = TRUE, solidHeader = TRUE, 
+                fluidRow(column(width=12, uiOutput(ns("multiple_figures_container"))))   
+                
        )
   ) 
   ) # tagList
@@ -170,10 +172,7 @@ module_run_script <- function(input, output, session,
     values$filtered_dataset2 = callModule(module_filtered_dataset, "load_dataset_for_run_script", 
                      load_dataset()
                      )
-    
-    #isolate({ values$filtered_dataset2 = filtered_dataset2 })
-    
-    # UI  
+     
      
     module_filtered_dataset_UI(id=ns("load_dataset_for_run_script"), label=NULL) 
     
@@ -406,55 +405,7 @@ output$table_container <- renderUI({
     })
   
   )
-})
-  
-
-################################
-# figure_container
-################################
-output$figure_container <- renderUI({  
-  validate(need(is.list(values$figure), message="no figure found, or output$figure needs to be a list"))
- 
-  tagList(
-    br(),
-    
-    fluidRow(
-      column(2,  offset=6,
-             actionButton(ns("save_all_figure"),label="Save all", style=actionButton_style)
-      ),
-      column(2,  #offset=10,
-             downloadButton(ns("docx_all_figure"),label="docx all", icon=icon("download"), style=actionButton_style)
-      ),
-      column(2,  #offset=10,
-             downloadButton(ns("pptx_all_figure"),label="pptx all", icon=icon("download"), style=actionButton_style)
-      )
-    ), 
-    
-    br(),
-    
-    lapply(1:length((values$figure)), function(i) {
-      validate(need(values$figure[[i]], message="no figure found"), 
-               need(is.ggplot(values$figure[[i]]), message="only ggpot object allowed")
-      )
-      
-      # save values$figure into ALL$FIGURE
-      ALL = callModule(module_save_figure, paste0("module_save_figure_", i), 
-                       ALL, 
-                       figure = values$figure[[i]], 
-                       figure_index = i, 
-                       figure_name = names(values$figure[i]), 
-                       figure_data = values$figure[[i]]$data
-      )
-      
-      module_save_figure_UI(ns(paste0("module_save_figure_", i)), label = NULL) 
-    })
-    
-  ) # tagList
-})
-
-
-
-
+}) 
 
 ################################
 # run_script  
@@ -507,6 +458,17 @@ observeEvent({input$save_all_data}, {
 ####################################################################
 # save all tables
 ####################################################################
+output$multiple_tables_container <-renderUI({
+  
+  # callModule 
+  ALL = callModule(
+    module_save_multiple_tables, "multiple_tables", ALL, values$table
+  ) 
+  
+  module_save_multiple_tables_UI(id=ns("multiple_tables"), label=NULL) 
+  
+})
+
 
 # save_all_table
 #------------------
@@ -538,9 +500,7 @@ output$docx_all_table <- downloadHandler(
     
     #tt <- print2_word_ppt2(FIGURE_ALL=NULL,  TABLE_ALL=mytabl, mydoc=NULL, myppt=NULL)
     # mydocx <- docx() 
-    
-    print("values$table")
-    print(values$table)
+     
     
     mydocx <- read_docx(paste0(HOME, "/lib/docTemplate.docx")) %>% 
       print2docx(FIGURE=NULL, TABLE=values$table)
@@ -592,82 +552,19 @@ output$pptx_all_table <- downloadHandler(
 ####################################################################
 # save all figures
 ####################################################################
+ 
 
-# save_all_figure
-#------------------
-observeEvent({input$save_all_figure}, {
-  validate(need(length(values$figure), message="no figure found") )
-  isolate({ 
-  #lapply(1:length(values$figure), function(i) ALL$FIGURE[[names(values$figure)[i]]] = values$figure[[i]])
-    ALL$FIGURE = c(ALL$FIGURE, values$figure)
-     
-  showNotification("all figures saved", type="message") 
-  })
-    
+output$multiple_figures_container <-renderUI({
+  
+  # callModule 
+  ALL = callModule(
+    module_save_multiple_figures, "multiple_figures", ALL, values$figure
+  ) 
+  
+  module_save_multiple_figures_UI(id=ns("multiple_figures"), label=NULL) 
+  
 })
 
-# docx_all_figure
-#------------------
-output$docx_all_figure <- downloadHandler(
-  filename = function() {     
-    paste0("output", ".docx")                                                                                                                                                                       
-  },
-  
-  content = function(file) {
-    # temporarily switch to the temp dir, in case you do not have write
-    # permission to the current working directory
-    #owd <- setwd(tempdir())
-    #on.exit(setwd(owd))
-    #mydoc <-docx()    # D$documents[[1]]
-    
-    #myfig <- NULL
-    #myfig <- values$figure   #[[input$figure_name]] <- ggplot_figure()  
-    
-    #tt <- print2_word_ppt2(myfig, TABLE_ALL=NULL, mydoc=NULL, myppt=NULL)
-    mydocx <- read_docx(paste0(HOME, "/lib/docTemplate.docx"))  %>% 
-      print2docx(FIGURE=values$figure)
-    
-    validate(need(!is.null(mydocx), "no doc found"))
-    print(mydocx, target =file)
-    #writeDoc(mydocx, file)
-  })
-
-# pptx_all_figure
-#------------------
-output$pptx_all_figure <- downloadHandler(
-  
-  filename = function() { 
-    paste0("output", ".pptx")    
-  },
-  
-  content = function(file) {
-    #if (is.null(inputData()))  {return(NULL)   }
-    
-    #tmpdir <- setwd(tempdir())
-    #on.exit(setwd(tmpdir))
-    
-    #myppt <-pptx()    
-    #myfig <- NULL
-    #myfig[[input$figure_name]] <- ggplot_figure() 
-    #myfig <- values$figure
-    
-    #tt <- print2_word_ppt2(myfig, TABLE_ALL=NULL, mydoc=NULL, myppt=NULL)
-    #mypptx <- pptx() %>% print2docx(FIGURE=values$figure)
-    mypptx <- read_pptx(paste0(HOME, "/lib/pptTemplate.pptx")) 
-    mypptx <- mypptx %>% print2pptx(FIGURE=values$figure)
-    validate(need(!is.null(mypptx), "no pptx found"))
-    
-    #writeDoc(mypptx,file=file)
-    print(mypptx, target = file)
-    
-    # http://stackoverflow.com/questions/40314582/how-to-download-multiple-reports-created-using-r-markdown-and-r-shiny-in-a-zip-f/40324750#40324750
-    #zip(zipfile=file, files=c(fileDOC, filePPT) )
-    #browseURL(fileDOC)
-  }
-  #contentType = "application/zip"
-  #contentType="application/octet-stream"  #ms-word
-  #contentType="application/ms-word"  #ms-word
-)
   
 return(ALL)
 }

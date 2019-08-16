@@ -1,6 +1,152 @@
 
 ################################################################################ 
-# module_load_cppModel_UI
+# module_save_multiple_tables_UI
+################################################################################
+# A module's UI function should be given a name that is suffixed with Input, Output, or UI; 
+module_save_multiple_tables_UI <- function(id, label = "") {
+  
+  ns <- NS(id) # Create a namespace function using the provided id
+  
+  tagList(
+    br(),
+    
+    fluidRow(
+      column(2,  offset=6,
+             actionButton(ns("save_all_tables"),label="Save all", style=actionButton_style)
+      ),
+      column(2,  #offset=10,
+             downloadButton(ns("docx_all_tables"),label="docx all", icon=icon("download"), style=actionButton_style)
+      ),
+      column(2,  #offset=10,
+             downloadButton(ns("pptx_all_tables"),label="pptx all", icon=icon("download"), style=actionButton_style)
+      )
+    ), 
+    
+    br(),
+    
+    uiOutput(ns("multiple_tables_container"))
+  )
+}
+
+
+################################################################################ 
+# module_save_multiple_tables
+################################################################################
+
+module_save_multiple_tables <- function(input, output, session, 
+                                        ALL, tables=NULL 
+){
+  
+  ns <- session$ns 
+  #values <- reactiveValues()
+  
+  output$multiple_tables_container <- renderUI({  
+    validate(need(is.list(tables), message="no table found, or output$table needs to be a list"))
+    
+    lapply(1:length((tables)), function(i) {
+      validate(need(tables[[i]], message="no table found"), 
+               need(is.data.frame(tables[[i]]), message="only data.frame object allowed")
+      )
+      
+      # save table into ALL$table
+      ALL = callModule(module_save_table, paste0("module_save_table_", i), 
+                       ALL, 
+                       table = tables[[i]], 
+                       table_index = i, 
+                       table_name = names(tables[i])
+      )
+      
+      module_save_table_UI(ns(paste0("module_save_table_", i)), label = NULL) 
+    })
+    
+  })
+  
+  
+  # save_all_tables
+  #------------------
+  observeEvent({input$save_all_tables}, {
+    validate(need(length(tables), message="no table found") )
+    isolate({ 
+      
+      #lapply(1:length(values$table), function(i) ALL$table[[names(values$table)[i]]] = values$table[[i]])
+      ALL$TABLE = c(ALL$TABLE, tables)
+      
+      showNotification("all tables saved", type="message") 
+    })
+    
+  })
+  
+  # docx_all_tables
+  #------------------
+  output$docx_all_tables <- downloadHandler(
+    filename = function() {     
+      paste0("output", ".docx")                                                                                                                                                                       
+    },
+    
+    content = function(file) {
+      # temporarily switch to the temp dir, in case you do not have write
+      # permission to the current working directory
+      #owd <- setwd(tempdir())
+      #on.exit(setwd(owd))
+      #mydoc <-docx()    # D$documents[[1]]
+      
+      #myfig <- NULL
+      #myfig <- values$table   #[[input$table_name]] <- ggplot_table()  
+      
+      #tt <- print2_word_ppt2(myfig, TABLE_ALL=NULL, mydoc=NULL, myppt=NULL)
+      mydocx <- read_docx(paste0(HOME, "/lib/docTemplate.docx"))  %>% 
+        print2docx(TABLE=tables)
+      
+      validate(need(!is.null(mydocx), "no doc found"))
+      print(mydocx, target =file)
+      #writeDoc(mydocx, file)
+    })
+  
+  # pptx_all_tables
+  #------------------
+  output$pptx_all_tables <- downloadHandler(
+    
+    filename = function() { 
+      paste0("output", ".pptx")    
+    },
+    
+    content = function(file) {
+      #if (is.null(inputData()))  {return(NULL)   }
+      
+      #tmpdir <- setwd(tempdir())
+      #on.exit(setwd(tmpdir))
+      
+      #myppt <-pptx()    
+      #myfig <- NULL
+      #myfig[[input$table_name]] <- ggplot_table() 
+      #myfig <- values$table
+      
+      #tt <- print2_word_ppt2(myfig, TABLE_ALL=NULL, mydoc=NULL, myppt=NULL)
+      #mypptx <- pptx() %>% print2docx(table=values$table)
+      mypptx <- read_pptx(paste0(HOME, "/lib/pptTemplate.pptx")) 
+      mypptx <- mypptx %>% print2pptx(TABLE=tables)
+      validate(need(!is.null(mypptx), "no pptx found"))
+      
+      #writeDoc(mypptx,file=file)
+      print(mypptx, target = file)
+      
+      # http://stackoverflow.com/questions/40314582/how-to-download-multiple-reports-created-using-r-markdown-and-r-shiny-in-a-zip-f/40324750#40324750
+      #zip(zipfile=file, files=c(fileDOC, filePPT) )
+      #browseURL(fileDOC)
+    }
+    #contentType = "application/zip"
+    #contentType="application/octet-stream"  #ms-word
+    #contentType="application/ms-word"  #ms-word
+  )
+  
+  return(ALL)
+}
+
+
+
+
+################################################################################ 
+# module_save_table_UI
 ################################################################################
 # A module's UI function should be given a name that is suffixed with Input, Output, or UI; 
 module_save_table_UI <- function(id, label = "") {
@@ -60,7 +206,8 @@ module_save_table_UI <- function(id, label = "") {
 # main function: module_save_table
 ################################################################################
 
-module_save_table <- function(input, output, session, ALL, table, 
+module_save_table <- function(input, output, session, ALL, 
+                              table, 
                               table_index = 1,   # in values$table[[1]]
                               table_name = "table_name"    # values$table[["table_name]]
                              #default_table_name = "tab-"#,

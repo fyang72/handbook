@@ -3,6 +3,155 @@
 # module_load_cppModel_UI
 ################################################################################
 # A module's UI function should be given a name that is suffixed with Input, Output, or UI; 
+module_save_multiple_figures_UI <- function(id, label = "") {
+  
+  ns <- NS(id) # Create a namespace function using the provided id
+  
+  tagList(
+    br(),
+    
+    fluidRow(
+      column(2,  offset=6,
+             actionButton(ns("save_all_figures"),label="Save all", style=actionButton_style)
+      ),
+      column(2,  #offset=10,
+             downloadButton(ns("docx_all_figures"),label="docx all", icon=icon("download"), style=actionButton_style)
+      ),
+      column(2,  #offset=10,
+             downloadButton(ns("pptx_all_figures"),label="pptx all", icon=icon("download"), style=actionButton_style)
+      )
+    ), 
+    
+    br(),
+
+    uiOutput(ns("multiple_figures_container"))
+  )
+}
+
+
+################################################################################ 
+# main function: module_load_cppModel
+################################################################################
+
+module_save_multiple_figures <- function(input, output, session, 
+                                         ALL, figures=NULL 
+){
+  
+ns <- session$ns 
+#values <- reactiveValues()
+  
+  
+output$multiple_figures_container <- renderUI({  
+  validate(need(is.list(figures), message="no figure found, or output$figure needs to be a list"))
+   
+    lapply(1:length((figures)), function(i) {
+      validate(need(figures[[i]], message="no figure found"), 
+               need(is.ggplot(figures[[i]]), message="only ggpot object allowed")
+      )
+      
+      # save figure into ALL$FIGURE
+      ALL = callModule(module_save_figure, paste0("module_save_figure_", i), 
+                       ALL, 
+                       figure = figures[[i]], 
+                       figure_index = i, 
+                       figure_name = names(figures[i])
+      )
+      
+      module_save_figure_UI(ns(paste0("module_save_figure_", i)), label = NULL) 
+    })
+     
+})
+
+ 
+# save_all_figures
+#------------------
+observeEvent({input$save_all_figures}, {
+  validate(need(length(figures), message="no figure found") )
+  isolate({ 
+    
+    #lapply(1:length(values$figure), function(i) ALL$FIGURE[[names(values$figure)[i]]] = values$figure[[i]])
+    ALL$FIGURE = c(ALL$FIGURE, figures)
+    
+    showNotification("all figures saved", type="message") 
+  })
+  
+})
+
+# docx_all_figures
+#------------------
+output$docx_all_figures <- downloadHandler(
+  filename = function() {     
+    paste0("output", ".docx")                                                                                                                                                                       
+  },
+  
+  content = function(file) {
+    # temporarily switch to the temp dir, in case you do not have write
+    # permission to the current working directory
+    #owd <- setwd(tempdir())
+    #on.exit(setwd(owd))
+    #mydoc <-docx()    # D$documents[[1]]
+    
+    #myfig <- NULL
+    #myfig <- values$figure   #[[input$figure_name]] <- ggplot_figure()  
+    
+    #tt <- print2_word_ppt2(myfig, TABLE_ALL=NULL, mydoc=NULL, myppt=NULL)
+    mydocx <- read_docx(paste0(HOME, "/lib/docTemplate.docx"))  %>% 
+      print2docx(FIGURE=figures)
+    
+    validate(need(!is.null(mydocx), "no doc found"))
+    print(mydocx, target =file)
+    #writeDoc(mydocx, file)
+  })
+
+# pptx_all_figures
+#------------------
+output$pptx_all_figures <- downloadHandler(
+  
+  filename = function() { 
+    paste0("output", ".pptx")    
+  },
+  
+  content = function(file) {
+    #if (is.null(inputData()))  {return(NULL)   }
+    
+    #tmpdir <- setwd(tempdir())
+    #on.exit(setwd(tmpdir))
+    
+    #myppt <-pptx()    
+    #myfig <- NULL
+    #myfig[[input$figure_name]] <- ggplot_figure() 
+    #myfig <- values$figure
+    
+    #tt <- print2_word_ppt2(myfig, TABLE_ALL=NULL, mydoc=NULL, myppt=NULL)
+    #mypptx <- pptx() %>% print2docx(FIGURE=values$figure)
+    mypptx <- read_pptx(paste0(HOME, "/lib/pptTemplate.pptx")) 
+    mypptx <- mypptx %>% print2pptx(FIGURE=figures)
+    validate(need(!is.null(mypptx), "no pptx found"))
+    
+    #writeDoc(mypptx,file=file)
+    print(mypptx, target = file)
+    
+    # http://stackoverflow.com/questions/40314582/how-to-download-multiple-reports-created-using-r-markdown-and-r-shiny-in-a-zip-f/40324750#40324750
+    #zip(zipfile=file, files=c(fileDOC, filePPT) )
+    #browseURL(fileDOC)
+  }
+  #contentType = "application/zip"
+  #contentType="application/octet-stream"  #ms-word
+  #contentType="application/ms-word"  #ms-word
+)
+
+return(ALL)
+}
+
+
+
+
+
+
+################################################################################ 
+# module_load_cppModel_UI
+################################################################################
+# A module's UI function should be given a name that is suffixed with Input, Output, or UI; 
 module_save_figure_UI <- function(id, label = "") {
   
   ns <- NS(id) # Create a namespace function using the provided id
@@ -60,8 +209,7 @@ module_save_figure_UI <- function(id, label = "") {
 module_save_figure <- function(input, output, session, ALL, 
                                figure=NULL, 
                                figure_index = 1, 
-                               figure_name="fig-", 
-                               figure_data =NULL
+                               figure_name="fig-"
                                ){
   
 ns <- session$ns 
@@ -76,8 +224,8 @@ output$figure_title_container <- renderUI(renderText({
 
 # figure_name_container
 output$figure_name_container <- renderUI({
-  validate(need(figure, message="no figure found")
-  )
+  # validate(need(figure_name, message="no figure found")
+  # )
   
 textInput(ns("figure_name"), value=figure_name, label=NULL)
 })

@@ -83,16 +83,18 @@ print2docx <- function(mydocx=NULL, FIGURE=NULL, TABLE=NULL) {
         cursor_bookmark(figure_name) %>%
         body_add_par(value = title, style = "Caption1") %>% 
         #shortcuts$slip_in_plotref(depth = 1) %>%
-        body_add_gg(value = new_figure, style = "Figure", width = docx_width, height = docx_height)
+        body_add_gg(value = new_figure, style = "Figure", width = docx_width, height = docx_height) %>% 
         #body_add_img(src = "fig.png", width = 5, height = 6, style = "Figure")
+        body_add_break(pos = "after")
         
     }else{
       mydocx <- mydocx %>% 
         cursor_end() %>%   
         body_add_par(value = title, style = "Caption1") %>% 
         #shortcuts$slip_in_plotref(depth = 1) %>%
-        body_add_gg(value = new_figure, style = "Figure", width = docx_width, height = docx_height)
+        body_add_gg(value = new_figure, style = "Figure", width = docx_width, height = docx_height) %>% 
         #body_add_img(src = "fig.png", width = 5, height = 6, style = "Figure")
+        body_add_break(pos = "after")
     }
     
   
@@ -130,7 +132,9 @@ print2docx <- function(mydocx=NULL, FIGURE=NULL, TABLE=NULL) {
             #set_header_labels( n = "#", Mean = "\u03D1", SD = "\u03C3") %>% 
             #color(i = ~ n < 4, color = "wheat") %>% 
             autofit() 
-        )
+        ) %>% 
+        body_add_break(pos = "after")
+      
     }else{
       mydocx <- mydocx %>% 
         cursor_end() %>%   
@@ -143,7 +147,8 @@ print2docx <- function(mydocx=NULL, FIGURE=NULL, TABLE=NULL) {
             #set_header_labels( n = "#", Mean = "\u03D1", SD = "\u03C3") %>% 
             #color(i = ~ n < 4, color = "wheat") %>% 
             autofit() 
-        )
+        )%>% 
+        body_add_break(pos = "after")
     }
     
   }}  
