@@ -4,8 +4,9 @@
 
 
 setup_scale <- function(myscale='7_14', mylimit) {
+  library(shiny)
   
-  validate(need(length(mylimit)==2, message="Need a vector with length of 2"), 
+  shiny::validate(need(length(mylimit)==2, message="Need a vector with length of 2"), 
            need(mylimit[2]>mylimit[1], message="The first entry must be small than the second entry")
            )
   x=NULL
