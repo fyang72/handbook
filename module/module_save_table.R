@@ -10,8 +10,14 @@ module_save_multiple_tables_UI <- function(id, label = "") {
   tagList(
     br(),
     
+    fluidRow(column(12, uiOutput(ns("checkboxGroup_input")))),
+    
     fluidRow(
-      column(2,  offset=6,
+      column(2,  
+             actionButton(ns("update_all_tables"),label="Refresh tables", style=actionButton_style)
+      ),
+      
+      column(2,  offset=4,
              actionButton(ns("save_all_tables"),label="Save all", style=actionButton_style)
       ),
       column(2,  #offset=10,
@@ -38,22 +44,37 @@ module_save_multiple_tables <- function(input, output, session,
 ){
   
   ns <- session$ns 
-  #values <- reactiveValues()
+  values <- reactiveValues(tables=tables)
+  
+  
+  output$checkboxGroup_input <- renderUI({  
+    shiny::validate(need(tables, message="no table found yet"))
+    
+    checkboxGroupInput(ns("table_list"), "Select table(s):",
+                       inline=TRUE, 
+                       choices = names(tables), 
+                       selected = names(tables)
+    )
+    
+  })
+  
   
   output$multiple_tables_container <- renderUI({  
     validate(need(is.list(tables), message="no table found, or output$table needs to be a list"))
     
-    lapply(1:length((tables)), function(i) {
-      validate(need(tables[[i]], message="no table found"), 
-               need(is.data.frame(tables[[i]]), message="only data.frame object allowed")
+    subset_of_tables <- values$tables  #figures[input$figure_list]
+    
+    lapply(1:length((subset_of_tables)), function(i) {
+      validate(need(subset_of_tables[[i]], message="no table found"), 
+               need(is.data.frame(subset_of_tables[[i]]), message="only data.frame object allowed")
       )
       
       # save table into ALL$table
       ALL = callModule(module_save_table, paste0("module_save_table_", i), 
                        ALL, 
-                       table = tables[[i]], 
+                       table = subset_of_tables[[i]], 
                        table_index = i, 
-                       table_name = names(tables[i])
+                       table_name = names(subset_of_tables[i])
       )
       
       module_save_table_UI(ns(paste0("module_save_table_", i)), label = NULL) 
@@ -62,14 +83,27 @@ module_save_multiple_tables <- function(input, output, session,
   })
   
   
+  # update_all_tables
+  #------------------
+  observeEvent({input$update_all_tables}, {
+    validate(need(length(tables), message="no figure found"), 
+             need(input$table_list, message=FALSE)
+    )
+    
+    values$tables = tables[input$table_list]
+    
+    showNotification("all tables updated", type="message") 
+    
+    
+  })
   # save_all_tables
   #------------------
   observeEvent({input$save_all_tables}, {
-    validate(need(length(tables), message="no table found") )
+    validate(need(length(values$tables), message="no table found") )
     isolate({ 
       
       #lapply(1:length(values$table), function(i) ALL$table[[names(values$table)[i]]] = values$table[[i]])
-      ALL$TABLE = c(ALL$TABLE, tables)
+      ALL$TABLE = c(ALL$TABLE, values$tables)
       
       showNotification("all tables saved", type="message") 
     })
@@ -95,7 +129,7 @@ module_save_multiple_tables <- function(input, output, session,
       
       #tt <- print2_word_ppt2(myfig, TABLE_ALL=NULL, mydoc=NULL, myppt=NULL)
       mydocx <- read_docx(paste0(HOME, "/lib/docTemplate.docx"))  %>% 
-        print2docx(TABLE=tables)
+        print2docx(TABLE=values$tables)
       
       validate(need(!is.null(mydocx), "no doc found"))
       print(mydocx, target =file)
@@ -124,7 +158,7 @@ module_save_multiple_tables <- function(input, output, session,
       #tt <- print2_word_ppt2(myfig, TABLE_ALL=NULL, mydoc=NULL, myppt=NULL)
       #mypptx <- pptx() %>% print2docx(table=values$table)
       mypptx <- read_pptx(paste0(HOME, "/lib/pptTemplate.pptx")) 
-      mypptx <- mypptx %>% print2pptx(TABLE=tables)
+      mypptx <- mypptx %>% print2pptx(TABLE=values$tables)
       validate(need(!is.null(mypptx), "no pptx found"))
       
       #writeDoc(mypptx,file=file)

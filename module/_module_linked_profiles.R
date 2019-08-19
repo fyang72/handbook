@@ -24,8 +24,8 @@ module_linked_profiles <- function(input, output, session,
                             # xvar_name_label = xvar_name,
                             # 
                             # yvar_name = "DVOR", 
-                            test_name = ""#,  
-                            #test_name_label = test_name #, 
+                            test_name = "",  
+                            test_name_label = test_name #, 
                             # log_scale = TRUE, 
                             # 
                             # id_name = "USUBJID", 
@@ -39,26 +39,28 @@ module_linked_profiles <- function(input, output, session,
   # data frame with an additional columns "HIGHLIGHT_ID" and "HIGHLIGHT_ID_NTIM
   # that indicates whether that observation is brushed, USUBJID/NTIM highlighed
   ns <- session$ns
-  # 
-  # xvar_name = xvar_name()
-  # xvar_name_label = xvar_name_label()
-  # yvar_name = yvar_name()
-  # 
+  
+  xvar_name = xvar_name()
+  xvar_name_label = xvar_name_label()
+  yvar_name = yvar_name()
+  
   test_name = test_name()
-  #test_name_label = test_name_label()
-   
-  # log_scale = log_scale()
-  # id_name = id_name()
-  # 
-  # dosegrp_name = dosegrp_name()
-  # testvar_name = testvar_name()
-  # 
-  # if (length(log_scale)==1) {
-  #   log_scale = rep(log_scale, times=length(test_name))
-  # }
-  # 
-  # log_scale = log_scale[1:length(test_name)]
- 
+  test_name_label = test_name_label()
+  log_scale = log_scale()
+  id_name = id_name()
+  
+  dosegrp_name = dosegrp_name()
+  testvar_name = testvar_name()
+  
+  if (length(log_scale)==1) {
+    log_scale = rep(log_scale, times=length(test_name))
+  }
+  
+  log_scale = log_scale[1:length(test_name)]
+  #validate(need(length(log_scale)==length(test_name), 
+  #              message= "log_scale must have same length of test_name"))
+  
+  #
   output$multi_panel <- renderUI({
     lapply(1:length(test_name), function(i) {
       
@@ -75,9 +77,9 @@ module_linked_profiles <- function(input, output, session,
   
 
     
-lapply(1:length(test_name), function(i) {
+  lapply(1:length(test_name), function(i) {
     
- output[[paste0("plot", i)]] <- renderUI({
+    output[[paste0("plot", i)]] <- renderUI({
       
     # loop for all the figures
     output[[paste0("figure_output", i)]] <- renderPlot({ 
@@ -87,15 +89,17 @@ lapply(1:length(test_name), function(i) {
       #print("render plots1")
       
       fig <- linked_time_profile_plot(
-        dataWithSelection() %>% filter(TEST==test_name[i]) 
+        dataWithSelection() %>% filter(TEST==test_name[i]),
+        xvar_name_label = xvar_name_label[i], 
+        test_name_label = test_name_label[i]
       )  
       
-      #if (log_scale[i]) {
-        # fig <- fig + scale_y_log10()  + 
-        #   scale_y_log10(breaks = 10^(seq(-3,3,by=1)),      #trans_breaks("log10", function(x) 10^x),
-        #                 labels = 10^(seq(-3,3,by=1))) +      # trans_format("log10", math_format(10^.x))) +
-        #   annotation_logticks(sides ="l")  #+  # "trbl", for top, right, bottom, and left.
-      #}
+      if (log_scale[i]) {
+        fig <- fig + scale_y_log10()  + 
+          scale_y_log10(breaks = 10^(seq(-3,3,by=1)),      #trans_breaks("log10", function(x) 10^x),
+                        labels = 10^(seq(-3,3,by=1))) +      # trans_format("log10", math_format(10^.x))) +
+          annotation_logticks(sides ="l")  #+  # "trbl", for top, right, bottom, and left.
+      }
       
       fig
     })
@@ -126,9 +130,7 @@ lapply(1:length(test_name), function(i) {
     # loop for all the tables
     output[[paste0("summary", i)]] <- renderUI({
       
-      validate(need(dataWithSelection(), message=FALSE), 
-               need(input$brush, message=FALSE)
-      )
+      validate(need(dataWithSelection(), message="no data found"))
      
       # or renderTable + tableOutput
       output[[paste0("table_output", i)]] <- DT::renderDataTable(                                                                                                                                          
@@ -160,23 +162,23 @@ lapply(1:length(test_name), function(i) {
              )
     
     #print("in datawith selection1")
-    # tdata <- dataset %>% 
-    #   mutate_(xvar = xvar_name, 
-    #           yvar = yvar_name 
-    #   )  %>% 
-    #   mutate(xvar=as_numeric(xvar),
-    #          yvar=as_numeric(yvar)
-    #   ) 
-    # 
+    tdata <- dataset %>% 
+      mutate_(xvar = xvar_name, 
+              yvar = yvar_name 
+      )  %>% 
+      mutate(xvar=as_numeric(xvar),
+             yvar=as_numeric(yvar)
+      ) 
+    
     # add "selected_"
-    tdata = brushedPoints(dataset, input$brush, allRows = TRUE) %>% 
+    tdata = brushedPoints(tdata, input$brush, allRows = TRUE) %>% 
       
-      # mutate_(NTIM = xvar_name, 
-      #         DVOR = yvar_name, 
-      #         USUBJID = id_name,
-      #         ARMA = dosegrp_name,
-      #         TEST = testvar_name
-      # ) %>% 
+      mutate_(NTIM = xvar_name, 
+              DVOR = yvar_name, 
+              USUBJID = id_name,
+              ARMA = dosegrp_name,
+              TEST = testvar_name
+      ) %>% 
 
       mutate(
         HIGHLIGHT_ID=FALSE, 
@@ -226,7 +228,9 @@ lapply(1:length(test_name), function(i) {
   #------------------------------------------------------
   # util function of linked_time_profile_plot
   #------------------------------------------------------  
-  linked_time_profile_plot <- function(data ) {
+  linked_time_profile_plot <- function(data, 
+                                       xvar_name_label, 
+                                       test_name_label) {
     
     # ------------------------------------------
     # key varaibles: 
@@ -236,9 +240,9 @@ lapply(1:length(test_name), function(i) {
     tdata = data
     validate(need(tdata, message=FALSE))
     
-    x=setup_scale(myscale='1_7', mylimit=c(0, max(tdata$NTIM, na.rm=TRUE)))
+    x=setup_scale(myscale='1_7', mylimit=c(0, max(tdata$xvar, na.rm=TRUE)))
     
-    ggplot(tdata, aes(x = NTIM, y = DVOR, group=USUBJID)) +
+    ggplot(tdata, aes_string(x = "xvar", y = "yvar", group="USUBJID")) +
       geom_point(aes(color = HIGHLIGHT_ID_NTIM)) +
       geom_point(data=tdata%>%filter(HIGHLIGHT_ID_NTIM), 
                  aes(color = HIGHLIGHT_ID_NTIM),
@@ -257,59 +261,14 @@ lapply(1:length(test_name), function(i) {
       # #scale_y_continuous(breaks=y$breaks, label=y$labels) +
       # 
       # #coord_cartesian(xlim = c(0, 85)) + 
-      xlab("Nominal Time (day)") + 
-      ylab("PK concentration (mg/L) or PD measurement") + 
+      # 
+      xlab(xvar_name_label) +  
+      ylab(test_name_label) +   
       
-      theme_bw() + theme_regn(font_size = as.integer(12)) #+ 
+      theme_bw() + base_theme(font.size = as.integer(12)) #+ 
     #guides(col=guide_legend(ncol=4,byrow=TRUE))  
     
   }
   
   return(dataWithSelection)
-}
-
-
-
-
-
-
-idegug = 1
-#source("~/handbook/global.R")
-
-if (idegug) { 
-  
-  ui <- basicPage( #(id, label = "") {
-    
-    tagList(
-      uiOutput("linked_profiles")  
-      
-    )
-    
-  )
-  
-  
-server <- function(input, output, session) {
-    dataset = read_datafile(paste0(HOME, "/data/nmdatPKPD.csv"))   %>% 
-      convert_vars_type(nmdat_data_type)
-
-    output$linked_profiles <- renderUI({
-      
-      callModule(module_linked_profiles, "sfstest", 
-                 dataset= dataset, 
-                 test_name = reactive(c("Concentration of FY001",  "RESP1", "RESP2"))#,
-                 #test_name_label = reactive(c("Concentration of FY001",  "RESP1", "RESP2"))
-      )
-      
-      module_linked_profiles_UI(("sfstest"))
-      
-    })
-    
-    
-  }
-  
-  
-  
-  #source("./handbook/global.R")
-  shinyApp(ui, server)
-  
 }

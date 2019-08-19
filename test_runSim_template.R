@@ -3,8 +3,12 @@
 ######################################################################
 # setup
 ######################################################################
+ 
+library(stringr)
+HOME = paste0(normalizePath("."), "/")
+if (str_sub(HOME, 1, 22) == "/home/feng.yang/FYANG/") {HOME=paste0("/home/feng.yang/YANG/")}
+if (str_sub(HOME, 1, 19) == "C:\\Users\\feng.yang\\") {HOME=paste0("C:\\Users\\feng.yang\\Documents\\handbook/")}
 
-HOME = "/home/feng.yang/YANG/"
 
 #source(paste0(HOME, "global.R"))
 library(dplyr)
@@ -42,9 +46,8 @@ for (ifile in 1:length(file.lst)) {source(file=file.lst[ifile])  }
 #---------------------------------------- 
 # load mrgsolve cpp model
 #---------------------------------------- 
-cppModel_file <- "/home/feng.yang/FYANG/Template/runSim/cpp/LN001.cpp"
-cppModel <- read_cppModel(cppModel_file, "R2810") %>% 
-           param(COVARIATE=0, SCALING=1)    # change parameters
+cppModel_file <- paste0(HOME, "/cpp/LN001.cpp")
+cppModel <- read_cppModel(cppModel_file, "TEST")  
  
 # output results
 FIGURE  = NULL
@@ -126,7 +129,7 @@ simData = lapply(1:nrep, function(i) {
   print(i)
   
   # virtual subject 
-  i_adsl = adsl %>% 
+  i_adsl = adsl_100 %>% 
     sample_n(size=nsubject, replace=TRUE) %>% 
     mutate(USUBJID = 1:nsubject)   
   
@@ -152,8 +155,8 @@ tdata = simData_1 %>%
          )
  
 STUDY.NAME = "tmp"
-PK.TEST.NAME = "REGN2810"
-PK.TEST.LABEL = "REGN2810"
+PK.TEST.NAME = "TEST"
+PK.TEST.LABEL = "TEST"
 x=setup_scale(myscale='1_4', mylimit=c(0, max(tdata$TIME, na.rm=TRUE)))
 
 fig = ggplot(tdata, aes(x=TIME, y=DVOR, group=ID, col=ARMA)) + 
@@ -257,7 +260,7 @@ x=setup_scale(myscale='1_4', mylimit=c(0, max(tdata$TIME, na.rm=TRUE)))
 fig = ggplot(tdata, aes(x=TIME, y=Median, group=ARMA)) + 
   geom_line(col="black", show.legend=TRUE  ) +
   geom_ribbon(aes(ymin=PCT2P5,ymax=PCT97P5), fill="gray50", alpha="0.5", show.legend=F)   + 
-  scale_fill_manual(values=c(clear,blue)) + 
+  #scale_fill_manual(values=c(clear,blue)) + 
   
   #coord_cartesian(xlim =xlim, ylim =ylim) + 
   

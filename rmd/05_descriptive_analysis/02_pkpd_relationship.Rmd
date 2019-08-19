@@ -6,6 +6,32 @@
 ### Linked PK/PD time-profile
  
  
+```{r} 
+
+  output$load_dataset_container <-renderUI({
+    
+    # callModule 
+    ALL = callModule(module_load_dataset, "load_dataset_for_linked_PKPD_analysis", 
+                     ALL, dataset_name="mYtEsT_for_linked_PKPD_analysis")
+    
+    # UI  
+    fluidRow(column(6, 
+                    module_load_dataset_UI(id=("load_dataset_for_linked_PKPD_analysis"), label=NULL) 
+                    ), 
+              column(6, 
+                   HTML(colFmt("internal library: build-in dataset <br>
+                        within session: secondary data derived from the original <br> 
+                        external file: external file", color="gray")
+                   )
+             )
+    )
+   
+  })
+
+uiOutput("load_dataset_container")
+
+```
+ 
 ```{r}
   
   #--------------------------------------  
@@ -14,7 +40,7 @@
   output$select_multiple_response_variables_4PKPD_container <- renderUI({
     validate(need(globalVars$login$status, message=FALSE)) 
     
-    tdata = ALL$DATA[["mYtEsT_for_descriptive_analysis"]] 
+    tdata = ALL$DATA[["mYtEsT_for_linked_PKPD_analysis"]] 
     validate(need(tdata, message="no data found yet"))
     
     # testcat.lst = unique(tdata$TESTCAT)
@@ -26,90 +52,91 @@
     # )
     # 
     # testcat.lst = c("", sort(testcat.lst) )
-    TEST_lst <- tdata$TEST %>% unique()
+    TEST_lst <- tdata %>% drop_na(TEST) %>% pull(TEST) %>% unique()
+    
     
     tagList(
-    fluidRow( 
-      column(12, 
-             style='margin-bottom:30px;  border:1px solid; padding: 10px;',
-             
-        fluidRow(
-          column(6,  
-             selectizeInput("xvar_name", 
-                       label    = "colname of nominal time (NTIM)", 
-                       choices  = colnames(tdata), 
-                       multiple = FALSE,
-                       width="100%", 
-                       selected = ifelse("NTIM" %in% colnames(tdata), 
-                                         "NTIM", 
-                                         colnames(tdata)[1]
-                                         )
-                       ),
-             
-             textInput("xvar_name_label", label="label for NTIM", value="Nominal time (Day)"), 
-             
-             selectizeInput("id_name", 
-                       label    = "colname of unique ID (USUBJID)", 
-                       choices  = colnames(tdata), 
-                       multiple = FALSE,
-                       width="100%", 
-                       selected = ifelse("USUBJID" %in% colnames(tdata), 
-                                         "USUBJID", 
-                                         colnames(tdata)[1]
-                                         )
-                       )
-             ), 
-      column(6,  
-             selectizeInput("yvar_name", 
-                       label    = "colname of dependent varaible (DVOR)", 
-                       choices  = colnames(tdata), 
-                       multiple = FALSE,
-                       width="100%", 
-                       selected = ifelse("DVOR" %in% colnames(tdata), 
-                                         "DVOR", 
-                                         colnames(tdata)[1]
-                                         )
-                       ),
-             
-             textInput("log_scale", label="logscale of DVOR", value="TRUE, FALSE, FALSE, FALSE"), 
-             
-             selectizeInput("dosegrp_name", 
-                       label    = "colname of dose group (ARMA)", 
-                       choices  = colnames(tdata), 
-                       multiple = FALSE,
-                       width="100%", 
-                       selected = ifelse("ARMA" %in% colnames(tdata), 
-                                         "ARMA", 
-                                         colnames(tdata)[1]
-                                         )
-                       ),
-             
-             selectizeInput("testvar_name", 
-                       label    = "colname of analyte (TEST)", 
-                       choices  = colnames(tdata), 
-                       multiple = FALSE,
-                       width="100%", 
-                       selected = ifelse("TEST" %in% colnames(tdata), 
-                                         "TEST", 
-                                         colnames(tdata)[1]
-                                         )
-                       )
-          )
-        )
-      )
-    ),
+    # fluidRow( 
+    #   column(12, 
+    #          style='margin-bottom:30px;  border:1px solid; padding: 10px;',
+    #          
+    #     fluidRow(
+    #       column(6,  
+    #          selectizeInput("xvar_name", 
+    #                    label    = "colname of nominal time (NTIM)", 
+    #                    choices  = colnames(tdata), 
+    #                    multiple = FALSE,
+    #                    width="100%", 
+    #                    selected = ifelse("NTIM" %in% colnames(tdata), 
+    #                                      "NTIM", 
+    #                                      colnames(tdata)[1]
+    #                                      )
+    #                    ),
+    #          
+    #          textInput("xvar_name_label", label="label for NTIM", value="Nominal time (Day)"), 
+    #          
+    #          selectizeInput("id_name", 
+    #                    label    = "colname of unique ID (USUBJID)", 
+    #                    choices  = colnames(tdata), 
+    #                    multiple = FALSE,
+    #                    width="100%", 
+    #                    selected = ifelse("USUBJID" %in% colnames(tdata), 
+    #                                      "USUBJID", 
+    #                                      colnames(tdata)[1]
+    #                                      )
+    #                    )
+    #          ), 
+    #   column(6,  
+    #          selectizeInput("yvar_name", 
+    #                    label    = "colname of dependent varaible (DVOR)", 
+    #                    choices  = colnames(tdata), 
+    #                    multiple = FALSE,
+    #                    width="100%", 
+    #                    selected = ifelse("DVOR" %in% colnames(tdata), 
+    #                                      "DVOR", 
+    #                                      colnames(tdata)[1]
+    #                                      )
+    #                    ),
+    #          
+    #          textInput("log_scale", label="logscale of DVOR", value="TRUE, FALSE, FALSE, FALSE"), 
+    #          
+    #          selectizeInput("dosegrp_name", 
+    #                    label    = "colname of dose group (ARMA)", 
+    #                    choices  = colnames(tdata), 
+    #                    multiple = FALSE,
+    #                    width="100%", 
+    #                    selected = ifelse("ARMA" %in% colnames(tdata), 
+    #                                      "ARMA", 
+    #                                      colnames(tdata)[1]
+    #                                      )
+    #                    ),
+    #          
+    #          selectizeInput("testvar_name", 
+    #                    label    = "colname of analyte (TEST)", 
+    #                    choices  = colnames(tdata), 
+    #                    multiple = FALSE,
+    #                    width="100%", 
+    #                    selected = ifelse("TEST" %in% colnames(tdata), 
+    #                                      "TEST", 
+    #                                      colnames(tdata)[1]
+    #                                      )
+    #                    )
+    #       )
+    #     )
+    #   )
+    # ),
     
     fluidRow(
       column(12, 
         selectizeInput("multiple_test_name", 
-                       label    = "select which variable(s)", 
+                       label    = "select which analytes for linked profiles", 
                        choices  = TEST_lst, 
                        multiple = TRUE,
                        width="100%", 
-                       selected = TEST_lst[1]),
+                       selected = TEST_lst[1])#,
       
-       textInput("test_name_label", label="label for analyte name ", value="Concentration (mg/L)"), 
-       style='margin-bottom:30px;  border:1px solid; padding: 10px;'
+       #textInput("test_name_label", label="label for analyte name ", value="Concentration (mg/L)"), 
+       #style='margin-bottom:30px;  border:1px solid; padding: 10px;'
       )
     )
     
@@ -127,7 +154,7 @@
 ```{r}  
  
 output$PKPD_linked_profiles_plot <- renderUI({ 
-  tdata = ALL$DATA[["mYtEsT_for_descriptive_analysis"]]
+  tdata = ALL$DATA[["mYtEsT_for_linked_PKPD_analysis"]]
   validate(need(tdata, message="no data found yet"))
     
   key_col_lst <- c("USUBJID", "ARMA","TIME", "NTIM", "TEST", "DVOR", "WGTBL")
@@ -138,39 +165,40 @@ output$PKPD_linked_profiles_plot <- renderUI({
   )
   
   col_lst <- c(key_col_lst, setdiff(colnames(tdata), key_col_lst))
-  tdata = tdata %>% select(one_of(col_lst)) 
+  tdata = tdata %>% select(one_of(col_lst)) %>% 
+    convert_vars_type(nmdat_data_type)
  
   ALL = callModule(module_linked_profiles, "module_PKPD_linked_profiles_plot", 
                     dataset = tdata, 
-                    xvar_name = reactive(input$xvar_name), #"NTIM", 
-                    xvar_name_label = 
-                     if(length(input$xvar_name_label)==1) {
-                                        reactive(rep(input$xvar_name_label,
-                                                     times=length(input$multiple_test_name))
-                                                 )
-                                         }else{
-                                         reactive(input$xvar_name_label)
-                                      },
-                    
-                    yvar_name = reactive(input$yvar_name), 
-                    test_name = reactive(input$multiple_test_name),  
-                    test_name_label = if(length(input$test_name_label)==1) {
-                                        reactive(rep(input$test_name_label,
-                                                     times=length(input$multiple_test_name))
-                                                 )
-                                         }else{
-                                         reactive(input$test_name_label)
-                                      },
-                   
-                    log_scale = reactive(
-                      as.logical(
-                        eval(parse(text=paste0("c(", input$log_scale, ")")))
-                        )
-                      ),  
-                    
-                    id_name = reactive(input$id_name),  
-                    dosegrp_name = reactive(input$dosegrp_name),
-                    testvar_name = reactive(input$testvar_name) 
+                    # xvar_name = reactive(input$xvar_name), #"NTIM", 
+                    # xvar_name_label = 
+                    #  if(length(input$xvar_name_label)==1) {
+                    #                     reactive(rep(input$xvar_name_label,
+                    #                                  times=length(input$multiple_test_name))
+                    #                              )
+                    #                      }else{
+                    #                      reactive(input$xvar_name_label)
+                    #                   },
+                    # 
+                    # yvar_name = reactive(input$yvar_name), 
+                    test_name = reactive(input$multiple_test_name)#,  
+                    # test_name_label = if(length(input$test_name_label)==1) {
+                    #                     reactive(rep(input$test_name_label,
+                    #                                  times=length(input$multiple_test_name))
+                    #                              )
+                    #                      }else{
+                    #                      reactive(input$test_name_label)
+                    #                   } #,
+                    # # 
+                    # log_scale = reactive(
+                    #   as.logical(
+                    #     eval(parse(text=paste0("c(", input$log_scale, ")")))
+                    #     )
+                    #   ),  
+                    # 
+                    # id_name = reactive(input$id_name),  
+                    # dosegrp_name = reactive(input$dosegrp_name),
+                    # testvar_name = reactive(input$testvar_name) 
                         
    )
   

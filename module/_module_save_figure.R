@@ -211,31 +211,29 @@ module_save_figure_UI <- function(id, label = "") {
       )
     ), 
     
-    #fluidRow(column(width=12, uiOutput(ns("figure_options_container")))),
-    
     fluidRow(  #column(width=12, div(align = "center",
-
+      
       column(width=2, offset = 1, #status = "primary",  #class = 'rightAlign',#background ="aqua",
              actionButton(ns("figure_options"),label="Options", style=actionButton_style)
-      ),
-
+      ), 
+      
       column(width=3, #status = "primary",  #class = 'rightAlign', #background ="aqua",
              uiOutput(ns("figure_name_container"))
-
+             
       ),
-
+       
       column(width=2, #status = "primary",  #class = 'rightAlign',#background ="aqua",
              actionButton(ns("figure_saveit"),label="Save it", style=actionButton_style)
-      ),
-
-      column(width=2,
-             downloadButton(ns("downloaddoc"),label="docx", icon=icon("download"), style=actionButton_style)
-      ),
-
-      column(width=2,
-             downloadButton(ns("downloadppt"),label="pptx", icon=icon("download"), style=actionButton_style)
+      ), 
+      
+      column(width=2,                                                                                                                                                                   
+             downloadButton(ns("downloaddoc"),label="docx", icon=icon("download"), style=actionButton_style)                                                                        
+      ), 
+      
+      column(width=2,                                                                                                                                                                   
+             downloadButton(ns("downloadppt"),label="pptx", icon=icon("download"), style=actionButton_style)                                                                        
       )
-    ),
+    ), #)), 
     
     style='margin-bottom:30px;  border:1px solid; padding: 10px;'
   )
@@ -353,7 +351,7 @@ output$figure_container <-renderUI({
   
   #call module  
   callModule(module_ggplot_brush, "module_ggplot_brush_for_save_figure", 
-                   fig=ggplot_figure() 
+                   fig=ggplot_figure(), mydata=figure_data, xvar="xvar", yvar="yvar"
              )
  
   # UI  
@@ -379,33 +377,6 @@ output$figure_container2 <- renderUI({
   plotlyOutput(ns("figure2"), width = "100%", height = "500px")
  })
 
-
-
-
-
-#----------------------------------------------------
-# figure_options_container
-#----------------------------------------------------
-output$figure_options_container <-renderUI({
-  validate(need(ggplot_figure(), message="no figure found")
-  )
-  
-  figure <- figure  #ggplot_figure()
-  #call module  
-  ALL = callModule(module_save_for_figure_with_options, "module_ggplot_options_for_save_figure", 
-             ALL, 
-             figure=figure, 
-             figure_name = names(figure[i])
-  )
-  
-  # UI  
-  fluidRow(column(12, 
-                  module_save_for_figure_with_options_UI(ns("module_ggplot_options_for_save_figure"), label=NULL)
-  ) 
-  )  
-})
-
- 
 
 #-------------------------------------------------------------
 # save figure 

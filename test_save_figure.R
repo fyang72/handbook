@@ -3,9 +3,11 @@
 ######################################################################
 # setup
 ######################################################################
+library(stringr)
+HOME = paste0(normalizePath("."), "/")
+if (str_sub(HOME, 1, 22) == "/home/feng.yang/FYANG/") {HOME=paste0("/home/feng.yang/YANG/")}
+if (str_sub(HOME, 1, 19) == "C:\\Users\\feng.yang\\") {HOME=paste0("C:\\Users\\feng.yang\\Documents\\handbook/")}
 
-HOME = "/home/feng.yang/YANG/"
-#source(paste0(HOME, "global.R"))
  
 library(stringr)
 library(officer) 
