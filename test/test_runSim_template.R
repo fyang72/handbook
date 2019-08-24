@@ -6,8 +6,8 @@
  
 library(stringr)
 HOME = paste0(normalizePath("."), "/")
-if (str_sub(HOME, 1, 22) == "/home/feng.yang/FYANG/") {HOME=paste0("/home/feng.yang/YANG/")}
-if (str_sub(HOME, 1, 19) == "C:\\Users\\feng.yang\\") {HOME=paste0("C:\\Users\\feng.yang\\Documents\\handbook/")}
+if (str_sub(HOME, 1, 6) == "/home/") {HOME=paste0("/home/feng.yang/YANG/")}
+if (str_sub(HOME, 1, 9) == "C:\\Users\\") {HOME=paste0("C:\\Users\\feng.yang\\Documents\\handbook/")}
 
 
 #source(paste0(HOME, "global.R"))
@@ -43,21 +43,26 @@ file.lst <- list_files_in_a_folder(folder.loc=paste0(HOME, "/script/"), file.ext
 for (ifile in 1:length(file.lst)) {source(file=file.lst[ifile])  }     
 
 
+
+######################################################################
+# run simulations
+######################################################################
+
 #---------------------------------------- 
 # load mrgsolve cpp model
 #---------------------------------------- 
-cppModel_file <- paste0(HOME, "/cpp/LN001.cpp")
+USER_HOME = HOME  # your own directory
+
+cppModel_file <- paste0(USER_HOME, "/cpp/LN001.cpp")
 cppModel <- read_cppModel(cppModel_file, "TEST")  
  
 # output results
 FIGURE  = NULL
 TABLE = NULL
 
-
 set.seed(1234) 
 
-
-#----------------------------------------  
+#---------------------------------------  
 # dose regimens to be simulated
 #----------------------------------------
  
@@ -71,14 +76,19 @@ adex = parseARMA(c("350 mg IV Q3W*6",
 nrep = 1   # n replicate
 nsubject = 1  # define a population
 
-# define population
+# a typical subject
+#-------------------
 adsl_1 <- 
   data_frame(USUBJID=1:nsubject) %>% 
   #mutate_random(WGTBL[50,110] ~ rnorm(80,30)) %>%   # [lower,upper] ~ rnorm(mu,sd))
   mutate_random(WGTBL[50,110] ~ rnorm(70,0)) %>%   # [lower,upper] ~ rnorm(mu,sd))
   mutate_random(SEX ~ rbinomial(0.7))     # "1"=70%, "0"=30%
    
+# or use 
+#adsl_1 = data.frame(USUBJID=1, WGTBL=75)  # a data.frame
 
+# a population of 100 subjects
+#-------------------------------
 nrep = 1   # n replicate
 nsubject = 100  # define a population
 
@@ -89,7 +99,8 @@ adsl_100 <-
   mutate_random(WGTBL[50,110] ~ rnorm(70,0)) %>%   # [lower,upper] ~ rnorm(mu,sd))
   mutate_random(SEX ~ rbinomial(0.7))     # "1"=70%, "0"=30%
 
-#adsl = data.frame(USUBJID=1, WGTBL=75)  # a data.frame
+# or use 
+# adsl_100 = data.frame(USUBJID=1:nsubject, WGTBL=75)  # a data.frame
  
 #---------------------------------------- 
 # run a single simulation
@@ -124,33 +135,35 @@ simData_100 <- runSim_by_dosing_regimen(
 # run trial simulation (with replicate = nrep)
 #-----------------------------------------------
 nrep=0
-simData = lapply(1:nrep, function(i) {
-  
-  print(i)
-  
-  # virtual subject 
-  i_adsl = adsl_100 %>% 
-    sample_n(size=nsubject, replace=TRUE) %>% 
-    mutate(USUBJID = 1:nsubject)   
-  
-  # run simulation   
-  cbind(REP=i,
-        runSim_by_dosing_regimen(cppModel, 
-                                 i_adsl, 
-                                 adex, 
-                                 simulation_delta = simulation_delta,       # default density of time point                           
-                                 tgrid = NULL,  # extra timepoint, from nmdat$TIME
-                                 infusion_hrs_lst = infusion_hrs_lst,
-                                 followup_period = followup_period,
-                                 seed=1234) %>% as.data.frame() 
-  )
-}) %>% bind_rows()
- 
+if (nrep) { 
+  simData = lapply(1:nrep, function(i) {
+    
+    print(i)
+    
+    # virtual subject 
+    i_adsl = adsl_100 %>% 
+      sample_n(size=nsubject, replace=TRUE) %>% 
+      mutate(USUBJID = 1:nsubject)   
+    
+    # run simulation   
+    cbind(REP=i,
+          runSim_by_dosing_regimen(cppModel, 
+                                   i_adsl, 
+                                   adex, 
+                                   simulation_delta = simulation_delta,       # default density of time point                           
+                                   tgrid = NULL,  # extra timepoint, from nmdat$TIME
+                                   infusion_hrs_lst = infusion_hrs_lst,
+                                   followup_period = followup_period,
+                                   seed=1234) %>% as.data.frame() 
+    )
+  }) %>% bind_rows()
+}
+
 #---------------------------------------- 
 # priminary plot     
 # -----------------------------------
 tdata = simData_1 %>% 
-  mutate(TIME = TIME/7, 
+  mutate(TIME = TIME/7,    # in weeks
          DVOR = CENTRAL/V2
          )
  
@@ -242,8 +255,6 @@ tabl = out  %>% calc_stats(id="USUBJID", group_by=c("ARMA", "TEST"), value="DVOR
 TABLE[["summary_stats_exposure_metrics"]]  = tabl
 
 
-  
-
 
 #-----------------------------------------------
 # calcualte 95% CI interval 
@@ -284,10 +295,16 @@ fig
 #-----------------------------------------------
 library(officer)
 
-mydocx <- read_docx(paste0(HOME, "/lib/docTemplate.docx")) %>% 
+mydocx <- read_docx(paste0(USER_HOME, "/lib/docTemplate.docx")) %>% 
   print2docx(FIGURE, TABLE) 
 print(mydocx, target = './docx_result.docx')
+browseURL(paste0(USER_HOME, "/docx_result.docx"))
 
-mypptx <- read_pptx(paste0(HOME, "/lib/pptTemplate.pptx")) %>% 
+mypptx <- read_pptx(paste0(USER_HOME, "/lib/pptTemplate.pptx")) %>% 
   print2pptx(FIGURE, TABLE) 
 print(mypptx, target = './pptx_result.pptx')
+browseURL(paste0(USER_HOME, "/pptx_result.pptx"))
+
+
+
+

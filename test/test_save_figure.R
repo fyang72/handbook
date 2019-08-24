@@ -5,8 +5,8 @@
 ######################################################################
 library(stringr)
 HOME = paste0(normalizePath("."), "/")
-if (str_sub(HOME, 1, 22) == "/home/feng.yang/FYANG/") {HOME=paste0("/home/feng.yang/YANG/")}
-if (str_sub(HOME, 1, 19) == "C:\\Users\\feng.yang\\") {HOME=paste0("C:\\Users\\feng.yang\\Documents\\handbook/")}
+if (str_sub(HOME, 1, 6) == "/home/") {HOME=paste0("/home/feng.yang/YANG/")}
+if (str_sub(HOME, 1, 9) == "C:\\Users\\") {HOME=paste0("C:\\Users\\feng.yang\\Documents\\handbook/")}
 
  
 library(stringr)

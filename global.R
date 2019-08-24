@@ -2,8 +2,8 @@
 
 library(stringr)
 HOME = paste0(normalizePath("."), "/")
-if (str_sub(HOME, 1, 22) == "/home/feng.yang/FYANG/") {HOME=paste0("/home/feng.yang/YANG/")}
-if (str_sub(HOME, 1, 19) == "C:\\Users\\feng.yang\\") {HOME=paste0("C:\\Users\\feng.yang\\Documents\\handbook/")}
+if (str_sub(HOME, 1, 6) == "/home/") {HOME=paste0("/home/feng.yang/YANG/")}
+if (str_sub(HOME, 1, 9) == "C:\\Users\\") {HOME=paste0("C:\\Users\\feng.yang\\Documents\\handbook/")}
  
  
 ######################################################################
@@ -159,7 +159,7 @@ list_files_in_a_folder <- function(folder.loc="./util/", file.extension=c(".r", 
 ihandbook = 0
  
 file.lst <- list_files_in_a_folder(folder.loc=paste0(HOME, "/util/"), file.extension=c(".r", ".R"))
-for (ifile in 1:length(file.lst)) { source(file=file.lst[ifile]) }     
+for (ifile in 1:length(file.lst)) {print(file.lst[ifile]); source(file=file.lst[ifile]) }     
 
 file.lst <- list_files_in_a_folder(folder.loc=paste0(HOME, "/module/"), file.extension=c(".r", ".R"))
 for (ifile in 1:length(file.lst)) {source(file=file.lst[ifile])  }     
