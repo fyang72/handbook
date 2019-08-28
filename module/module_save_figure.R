@@ -271,6 +271,9 @@ output$figure_name_container <- renderUI({
 textInput(ns("figure_name"), value=figure_name, label=NULL)
 })
  
+#-------------------------
+
+#-------------------------
 ggplot_figure <- reactive({
    
   # title
@@ -337,7 +340,30 @@ ggplot_figure <- reactive({
   #     annotate("text", values$vline_location, values$vline, vjust = -1, label = values$vline_label)   
   # }
   
-   
+  if (!is.null(values$yscale) ) { 
+    if (values$yscale=="log") {
+      figure = figure + scale_y_log10(breaks = 10^(seq(-5,5,by=1)),      #trans_breaks("log10", function(x) 10^x),
+                              labels = 10^(seq(-5,5,by=1)))        # trans_format("log10", math_format(10^.x))) +
+      
+      figure = figure + annotation_logticks(sides ="l") # "trbl", for top, right, bottom, and left.
+    }
+  }
+  
+  if (!is.null(values$xscale) ) { 
+    if (values$xscale=="log") {
+      figure = figure + scale_x_log10(breaks = 10^(seq(-5,5,by=1)),      #trans_breaks("log10", function(x) 10^x),
+                                      labels = 10^(seq(-5,5,by=1)))        # trans_format("log10", math_format(10^.x))) +
+      
+      figure = figure + annotation_logticks(sides ="b") # "trbl", for top, right, bottom, and left.
+    }
+  }  
+  
+  if (!is.null(values$facet_by) && values$facet_by !="") { 
+    if (class(figure$data[[values$facet_by]]) %in% c("factor", "character")) {
+      figure = figure + facet_wrap(as.formula(paste("~", values$facet_by))) 
+    }
+  }
+  
   figure
 })
 
@@ -489,11 +515,40 @@ plotModel <- function(){
   my_plot <- ggplot_figure()  #req(zoomed_plot())$plot
    
   modalDialog(
-    fluidRow(column(12, textInput(ns("title"), "title", width = "100%", value = attr(my_plot, "title")))),
-    #fluidRow(column(12, textInput(ns("subtitle"), "sub-title", width = "100%", value =  my_plot$labels$subtitle))),
-    
-    fluidRow(column(6, textInput(ns("xlabel"), "x-axis label", width = "100%", value = my_plot$labels$x)),
-             column(6, textInput(ns("ylabel"), "y-axis label", width = "100%", value = my_plot$labels$y))),
+    fluidRow(
+      # column(6,textInput(
+      #   ns("title"), "title", 
+      #   width = "100%", 
+      #   value = attr(my_plot, "title"))), 
+      column(3, textInput(ns("xlabel"), "x-axis label", width = "100%", value = my_plot$labels$x)),
+      column(3, textInput(ns("ylabel"), "y-axis label", width = "100%", value = my_plot$labels$y)),
+      
+      column(4, selectizeInput(
+        ns("facet_by"), "facet_by", 
+        choices = c("", colnames(my_plot$data)), 
+        selected = NULL)
+      ),
+      column(2, numericInput(
+        ns("fontsize"), "fontsize", 
+        width = "100%", 
+        value = ifelse(is.null(attr(my_plot, "fontsize")), 12, attr(my_plot, "fontsize")))
+        )
+      ),
+
+    fluidRow(
+      column(3, radioButtons(  
+        ns("xscale"), "x-axis scale", 
+        inline = TRUE,
+        choices = c("nonlog", "log"),  
+        selected = "nonlog")
+      ), 
+      column(3, radioButtons(  
+        ns("yscale"), "y-axis scale", 
+        inline = TRUE,
+        choices = c("nonlog", "log"),  
+        selected = "nonlog")
+      )
+      ),
     
     fluidRow(column(3, textInput(ns("hline"), "hline(s)", width = "100%", value = NULL, placeholder="0.078, 10" )),
              column(3, textInput(ns("hline_location"), "location(s)", width = "100%", value = NULL, placeholder="0, 0" )), 
@@ -502,7 +557,9 @@ plotModel <- function(){
              # column(2, textInput(ns("vline"), "vline(s)", width = "100%", value = NULL, placeholder="28, 56" )),
              # column(2, textInput(ns("vline_label"), "vlabel(s)", width = "100%", value = NULL, placeholder="Day 28, Day 56" )),
              # column(2, textInput(ns("vline_location"), "hlocation(s)", width = "100%", value = NULL, placeholder="10, 10" ))
-             ),
+    ),
+    
+    fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
     
     fluidRow(
       column(3, numericInput(ns("docx_width"), "width(docx)",
@@ -522,11 +579,7 @@ plotModel <- function(){
                              value = ifelse(is.null(attr(my_plot, "pptx_height")), 5.2, attr(my_plot, "pptx_height"))))      
       ),
     
-    fluidRow(
-      column(3, numericInput(
-        ns("fontsize"), "fontsize", 
-        width = "100%", 
-        value = ifelse(is.null(attr(my_plot, "fontsize")), 12, attr(my_plot, "fontsize"))))), 
+     
     
     #fluidRow(column(3, selectInput(ns("theme"), "Theme", choices = c("Default", "Grey", "White", "Minimal"), selected = "Default"))),
     #fluidRow(column(6,
@@ -544,8 +597,11 @@ observeEvent(input$save, {
   values$subtitle<- input$subtitle
   
   
-  values$xlabel<- input$xlabel
-  values$ylabel<- input$ylabel
+  values$xlabel <- input$xlabel
+  values$ylabel <- input$ylabel
+  
+  values$xscale <- input$xscale
+  values$yscale<- input$yscale
   
   values$docx_width <- input$docx_width
   values$docx_height<- input$docx_height
@@ -561,6 +617,9 @@ observeEvent(input$save, {
   #values$vline_location <- input$vline_location  
   
   values$fontsize<- input$fontsize
+  
+  values$facet_by<- input$facet_by
+  
   
 })
 

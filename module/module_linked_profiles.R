@@ -65,7 +65,9 @@ module_linked_profiles <- function(input, output, session,
       tagList(
         #fluidRow(column(6, 
         uiOutput(ns(paste0("plot", i))), 
-        uiOutput(ns(paste0("summary", i)))
+        uiOutput(ns(paste0("summary", i))),
+        uiOutput(ns(paste0("save_figure_control_panel", i)))
+        
         #))
       )
       

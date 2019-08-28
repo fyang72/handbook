@@ -1,5 +1,4 @@
 
-
 ######################################################################
 # setup
 ######################################################################
@@ -8,69 +7,29 @@ HOME = paste0(normalizePath("."), "/")
 if (str_sub(HOME, 1, 6) == "/home/") {HOME=paste0("/home/feng.yang/YANG/")}
 if (str_sub(HOME, 1, 9) == "C:\\Users\\") {HOME=paste0("C:\\Users\\feng.yang\\Documents\\handbook/")}
 
- 
-library(stringr)
-library(officer) 
-library(shiny)   
-library(DT) 
-library(RColorBrewer)
-library(xpose) #If you rely on xpose for your work, please keep an eye on our github:
-  #https://github.com/UUPharmacometrics/xpose
-
-actionButton_style ="float:left;color: #fff; background-color: #328332; border-color: #328332"
-
-login = NULL
-login$status = TRUE
-login$user.name.lst = c("training",   "feng.yang"   )
-login$user.name = "feng.yang"   # determineCurrentUser(session=session)
-login$status = login$user.name %in% login$user.name.lst  
-globalVars <- reactiveValues(login=login)
-
-
-list_files_in_a_folder <- function(folder.loc="./util/", file.extension=c(".r", ".R")) {
-  file.lst <-list.files(path = folder.loc, all.files = FALSE,full.names = TRUE, include.dirs = TRUE, recursive =TRUE)     
-  file.lst = file.lst[which(substr(file.lst, nchar(file.lst)-(nchar(file.extension)-1), nchar(file.lst)) %in% file.extension)]
-  file.lst = file.lst[which(!substr(basename(file.lst), 1, 1) %in% "_")]
-  file.lst = file.lst[setdiff(1:length(file.lst), grep("_not_used", file.lst, fixed=TRUE))]
-  return(file.lst)
-}
-
-ihandbook = 0
-
-file.lst <- list_files_in_a_folder(folder.loc=paste0(HOME, "/util/"), file.extension=c(".r", ".R"))
-for (ifile in 1:length(file.lst)) { print(file.lst[ifile]); source(file=file.lst[ifile]) }     
-
-file.lst <- list_files_in_a_folder(folder.loc=paste0(HOME, "/module/"), file.extension=c(".r", ".R"))
-for (ifile in 1:length(file.lst)) {source(file=file.lst[ifile])  }     
-
-file.lst <- list_files_in_a_folder(folder.loc=paste0(HOME, "/script/"), file.extension=c(".r", ".R"))
-for (ifile in 1:length(file.lst)) {source(file=file.lst[ifile])  }     
-
+#source(paste0(HOME, "/global.R"))  
  
 ######################################################################
-# Load local R functions
+# testing
 ######################################################################
+library(shiny)
+library(shinydashboard)
 
-ui <- basicPage( #(id, label = "") {
-  
-  tagList(
-    uiOutput("figure_container")  
-  )
-  
+ui <- dashboardPage(
+  dashboardHeader(),
+  dashboardSidebar(),
+  dashboardBody(uiOutput("figure_container")  )
 )
-
-
+ 
 server <- function(input, output, session) {
-  
-  source(paste0(HOME, "/module/module_save_figure.R"))
-  source(paste0(HOME, "/module/module_ggplot_brush.R"))
-  
+
   figure=NULL
   table =NULL
   data = NULL
         
+  library(xpose)
   xpdb <- xpdb_ex_pk %>% 
-    update_themes(gg_theme = theme_bw(), #+ base_theme(font.size = 12),
+    update_themes(gg_theme = theme_regn(), #+ base_theme(font.size = 12),
                   xp_theme = list(point_color = 'blue',
                                   line_color  = 'black'))  
    
