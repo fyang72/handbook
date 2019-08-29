@@ -8,6 +8,8 @@ if (str_sub(HOME, 1, 6) == "/home/") {HOME=paste0("/home/feng.yang/YANG/")}
 if (str_sub(HOME, 1, 9) == "C:\\Users\\") {HOME=paste0("C:\\Users\\feng.yang\\Documents\\handbook/")}
 
 #source(paste0(HOME, "/global.R"))  
+
+source(paste0(HOME, "/module/module_linked_profiles.R"))  
  
 ######################################################################
 # testing

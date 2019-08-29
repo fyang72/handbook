@@ -39,6 +39,7 @@ module_linked_profiles <- function(input, output, session,
   # data frame with an additional columns "HIGHLIGHT_ID" and "HIGHLIGHT_ID_NTIM
   # that indicates whether that observation is brushed, USUBJID/NTIM highlighed
   ns <- session$ns
+  values <- reactiveValues(figures=NULL)
   # 
   # xvar_name = xvar_name()
   # xvar_name_label = xvar_name_label()
@@ -65,8 +66,8 @@ module_linked_profiles <- function(input, output, session,
       tagList(
         #fluidRow(column(6, 
         uiOutput(ns(paste0("plot", i))), 
-        uiOutput(ns(paste0("summary", i))),
-        uiOutput(ns(paste0("save_figure_control_panel", i)))
+        uiOutput(ns(paste0("summary", i))) #,
+        #uiOutput(ns(paste0("save_figure_control_panel", i)))
         
         #))
       )
@@ -76,21 +77,22 @@ module_linked_profiles <- function(input, output, session,
   })
   
 
-    
+  
+  
+  
 lapply(1:length(test_name), function(i) {
     
  output[[paste0("plot", i)]] <- renderUI({
-      
+   
     # loop for all the figures
     output[[paste0("figure_output", i)]] <- renderPlot({ 
-      
-      validate(need(dataWithSelection(), message="no data found"))
-      
+       
       #print("render plots1")
       
-      fig <- linked_time_profile_plot(
-        dataWithSelection() %>% filter(TEST==test_name[i]) 
-      )  
+       fig <- linked_time_profile_plot(
+         dataWithSelection() %>% filter(TEST==test_name[i]) 
+       )  
+      # values$figures[[i]] = fig
       
       #if (log_scale[i]) {
         # fig <- fig + scale_y_log10()  + 
@@ -98,8 +100,7 @@ lapply(1:length(test_name), function(i) {
         #                 labels = 10^(seq(-3,3,by=1))) +      # trans_format("log10", math_format(10^.x))) +
         #   annotation_logticks(sides ="l")  #+  # "trbl", for top, right, bottom, and left.
       #}
-      
-      fig
+       fig
     })
     
     plotOutput(ns(paste0("figure_output", i)), brush = ns("brush"))#, 
@@ -124,7 +125,7 @@ lapply(1:length(test_name), function(i) {
     #   tableOutput(ns(paste0("table_output", i)))
     # })
     # 
-    
+
     # loop for all the tables
     output[[paste0("summary", i)]] <- renderUI({
       
@@ -148,10 +149,42 @@ lapply(1:length(test_name), function(i) {
     })
     
     
+    output[[paste0("save_figure_control_panel", i)]] <- renderUI({  
+      
+      
+      fluidRow(  #column(width=12, div(align = "center",
+        
+        column(width=2, offset = 1, #status = "primary",  #class = 'rightAlign',#background ="aqua",
+               actionButton(ns(paste0("figure_options", i)),label="Options", style=actionButton_style)
+        ),
+        
+        column(width=3, #status = "primary",  #class = 'rightAlign', #background ="aqua",
+               uiOutput(ns(paste0("figure_name_container", i)))
+        ),
+               
+       column(width=2, #status = "primary",  #class = 'rightAlign',#background ="aqua",
+              actionButton(ns(paste0("figure_saveit", i)),label="Save it", style=actionButton_style)
+       ),
+       
+       column(width=2,
+              downloadButton(ns(paste0("downloaddoc", i)),label="docx", icon=icon("download"), style=actionButton_style)
+       ),
+       
+       column(width=2,
+              downloadButton(ns(paste0("downloadppt", i)),label="pptx", icon=icon("download"), style=actionButton_style)
+       ) ,
+        
+        style='margin-bottom:30px;  border:1px solid; padding: 10px;'
+      )
+    })
+    
+    
   })
    
   
   
+  
+
   #----------------------------------
   # reactive of dataWithSelection
   #----------------------------------
@@ -273,45 +306,3 @@ lapply(1:length(test_name), function(i) {
 
 
 
-
-
-idegug = 1
-#source("~/handbook/global.R")
-
-if (idegug) { 
-  
-  ui <- basicPage( #(id, label = "") {
-    
-    tagList(
-      uiOutput("linked_profiles")  
-      
-    )
-    
-  )
-  
-  
-server <- function(input, output, session) {
-    dataset = read_datafile(paste0(HOME, "/data/nmdatPKPD.csv"))   %>% 
-      convert_vars_type(nmdat_data_type)
-
-    output$linked_profiles <- renderUI({
-      
-      callModule(module_linked_profiles, "sfstest", 
-                 dataset= dataset, 
-                 test_name = reactive(c("Concentration of FY001",  "RESP1", "RESP2"))#,
-                 #test_name_label = reactive(c("Concentration of FY001",  "RESP1", "RESP2"))
-      )
-      
-      module_linked_profiles_UI(("sfstest"))
-      
-    })
-    
-    
-  }
-  
-  
-  
-  #source("./handbook/global.R")
-  shinyApp(ui, server)
-  
-}

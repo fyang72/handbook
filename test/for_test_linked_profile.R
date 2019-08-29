@@ -1,7 +1,6 @@
  
 
-output[[paste0("save_figure_control_panel", i)]] <- renderUI({  
-  
+
 #-------------------------------------------------------------
 # save figure 
 #-------------------------------------------------------------
@@ -9,11 +8,11 @@ output[[paste0("save_figure_control_panel", i)]] <- renderUI({
 observeEvent(input[[paste0("figure_saveit", i)]] {
   
   validate(need(input[[paste0("figure_name", i)]], message=FALSE),
-           need(figures[[i]], message="no figure found")
+           need(values$figures[[i]], message="no figure found")
   )
   
-  attr(figures[[i]], "data_name") = "data_name"
-  ALL$FIGURE[[input[[paste0("figure_name", i)]]]]  = figures[[i]]
+  attr(values$figures[[i]], "data_name") = "data_name"
+  ALL$FIGURE[[input[[paste0("figure_name", i)]]]]  = values$figures[[i]]
   
   showNotification("Save figure sucessfully", type="message")   # "default, "message", "warning", "error"
 })
@@ -76,12 +75,12 @@ output$downloadppt <- downloadHandler(
 
 
 observeEvent(input[[paste0("figure_options",i)]], {
-  showModal(plotModel())
+  showModal(plotModel(values$figures, i))
 })
 
 
-plotModel <- function(){
-  my_plot <- ggplot_figure()  #req(zoomed_plot())$plot
+plotModel <- function(figures, i){
+  my_plot <- figures[[i]]  #ggplot_figure()  #req(zoomed_plot())$plot
   
   modalDialog(
     fluidRow(
@@ -177,36 +176,6 @@ observeEvent(input[[paste0("save", i)]], {
   values[ns_lst] = input[ns_lst]
    
 })
+ 
 
-
-#fluidRow(column(width=12, uiOutput(ns("figure_options_container")))),
-
-fluidRow(  #column(width=12, div(align = "center",
-  
-  column(width=2, offset = 1, #status = "primary",  #class = 'rightAlign',#background ="aqua",
-         actionButton(ns(paste0("figure_options", i)),label="Options", style=actionButton_style)
-  ),
-  
-  column(width=3, #status = "primary",  #class = 'rightAlign', #background ="aqua",
-         uiOutput(ns(paste0("figure_name_container", i))
-                  
-         ),
-         
-         column(width=2, #status = "primary",  #class = 'rightAlign',#background ="aqua",
-                actionButton(ns(paste0("figure_saveit", i)),label="Save it", style=actionButton_style)
-         ),
-         
-         column(width=2,
-                downloadButton(ns(paste0("downloaddoc", i)),label="docx", icon=icon("download"), style=actionButton_style)
-         ),
-         
-         column(width=2,
-                downloadButton(ns(paste0("downloadppt", i)),label="pptx", icon=icon("download"), style=actionButton_style)
-         )
-  ),
-  
-  style='margin-bottom:30px;  border:1px solid; padding: 10px;'
-)
-
-
-})
+ 
