@@ -1,4 +1,5 @@
-
+ 
+ 
 #-------------------------------
 # check the running status
 #-------------------------------
@@ -41,4 +42,23 @@ check_run_status <- function(server_IP_address,
   readLines("./output.log")
   
   
+}
+
+
+
+# 
+# file_full_path_name_lst <- "~/HPC_TEST/ctl/model01_nmdat1/*.lst"
+# check_file_exists(server_IP_address, file_full_path_name_lst)
+#   
+#   
+check_file_exists <- function(server_IP_address, file_full_path_name_lst) {
+  
+  output <- NULL
+  for (i in 1:length(file_full_path_name_lst)) {
+    file_full_path_name <- file_full_path_name_lst[i] # "/HPC_TEST/ctl/model01_nmdat1/*.lst"
+    TRUE_FALSE <- system(command = paste0("if scp ", server_IP_address, ":~/", file_full_path_name, 
+                                          " ./ >&/dev/null ; then return(TRUE) ; else FALSE ; fi"))
+    output <- c(output, TRUE_FALSE)
+  }
+  return(output)
 }

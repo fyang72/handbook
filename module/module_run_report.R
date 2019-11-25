@@ -3,6 +3,11 @@
 #Tips and tricks for working with images and figures in R Markdown documents
 # http://zevross.com/blog/2017/06/19/tips-and-tricks-for-working-with-images-and-figures-in-r-markdown-documents/
   
+
+
+
+# table should be changed to tables
+# figure too!  2019-09-17
   
   #-----------------------------------------
 # xxxUI, xxxInput, xxxOutput, xxxControl 
@@ -32,7 +37,7 @@ module_run_report_UI <- function(id, label = "") {
            ),       
            
            # script_container 
-           tabPanel(width=12, title="template", value = "template", collapsible = TRUE, 
+           tabPanel(width=12, title="script", value = "script", collapsible = TRUE, 
                     collapsed = TRUE, solidHeader = TRUE,
                     fluidRow(column(12, uiOutput(ns("script_container"))))
            ),     
@@ -53,7 +58,16 @@ module_run_report_UI <- function(id, label = "") {
            tabPanel(width=12, title="figure", value = "figure", collapsible = TRUE, 
                     collapsed = TRUE, solidHeader = TRUE,
                     fluidRow(column(12, uiOutput(ns("figure_container"))))   
+           ), 
+           
+           #checkout_container
+           tabPanel(width=12, title="checkout", value = "checkout", collapsible = TRUE, 
+                    collapsed = TRUE, solidHeader = TRUE,
+                    fluidRow(column(12, uiOutput(ns("checkout_container"))))   
+                    #uiOutput(ns("checkout_container"))   
+                    
            )
+           
     ) 
     ) # tagList
 }
@@ -86,30 +100,36 @@ module_run_report <- function(input, output, session,
   ################################ 
   output$dataset_container <-renderUI({
     
-      fluidRow(
+      tagList(
+        HTML(colFmt("Purpose: load dataset, then filter it if necessary <br>", color="gray")
+        ),
+        
         # dataset
-        HTML(colFmt("Step 1: Load the dataset<br>", color="darkblue")
+        fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+        HTML(colFmt("Step 1: Load the dataset<br>", color="gray")
         ),
         uiOutput(ns("pk_report_data_selector")),
-        #fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
         
         # filters
-        HTML(colFmt("Step 2: Apply following filter(s), if needed, to narrow down the dataset<br>", color="darkblue")
+        fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+        HTML(colFmt("Step 2: Apply following filter(s), if needed, to narrow down the dataset<br>", color="gray")
         ),
         uiOutput(ns("select_STUDYID_container")), 
         uiOutput(ns("select_TEST_container")), 
         uiOutput(ns("select_ARMA_container")),
-        #fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+        
         
         #style='margin-bottom:30px;  border:1px solid; padding: 10px;'
         
         # ),
         # fluidRow(
         #   column(12, 
-        HTML(colFmt("Step 3: Review the (filtered) dataset <br>", color="darkblue")
+        fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+        HTML(colFmt("Step 3: Review the (filtered) dataset <br>", color="gray")
         ),
-        uiOutput(ns("filtered_dataset_container")), 
-        style='margin-bottom:30px;  border:1px solid; padding: 10px;'
+        uiOutput(ns("filtered_dataset_container")) 
+        
+        #style='margin-bottom:30px;  border:1px solid; padding: 10px;'
         #)
       ) 
   
@@ -120,7 +140,7 @@ module_run_report <- function(input, output, session,
     # callModule 
     ALL = callModule(module_load_dataset, "load_nmdat_for_pk_report", 
                      ALL, dataset_name="mYtEsT_for_pk_report")
-     
+       
     # UI  
     fluidRow(column(6, 
                     module_load_dataset_UI(id=ns("load_nmdat_for_pk_report"), label=NULL)
@@ -241,48 +261,36 @@ module_run_report <- function(input, output, session,
     
     script_lst <- c("", names(script))
     tagList(
+      HTML(colFmt("Purpose: load Rmarkdown script, modify it if necessary, then run/download the Rmarkdown-based documents <br>", color="gray")
+      ),
+      
+      
+      fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+      HTML(colFmt("Step 1: select which script template <br>", color="gray")),
       
       fluidRow(
-        column(6, 
-            HTML(colFmt("Step 1: select which script template<br>", color="darkblue")
-            ),
-            
-            fluidRow(
-              column(12,
-                     selectizeInput(ns("script_selector"),
-                                    label    = NULL, #"select script:" ,
-                                    choices  = script_lst,
-                                    multiple = FALSE,
-                                    selected = script_lst[1]
-                     )
-              )
-              # column(3,
-              #        actionButton(ns("run_script"), label="Run script", style=actionButton_style )
-              # ) 
-            ), 
-            
-            # download_report_container
-            #fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
-            HTML(colFmt("Step 2: choose the options provided, then download it <br>", color="darkblue")
-            ),
-            fluidRow(column(12, uiOutput(ns("download_report_container"))))
-        ), 
+        column(12,
+               selectizeInput(ns("script_selector"),
+                              label    = NULL, #"select script:" ,
+                              choices  = script_lst,
+                              multiple = FALSE,
+                              selected = script_lst[1]
+               )
+        ) 
+      ), 
+      
+      # download_report_container
+      fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+      HTML(colFmt("Step 2: select which option, then download rmarkdown-based document <br>", color="gray")),
+      fluidRow(column(12, uiOutput(ns("download_report_container")))),
         
-        column(6, uiOutput(ns("ppt_word_checkout_container")))
-        ), 
-      
-      
-      
-      
       # rmd_content_container
-      #fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
-      HTML(colFmt("Step 3: optionally, modify the script, then re-download it.<br>", color="darkblue")
-      ),
+      fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+      HTML(colFmt("Step 3: optionally, modify the script, then re-download it.<br>", color="gray")),
       fluidRow(column(12, uiOutput(ns("rmd_content_container"))))
       
       )
-      
-    
+
   })
   
   
@@ -381,7 +389,7 @@ output$rmd_content_container <- renderUI({
               
              radioButtons(ns('format'), 
                           label='Document format', 
-                          choices= c('PDF', 'HTML', 'Word'),
+                          choices= c('HTML', 'Word', 'PDF'),
                           inline = TRUE),
              downloadButton(ns('downloadReport'), label="Download", style=actionButton_style)#,
               
@@ -418,24 +426,44 @@ output$rmd_content_container <- renderUI({
     validate(need(is.list(values$data), message="No data found, or values$data needs to be a list"))
     
     tagList(
+      
+      HTML(colFmt("Purpose: update bookmarked entries and globally replace text in the docx document.  <br>", color="gray")
+      ),
+      fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+      
+      
       fluidRow(
         column(12, offset=10, 
                actionButton(ns("save_all_data"),label="Save all", style=actionButton_style)
         )
       ),
+       
+      br(),
       
       lapply(1:length(names(values$data)), function(i) {
-        validate(need(values$data[[i]], message="no data found"), 
-                 need(is.data.frame(values$data[[i]]), message="only data.frame allowed")
+        table <- values$data[[i]]
+        #attr(table, "index") <- i
+        #attr(table, "name") <- names(values$data[i])
+        
+        validate(need(table, message="no data found"), 
+                 need(is.data.frame(table), message="only data.frame allowed")
         )
         
-        ALL = callModule(module_save_data, paste0("module_save_data_", i), 
-                         ALL,
-                         data = values$data[[i]],   
-                         data_name =  names(values$data[i])
-        )
         
-        module_save_data_UI(ns(paste0("module_save_data_", i)), label = NULL) 
+        values <- callModule(
+          module_rHandsontab,  #module_rHandsontab, 
+          paste0("module_save_data_", i), 
+          values = values,
+          data_index = i
+        )
+         
+        
+        print("line 459 at run_report")
+        #print(values$data[["BODY_REPLACE_ALL_TEXT"]])
+        print(values$data[[i]])
+        
+        
+        module_checkInRows_UI(ns(paste0("module_save_data_", i)), label = NULL) 
       })
       
     )
@@ -447,30 +475,53 @@ output$rmd_content_container <- renderUI({
   output$table_container <- renderUI({  
     validate(need(is.list(values$table), message="No table found, or values$table needs to be a list"))
     
-    tagList(
-      fluidRow(
-        column(12, offset=10,
-               actionButton(ns("save_all_table"),label="Save all", style=actionButton_style)
-        )
-      ),
+    # tagList(
+    #   HTML(colFmt("Purpose: a list of tables to be included in the docx document.  <br>", color="gray")
+    #   ),
+    #   fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+    #   
+    #   
+    #   # fluidRow(
+    #   #   column(12, offset=10,
+    #   #          actionButton(ns("save_all_table"),label="Save all", style=actionButton_style)
+    #   #   )
+    #   # ),
+    #   # 
+    #    
+    #   lapply(1:length(names(values$table)), function(i) {
+    #     validate(need(values$table[[i]], message="no table found"), 
+    #              need(is.data.frame(values$table[[i]]), message="only data.frame allowed")
+    #     )
+    #     
+    #     # save values$table into ALL$TABLE
+    #     ALL = callModule(module_save_table, paste0("module_save_table_", i), 
+    #                      ALL,
+    #                      table = values$table[[i]], 
+    #                      table_index = i, 
+    #                      table_name = names(values$table[i])
+    #     )
+    #     
+    #     module_save_table_UI(ns(paste0("module_save_table_", i)), label = NULL) 
+    #   })
       
-      lapply(1:length(names(values$table)), function(i) {
-        validate(need(values$table[[i]], message="no table found"), 
-                 need(is.data.frame(values$table[[i]]), message="only data.frame allowed")
-        )
-        
-        # save values$table into ALL$TABLE
-        ALL = callModule(module_save_table, paste0("module_save_table_", i), 
-                         ALL,
-                         table = values$table[[i]], 
-                         table_index = i, 
-                         table_name = names(values$table[i])
-        )
-        
-        module_save_table_UI(ns(paste0("module_save_table_", i)), label = NULL) 
-      })
       
-    )
+      
+      
+      
+      
+  ALL = callModule(module_save_multiple_tables, "module_save_table_all", ALL, values$table)
+ 
+  tagList(
+    HTML(colFmt("Purpose: a list of tables to be included in the docx document, and could be outputed to a non-template based documents <br>", color="gray")
+    ),
+    fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+    module_save_multiple_tables_UI(ns("module_save_table_all"), label = NULL) 
+  )
+       
+      
+      
+      
+    
   })
   
   
@@ -481,33 +532,61 @@ output$rmd_content_container <- renderUI({
     validate(need(is.list(values$figure), message="no figure found, or output$figure needs to be a list"))
     
     
+    ALL = callModule(module_save_multiple_figures, "module_save_figure_all", ALL, values$figure)
     
-    tagList(
-      fluidRow(
-        column(12,  offset=10,
-               actionButton(ns("save_all_figure"),label="Save all", style=actionButton_style)
-        )
-      ), 
+    #tagList(
+      # fluidRow(
+      #   column(12,  offset=10,
+      #          actionButton(ns("save_all_figure"),label="Save all", style=actionButton_style)
+      #   )
+      # ), 
       
-      lapply(1:length((values$figure)), function(i) {
-        validate(need(values$figure[[i]], message="no figure found"), 
-                 need(is.ggplot(values$figure[[i]]), message="only ggpot object allowed")
-        )
+      # lapply(1:length((values$figure)), function(i) {
+      #   validate(need(values$figure[[i]], message="no figure found"), 
+      #            need(is.ggplot(values$figure[[i]]), message="only ggpot object allowed")
+      #   )
         
         # save values$figure into ALL$FIGURE
-        ALL = callModule(module_save_figure, paste0("module_save_figure_", i), 
-                         ALL, 
-                         figure = values$figure[[i]], 
-                         figure_index = i, 
-                         figure_name = names(values$figure[i]), 
-                         figure_data = values$figure[[i]]$data
-        )
         
-        module_save_figure_UI(ns(paste0("module_save_figure_", i)), label = NULL) 
-      })
+        #)
+        
+    tagList(
+      HTML(colFmt("Purpose: a list of figures to be included in the docx document, and could be outputed to a non-template based documents.  <br>", color="gray")
+      ),
+    #fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+    
+      module_save_multiple_figures_UI(ns("module_save_figure_all"), label = NULL) 
+    )
+     # })
       
-    ) # tagList
+    #) # tagList
   })
+  
+  
+  
+  
+  
+  ################################
+  # checkout_container
+  ################################
+  output$checkout_container <- renderUI({  
+    validate(need(is.list(ALL), message="ALL needs to be a list")) 
+    
+    callModule(module_review_checkout, "module_checkout_all", ALL)
+     
+    
+    tagList(
+      HTML(colFmt("Purpose: dump all (bookmarks, texts, figures, tables) into a template-based docx/pptx documents.  <br>", color="gray")
+      ),
+      fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+      
+    module_review_checkout_UI(ns("module_checkout_all"), label = NULL) 
+    )
+    
+  })
+  
+  
+  
   
   
   
@@ -598,7 +677,12 @@ output$rmd_content_container <- renderUI({
     validate(need(length(values$data), message="no data found") ) 
     
     #lapply(1:length(values$data), function(i) ALL$DATA[[names(values$data)[i]]] = values$data[[i]])
-    ALL$DATA = (c(ALL$DATA, values$data))
+    ALL$DATA = c(ALL$DATA, values$data)
+    
+    print("line 674 at run_report")
+    print(values$data[["BODY_REPLACE_TEXT_AT_BKM"]])
+    print(values$data[["BODY_REPLACE_ALL_TEXT"]])
+           
     showNotification("all data saved", type="message") 
     
   })

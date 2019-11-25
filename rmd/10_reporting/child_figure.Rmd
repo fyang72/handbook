@@ -1,5 +1,5 @@
 
-```{r, eval=TRUE, label="figure_label",  fig.align="figure_align", fig.cap= "figure_caption"  }
+```{r label="figure_label", fig.cap= "figure_caption"  }
 FIGURE[["figure_name"]]
 ```
 

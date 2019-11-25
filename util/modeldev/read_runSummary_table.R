@@ -1,13 +1,17 @@
 
-
-#runno = c("MM0025_nmdat_0226_2019", "MM0026_nmdat_0321_2019")
-
-batch_read_runSummary_table <- function(server_IP_address, program_name, runno, 
-                                         local_home = "./KRM/output/") {
+ 
+batch_read_runSummary_table <- function(
+  runno_lst, 
+  
+  local_home = "./",
+  local_ctl_dir = paste0(local_home, "/ctl/"),    # local directory that holds all ctl files
+  local_data_dir = paste0(local_home, "/data/"),   # local directory that holds all data files
+  local_output_dir = paste0(local_home, "/output/")  # local directory that holds all nonmem output files from server
+) {
 
   library(readr)
 
-  runno_df = cbind(runno, str_split_fixed(runno, pattern="_", n=2)) %>% as.data.frame()
+  runno_df = cbind(runno_lst, str_split_fixed(runno_lst, pattern="_", n=2)) %>% as.data.frame()
   colnames(runno_df) <- c("runno", "ctl", "dat")
   runno_df = runno_df %>% mutate(runno=as.character(runno))
  
@@ -16,7 +20,7 @@ batch_read_runSummary_table <- function(server_IP_address, program_name, runno,
     irunno =   as.character(runno_df[i, "runno"])
     #local_model_name = as.character(runno_df[i, "ctl"])
           
-    folder.loc <- paste0(local_home, "ctl/", irunno)
+    folder.loc <- paste0(local_output_dir, "ctl/", irunno)
     file.lst <-list.files(path = folder.loc, all.files = FALSE,full.names = TRUE, 
                          include.dirs = TRUE, recursive =TRUE)     
     file.lst <- file.lst[which(substr(basename(file.lst), 1, 3)=="fit")]

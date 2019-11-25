@@ -3,7 +3,7 @@ module_save_data_UI <- function(id, label="") {
   
 ns <- NS(id)
 
-tagList(
+fluidRow(
 
   fluidRow(column(width=12, DT::dataTableOutput(ns("mydatatable")))),
   
@@ -33,8 +33,8 @@ tagList(
                        choices = seq(1, 100, by=1),                                                                                                                                   
                        selected = 3)                                                                                                                                                  
     )
-  )#,
-  #style='margin-bottom:30px;  border:1px solid; padding: 10px;'
+  ),
+  style='margin-bottom:30px;  border:1px solid; padding: 10px;'
 )
 
 }

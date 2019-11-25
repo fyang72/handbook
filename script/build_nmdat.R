@@ -50,14 +50,13 @@ build_nmdat <- function(dataset) {
     AMT  = as_numeric(EXTDOSE), 
     EVID = ifelse(!is.na(AMT) & AMT>0, 1, 0),
     
-    # remove PRE-DOSE, default flag
-    CFLAG = ifelse(toupper(ARMA) %in% c("PLACEBO"), "Placebo", 
-                   ifelse(TIME<=0 & EVID==0, "Predose",  
-                          ifelse(TIME<=0 & EVID==0 & DVOR > 0, "Pre-dose concentration > LLOQ", 
-                                 ifelse(is.na(TIME), "Missing Time", 
-                                      ifelse(TIME>0 & as.integer(BLQ)==1, "Postdose BLQ", 
-                                             as.character(CFLAG)))))),
-             
+    # note there is a priority
+    CFLAG = ifelse(toupper(ARMA) %in% c("PLACEBO"), "Placebo", CFLAG), 
+    CFLAG = ifelse(TIME<=0 & EVID==0, "Predose",  CFLAG), 
+    CFLAG = ifelse(TIME<=0 & EVID==0 & DVOR > 0, "Predose concentration > LLOQ", CFLAG), 
+    CFLAG = ifelse(TIME>0 & as.integer(BLQ)==1, "Postdose BLQ", CFLAG), 
+    CFLAG = ifelse(is.na(TIME), "Missing Time", CFLAG), 
+    
     RATE = as_numeric(AMT)/as_numeric(EXDUR),    
     RATE = ifelse(is.infinite(RATE)|is.na(RATE), 0, RATE), 
     
@@ -68,7 +67,9 @@ build_nmdat <- function(dataset) {
                  ),
     
    
-    DV = log(DVOR),  
+    #DV = log(DVOR),  
+    DV = ifelse(TESTCAT=="PK", log(DVOR), DV), 
+    
     DV = ifelse(!is.finite(DV), NA, DV),
     MDV = ifelse(is.na(as_numeric(DV)), 1, 0)
     
@@ -77,7 +78,7 @@ build_nmdat <- function(dataset) {
    
   # EXSEQ 
   nmdat = nmdat %>% group_by(USUBJID) %>% 
-    mutate( EXSEQ = cumsum(EVID)
+    mutate(EXSEQ = cumsum(EVID)
     ) %>% ungroup()
   
   #CFLAG 

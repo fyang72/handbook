@@ -20,7 +20,8 @@
 
 
 
-print2pptx <- function(mypptx=NULL, FIGURE=NULL, TABLE=NULL ) { 
+print2pptx <- function(mypptx=NULL, FIGURE=NULL, TABLE=NULL, 
+                       format = "jpg") {  # svg or jpg
   
   library(magrittr)
   library(officer)
@@ -34,6 +35,8 @@ print2pptx <- function(mypptx=NULL, FIGURE=NULL, TABLE=NULL ) {
   
   default_fontsize = 16; 
   default_title = "Type in title"
+  
+  default_file_type = "jpg"
   
   # loadfonts(device = "win")
   # windowsFonts(Times = windowsFont("TT Times New Roman"))
@@ -96,6 +99,9 @@ print2pptx <- function(mypptx=NULL, FIGURE=NULL, TABLE=NULL ) {
     pptx_width =  attr(new_figure, "pptx_width"); pptx_width = ifelse(is.null(pptx_width), default_pptx_width, pptx_width)
     pptx_height =  attr(new_figure, "pptx_height"); pptx_height = ifelse(is.null(pptx_height), default_pptx_height, pptx_height)
     
+    file_type =  attr(new_figure, "file_type"); file_type = ifelse(is.null(file_type), default_file_type, file_type)
+    format = file_type  # temp   2019-11-25
+    
     fontsize =  attr(new_figure, "fontsize"); fontsize = ifelse(is.null(fontsize), default_fontsize, fontsize)
      
     #filename <- tempfile()
@@ -125,13 +131,20 @@ print2pptx <- function(mypptx=NULL, FIGURE=NULL, TABLE=NULL ) {
        add_slide(layout="Title and Content", master=mytmp) %>%
       
        ph_empty(type='title') %>%
-       ph_add_fpar(fpar(ftext(title, prop=format_page_title)))  %>%
+       ph_add_fpar(fpar(ftext(title, prop=format_page_title)))   
        #ph_with_text(type="title", str=title) %>%
        
        #ph_with_text(type="ftr", str="A footnote") %>%
        #ph_with_text(type="dt", str=format(Sys.Date())) %>%
        
-       ph_with_gg_at(value=new_figure, width = pptx_width, height = pptx_height, left=2.5, top=2)   
+    mypptx <-switch(format, 
+              "jpg" =  mypptx %>%
+                 ph_with_gg_at(value=new_figure, width = pptx_width, height = pptx_height, left=2.5, top=2), 
+              
+              "svg" =  mypptx %>%
+                ph_with_vg_at(code = print(new_figure), type = "body", 
+                     width = pptx_width, height = pptx_height, left=2.5, top=2)  
+    )
       #ph_with_img(src = "fig1.png", type = "body", width = width, height = height)
       #ph_with_img_at(src="C:/temp/myplot.png", left=2, top=2, width=5, height=5)
     

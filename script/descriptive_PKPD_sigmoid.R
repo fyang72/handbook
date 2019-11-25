@@ -34,8 +34,8 @@ descriptive_PKPD_sigmoid <-function(dataset, params=NULL) {
   pk_label = dataset %>% filter(TESTCAT=="PK") %>% select(TEST) %>% unique()
   pk_label = pk_label[1]
   
-  resp_label = dataset %>% filter(TESTCAT=="RESP") %>% select(TEST) %>% unique()
-  resp_label = resp_label[1]
+  pd_label = dataset %>% filter(TESTCAT=="PD") %>% select(TEST) %>% unique()
+  pd_label = pd_label[1]
   
   #------------------------------           
   # prepare the dataset 
@@ -59,7 +59,8 @@ descriptive_PKPD_sigmoid <-function(dataset, params=NULL) {
   # Spread based on TESTCAT
   tdata = tdata %>%  select(STUDYID, USUBJID, ARMA, TIMEPT, NTIM,  DVOR, TESTCAT) %>%
     #unite(temp, STUDYID, USUBJID, ARMA, TIMEPT, NTIM) %>% 
-    #distinct(temp, .keep_all=TRUE) %>% 
+    #distinct(temp, TESTCAT,  .keep_all=TRUE) %>% 
+    distinct(STUDYID, USUBJID, ARMA, TIMEPT, NTIM, TESTCAT,  .keep_all=TRUE) %>% 
     spread(TESTCAT, DVOR)  %>% 
     arrange(ARMA, USUBJID, NTIM)  
   
@@ -68,7 +69,7 @@ descriptive_PKPD_sigmoid <-function(dataset, params=NULL) {
   #------------------
   tdata <- tdata%>% group_by(ARMA, USUBJID) %>% 
     mutate(xvar = PK, 
-           yvar = RESP 
+           yvar = PD 
     ) %>% 
     
     mutate(xend = lead(xvar,n=1),  # c(tail(Mean_PK, n=-1), NA)
@@ -89,12 +90,15 @@ descriptive_PKPD_sigmoid <-function(dataset, params=NULL) {
     
     scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
                   labels = trans_format("log10", math_format(10^.x))) +
-     
+    
+    scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                  labels = trans_format("log10", math_format(10^.x))) +
+    
     #coord_cartesian(xlim = c(0, 85)) + 
     #coord_cartesian(ylim=c(0.8, 1E+3)) +  
     
     xlab(paste0(pk_label, " (mg/L)")) + 
-    ylab(paste0(resp_label, " (unit)")) + 
+    ylab(paste0(pd_label, " (unit)")) + 
  
     theme_bw() +   
     base_theme(font.size = as.integer(12)) + 
@@ -108,21 +112,9 @@ descriptive_PKPD_sigmoid <-function(dataset, params=NULL) {
   #------------------
   # linear scale
   #------------------
-  attr(fig, 'title') <-  paste0("Scatter Plot of  ", 
-                                resp_label, " vs. ", pk_label, 
-                                " Following Subcutaneous or Intravenous Dose(s) of ", 
-                                drug_name, " (", study_name, ")")
-  figure[["sigmoid_pkpd"]] = fig 
-  figure[["sigmoid_pkpd"]]$data =  tdata 
-   
-  #------------------
-  # associated table
-  #------------------
-  data = tdata %>% select(STUDYID, USUBJID, ARMA, TIMEPT, NTIM, PK, RESP)  
-  
-  attr(data, 'title') <-  paste0("Raw Data for Sigmoid PKPD Plot of ",
-                                 resp_label, " vs. ", pk_label, "(", study_name, ")")
-  data[["sigmoid_tab"]] = data
+  attr(fig, 'title') <-  paste0("Percent Change from Baseline vs Concentration Regardless of Time Points and Dose Groups in Log-Log Scale (Analysis Set)")
+  figure[["SIGMOID_PKPD_LOG_LOG"]] = fig  
+    
   
   return(list(data=data, figure=figure, table=table))
 }

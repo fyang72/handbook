@@ -129,11 +129,10 @@ descriptive_time_profile_mean <-function(dataset, params=NULL) {
     "Mean(SE) ", test_label, 
     " in Serum vs Nominal Sampling Day Following Subcutaneous or Intravenous Dose(s) of ", 
     drug_name, " (", study_name, ")")
+  attr(fig, "footnote") <- "my footnote: QW: once a week, Q2W: twice a week"
   
-  attr(fig, 'width') <- 9
-  attr(fig, 'height') <- 6                                
-  figure[[paste0("mean_profile_ln_", test_name)]] = fig 
-  figure[[paste0("mean_profile_ln_", test_name)]]$data = tdata
+  figure[[paste0("FIGURE_MEAN_PK_TIME_PROFILE_LN")]] = fig  
+  
   
   #------------------
   # log scale 
@@ -156,11 +155,9 @@ descriptive_time_profile_mean <-function(dataset, params=NULL) {
     "Mean(SE) Log-scaled ", test_label, 
     " in Serum vs Nominal Sampling Day Following Subcutaneous or Intravenous Dose(s) of ", 
     drug_name, " (", study_name, ")")
+  attr(fig, "footnote") <- "my footnote: QW: once a week, Q2W: twice a week"                             
   
-  attr(fig, 'width') <- 9
-  attr(fig, 'height') <- 6                             
-  figure[[paste0("mean_profile_log_", test_name)]] = fig 
-  figure[[paste0("mean_profile_log_", test_name)]]$data =  tdata
+  figure[[paste0("FIGURE_MEAN_PK_TIME_PROFILE_LOG")]] = fig  
   
   #------------------
   # associated table
@@ -189,7 +186,7 @@ descriptive_time_profile_mean <-function(dataset, params=NULL) {
   attr(tabl, 'title') <-  paste0("Descriptive Statistics (SE) of ", 
     test_label, " in Serum ", "(", study_name, ")")
   
-  table[[paste0("stats_tab_", test_name)]] = tabl
+  table[[paste0("TABLE_STATS_SUMMARY_TIME_PROFILE")]] = tabl
   
   return(list(data=data, figure=figure, table=table))  # do keep it as this way, 07-28-2019
 }

@@ -7,8 +7,7 @@ module_save_multiple_tables_UI <- function(id, label = "") {
   
   ns <- NS(id) # Create a namespace function using the provided id
   
-  tagList(
-    br(),
+  tagList( 
     
     fluidRow(column(12, uiOutput(ns("checkboxGroup_input")))),
     

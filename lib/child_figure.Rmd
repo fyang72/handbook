@@ -1,0 +1,7 @@
+
+```{r {{figure_label}}, fig.cap= '{{figure_caption}}'}
+FIGURE[['{{figure_name}}']]
+```
+
+
+

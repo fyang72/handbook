@@ -7,7 +7,7 @@ module_review_checkout_UI <- function(id, label = "") {
   # Create a namespace function using the provided id
   ns <- NS(id)
   
-  fluidRow( 
+  #tagList( 
               #h5("Number of figures:"),
       # fluidRow(
       #   column(6, textOutput(ns("finalFigCount"))), 
@@ -46,7 +46,7 @@ module_review_checkout_UI <- function(id, label = "") {
       )
  
         
-    )
+   # )
   
 }
 
@@ -57,7 +57,7 @@ module_review_checkout_UI <- function(id, label = "") {
 module_review_checkout <- function(input, output, session, ALL) {
   
   ns <- session$ns
-  
+   
   #----------------------------------------------
   # server side [Checkout]
   #----------------------------------------------
@@ -162,10 +162,14 @@ module_review_checkout <- function(input, output, session, ALL) {
       # # Make sure it closes when we exit this reactive, even if there's an error
        on.exit(progress$close())
        progress$set(message = "Building Content...Please Wait", value = 0)
- 
-      
+   
       #mydocx <-   #read_docx(path= 'C://Users//feng.yang//Documents//handbook//lib//docTemplate.docx')
-      mydocx <- docx_input() %>% print2_docx(ALL$FIGURE, ALL$TABLE)  # docx_input()
+      mydocx <- docx_input() %>% print2docx(
+        ALL$FIGURE, 
+        ALL$TABLE, 
+        ALL$DATA[["BODY_REPLACE_TEXT_AT_BKM"]],   
+        ALL$DATA[["BODY_REPLACE_ALL_TEXT"]] 
+        )  # docx_input()
       #fileDOC = mydocx %>% print(target = "~/handbook/tmp.docx") 
       #browseURL(fileDOC)
        
@@ -195,12 +199,12 @@ module_review_checkout <- function(input, output, session, ALL) {
 
       #if (file.exists(file)) {file.remove(file)} #Delete file if it exists
       #pptx_input() %>% 
-      print2_pptx(mypptx=NULL, FIGURE=ALL$FIGURE, TABLE=ALL$TABLE) %>% print(target = file) 
+      print2pptx(mypptx=NULL, FIGURE=ALL$FIGURE, TABLE=ALL$TABLE) %>% print(target = file) 
       
       if (1==2)  {
         # doc/ppt template  
         environment(try_eval) <- environment()
-        env = try_eval(text="mypptx <- pptx_input() %>% print2_pptx(ALL$FIGURE, ALL$TABLE)")
+        env = try_eval(text="mypptx <- pptx_input() %>% print2pptx(ALL$FIGURE, ALL$TABLE)")
         
         output=NULL; error_message=NULL
         if ("mypptx" %in% ls(env)) {mypptx = get("mypptx", env)}

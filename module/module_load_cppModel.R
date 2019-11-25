@@ -75,7 +75,7 @@ output$load_internal_cppModel_container <- renderUI({
   validate(need(globalVars$login$status, message=FALSE), 
            need(input$cppModel_source=="internal library", message=FALSE)) 
   
-  dirs_lst=list.files(path = paste0(HOME, "/cpp"), 
+  dirs_lst=list.files(path = paste0(WORKING_HOME, "/cpp"), 
                        full.names = FALSE, 
                        recursive = FALSE, 
                        pattern=".cpp", 
@@ -174,7 +174,7 @@ load_internal_cppModel <- reactive({
   ) 
   
   # readLines cppModel
-  cppModel_file <- paste0(HOME, '/cpp/', input$which_internal_cppModel)
+  cppModel_file <- paste0(WORKING_HOME, '/cpp/', input$which_internal_cppModel)
   values$cppModel_content <- readLines(cppModel_file)
     
   # create a progress object
@@ -184,7 +184,7 @@ load_internal_cppModel <- reactive({
   
   # mread cppModel
   environment(try_eval) <- environment()              # basename
-  text="cppModel=mread(model='cppModel', project=paste0(HOME, '/cpp/'), quiet=TRUE, file=basename(input$which_internal_cppModel))"
+  text="cppModel=mread(model='cppModel', project=paste0(WORKING_HOME, '/cpp/'), quiet=TRUE, file=basename(input$which_internal_cppModel))"
   env = try_eval(text)
   
   if ("cppModel" %in% ls(env)) {

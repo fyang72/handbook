@@ -19,6 +19,18 @@ colScheme <- function() {
                     "brown",     "tan",       "violet",    "tomato",
                     "orange",    "magenta",   "pink",      "salmon",    "chocolate",
                     "plum",      "purple",    "navy",      "peru" ,     "khaki",
+                    "orchid",    "maroon",    "ivory",     "turquoise", "gold", "yellow", 
+                    
+                    "black",     "red",       "blue",      "green",     "cyan",
+                    "brown",     "tan",       "violet",    "tomato",
+                    "orange",    "magenta",   "pink",      "salmon",    "chocolate",
+                    "plum",      "purple",    "navy",      "peru" ,     "khaki",
+                    "orchid",    "maroon",    "ivory",     "turquoise", "gold", "yellow", 
+                    
+                    "black",     "red",       "blue",      "green",     "cyan",
+                    "brown",     "tan",       "violet",    "tomato",
+                    "orange",    "magenta",   "pink",      "salmon",    "chocolate",
+                    "plum",      "purple",    "navy",      "peru" ,     "khaki",
                     "orchid",    "maroon",    "ivory",     "turquoise", "gold", "yellow")
   return(color.scheme)
   
@@ -42,8 +54,9 @@ colScheme <- function() {
 #'   
 shapeScheme = function() {
   
-  shape.scheme = c( 15, 16, 17, 18, 
-                    0,  1,  2,  5, 6, 7, 8, 9, 10, 11, 12, 13, 14) 
+  shape.scheme = c( 15, 16, 17, 18, 0,  1,  2,  5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 
+                    15, 16, 17, 18, 0,  1,  2,  5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 
+                    15, 16, 17, 18, 0,  1,  2,  5, 6, 7, 8, 9, 10, 11, 12, 13, 14) 
   return(shape.scheme)
   
 }

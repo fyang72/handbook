@@ -106,10 +106,11 @@ descriptive_time_profile_indiv <-function(dataset, params=NULL) {
             " in Serum vs Nominal Sampling Day Following Subcutaneous or Intravenous Dose(s) of ", 
             drug_name, " (", study_name, ")")
   
+  attr(fig, "footnote") <- "my footnote: QW: once a week, Q2W: twice a week"
+  
   attr(fig, 'width') <- 9
   attr(fig, 'height') <- 6   
-  figure[[paste0("indiv_profile_ln_", test_name)]] = fig 
-  figure[[paste0("indiv_profile_ln_", test_name)]]$data =  tdata
+  figure[[paste0("FIGURE_INDIV_PK_TIME_PROFILE_LN")]] = fig  
   
   #------------------
   # log scale 
@@ -132,11 +133,12 @@ descriptive_time_profile_indiv <-function(dataset, params=NULL) {
     paste0("Individual Log-scaled ", 
            test_label, " in Serum vs Nominal Sampling Day Following Subcutaneous or Intravenous Dose(s) of ", 
            drug_name, " (", study_name, ")")
+  attr(fig, "footnote") <- "my footnote: QW: once a week, Q2W: twice a week"
   
-  attr(fig, 'width') <- 9
-  attr(fig, 'height') <- 6   
-  figure[[paste0("indiv_profile_log_", test_name)]] = fig 
-  figure[[paste0("indiv_profile_log_", test_name)]]$data =  tdata
+  #attr(fig, 'docx_width') <- 9
+  #attr(fig, 'docx_height') <- 6   
+  
+  figure[[paste0("FIGURE_INDIV_PK_TIME_PROFILE_LOG")]] = fig  
    
   return(list(data=data, figure=figure, table=table))  # do keep it as this way, 07-28-2019
   }

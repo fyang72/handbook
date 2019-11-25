@@ -209,7 +209,7 @@ update_base_model <- function(template_ctl, runno="002_001", DATA_NAME, DATA_INP
         step = c("base","fad", "bel"),
         base_runno,
         cov_ctl_template, cov_name_lst,
-        fad_threshold=-7, bel_threshold=14,
+        fad_threshold=-6.7, bel_threshold=13.7,
         max_wait_min=2,
         to_do_lst=c("write",  "run",  "read")) {
                         

@@ -1,0 +1,600 @@
+---
+title: "My first rmarkdown report using handbook"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 3    
+    number_sections: yes
+    keep_md: no
+    code_folding: show
+    fig_caption: yes
+  pdf_document:
+    fig_caption: yes
+    keep_tex: yes
+    number_sections: yes
+    toc: yes
+    toc_depth: '3'
+  word_document: 
+    toc: yes
+    toc_depth: '3'   
+    number_sections: yes
+params:
+  year:
+    label: "Year"
+    value: 2017
+    input: slider
+    min: 2010
+    max: 2088
+    step: 1
+    sep: ""
+  region:
+    label: "Region:"
+    value: Europe
+    input: select
+    choices: [North America, Europe, Asia, Africa]
+  printcode:
+    label: "Display Code:"
+    value: TRUE
+  data:
+    label: "Input dataset:"
+    value: results.csv
+    input: file
+  date2: !r Sys.Date()
+  dataset: !r data.frame()
+  title: ""
+  subtitle: ""
+---
+
+---
+subtitle: `r params$subtitle`
+title: `r params$title `
+---
+
+
+
+
+```{r setup, include=FALSE}
+
+#date: "`r format(Sys.time(), '%d %B, %Y')`"
+# not used newpage   2019-07-27
+library(knitr)
+knitr::opts_chunk$set(fig.width=9, 
+                      fig.height=6, 
+                      fig.path='figures/', 
+                      fig.align='center',
+                      
+                      comment = "#>",
+                      include=TRUE,
+                      collapse = TRUE,
+                      warning=FALSE, 
+                      message=FALSE, 
+                      fig.retina=NULL, 
+                      cache=FALSE, 
+                      autodep=TRUE, 
+                      echo=FALSE)
+
+opts_knit$set(eval.after = "fig.cap")
+
+```
+
+
+
+
+# Abstract {#sec-abstract}
+
+
+```{r summary}
+
+# https://scriptsandstatistics.wordpress.com/2016/08/29/how-to-number-and-reference-tables-and-figures-in-r-markdown-files/
+
+#values = list(data=NULL, figure=NULL, table=NULL)
+#params = NULL
+#params$dataset  = read_datafile(paste0(HOME, "/data/nmdatPKPD.csv"))
+
+  study_name = "TEST-FY-001"
+BODY_REPLACE_ALL_TEXT = NULL
+BODY_REPLACE_ALL_TEXT["AUTHOR_NAME"] <- "Feng Yang"
+BODY_REPLACE_ALL_TEXT["BOSS_NAME"] <- "John Davis"
+
+BODY_REPLACE_ALL_TEXT["STUDY_NAME"] = "TEST-FY-001"
+BODY_REPLACE_ALL_TEXT["DRUG_NAME"] = "FY001"
+BODY_REPLACE_ALL_TEXT["TARGET_NAME"] <- "C5"
+BODY_REPLACE_ALL_TEXT["ENDPOINT_NAME"] <- "CH50"
+ 
+
+BODY_REPLACE_ALL_TEXT <- data.frame(
+  OLD_VALUE= names(BODY_REPLACE_ALL_TEXT), 
+  NEW_VALUE = BODY_REPLACE_ALL_TEXT, 
+  stringsAsFactors = FALSE
+  )
+attr(BODY_REPLACE_ALL_TEXT, "title") <- "A list of text to be globally substituted by another text"
+values$data[["BODY_REPLACE_ALL_TEXT"]] = BODY_REPLACE_ALL_TEXT
+
+dataset = params$dataset  # read_datafile(paste0(HOME, "/data/nmdatPK.csv"))
+tdata = dataset %>% convert_vars_type(nmdat_data_type)
+ 
+
+study_id = paste0(tdata %>% drop_na(STUDYID) %>% pull(STUDYID)%>%unique(), collapse=",")
+
+study_drug = paste0(tdata %>% drop_na(EXTRT) %>% pull(EXTRT)%>%unique(), collapse=",")
+ 
+
+# post-dose samples
+n.BLQ = tdata %>% filter(EVID==0, TIME>0, DVOR<0) %>% nrow()
+n.ALL = tdata %>% filter(EVID==0, TIME>0) %>% nrow()  
+  
+# PK observations
+tdata = tdata %>% filter(TESTCAT=="PK", TIME>0, EVID==0) # without the outliers or missing data
+
+n.USUBJID      = tdata %>% filter(EVID==0)%>%pull(USUBJID) %>% unique() %>% length()
+n.samples = tdata %>% filter(EVID==0)%>%pull(DVOR) %>% length() 
+
+#stats of the PK population
+tdata = tdata %>% filter(EVID==0)   # only concentration
+tdata = tdata %>% mutate(SAMDTTM = standardise_SAMDTTM(SAMDTTM)) 
+last.sample.date = tdata %>% group_by(STUDYID) %>% 
+  dplyr::summarise(LAST.SAMPLE=max(SAMDTTM, na.rm=TRUE))
+last.date <- paste0(format((last.sample.date$LAST.SAMPLE), "%B %dth %Y"), collapse=" and ")
+ 
+n_samples = 
+n_subjects = 
+last_sample_date = 
+
+
+
+
+BODY_REPLACE_TEXT_AT_BKM = NULL
+BODY_REPLACE_TEXT_AT_BKM["BIG_BOSS_NAME"] <- "Thomas DiCioccio"
+BODY_REPLACE_TEXT_AT_BKM["REPORTING_DATE"] <- format(Sys.time(), '%b %d, %Y')
+BODY_REPLACE_TEXT_AT_BKM["N_SAMPLES"] <- n.samples
+BODY_REPLACE_TEXT_AT_BKM["N_SUBJECTS"] <- n.USUBJID
+BODY_REPLACE_TEXT_AT_BKM["LAST_SAMPLE_DATE"] <- last.date
+BODY_REPLACE_TEXT_AT_BKM <- data.frame(
+  BOOKMARK=names(BODY_REPLACE_TEXT_AT_BKM), 
+  VALUE = BODY_REPLACE_TEXT_AT_BKM, 
+  stringsAsFactors = FALSE
+  )
+
+attr(BODY_REPLACE_TEXT_AT_BKM, "title") <- "A list of bookmark to be substituted by text"
+values$data[["BODY_REPLACE_TEXT_AT_BKM"]] = BODY_REPLACE_TEXT_AT_BKM
+
+
+
+
+```
+
+The population PK analysis included `r n.samples` post-dose PK samples obtained from `r n.USUBJID` subjects in the studies for this interim analysis. The last sample was/were collected on `r last.date`  in study`r study_id`, respectively.  
+
+
+<!--
+
+-->
+
+
+# Introduction {#sec-introduction}
+  
+Study `r study_id` was a phase I randomized, double-blind, placebo-controlled, single ascending dose and multiple dose study of the safety, tolerability, pharmacokinetics, and pharmacodynamics of intravenously and subcutaneously administered human monoclonal antibody `r study_drug` in healthy volunteers.  `r study_drug` is intended to inhibit xxxx pathway and is being developed for the treatment of xxxx diseases.
+
+
+# Materials and Methods {#sec-method}
+
+Descriptive representation and summary statistics were used to assess the characteristics of PK of `r study_drug`.  Exposure-response relationships were also explored.
+ 
+## Overall Study Design  {#subsec-overall-study-design}
+The PK data collected from `r study_id` were combined for this PK report. The combined population is referred to as `overall population` hereafter.
+
+Pertinent details regarding the design and pharmacokinetic sampling scheme for each study are provided in Table 1. Henceforth, these studies are identified by the last 4 digits of the study number.  
+
+<br>
+
+```{r, summary-study-sampling-time }
+ 
+dataset = params$dataset  # read_datafile(paste0(HOME, "/data/nmdatPK.csv"))
+tdata = dataset %>% convert_vars_type(nmdat_data_type)
+
+tabl = dataset %>% 
+  filter(EVID==0) %>% 
+  group_by(STUDYID, ARMA) %>% 
+  dplyr::summarise(
+    N=length(unique(USUBJID)), 
+    sampling_time = paste0(unique(TIMEPT), collapse=", ")
+    )
+
+
+attr(tabl, "title") = paste0("Summary of sampling time in ", study_name)
+attr(tabl, "footnote") <- "Number of subjects with at least one quantifiable sample.  
+ QW = Once a week; IV = Intravenous; SC = Subcutaneous.   A loading dose of 15 mg/kg was used in the dose group of 400 mg SC QW.   
+"
+values$table[["tab_summary_study_sampling_time"]] = as.data.frame(tabl)
+
+pander(tabl)
+
+# not work for all formats (html, word, PDF) except pander
+#------------------------------------------------
+#caption = 'Summary of Studies and Sampling Time'
+#knitr::kable(tabl, booktabs = TRUE, caption=caption)      #, padding = 2
+   
+ #xtable(tabl, label = "tab:summary-study-sampling-time", 
+  #           caption = "Summary of Studies and Sampling Time")
+#print(tabl, comment = F)
+
+```
+
+<br>
+
+## Bioanalytical Assays {#subsec-bioanalytical-assays}
+
+###	Functional Assay  
+
+Serum samples were analyzed for functional `r study_drug` concentrations, using a validated enzyme-linked immunosorbent assay (ELISA). Captured `r study_drug` is detected using a biotinylated anti-human IgG4 monoclonal antibody. In this functional assay, `r study_drug` with at least one unoccupied binding site is detected. The lower limit of quantification (LLOQ) is 0.078 mg/L of functional `r study_drug` in neat human serum. The bioanalytical assay for functional `r study_drug` is described in detail in the Bioanalytical Report xxxx.
+
+
+### Anti-`r study_drug` Antibody Assay  
+
+Anti-`r study_drug` antibodies (anti-drug antibodies; ADA) were assessed in serum samples using a validated electrochemiluminescence bridging immunoassay.
+
+The method involved 3 steps for the evaluation of human serum samples: screening, confirmation, and titer determination.  The screening assay identified potentially positive samples.  Samples that had a positive response in the screening assay were then analyzed in the confirmation (drug specificity) assay.  Samples were considered negative for ADA if either the screening or confirmation tests were negative; samples that exhibited a positive response in the confirmation assay were considered positive for ADA.  A titration assay with a minimum dilution of 1:30 was then used to determine the ADA titer.  For samples that were confirmed ADA positive (in the confirmatory step), but found to have a titer below the assay titer cut-off at the minimum dilution (ie, <30), a titer value of 30 was imputed.
+
+The assay for anti-`r study_drug` antibody is described in detail in the Bioanalytical Report xxxx.
+
+
+
+### Neutralizing Anti-`r study_drug` Antibody Assay  
+The presence of neutralizing anti-`r study_drug` antibodies (NAb) was evaluated in ADA-positive serum samples using a validated competitive ligand-binding assay. The assay procedure employed a mouse anti `r study_drug` monoclonal antibody as the positive control, biotinylated `r study_drug` as the capture reagent, ruthenium-labeled PD-1 receptor as the detection reagent, and a human anti PD 1 receptor monoclonal antibody to mitigate ligand interference.
+
+The assay for neutralizing anti-`r study_drug` antibody is described in detail in the Bioanalytical Report xxxx. 
+
+
+# Results {#sec-results}
+
+## PK Population and Samples {#subsec-population-samples}
+
+
+
+```{r, summary-population-samples }
+ 
+dataset = params$dataset  # read_datafile(paste0(HOME, "/data/nmdatPK.csv"))
+tdata = dataset %>% convert_vars_type(nmdat_data_type)
+
+tabl <- tdata  %>% summary_of_studies(
+  group_by=c("STUDYID", "ARMA"), 
+  value="DVOR", 
+  id="USUBJID") 
+
+
+
+attr(tabl, "title") = paste0("Summary of PK samples in ", study_name)
+attr(tabl, "footnote") <- "QW = Once a week; IV = Intravenous; SC = Subcutaneous."
+values$table[["tab_summary_population_samples"]] = as.data.frame(tabl)
+
+pander(tabl)
+
+# caption = 'Summary of PK Samples Removed from the Original Dataset  '
+# knitr::kable(tabl, booktabs = TRUE, caption=caption)      #, padding = 2
+   
+#tabl <- xtable(tabl, label = "tab:summary-population-samples", 
+#             caption = "Summary of Studies and Samples")
+#print(tabl, comment = F)
+
+```
+ 
+http://rstudio-pubs-static.s3.amazonaws.com/317802_781eefa4a0144d70893113324f42eaf5.html
+
+
+```{r, results = "asis", eval=FALSE } 
+# 
+# mtcars %>%
+#   dplyr::group_by(.data$cyl) %>%
+#   summary_table(.)
+# # Another example from the diamonds data
+# data("diamonds", package = "ggplot2")
+# diamonds["The Price"] <- diamonds$price
+# diamonds["A Logical"] <- sample(c(TRUE, FALSE), size = nrow(diamonds), replace = TRUE)
+# diamonds[["badcol"]] <- replicate(expr = list(c(1:34)), n = nrow(diamonds))
+# 
+# summary_table(diamonds)
+# summary_table(diamonds, qsummary(diamonds))
+# 
+# summary_table(dplyr::group_by(diamonds, .data$cut))
+# 
+# summary_table(dplyr::group_by(diamonds, .data$cut),
+#               list("My Summary of Price" =
+#                    list("min price" = ~ min(.data$price),
+#                         "IQR"       = ~ stats::IQR(.data$price))))
+# 
+
+
+
+library(qwraps2)
+options(qwraps2_markup = 'markdown') # default is latex
+ 
+mtcar_summaries <-
+  list("Miles Per Gallon" =
+         list("min:"         = ~ min(mpg),
+              "mean (sd)"    = ~ qwraps2::mean_sd(mpg, denote_sd = "paren"),
+              "median (IQR)" = ~ qwraps2::median_iqr(mpg),
+              "max:"         = ~ max(mpg)),
+       "Cylinders:" = 
+         list("mean"             = ~ mean(cyl),
+              "mean (formatted)" = ~ qwraps2::frmt(mean(cyl)),
+              "4 cyl, n (%)"     = ~ qwraps2::n_perc0(cyl == 4),
+              "6 cyl, n (%)"     = ~ qwraps2::n_perc0(cyl == 6),
+              "8 cyl, n (%)"     = ~ qwraps2::n_perc0(cyl == 8)),
+       "Weight" =
+         list("Range" = ~ paste(range(wt), collapse = ", "))
+  )
+
+
+#by_am = summary_table(dplyr::group_by(mtcars, am), mtcar_summaries)
+
+# https://www.r-bloggers.com/baseline-characteristics-tables-with-qwraps2/
+# print(by_am, 
+#       cnames = c("_Manual_", "_Automatic_"),
+#       rtitle = "Vehicle Characteristics", 
+#       align = "lcc")
+
+
+# not work
+tabl = cbind(summary_table(dplyr::group_by(mtcars, am), mtcar_summaries), 
+      summary_table(mtcars, mtcar_summaries)
+)
+
+# print(tab, rtitle = "Summary Statistics")
+# HTML(knit2html(text=capture.output(stable),
+#               options(qwraps2_markup = 'markdown'), 
+#               fragment.only=TRUE
+#               )
+#     )
+  
+
+
+
+
+print(tabl, rtitle = "Summary Statistics")
+
+
+```
+
+
+```{r, results = "asis" }
+
+library(qwraps2)
+options(qwraps2_markup = 'markdown') # default is latex
+
+adsl = read_datafile(paste0(HOME, "/data/adsl.csv"))
+adsl = adsl %>% convert_vars_type(adsl_data_type)
+
+tdata = adsl %>% select(WGTBL, HGTBL, AGE, BMIBL, BSABL, 
+                               SEX, RACE, ETHNIC)
+tabl = qwraps2::summary_table(tdata, qsummary(tdata))
+
+
+tabl <-  adsl %>% calc_stats(id="USUBJID", group_by ="SEX", value="WGTBL") %>% select(N, Mean, Median, Range)
+attr(tabl, "title") = paste0("Summary of Patient Demographic in ", study_name)
+attr(tabl, "footnote") <- "your footnote"
+
+values$table[["tab_summary_patient_demographic"]] = tabl
+ 
+
+
+print(tabl, rtitle = "Summary Statistics")
+```
+
+
+
+## Descriptive analysis
+
+###	Concentrations of Functional `r study_drug`
+
+Mean and individual functional `r study_drug` concentrations in serum versus nominal/actual sampling week are presented by treatment group and by subject in Figure 1 through Figure 4. 
+
+The PK profiles of `r study_drug` exhibited a short distribution phase and a linear elimination phase followed by a concentration-dependent elimination phase, consistent with target-mediated elimination.   `r study_drug` concentrations increased in a greater than dose-proportional manner.  
+
+
+```{r, eval=TRUE}
+# Error in mapply: zero-length inputs cannot be mixed with those of non-zero length
+ 
+dataset = params$dataset  # read_datafile(paste0(HOME, "/data/nmdatPK.csv"))
+tdata = dataset %>% convert_vars_type(nmdat_data_type)
+
+tdata = tdata %>% filter(TESTCAT == "PK")
+output1 <- tdata %>% descriptive_time_profile_mean(params=NULL)
+output2 <- tdata %>% descriptive_time_profile_indiv(params=NULL)
+output <- mapply(c, output1, output2, SIMPLIFY=FALSE)
+
+values$table = c(values$table, output$table)
+values$figure = c(values$figure, output$figure)
+
+#values = mapply(c, values, output, SIMPLIFY=FALSE)
+
+```
+
+```{r, eval=TRUE}
+FIGURE = output$figure
+
+fig_lst <- names(output$figure)  
+out_figure <- lapply(1:length(fig_lst), function(i) {
+  knit_expand(paste0(HANDBOOK_HOME, '/lib/child_figure.Rmd'), 
+  figure_name = fig_lst[i],             
+  figure_label= gsub("_", "-", fig_lst[i], fix=TRUE), 
+  figure_caption = attr(FIGURE[[fig_lst[i]]], "title")
+  )
+}) %>% unlist()
+ 
+```
+
+`r paste(knit(text = out_figure), collapse = '\n')`
+
+
+```{r, eval=TRUE, include=FALSE}
+ 
+TABLE = output$table
+ 
+tabl_lst <- names(output$table)  
+out_table <- lapply(1:length(tabl_lst), function(i) {
+  knit_expand(paste0(HANDBOOK_HOME, '/lib/child_table.Rmd'), 
+  table_name = tabl_lst[i],             
+  table_label= gsub("_", "-", tabl_lst[i], fix=TRUE), 
+  table_caption = attr(TABLE[[tabl_lst[i]]], "title")
+  )
+}) %>% unlist()
+ 
+```
+ 
+
+`r paste(knit(text = out_table), collapse = '\n')`
+
+
+ 
+
+ 
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+  
+ 
+
+```{r model, eval=FALSE, collapse=TRUE}
+# callModule
+# regFormula <- reactive({
+#   as.formula(paste('mpg ~', input$x))
+# }) 
+
+options(digits = 4)
+fit <- lm(regFormula(), data = mtcars)
+b   <- coef(fit)
+summary(fit)
+# 
+# The fitting result is $mpg = `r b[1]` + `r b[2]``r input$x`$.  
+#  `r paste0(params$region, params$year)` 
+#  
+```
+
+ 
+ 
+```{r, eval=FALSE } 
+
+
+library(qwraps2)
+
+
+
+output$cov_p3 <- renderUI({
+  
+  
+  
+  dta_summaries <-
+    
+    list("Age" =
+           
+           list("min:"         = ~ min(AGE),
+                
+                "mean (sd)"    = ~ qwraps2::mean_sd(AGE, denote_sd = "paren"),
+                
+                "median (IQR)" = ~ qwraps2::median_iqr(AGE),
+                
+                "max:"         = ~ max(AGE)),
+         
+         "Weight" =
+           
+           list("min:"         = ~ min(WEIGHTBL),
+                
+                "mean (sd)"    = ~ qwraps2::mean_sd(WEIGHTBL, denote_sd = "paren"),
+                
+                "median (IQR)" = ~ qwraps2::median_iqr(WEIGHTBL),
+                
+                "max:"         = ~ max(WEIGHTBL)),
+         
+         "BMI" =
+           
+           list("min:"         = ~ min(BMIBL),
+                
+                "mean (sd)"    = ~ qwraps2::mean_sd(BMIBL, denote_sd = "paren"),
+                
+                "median (IQR)" = ~ qwraps2::median_iqr(BMIBL),
+                
+                "max:"         = ~ max(BMIBL)),
+         
+         "Sex" =
+           
+           list("Male, n (%)"   = ~ qwraps2::n_perc0(SEX == "M"),
+                
+                "Female, n (%)" = ~ qwraps2::n_perc0(SEX == "F")),
+         
+         "Race" =
+           
+           list("White, n (%)"   = ~ qwraps2::n_perc0(RACE == "WHITE"),
+                
+                "Asian, n (%)"   = ~ qwraps2::n_perc0(RACE == "ASIAN"),
+                
+                "Other, n (%)"   = ~ qwraps2::n_perc0((RACE !="WHITE")&(RACE != "ASIAN"))),
+         
+         
+         
+         "Albumin" =
+           
+           list("min:"         = ~ min(ALBBL),
+                
+                "mean (sd)"    = ~ qwraps2::mean_sd(ALBBL, denote_sd = "paren"),
+                
+                "median (IQR)" = ~ qwraps2::median_iqr(ALBBL),
+                
+                "max:"         = ~ max(ALBBL)),
+         
+         "Creatine" =
+           
+           list("min:"         = ~ min(CREATBL),
+                
+                "mean (sd)"    = ~ qwraps2::mean_sd(CREATBL, denote_sd = "paren"),
+                
+                "median (IQR)" = ~ qwraps2::median_iqr(CREATBL),
+                
+                "max:"         = ~ max(CREATBL)),
+         
+         "BSA" =
+           
+           list("min:"         = ~ min(BSABL),
+                
+                "mean (sd)"    = ~ qwraps2::mean_sd(BSABL, denote_sd = "paren"),
+                
+                "median (IQR)" = ~ qwraps2::median_iqr(BSABL),
+                
+                "max:"         = ~ max(BSABL))
+         
+    )
+  
+  #
+  
+  
+  
+  stable <- cbind(summary_table(dplyr::group_by(datasetInput_demo(), STDY), dta_summaries),
+                  
+                  summary_table(datasetInput_demo(), dta_summaries))
+  
+  HTML(knit2html(text=capture.output(stable),options(qwraps2_markup = 'markdown'), fragment.only=TRUE))
+  
+  
+  
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+ 

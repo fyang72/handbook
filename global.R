@@ -1,11 +1,13 @@
  
 
 library(stringr)
-HOME = paste0(normalizePath("."), "/")
-if (str_sub(HOME, 1, 6) == "/home/") {HOME=paste0("/home/feng.yang/YANG/")}
-if (str_sub(HOME, 1, 9) == "C:\\Users\\") {HOME=paste0("C:\\Users\\feng.yang\\Documents\\handbook/")}
+HANDBOOK_HOME = paste0(normalizePath("."), "/")
+if (str_sub(HANDBOOK_HOME, 1, 6) == "/home/") {HANDBOOK_HOME=paste0("/home/feng.yang/YANG/")}
+if (str_sub(HANDBOOK_HOME, 1, 9) == "C:\\Users\\") {HANDBOOK_HOME=paste0("C:\\Users\\feng.yang\\Documents\\handbook/")}
  
- 
+WORKING_HOME = HANDBOOK_HOME
+HOME = HANDBOOK_HOME
+
 ######################################################################
 # Load packages
 ######################################################################
@@ -36,6 +38,7 @@ library(rmarkdown)
 library(ReporteRs) 
 library(officer)
 library(pander)
+library(rvg)
  
 # Shiny, Rmarkdown
 #-------------------- 
@@ -77,7 +80,7 @@ library(pryr)   # Partial function application allows you to modify a function b
 #------------------------------------------------------------
 # plots
 #------------------------------------------------------------
-#library(Cairo)   # to solve X11 server problem
+library(Cairo)   # to solve X11 server problem
 require(grid)
 library("ggplot2")     # library("gplots")
 library(gridExtra)
@@ -158,13 +161,13 @@ list_files_in_a_folder <- function(folder.loc="./util/", file.extension=c(".r", 
   
 ihandbook = 0
  
-file.lst <- list_files_in_a_folder(folder.loc=paste0(HOME, "/util/"), file.extension=c(".r", ".R"))
+file.lst <- list_files_in_a_folder(folder.loc=paste0(HANDBOOK_HOME, "/util/"), file.extension=c(".r", ".R"))
 for (ifile in 1:length(file.lst)) {print(file.lst[ifile]); source(file=file.lst[ifile]) }     
 
-file.lst <- list_files_in_a_folder(folder.loc=paste0(HOME, "/module/"), file.extension=c(".r", ".R"))
+file.lst <- list_files_in_a_folder(folder.loc=paste0(HANDBOOK_HOME, "/module/"), file.extension=c(".r", ".R"))
 for (ifile in 1:length(file.lst)) {source(file=file.lst[ifile])  }     
  
-file.lst <- list_files_in_a_folder(folder.loc=paste0(HOME, "/script/"), file.extension=c(".r", ".R"))
+file.lst <- list_files_in_a_folder(folder.loc=paste0(HANDBOOK_HOME, "/script/"), file.extension=c(".r", ".R"))
 for (ifile in 1:length(file.lst)) {source(file=file.lst[ifile])  }     
 
  
@@ -187,7 +190,8 @@ library("rmarkdown")   # packageVersion("rmarkdown")
 set.seed(1234567)
 options(digits = 3)
  
-knitr::opts_chunk$set(fig.width=9, 
+knitr::opts_chunk$set(out.width='100%', 
+                      fig.width=9, 
                       fig.height=6, 
                       fig.path='figures/', 
                       fig.align='center',
@@ -200,6 +204,22 @@ knitr::opts_chunk$set(fig.width=9,
                       autodep=TRUE, 
                       echo=FALSE)
 
+# 
+# knitr::opts_chunk$set(out.width='100%', 
+#                       fig.width=9, 
+#                       fig.height=6, 
+#                       fig.path='figures/', 
+#                       fig.align='center',
+#                       echo=FALSE,
+#                       comment = "#>",
+#                       include=FALSE,
+#                       collapse = TRUE,
+#                       warning=FALSE, 
+#                       message=FALSE, 
+#                       fig.retina=NULL, 
+#                       cache=FALSE, 
+#                       autodep=TRUE
+# ) 
 # echo=FALSE indicates that the code will not be shown in the final document (though any results/output would still be displayed).
 # results="hide" to hide the results/output (but here the code would still be displayed).
 # include=FALSE to have the chunk evaluated, but neither the code nor its output displayed.
@@ -277,7 +297,7 @@ globalVars <- reactiveValues(login=login)
   
 library(dplyr)
 library(readxl)
-file_name <- paste0(HOME, "/lib/pkmeta.xlsx" )
+file_name <- paste0(HANDBOOK_HOME, "/lib/pkmeta.xlsx" )
 
 # key data format
 std_adsl <- read_excel(file_name,sheet="adsl",col_names = TRUE)  %>% 
@@ -396,21 +416,21 @@ tabl = data.frame(x=10, y=10)
 attr(tabl, 'title') <-  "test2"
 TABLE[["TEST2"]] = tabl
 
-tabl = read_datafile(paste0(HOME, "/data/nmdatPK.csv"))
+tabl = read_datafile(paste0(HANDBOOK_HOME, "/data/nmdatPK.csv"))
 attr(tabl, 'title') <-  "nmdatPK"
 DATA[["nmdatPK"]] = tabl
 
-tabl = read_datafile(paste0(HOME, "/data/adpc.csv"))
+tabl = read_datafile(paste0(HANDBOOK_HOME, "/data/adpc.csv"))
 attr(tabl, 'title') <-  "adpc"
 DATA[["adpc"]] = tabl
 
 cppModel1=mread(model='cppModel',
-                project=paste0(HOME, '/cpp/'),
+                project=paste0(HANDBOOK_HOME, '/cpp/'),
                 quiet=TRUE,
                 file=basename("LN001.cpp"))
 
 cppModel2=mread(model='cppModel',
-                project=paste0(HOME, '/cpp/'),
+                project=paste0(HANDBOOK_HOME, '/cpp/'),
                 quiet=TRUE,
                 file=basename("LN001.cpp"))
 
@@ -421,14 +441,14 @@ cppModel = list(
 ) 
 
 ctlModel = list(
-  "LN001.ctl"=readLines(paste0(HOME, "/ctl/", "LN001.ctl")), 
-  "LN002.ctl"=readLines(paste0(HOME, "/ctl/", "LN002.ctl"))
+  "LN001.ctl"=readLines(paste0(HANDBOOK_HOME, "/ctl/", "LN001.ctl")), 
+  "LN002.ctl"=readLines(paste0(HANDBOOK_HOME, "/ctl/", "LN002.ctl"))
 ) 
 
 
 script = list(
-  "build_adsl.R"=readLines(paste0(HOME, "/script/", "build_adsl.R")), 
-  "build_adex.R"=readLines(paste0(HOME, "/script/", "build_adex.R"))
+  "build_adsl.R"=readLines(paste0(HANDBOOK_HOME, "/script/", "build_adsl.R")), 
+  "build_adex.R"=readLines(paste0(HANDBOOK_HOME, "/script/", "build_adex.R"))
 )
 
 default_DATA   = DATA

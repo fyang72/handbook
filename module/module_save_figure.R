@@ -8,8 +8,8 @@ module_save_multiple_figures_UI <- function(id, label = "") {
   ns <- NS(id) # Create a namespace function using the provided id
   
   tagList(
-    br(),
-    
+    #br(),
+    fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
     fluidRow(column(12, uiOutput(ns("checkboxGroup_input")))), 
     
     
@@ -29,9 +29,11 @@ module_save_multiple_figures_UI <- function(id, label = "") {
       )
     ), 
     
-    br(),
-
-    uiOutput(ns("multiple_figures_container"))
+    #br(),
+    fluidRow(column(width=12, tags$hr(style="border-color: gray;"))),
+    fluidRow(column(12, uiOutput(ns("multiple_figures_container"))))
+    
+    #uiOutput(ns("multiple_figures_container"))
   )
 }
 
@@ -79,7 +81,12 @@ output$multiple_figures_container <- renderUI({
                        figure_name = names(subset_of_figures[i])
       )
       
+      
+      
+    
       module_save_figure_UI(ns(paste0("module_save_figure_", i)), label = NULL) 
+       
+      
     })
      
 })

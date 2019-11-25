@@ -1,3 +1,24 @@
+# https://stackoverflow.com/questions/3028642/regular-expression-for-letters-numbers-and
+# ^[a-zA-Z0-9_.-]*$
+#   Explanation:
+#   
+#   ^ is the beginning of the line anchor
+# $ is the end of the line anchor
+# [...] is a character class definition
+# * is "zero-or-more" repetition
+#  
+# "$THETA  "
+# "$OMEGA"
+# start <- which(str_detect(base_ctl, "^\\$THETA\\s+"))
+# end <- which(str_detect(base_ctl, "^\\$OMEGA\\s+"))
+# ids <- intersect(start:end, which(!str_detect(base_ctl, "^\\s*;")))
+# 
+# pair_lst <- str_extract_all(base_ctl[ids], 
+#                "[a-zA-Z0-9_.-]*_ON_[a-zA-Z0-9_.-]*", simplify = FALSE
+#                )  %>% unlist() %>% unique()
+# 
+# 
+
 
 parseARMA <- function(ARMA) {
   if (1==2)    { # debug}

@@ -1,0 +1,138 @@
+## Global variable setting
+
+  
+```{r, eval=TRUE } 
+
+file_name <- paste0(HOME, "/lib/pkmeta.xlsx")
+
+std_nmdat <- read_excel(file_name,sheet="nmdat",col_names = TRUE)  %>% 
+  as.data.frame() %>% filter(!is.na(standard.name))
+
+std_adsl <- read_excel(file_name,sheet="adsl",col_names = TRUE)  %>% 
+  as.data.frame() %>% filter(!is.na(standard.name))
+
+std_adex <- read_excel(file_name,sheet="adex",col_names = TRUE)  %>% 
+  as.data.frame() %>% filter(!is.na(standard.name))
+
+std_adpc <- read_excel(file_name,sheet="adpc",col_names = TRUE)  %>% 
+  as.data.frame() %>% filter(!is.na(standard.name))
+
+std_convention <- read_excel(file_name,sheet="convention",col_names = TRUE)  %>% 
+  as.data.frame() %>% filter(!is.na(domain))
+ 
+adsl_var_lst <- std_adsl %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
+adex_var_lst <- std_adex %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
+adpc_var_lst <- std_adpc %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
+nmdat_var_lst <- std_nmdat %>% filter(tier %in% c(1,2)) %>% pull(standard.name)
+
+dvoru_var_lst <- std_convention %>% filter(domain=="DVORU") %>% pull(value)
+sex_var_lst <- std_convention %>% filter(domain=="SEX") %>% pull(value)
+race_var_lst <- std_convention %>% filter(domain=="RACE") %>% pull(value)
+ethnic_var_lst <- std_convention %>% filter(domain=="ETHNIC") %>% pull(value)
+dosu_var_lst <- std_convention %>% filter(domain=="DOSU") %>% pull(value)
+route_var_lst <- std_convention %>% filter(domain=="ROUTE") %>% pull(value)
+testcat_var_lst <- std_convention %>% filter(domain=="TESTCAT") %>% pull(value)
+timefmt_var_lst <- std_convention %>% filter(domain=="TIMEFMT") %>% pull(value)
+
+
+
+table = NULL
+
+tabl = std_adsl
+attr(tabl, "title") = "List of standard varaible for adsl" 
+attr(tabl, "key") = "USUBJID"
+attr(tabl, "value") = "WGTBL" 
+attr(tabl, "footnote") = paste0("Note, the default test rows.")
+
+table[[1]] = tabl
+table[[2]] = std_adex
+table[[3]] = std_adpc
+table[[4]] = std_nmdat 
+table[[5]] = std_convention 
+
+values = reactiveValues(figure=NULL, table=NULL, data=NULL)
+values$table = table
+
+################################
+# checkInRows_container
+################################
+output$standard_dataset_container <- renderUI({  
+  validate(need(is.list(values$table), message="No table found, or values$table needs to be a list"))
+  
+  print("within standard_dataset_container")
+  
+  
+  tagList(
+    fluidRow(  
+      column(2, offset=10,
+             actionButton(("saveAll"),label="Save all", style=actionButton_style)
+      ) 
+    ),
+
+    # all standard table   
+    lapply(1:length(names(values$table)), function(i) {
+      
+      validate(need(values$table[[i]], message="no table found"), 
+               need(is.data.frame(values$table[[i]]), message="only data.frame allowed"),
+               need(values$data, message="no data found")
+      )
+
+      values = callModule(module_checkInRows, paste0("module_standard_table_", i),  
+                          values0 = values,
+                          table_index = i
+      )   
+      
+      # UI
+      module_checkInRows_UI((paste0("module_standard_table_", i)), label = NULL) 
+    })
+  
+  ) # tagList
+})
+   
+ fluidRow(column(12, uiOutput(("standard_dataset_container")))) 
+ 
+ 
+################################
+# save all curation tables  
+################################ 
+observeEvent(input$saveAll, {
+  validate(need(input$saveAll, message=NULL), 
+           need(values$table, message=NULL), 
+           need(values$data, message=NULL)
+  ) 
+    
+  tdata_org = ALL$DATA[[dataset_name]] 
+  tdata_org = tdata_org %>% 
+    rename_at(vars(colnames(tdata_org)),
+              ~ paste0(colnames(tdata_org), "_ORG")
+    )
+  
+  tdata = values$data %>% cbind(tdata_org)
+  ntabl = length(values$table)
+  
+  # for all curation tables
+  for (i in 1:ntabl) {
+    table = values$table[[i]]
+    if (is.null(table) ) {next} 
+    if (nrow(table)==0) {next} 
+    
+    # incompatible types (character / logical)
+    KEY = attr(table, "key")
+    tdata[, KEY] = as.character(tdata[, KEY])
+    table[, KEY]  = as.character(table[, KEY])
+    
+    col.lst =  setdiff(colnames(table), KEY)
+    tdata = tdata %>% select(-one_of(intersect(col.lst, colnames(tdata)))) %>% 
+      left_join(table, by=KEY)
+  }
+  
+  tdata = tdata[, setdiff(colnames(tdata), colnames(tdata_org))]
+  tdata = tdata[, colnames(values$data)]
+  
+  ALL$DATA[[dataset_name]] <- tdata
+  showNotification("save all sucessfully", type="message")   # "default, "message", "warning", "error"
+  
+})
+
+    
+ 

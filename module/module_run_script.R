@@ -502,7 +502,7 @@ output$docx_all_table <- downloadHandler(
     # mydocx <- docx() 
      
     
-    mydocx <- read_docx(paste0(HOME, "/lib/docTemplate.docx")) %>% 
+    mydocx <- read_docx(paste0(HANDBOOK_HOME, "/lib/docTemplate.docx")) %>% 
       print2docx(FIGURE=NULL, TABLE=values$table)
     
     validate(need(!is.null(mydocx), "no docx found"))
@@ -532,7 +532,7 @@ output$pptx_all_table <- downloadHandler(
     #mytabl <- values$table
     
     #tt <- print2_word_ppt2(FIGURE_ALL=NULL, TABLE_ALL=mytabl, mydoc=NULL, myppt=NULL)
-    mypptx <- read_pptx(paste0(HOME, "/lib/pptTemplate.pptx")) %>% 
+    mypptx <- read_pptx(paste0(HANDBOOK_HOME, "/lib/pptTemplate.pptx")) %>% 
       print2pptx(TABLE=values$table)
     
     validate(need(!is.null(mypptx), "no pptx found"))

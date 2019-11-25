@@ -214,6 +214,14 @@ resource_files:
 #----------------------------------------
 # to reload R file in case updating
 #----------------------------------------
+
+# This is a collection of Shiny examples.
+#https://github.com/rstudio/shiny-examples
+
+
+#https://www.brodrigues.co/blog/2018-10-05-ggplot2_purrr_officer/
+
+
 # https://www.pharmasug.org/proceedings/china2018/AD/Pharmasug-China-2018-AD38.pdf
 #@ https://community.rstudio.com/t/best-practices-for-organizing-rmarkdown-projects/914/2
 # http://www.dartistics.com/rmarkdown-shiny.html
@@ -226,8 +234,11 @@ resource_files:
 
 
 #HOME <- paste0(getwd(), "/")
-HOME = paste0(normalizePath("."), "/")
-source("./global.R")
+#HOME = paste0(normalizePath("."), "/")
+source(paste0("~/YANG/global.R"))
+WORKING_HOME = HANDBOOK_HOME
+HOME = HANDBOOK_HOME
+
 
 options(digits = 4)
 
@@ -571,7 +582,7 @@ if (1==2) {
     for (ifile in 1:length(file.lst)) {
      print(file.lst[ifile])
      txt = paste0(readLines(file.lst[ifile]), collapse=" ")
-     if ( length(grep("within standard_dataset_container", txt, fixed=TRUE) )) {        #  reshape sm
+     if ( length(grep("dv_vs_ipred", txt, fixed=TRUE) )) {        #  reshape sm
        print(file.lst[ifile])
        print("found one")
        

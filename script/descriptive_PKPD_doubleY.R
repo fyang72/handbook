@@ -2,12 +2,12 @@
 # Mean time profile
 ##########################################################################################
 
-descriptive_PKPD_hysterisis <-function(dataset, params=NULL) {
+descriptive_PKPD_doubleY <-function(dataset, params=NULL) {
   #
-    # dataset=read_csv("./data/nmdatPKPD.csv") %>%   #filter(TESTCAT=="PD1")
-    #          mutate(TESTCAT  = gsub("RESP1", "RESP", TESTCAT , fixed=TRUE)) %>% 
-    #          filter(TESTCAT %in% c("PK", "RESP"))
-  # 
+     # dataset=read_csv("./data/nmdatPKPD.csv") %>%   #filter(TESTCAT=="RESP1")
+     #          mutate(TESTCAT  = gsub("RESP1", "RESP", TESTCAT , fixed=TRUE)) %>% 
+     #          filter(TESTCAT %in% c("PK", "RESP"))
+     # 
   figure=NULL
   table =NULL
   data = NULL
@@ -53,11 +53,13 @@ descriptive_PKPD_hysterisis <-function(dataset, params=NULL) {
     mutate(DVOR = ifelse(DVOR<LLOQ, LLOQ/2, DVOR))  
   
   # order the dose group  
-  ARMA.lst <- unique(tdata$ARMA)
+  ARMA.lst <- unique(tdata$ARMA) 
   tdata = tdata %>%  mutate(ARMA=ordered(ARMA, levels=ARMA.lst))
    
   # Spread based on TESTCAT
-  tdata = tdata %>%  select(STUDYID, USUBJID, ARMA, TIMEPT, NTIM,  DVOR, TESTCAT) %>% 
+  tdata = tdata %>%  select(STUDYID, USUBJID, ARMA, TIMEPT, NTIM,  DVOR, TESTCAT) %>%
+    #unite(temp, STUDYID, USUBJID, ARMA, TIMEPT, NTIM) %>% 
+    #distinct(temp, TESTCAT,  .keep_all=TRUE) %>% 
     distinct(STUDYID, USUBJID, ARMA, TIMEPT, NTIM, TESTCAT,  .keep_all=TRUE) %>% 
     spread(TESTCAT, DVOR)  %>% 
     arrange(ARMA, USUBJID, NTIM)  
@@ -65,8 +67,7 @@ descriptive_PKPD_hysterisis <-function(dataset, params=NULL) {
   #------------------
   # plot
   #------------------
-  tdata <- tdata %>% 
-    group_by(ARMA, USUBJID) %>% 
+  tdata <- tdata%>% group_by(ARMA, USUBJID) %>% 
     mutate(xvar = PK, 
            yvar = PD 
     ) %>% 
@@ -89,7 +90,10 @@ descriptive_PKPD_hysterisis <-function(dataset, params=NULL) {
     
     scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
                   labels = trans_format("log10", math_format(10^.x))) +
-     
+    
+    scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                  labels = trans_format("log10", math_format(10^.x))) +
+    
     #coord_cartesian(xlim = c(0, 85)) + 
     #coord_cartesian(ylim=c(0.8, 1E+3)) +  
     
@@ -104,44 +108,13 @@ descriptive_PKPD_hysterisis <-function(dataset, params=NULL) {
   fig = fig + annotation_logticks(sides ="b") +  # "trbl", for top, right, bottom, and left.
     theme(panel.grid.minor = element_blank())
   fig
-  
-  
-  
-  #-------------------------------------------------------------
-  # addon-1:   hysteresis plot by dose group 
-  #-------------------------------------------------------------
-  fig = fig + facet_wrap(~ARMA) + #ggplot2::theme(legend.position = "none") + #, scales="free")
-    geom_segment(aes(xend = xend,yend= yend),
-                 arrow=arrow(length=unit(0.2,"cm")))
-  fig
-  
-  attr(fig, 'title') <- paste0(
-    "Hysteresis Plot of Mean Percent Change of ", PD_NAME, " from Baseline vs Mean Concentration by Treatment Group")
-  #attr(fig, 'width') <- 8
-  #attr(fig, 'height') <- 6
-  figure[["HYSTERISIS_PKPD_BYGROUP"]] = fig  
-  
-  
-  #-------------------------------------------------------------
-  # addon-2: individual hysteresis plot, if N is small 
-  #-------------------------------------------------------------
-  if (length(tdata$USUBJID)<8)  {
-    fig = fig + facet_wrap(~USUBJID) + #ggplot2::theme(legend.position = "none") + #, scales="free")
-      geom_segment(aes(xend = xend,yend= yend),
-                   arrow=arrow(length=unit(0.2,"cm")))
-    fig
+ 
+  #------------------
+  # linear scale
+  #------------------
+  attr(fig, 'title') <-  paste0("Percent Change from Baseline vs Concentration Regardless of Time Points and Dose Groups in Log-Log Scale in Analysis Set")
+  figure[["SIGMOID_PKPD_LOG_LOG"]] = fig  
     
-    attr(fig, 'title') <- paste0(
-      "Hysteresis Plot of Mean Percent Change of ", PD_NAME, " from Baseline vs Mean Concentration by USUBJID")
-    #attr(fig, 'width') <- 8
-    #attr(fig, 'height') <- 6
-    figure[["HYSTERISIS_PKPD_BYID"]] = fig  
-  }
-  
-  
-  #------------------
-  # associated table
-  #------------------
   
   return(list(data=data, figure=figure, table=table))
 }
@@ -151,7 +124,7 @@ descriptive_PKPD_hysterisis <-function(dataset, params=NULL) {
 #################################################################
 if (ihandbook) {
 output = suppressWarnings(
-  filtered_dataset() %>% descriptive_PKPD_hysterisis(params=NULL)
+  filtered_dataset() %>% descriptive_PKPD_sigmoid(params=NULL)
 )
 
 }

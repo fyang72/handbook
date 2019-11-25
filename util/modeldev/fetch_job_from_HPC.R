@@ -2,7 +2,21 @@
 #-------------------------------
 # fetch the result when done
 #-------------------------------
-batch_fetch_job_from_HPC <- function(server_IP_address, program_name, runno, local_home="./KRM") {
+batch_fetch_job_from_HPC <- function(
+  server_IP_address = "10.244.64.97",
+  program_name="TEST", 
+  runno ="",
+  
+  server_home = "/home/",   # /data/feng.yang/     /home/feng.yang/
+  server_ctl_dir = paste0(server_home, tolower(Sys.info()["user"]), "/", program_name, "/ctl/"),
+  server_data_dir = paste0(server_home, tolower(Sys.info()["user"]), "/", program_name, "/data/"), 
+  
+  local_home = "./",
+  local_ctl_dir = paste0(local_home, "ctl/"),    # local directory that holds all ctl files
+  local_data_dir = paste0(local_home, "data/"),   # local directory that holds all data files
+  local_output_dir = paste0(local_home, "output/")  # local directory that holds all nonmem output files from server
+  
+) {
   
   runno_df = cbind(runno, str_split_fixed(runno, pattern="_", n=2)) %>% as.data.frame()
   colnames(runno_df) <- c("runno", "ctl", "dat")
@@ -13,14 +27,10 @@ batch_fetch_job_from_HPC <- function(server_IP_address, program_name, runno, loc
     runno = runno_df[i, "runno"]
     print(paste0("fetching ", runno))
     
-    main_directory <- paste0("/home/", tolower(Sys.info()["user"]), "/", program_name, "/")
-    server_model_dir = paste0(main_directory, "ctl/", runno)
-    local_result_dir = paste0(local_home, "/output/ctl/", runno)
-    
     fetch_job_from_HPC(  
       server_IP_address = server_IP_address,
-      server_model_dir = server_model_dir, 
-      local_result_dir = local_result_dir  #,   #"./ctl/LN_BASE_WT/", 
+      server_model_dir = paste0(server_ctl_dir, runno),
+      local_result_dir = paste0(local_output_dir, "/ctl/", runno)
     )
     
   }
@@ -67,9 +77,17 @@ fetch_job_from_HPC <- function(
   system(command = paste0("scp ", server_IP_address, ":", paste0(server_model_dir,  "cotab*  ", local_result_dir)))
   system(command = paste0("scp ", server_IP_address, ":", paste0(server_model_dir,  "mytab*  ", local_result_dir))) 
  
-  
-  tt = list_folder_on_HPC(server_IP_address, server_model_dir)  
-  modelfit_directory <- sort(tt, decreasing=TRUE) #[1]  # the most recent one
+  # order the modelfit_directory by their IDs
+  #tt = list_folder_on_HPC(server_IP_address, server_model_dir)  
+  tt = list_subdir_or_file_on_HPC(server_IP_address, 
+    directory_on_server = server_model_dir, 
+    option="-d */")
+    
+  tt = bind_cols(modelfit_directory=tt, 
+        ID=tt %>% extractExpr(regexpr="([0-9]*\\.?[0-9]+)" ) %>% as.numeric()
+        ) %>% 
+    arrange(ID)
+  modelfit_directory <- tt%>% pull(modelfit_directory) # , decreasing=TRUE)  
   
   for (i in 1:length(modelfit_directory)) {
     modelfit_dir <- modelfit_directory[i]
@@ -109,8 +127,8 @@ fetch_job_from_HPC <- function(
   # lst.content = tryCatch(#source("text.R", local=TRUE),    #eval(parse(text=txt ))  , 
   #   readLines(lst.file),
   #   error=function(e) {
-  #     print("nonmem job not finish yet ..."); 
-  #     return("nonmem job not finish yet ...")
+  #     print("nonmem runno not finish yet ..."); 
+  #     return("nonmem runno not finish yet ...")
   #   } #, finally = {
   #   # eval(parse(text=txt)) %>% as.data.frame()
   #   #}
