@@ -239,7 +239,6 @@ source(paste0("~/YANG/global.R"))
 WORKING_HOME = HANDBOOK_HOME
 HOME = HANDBOOK_HOME
 
-
 options(digits = 4)
 
 
