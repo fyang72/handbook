@@ -80,6 +80,11 @@ module_review_checkout <- function(input, output, session, ALL) {
     library(officer)
     if(is.null(input$docx_template)) {
       mydocx <- read_docx(path= paste0(HOME, '/lib/docTemplate.docx'))
+      
+      # add as of 2019-11-25
+      #mydocx <- read_docx(path= paste0(HOME, '/lib/PopPK Report template 2019-10-18.docx'))
+      
+      
     }else{
       inFile = input$docx_template   # docx_template
       ext <- tools::file_ext(inFile$name)

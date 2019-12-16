@@ -3,7 +3,7 @@
 
 This chapter is dedicated for all data-driven pharmacokinetics/pharmacodynmaic analysis, with a minimum level
 of modeling.  Most often, the concentration-time profiles will be plotted, 
-in both log- and linear-scale (see section [Time profile](#time_profile)).  A variety of visualization for PK-PD analyses are presented in section [PKPD relationship](#descriptive_PKPD)) 
+in both log- and linear-scale (see section \@ref(time-profile)).  A variety of visualization for PK-PD analyses are presented in section \@ref(descriptive-PKPD). 
 
 First of all, a dataset (see below) needs to be loaded by using three different approaches mentioned earlier. If load sucessfully, the dataset will be populated in the subsequent sections in this chapter.  
  
@@ -41,7 +41,7 @@ tagList(
 ```
 
 
-## Time profile <a name="time_profile"></a>
+## Time profile {#time-profile}    
 
 The concentration-time profiles are the most commonly used visualization for both PK or PD. 
 If your dataset were standardized previously, you should be able to generate these time-profiles using 
@@ -50,7 +50,7 @@ the scripts below. The general step-by-step instructions were shown below:
 1. As mentioned early, the loaded dataset is presented in the tab of *dataset*. 
 Within the tab, some commonly used filters is shown and they could be used to narrow down your dataset. 
 For examples, select either one study or multiple studies, select which analyte and which dose groups.
-Note you can only choose one analye; you may choose multiple analytes at next section of PKPD relationship.
+Note you can only choose one analye; you may choose multiple analytes at next section \@ref(descriptive-PKPD).
 
 2. In the tab of *script*, you may select/run/modify the template scripts and generate the derived data(s), table(s) and figure(s) based on the input data (dataset) with/withou the parameters (params). Note, certain key words should be reserved; certain formatting should be followed. See instruction carefully.
 

@@ -218,7 +218,7 @@ module_save_figure_UI <- function(id, label = "") {
       )
     ), 
     
-    #fluidRow(column(width=12, uiOutput(ns("figure_options_container")))),
+    #fluidRow(column(width=12, uiOutput(ns("figure_footnote_container")))),
     
     fluidRow(  #column(width=12, div(align = "center",
 
@@ -274,7 +274,15 @@ output$figure_title_container <- renderUI(renderText({
 output$figure_name_container <- renderUI({
   # validate(need(figure_name, message="no figure found")
   # )
-  
+   
+# figure_footnote_container
+output$figure_footnote_container <- renderUI(
+  renderText({
+  figure <- ggplot_figure()
+  attributes(figure)$footnote 
+}) 
+)
+
 textInput(ns("figure_name"), value=figure_name, label=NULL)
 })
  
@@ -314,6 +322,11 @@ ggplot_figure <- reactive({
   if (!is.null(values$docx_height)) {   
     attr(figure, "docx_height") = as.numeric(values$docx_height)
   }  
+  
+  # jpg or svg
+  if (!is.null(values$file_type)) {   
+    attr(figure, "file_type") = values$file_type
+  }
   
   # fontsize
   if (!is.null(values$fontsize)) {   
@@ -366,7 +379,7 @@ ggplot_figure <- reactive({
   }  
   
   if (!is.null(values$facet_by) && values$facet_by !="") { 
-    if (class(figure$data[[values$facet_by]]) %in% c("factor", "character")) {
+    if (all(class(figure$data[[values$facet_by]]) %in% c("ordered", "factor", "character"))) {
       figure = figure + facet_wrap(as.formula(paste("~", values$facet_by))) 
     }
   }
@@ -586,7 +599,12 @@ plotModel <- function(){
                              value = ifelse(is.null(attr(my_plot, "pptx_height")), 5.2, attr(my_plot, "pptx_height"))))      
       ),
     
-     
+    fluidRow(column(3, radioButtons(  
+        ns("file_type"), "file type", 
+        inline = TRUE,
+        choices = c("jpg", "svg"),  
+        selected = "jpg"))
+      ), 
     
     #fluidRow(column(3, selectInput(ns("theme"), "Theme", choices = c("Default", "Grey", "White", "Minimal"), selected = "Default"))),
     #fluidRow(column(6,
@@ -602,7 +620,6 @@ plotModel <- function(){
 observeEvent(input$save, {
   values$title<- input$title
   values$subtitle<- input$subtitle
-  
   
   values$xlabel <- input$xlabel
   values$ylabel <- input$ylabel
@@ -624,6 +641,7 @@ observeEvent(input$save, {
   #values$vline_location <- input$vline_location  
   
   values$fontsize<- input$fontsize
+  values$file_type<- input$file_type
   
   values$facet_by<- input$facet_by
   

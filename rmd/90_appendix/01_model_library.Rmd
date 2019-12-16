@@ -3,8 +3,76 @@
 
 ## Model library
 
+
+### Introduction of the Model {#appendix-model-intro}
+
+A two-compartment model with parallel linear and nonlinear (Michaelis-Menten) elimination was selected as a starting model structure. Figure \@ref(fig:diagram-2compartment)  provides a schematic for the initial two-compartment structural PK model with parallel linear and nonlinear (Michaelis-Menten) elimination.  
+
+```{r diagram-2compartment, out.width='80%',  fig.cap='A General Structural Representation of a Two-compartment Model with Parallel Linear and Michaelis-Menten Elimination for both IV and SC Administration'}
+
+local_home <- "/home/feng.yang/Apps/handbook/"
+knitr::include_graphics(paste0(local_home, '/lib/diagram-for-two-compartment-model.png'))
+```
+
+
+Note: the grayed diagram of SC administration is not applicable to drug clinical development at this time or indication. However, actual model codes were structured flexibly to accommodate possible route changes in future. SC = subcutaneous; IV = intravenous; $F_1$ = F = bioavailability; $k_a$ = absorption rate constant; $V_2$ = $V_c$ = volume of distribution (central compartment); $V_3$ = $V_p$ = volume of distribution (peripheral compartment); Q = inter-compartmental clearance between the central and peripheral compartments; $k_{23}$, $k_{32}$– inter-compartmental rate constants; $k_e$ – elimination rate constant; $V_m$ – maximum target-mediated rate of elimination; $k_m$ – Michaelis-Menten constant.  CL is plasma clearance, derived from $k_e V_2$. $A_1$ is the amount of drug dosed via SC route and patient to bioavailability F, $A_2$ is the amount of drug in the central compartment with a volume $V_2$, $A_3$ is the amount of drug in the peripheral compartment with a volume $V_3$.
+
+This structural model was parameterized in terms of clearance (CL), central volume of distribution ($V_2$), peripheral volume of distribution ($V_3$), inter-compartmental clearance (Q), with log-normal random effect distributions.  In the model with both parallel linear and nonlinear elimination, $V_{max}$ (maximum rate in nonlinear elimination) and $K_m$ (Michaelis-Menten constant) were introduced.  The absolute bioavailability ($F_1$) was set to a typical value, 0.7, and first-order absorption rate constant ($K_a$) was set to 0.4.  
+This diagram representation can be mathematically expressed as the following ODE equations: 
+ 
+$$\frac{dA_1}{dt} = -{k_a}{A_1}$$  
+$$\frac{dA_2}{dt} = -{k_e}{A_2} + {k_a}{A_1} - {k_{23}} {A_2} + {k_{32}} {A_3}  - \frac{{V_{max}}{\frac{A_2}{V_2}}}{{K_m}+\frac{A_2}{V_2}} $$
+$$\frac{dA_3}{dt} = {k_{23}} {A_2} - {k_{32}}{A_3}$$ 
+
+where $A_1$, $A_2$, $A_3$, $k_a$, $k_e$, $k_{23}$, $k_{32}$, $V_{max}$, and $k_m$ are explained in the footnote of Figure \@ref(fig:diagram-2comp). 
+ 
+
+
+
+### Equations Matrix and Stats
+
+We can write fractions: $\frac{2}{3}$. We can also handle things like estimated population growth rate, e.g., $\hat{\lambda}=1.02$. And, $\sqrt{4}=2$.
+
+$$\alpha, \beta,  \gamma, \Gamma$$
+
+$$a \pm b$$
+$$x \ge 15$$
+$$a_i \ge 0~~~\forall i$$
+ 
+$$A_{m,n} =
+ \begin{pmatrix}
+  a_{1,1} & a_{1,2} & \cdots & a_{1,n} \\
+  a_{2,1} & a_{2,2} & \cdots & a_{2,n} \\
+  \vdots  & \vdots  & \ddots & \vdots  \\
+  a_{m,1} & a_{m,2} & \cdots & a_{m,n}
+ \end{pmatrix}$$
+ 
+
+The binomial probability: $$f(y|N,p) = \frac{N!}{y!(N-y)!}\cdot p^y \cdot (1-p)^{N-y} = {{N}\choose{y}} \cdot p^y \cdot (1-p)^{N-y}$$
+
+To calculate the **mean** of \textit{n} observations of variable \textit{x}, you can use: $$\bar{x} = \frac{1}{n} \sum_{i=1}^{n}x_{i}$$ 
+
+Note that this equation looks quite nice above where it's in display math mode. It is more compact but not quite as nice looking if we present it using inline mode, e.g., $\bar{x} = \frac{1}{n} \sum_{i=1}^{n}x_{i}$.
+
+Let's do the same with the equation for **variance**. First the inline version, which is 
+$\sigma^{2} = \frac{\sum\limits_{i=1}^{n} \left(x_{i} - \bar{x}\right)^{2}} {n-1}$. And then the display mode version: 
+$$\sigma^{2} = \frac{\sum_{i=1}^{n} 
+  \left(x_{i} - \bar{x}\right)^{2}}
+  {n-1}$$
+  
+Next, it's good to look at the equation for **covariance** to see how it is just a generalization of variance to two variables. An inline version of the equation is $cov_{x,y} = \frac{\sum\limits_{i=1}^{n}{(x_i-\overline{x}) \cdot (y_i-\overline{y})} }{n-1}$. And, the display mode is: $$cov_{x,y} = \frac{\sum\limits_{i=1}^{n}{(x_i-\overline{x}) \cdot (y_i-\overline{y})} }{n-1}$$
+  
+And, finally, we'll end with the **standard deviation**. Here's the inline version, $\sigma = \sqrt{\frac{\sum\limits_{i=1}^{n} \left(x_{i} - \bar{x}\right)^{2}} {n-1}}$. And here's the display version.
+$$\sigma = \sqrt{\frac{\sum\limits_{i=1}^{n} \left(x_{i} - \bar{x}\right)^{2}} {n-1}}$$
+
+There are helpful online editors to help you learn code for various equations you might want to include. I have found the one at: http://visualmatheditor.equatheque.net/VisualMathEditor.html to be very useful. You can work out the code there and then copy it over to your RMarkdown document in between dollar signs (1 or 2 on either end depending on whether you want the equation in line or in display mode).
+
+
+### Model Repository
+
 This chapter is for a model library, in particular how to add, delete or retrieve a given model(s). 
 All modles will be included, with their meta information, i.e. who developed it (author), when developed (year), 
+
 key features of model (1/2 comparment, linear/nonlinear), which therapeutic area (area), which program, which study, etc.
 
   

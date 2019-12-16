@@ -77,7 +77,7 @@ module_run_script <- function(input, output, session,
   load_dataset <- reactive({
     #dataset
     ALL$DATA[["mYtEsT_for_run_script"]]
-    
+
   })
   
   filtered_dataset <- reactive({
@@ -138,8 +138,9 @@ module_run_script <- function(input, output, session,
   
       HTML(colFmt("Step 3: Review the (filtered) dataset <br>", color="darkblue")
       ),
-      uiOutput(ns("render_filtered_dataset_container")), 
-      style='margin-bottom:30px;  border:1px solid; padding: 10px;'
+      uiOutput(ns("render_filtered_dataset_container")) #, 
+      
+      #style='margin-bottom:30px;  border:1px solid; padding: 10px;'
    
     ) 
     

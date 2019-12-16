@@ -120,7 +120,8 @@ script <- list.files(path=paste0(HOME, "/script/"),
 names(script) = basename(script)
  
 # call module_run_script
-ALL =  callModule(module_run_script, "mYtEsT_for_run_simulation_by_script", ALL, 
+ALL =  callModule(module_run_script, "mYtEsT_for_run_simulation_by_script", 
+                  ALL, 
                   dataset= ALL$DATA[["mYtEsT_for_runSim_dataset"]], 
                   script = script, 
                   params = reactive(

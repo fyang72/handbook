@@ -1,0 +1,145 @@
+DOMAIN,USER.NAME,CATEGORY,ID,KEY,DATE,VALUE
+public,feng.yang@regeneron.com,event,1,"ev, event, simulation",2018-03-01,"
+#------------------------------------------------------------
+# A single dose of 250mg SC, 300mg SC, 450mg SC (3 groups), 
+#------------------------------------------------------------
+expand.ev(amt=c(250, 300, 450))
+ 
+ 
+ 
+#------------------------------------------------------------ 
+# A single dose of 250mg SC, 300mg SC, and  
+# 5, 10 and 15 mg/kg IV (5 groups),  1 hour infusion
+#------------------------------------------------------------
+ev(ID=1, amt=250, unit=mg, route=SC) +            # 250mg SC
+ev(ID=2, amt=300, unit=mg, route=SC) +            # 300mg SC
+ev(ID=3, amt=5,  unit=mkg, route=IV, infhr=1) +   # 5 mg/kg IV 
+ev(ID=4, amt=10, unit=mkg, route=IV, infhr=1) +   # 10 mg/kg IV 
+ev(ID=5, amt=15, unit=mkg, route=IV, infhr=1)     # 15 mg/kg IV     
+ 
+ 
+ 
+ 
+#------------------------------------------------------------- 
+# Multiple doses: 250mg SC QW*8, 300mg SC Q2W*4, and  
+# 5, 10 and 15 mg/kg IV Q4W*2 (5 groups), 
+#-------------------------------------------------------------  
+ev(ID=1, amt=250, unit=mg, route=SC, ii=7, addl=7) +             # 250mg SC QW*8
+ev(ID=2, amt=300, unit=mg, route=SC, ii=14, addl=3) +            # 300mg SC Q2W*4
+ev(ID=3, amt=5,  unit=mkg, route=IV, infhr=1, ii=28, addl=1) +   # 5 mg/kg IV Q4W*2
+ev(ID=4, amt=10, unit=mkg, route=IV, infhr=1, ii=28, addl=1) +   # 10 mg/kg IV Q4W*2    
+ev(ID=5, amt=15, unit=mkg, route=IV, infhr=1, ii=28, addl=1)     # 15 mg/kg IV Q4W*2
+ 
+ 
+ 
+ 
+#------------------------------------------------------------ 
+# Loading dose: 
+# i. A loading dose of 250 mg SC, 
+#ii. @day 14, followed by  a single dose of 5,10, 15 mg/kg IV, 
+#iii. @ day 84 followed by 450 mg SC QW*4
+#------------------------------------------------------------
+# auto-version: 
+#--------------- 
+250mg SC Q2W*1 + 5 mg/kg IV Q10W*1 + 450 mg SC QW*4
+250mg SC Q2W*1 + 10 mg/kg IV Q10W*1 + 450 mg SC QW*4
+250 mg SC Q2W*1 + 15 mg/kg IV Q10W*1 + 450 mg SC QW*4
+
+# script-version: 
+#-----------------
+# 250mg SC Q2W*1 + 5 mg/kg IV Q10W*1 + 450 mg SC QW*4
+ev(ID=1, time=0, amt=250, unit=mg, route=SC, ii=14, addl=0) +    
+ev(ID=1, time=14, amt=5, unit=mkg, route=IV, ii=70, addl=0, infhr=1) + 
+ev(ID=1, time=84, amt=450, unit=mg, route=SC, ii=7, addl=3) +
+
+# 250mg SC Q2W*1 + 10 mg/kg IV Q10W*1 + 450 mg SC QW*4 
+ev(ID=2, time=0, amt=250, unit=mg, route=SC, ii=14, addl=0) +    
+ev(ID=2, time=14, amt=10, unit=mkg, route=IV, ii=70, addl=0, infhr=1) + 
+ev(ID=2, time=84, amt=450, unit=mg, route=SC, ii=7, addl=3) +
+
+# 250mg SC Q2W*1 + 10 mg/kg IV Q10W*1 + 450 mg SC QW*4 
+ev(ID=3, time=0, amt=250, unit=mg, route=SC, ii=14, addl=0) +    
+ev(ID=3, time=14, amt=15, unit=mkg, route=IV, ii=70, addl=0, infhr=1) + 
+ev(ID=3, time=84, amt=450, unit=mg, route=SC, ii=7, addl=3)
+
+ 
+
+
+#------------------------------------------------------------
+# 250 mg, 300 mg, 450 mg SC for all Q2W, Q3W, Q4W 
+# [9 dose groups, 4 doses for each]
+#------------------------------------------------------------
+expand.ev(amt=c(250, 300, 450), ii=c(14,21,28), addl=3)
+ 
+ 
+  
+
+#------------------------------------------------------------
+# Using the following scripts to 
+# 1) create the event and run the simulation, and 
+# 2) overlay with observed data from R1500-CL-1321
+#------------------------------------------------------------
+ev(ID=1, amt=150, unit=mg, route=SC, ii=7, addl=7) +       # 150 mg SC QW*8
+ev(ID=2, amt=300, unit=mg, route=SC, ii=7, addl=7) +       # 300 mg SC QW*8
+ev(ID=3, amt=450, unit=mg, route=SC, ii=7, addl=7) +       # 300 mg SC QW*8
+
+ev(ID=4, amt=300, unit=mg, route=SC, ii=14, addl=3) +     # 300 mg SC Q2W*4
+ev(ID=5, amt=450, unit=mg, route=SC, ii=14, addl=3) +     # 450 mg SC Q2W*4
+
+ev(ID=6, amt=5, unit=mkg, route=IV, ii=28, addl=1) +        # 5 mg/kg IV Q4W*2
+ev(ID=7, amt=10, unit=mkg, route=IV, ii=28, addl=1) +      # 10 mg/kg IV Q4W*2
+ev(ID=8, amt=15, unit=mkg, route=IV, ii=28, addl=1) +      # 15 mg/kg IV Q4W*2
+ev(ID=9, amt=20, unit=mkg, route=IV, ii=28, addl=1)         # 20 mg/kg IV Q4W*2
+
+"
+private,feng.yang@regeneron.com,parse,2,"parse, TIMEPT",2018-03-08,"
+  # to parse TIMEPT like the following:
+  #-------------------------------------
+  # TIMEPT = c(
+  #   ""D1 PRE"",
+  #   ""D1 0HR"",
+  #   ""D1 15MIN"",
+  #   ""D1 30MIN"",
+  #   ""D1 1HR"",
+  #   ""D1 2HR"",
+  #   ""D1 4HR"",
+  #   ""D1 8HR"",
+  #   ""D1 12HR"",
+  #   ""D2"", ""D4"", ""D8"", ""D15"", ""D22"", ""D29"")
+    
+  # assume having ""TIMEPT"" in data
+  TIMEPT = toupper(data$TIMEPT)
+  
+  TIMEPT.ORG = TIMEPT
+  TIMEPT = as.data.frame(TIMEPT)
+  TIMEPT = TIMEPT %>% mutate(TIMEPT = gsub(""HR"", "" HR"", TIMEPT), 
+                             TIMEPT = gsub(""MIN"", "" MIN"", TIMEPT) )
+  
+  TIMEPT = strVec2matrix(TIMEPT[[1]], sep="" "")
+  colnames(TIMEPT) = c(""DAY"", ""HOUR"", ""UNIT"")
+  TIMEPT = bind_cols(TIMEPT=TIMEPT.ORG, TIMEPT)
+  
+  # calculate NTIM = DAY+HOUR*CONST
+  TIMEPT = TIMEPT %>% mutate(DAY=as.numeric(gsub(""D"","""",DAY)), 
+                             HOUR =ifelse(is.na(HOUR), 0, HOUR),
+                             CONST=ifelse(is.na(UNIT), 1,  
+                                          ifelse(UNIT==""MIN"", 1/60/24, 
+                                                 ifelse(UNIT==""HR"", 1/24, NA))),
+                             NTIM = DAY + as.numeric(HOUR)*CONST )
+  
+  # convert clinical Day 1 as NTIM=0, and so on.
+  TIMEPT  = TIMEPT %>% mutate(NTIM=ifelse(NTIM>0, NTIM-1, NTIM))
+  
+  # if TIMEPT recorded from the end of infusion
+  INFHR = 1 # assume 1 hour infusion if IV dose
+  TIMEPT = TIMEPT %>% mutate(NTIM=ifelse(NTIM<1, NTIM+INFHR/24, NTIM))
+  
+  # assign NTIM=0 for PRE (pre-infusion)
+  TIMEPT = TIMEPT %>% mutate(NTIM=ifelse(HOUR==""PRE"", 0, NTIM))
+  
+  # final output
+  data = data %>% left_join(TIMEPT[, c(""TIMEPT"", ""NTIM"")], by=""TIMEPT"")
+"
+public,feng.yang@regeneron.com,event,3,test,2018-03-18,data %>% mute_if()
+private,feng.yang@regeneron.com,test,id-4,"test, many",2018-03-28,nothing
+all,all,testscript,testscript,2018-07-23,NA,all

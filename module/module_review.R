@@ -51,8 +51,7 @@ module_review_figure <- function(input, output, session,  ALL) {
                        ALL, 
                        figure = ALL$FIGURE[[figure_name]], 
                        figure_index = i, 
-                       figure_name = names(ALL$FIGURE[figure_name]), 
-                       figure_data = ALL$FIGURE[[figure_name]]$data
+                       figure_name = names(ALL$FIGURE[figure_name])
       )
       
       module_save_figure_UI(ns(paste0("module_save_figure_", i)), label = NULL) 

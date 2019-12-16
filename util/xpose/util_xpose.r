@@ -423,13 +423,11 @@ GOF_FIT_CPP <- function(xpdb, adpx, mod, sim_end=16*7, delta=1, tgrid=0, ADEX, F
   
   
   
+   
   
   
-  
-  
-  
-
-mycol = brewer.pal(7,"Dark2") 
+library(RColorBrewer)
+mycol = RColorBrewer::brewer.pal(7,"Dark2") 
 alphacol <-function(col) rgb(t(col2rgb(col)),alpha=100,max=255)
  
   

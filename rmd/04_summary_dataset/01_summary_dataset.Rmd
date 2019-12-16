@@ -4,6 +4,10 @@
 This chapter is to summarise the input dataset in term of the samples, the patient demographic, 
 laboratory information, and their corresponding statistics.  
 
+## Accouting of Population and Samples
+
+to summarize the population for each analyte (concentration, target, biomarker, efficacy, etc)
+to summarize the sample accounting for each analyte (concentration, target, biomarker, efficacy, etc)
 
 
 ```{r, summary_population_samples}
@@ -22,7 +26,7 @@ output$summary_population_samples <-renderUI({
   # callModule 
   ALL = callModule(module_run_script, "summary_population_samples", 
                    ALL, 
-                   dataset_name="mYtEsT_for_summary_population_samples",
+                   dataset=NULL,
                    script=script,
                    params = NULL
   )
@@ -37,21 +41,116 @@ output$summary_population_samples <-renderUI({
 fluidRow(column(12, uiOutput(("summary_population_samples"))))
 ```
 
+ 
+## Summary of Patients' Demographics {#patients-demographics}
+
+Descriptive statistics of potential covariates (baseline values) of the subjects included in the analysis are summarized as follows.   <!--in Table \@ref(tab:summary-demog2).   -->
 
 
-## Population
+```{r summary-demog2, results='asis'}
 
-to summarize the population for each analyte (concentration, target, biomarker, efficacy, etc)
+library(qwraps2)
+options(qwraps2_markup = 'markdown') # default is latex
+
+  dta_summaries <-
+    
+    list("Age(year)" =
+           list("min:"         = ~ min(AGE, na.rm=TRUE),
+                "mean (sd)"    = ~ qwraps2::mean_sd(AGE, denote_sd = "paren"),
+                "median (IQR)" = ~ qwraps2::median_iqr(AGE),
+                "max:"         = ~ max(AGE, na.rm=TRUE)),
+         
+         "Weight(kg)" =
+           list("min:"         = ~ min(WGTBL, na.rm=TRUE),
+                "mean (sd)"    = ~ qwraps2::mean_sd(WGTBL, denote_sd = "paren"),
+                "median (IQR)" = ~ qwraps2::median_iqr(WGTBL),
+                "max:"         = ~ max(WGTBL, na.rm=TRUE)),
+         
+         "Height(kg)" =
+           list("min:"         = ~ min(HGTBL, na.rm=TRUE),
+                "mean (sd)"    = ~ qwraps2::mean_sd(HGTBL, denote_sd = "paren"),
+                "median (IQR)" = ~ qwraps2::median_iqr(HGTBL),
+                "max:"         = ~ max(HGTBL, na.rm=TRUE)),
+         
+         "BMI(kg/m2)" =
+           list("min:"         = ~ min(BMIBL, na.rm=TRUE),
+                "mean (sd)"    = ~ qwraps2::mean_sd(BMIBL, denote_sd = "paren"),
+                "median (IQR)" = ~ qwraps2::median_iqr(BMIBL),
+                "max:"         = ~ max(BMIBL, na.rm=TRUE)),
+         
+         "Sex" =
+           list("Male, n (%)"   = ~ qwraps2::n_perc0(SEXN == 1),
+                "Female, n (%)" = ~ qwraps2::n_perc0(SEXN == 2)),
+         
+         "Race" =
+           list("White, n (%)"   = ~ qwraps2::n_perc0(RACEN == 1),
+                "Asian, n (%)"   = ~ qwraps2::n_perc0(RACEN == 2),
+                "Black, n (%)"   = ~ qwraps2::n_perc0(RACEN == 3),
+                "Other, n (%)"   = ~ qwraps2::n_perc0(!RACEN %in% c(1, 2, 3))),
+         
+         "Ethnic" =
+           list("Hispanic/Latino, n (%)"   = ~ qwraps2::n_perc0(ETHNICN == 1),  #
+                "Not Hispanic/Latino, n (%)"   = ~ qwraps2::n_perc0(ETHNICN == 2),
+                "Not Reported, n (%)"   = ~ qwraps2::n_perc0(!ETHNICN %in% c(1, 2)))#,
+          
+         # "Albumin(g/L)" =
+         #   list("min:"         = ~ min(ALBBL, na.rm=TRUE),
+         #        "mean (sd)"    = ~ qwraps2::mean_sd(ALBBL, denote_sd = "paren"),
+         #        "median (IQR)" = ~ qwraps2::median_iqr(ALBBL),
+         #        "max:"         = ~ max(ALBBL, na.rm=TRUE)), 
+         # 
+         # "BSA(m^2)" =
+         #   list("min:"         = ~ min(BSABL, na.rm=TRUE),
+         #        "mean (sd)"    = ~ qwraps2::mean_sd(BSABL, denote_sd = "paren"),
+         #        "median (IQR)" = ~ qwraps2::median_iqr(BSABL),
+         #        "max:"         = ~ max(BSABL, na.rm=TRUE))
+         
+          # CREATBL
+          # CRCLBL
+          # ALTBL
+          # ASTBL, 
+          # BILIBL
+          # IGGBL
+          # LDHBL
+          # ALPBL
+         
+    )
   
+  #
+  
+dataset <- read_datafile(paste0(HANDBOOK_HOME, "/data/adsl.csv")) 
+adsl = dataset %>% 
+  dplyr::distinct(USUBJID, .keep_all=TRUE) %>% 
+  convert_vars_type(adsl_data_type)  
+ 
 
-## Samples
+adsl[is.na(adsl)] = 0
+  
+#HTML(knit2html(text=capture.output(stable),options(qwraps2_markup = 'markdown'), fragment.only=TRUE))
+#TABLE[["tab_summary_patient_demographic"]] = tabl
+#knitr::kable(tabl, booktabs = TRUE, caption = caption)
+ 
+adsl1 <- adsl %>% mutate(STUDYID = "STUDY-001")
+adsl2 <- adsl %>% mutate(STUDYID = "STUDY-002")
+adsl <- rbind(adsl1, adsl2)
 
-to summarize the sample accounting for each analyte (concentration, target, biomarker, efficacy, etc)
+tabl <- cbind(
+  qwraps2::summary_table(dplyr::group_by(adsl, STUDYID), dta_summaries), 
+  qwraps2::summary_table(adsl, dta_summaries)
+)
+
+caption = "Descriptive Statistics of Baseline Demographic Characteristics, Laboratory and Disease Status Variables of the Patients/subjects included in the Overall Population"
+attr(tabl, "title") = caption
+attr(tabl, "footnote") <- NA
+#TABLE[["TABLE_SUMMARY_PATIENT_DEMOGRAPHICS"]] = as.data.frame(tabl)
+
+tabl
+
+```
 
 
-## Demographic and lab information  
 
-to summarize demographic and lab information
+
 
 
  

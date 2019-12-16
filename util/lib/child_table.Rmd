@@ -1,0 +1,6 @@
+ 
+```{r {{table_label}}}
+#knitr::kable(TABLE[["table_name"]], booktabs = TRUE, caption="table_caption")  
+pander(TABLE[['{{table_name}}']])
+```
+

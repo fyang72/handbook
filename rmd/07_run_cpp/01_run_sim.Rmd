@@ -2,33 +2,32 @@
 
 # Simulation <a name="chapter_simulation"></a>
 
-This chapter is dedicated for simulation and post-process of the simulated data. 
+This chapter is dedicated for simulation and post-processing of the simulated data. 
 In particular, R package *mrgsolve* is used as the simulation engine. 
 For more details on using *mrgsolve* see <https://mrgsolve.github.io/>.
 
-not good \@ref(sec-summaris-eexposure). 
+1. To run simulations, see section \@ref(sec-run-simulation);  
+2. To post-processing a simulated data, for examples, 
+    + derive exposure matrices, see section \@ref(sec-summarise-exposure);  
+    + calculate percent of population above certain threshold concentrations, 
+      see section \@ref(sec-pct-threshold); 
+    + plot VPC, see section \@ref(sec-plot-VPC);    
+   
+## Run simulation {#sec-run-simulation}    
 
-1. To run simulations, see section \@ref(sec-summaris-eexposure) [run simulation](#sec_run_sim);  
-2. To post-processing a simulated data, including 
-    + derive exposure matrices, see section \@ref(sec-summaris-eexposure);  
-    + calculate percent of population above certain threshold, 
-      see section [calculate pct threshold](#sec_pct_threshold); 
-    + plot VPC, see section [plot VPC](#sec_plot_VPC); 
-  
- 
-
-## Run simulation <a name="sec_run_sim"></a>
-
-To run simulation using R, you need to have a *mrgsolve* model specification file (called .cpp file). 
-Typically, a simulation is based on the following scenario, including 
+To run simulation using *mrgsolve*, you need to have a model specification file called *.cpp* file. Typically, a simulation is based on the following scenario, including 
 
 1. population simulation  
     + without inter-subject variability
     + with inter-subject variability
     
-2. post-hoc simulation for a given population with their corresponding post-hoc model parameters.
+2. post-hoc simulation for a given population with their corresponding individual model parameters.
     + use individual dosing records,
     + use specified dosing regimens
+    
+3. overlay simulated data with observed one
+
+4. trial simulation
 
 ```{r}
 output$run_simulation <- renderUI({ 
@@ -42,14 +41,10 @@ output$run_simulation <- renderUI({
 fluidRow(column(12, uiOutput("run_simulation")))
 ```
 
-## Summarise exposure {#sec-summaris-eexposure}  
-
-### Figures with images {#discussion}
-
-
+## Summarise exposure {#sec-summarise-exposure}  
+ 
 In this section, you can calculate the individual exposure metrics 
-based on the simulated data, and then summarise them, typically based on their dose groups, 
-to generate a variety of summary tables and appropriate visualizations. 
+based on the simulated data, and then summarise them, typically based on their dose groups, to generate a variety of summary tables and appropriate visualizations if requested. 
 
 
 ```{r}
@@ -96,7 +91,7 @@ fluidRow(column(12, uiOutput("summarise_exposure")))
   
 
 
-## Set threshold <a name="sec_pct_threshold"></a>
+## Set threshold {#sec-pct-threshold}    
 In this section, you may calculate the percent of population above a specified threshold concentration. 
  
 ```{r} 
@@ -141,7 +136,7 @@ fluidRow(column(12, uiOutput("pct_threshold")))
 ```
   
 
-## Plot VPC <a name="sec_plot_VPC"></a>
+## Plot VPC {#sec-plot-VPC}  
 In this section, you may overlay the observed data on top of simulation data with 95% CI. 
 
 ```{r} 

@@ -2,9 +2,9 @@
 
 library(stringr)
 HANDBOOK_HOME = paste0(normalizePath("."), "/")
-if (str_sub(HANDBOOK_HOME, 1, 6) == "/home/") {HANDBOOK_HOME=paste0("/home/feng.yang/YANG/")}
-if (str_sub(HANDBOOK_HOME, 1, 9) == "C:\\Users\\") {HANDBOOK_HOME=paste0("C:\\Users\\feng.yang\\Documents\\handbook/")}
- 
+if (str_sub(HANDBOOK_HOME, 1, 16) == "/home/feng.yang/") {HANDBOOK_HOME=paste0("/home/feng.yang/Apps/handbook/")}
+if (str_sub(HANDBOOK_HOME, 1, 18) == "C:\\Users\\feng.yang") {HANDBOOK_HOME=paste0("C:\\Users\\feng.yang\\Documents\\handbook/")}
+
 WORKING_HOME = HANDBOOK_HOME
 HOME = HANDBOOK_HOME
 
@@ -21,21 +21,27 @@ HOME = HANDBOOK_HOME
 # tools:::.get_standard_package_names()
 # rsconnect::appDependencies()
 list.of.packages = sort((.packages())) 
-
-# [1] "grid"           "XML"            "reshape"        "pander"         "rmarkdown"      "xpose4"         "scales"         "bindrcpp"      
-# [9] "latticeExtra"   "Rcpp"           "PKPDmisc"       "mrgsolve"       "gdata"          "Hmisc"          "Formula"        "survival"      
-# [17] "lattice"        "forcats"        "stringr"        "purrr"          "tidyr"          "tibble"         "tidyverse"      "xtable"        
-# [25] "haven"          "knitr"          "plotly"         "readr"          "reshape2"       "DT"             "ReporteRs"      "ReporteRsjars" 
-# [33] "shinydashboard" "rhandsontable"  "dplyr"          "magrittr"       "readxl"         "shiny"          "RColorBrewer"   "ggplot2"       
-# [41] "lazyeval"       "stats"          "graphics"       "grDevices"      "utils"          "datasets"       "methods"        "base"
-#if ("metrumrg" %in% list.of.packages) {base::detach(package:metrumrg) } 
+ 
+  
 #if ("MASS" %in% list.of.packages) {base::detach(package:MASS) } 
  
+p_load(tidyverse,           # ggplot2, dplyr, etc.
+       haven,               # read .sas7bat files easier
+       officer,             # export R tables & figures to Word and PowerPoint
+       survival,            # survival analysis package
+       survminer,           # ggsurvplot() -- nicer Kaplan-Meier plots
+       flextable,           # nicer looking tables with rich customisation
+       lubridate,           # work with dates/time data
+       rvg)                 # output files as vector graphics w/ officer in ppt
+
+
+
 # Reporting
 #-------------- 
 library(knitr)
 library(rmarkdown)
-library(ReporteRs) 
+#library(Reports353eRs) 
+
 library(officer)
 library(pander)
 library(rvg)
@@ -84,7 +90,7 @@ library(Cairo)   # to solve X11 server problem
 require(grid)
 library("ggplot2")     # library("gplots")
 library(gridExtra)
-library(ggpmisc)         # add_formula_pvalue
+#library(ggpm67isc)         # add_formula_pvalue
 library(VennDiagram)
 # library(party)  # tree structure of the model development
 
@@ -126,8 +132,7 @@ library(Rcpp)
 library(xtable) #pretty tables
 #library(packrat)
 #library("testthat")
-#library(kfigr) #figure referencing for markdown # devtools::install_github("github mkoohafkan/kfigr")
-#if ("metrumrg" %in% list.of.packages) {base::detach(package:metrumrg) } 
+ 
 #if ("MASS" %in% list.of.packages) {base::detach(package:MASS) } 
 #library(stargazer) #pretty tables
 
@@ -147,13 +152,14 @@ list_files_in_a_folder <- function(folder.loc="./util/", file.extension=c(".r", 
   
   # find a string multiple files
   # for (ifile in 1:length(file.lst)) { 
+  #   print(ifile)
   #   print(file.lst[ifile])
   #   txt = paste0(readLines(file.lst[ifile]), collapse=" ")
-  #   if ( length(grep("regnR", txt, fixed=TRUE) )) {
+  #   if ( length(grep("Repo325rteRsseswjars2424", txt, fixed=TRUE) )) {
   #     print(file.lst[ifile])
   #     exit;
   #   }
-  #    
+  # 
   # }     #sys.source('file.R', envir=environment())
   
   return(file.lst)

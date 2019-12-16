@@ -1,0 +1,79 @@
+Domain,Alias,Freq,Label,Where,Who
+STUDYID,STUDYID,10,Study ID,indivProfile,feng.yang
+STUDYID,STUDY,9,Study ID,indivProfile,feng.yang
+STUDYID,STUD,8,Study ID,indivProfile,feng.yang
+USUBJID,USUBJID,10,Unique Subject ID,indivProfile,feng.yang
+USUBJID,SUBJID,8,Unique Subject ID,indivProfile,feng.yang
+USUBJID,SUBJECT,6,Unique Subject ID,indivProfile,feng.yang
+USUBJID,CLID,1,Unique Subject ID,indivProfile,feng.yang
+USUBJID,ID,9,Unique Subject ID,indivProfile,feng.yang
+ARMA,ARMA,10,Actual dose group,indivProfile,feng.yang
+ARMA,ARM,1,Actual dose group,indivProfile,feng.yang
+ARMA,TRTA,1,Actual dose group,indivProfile,feng.yang
+ARMA,TRT01A,1,Actual dose group,indivProfile,feng.yang
+ARMA,TRTGROUP,1,Actual dose group,indivProfile,feng.yang
+ARMA,COHORT,1,Actual dose group,indivProfile,feng.yang
+ARMA,DOSECH,7,Actual dose group,indivProfile,feng.yang
+TEST,TEST,10,Analyte method name,indivProfile,feng.yang
+TEST,METHOD,9,Analyte method name,indivProfile,feng.yang
+TEST,SOP,8,SOP,indivProfile,feng.yang
+TEST,ANALYTE,8,Analyte name,indivProfile,feng.yang
+TIME,TIME,10,NA,indivProfile,feng.yang
+TIME,PKDAY_C,1,NA,indivProfile,feng.yang
+TIME,NTIM,1,NA,indivProfile,feng.yang
+NTIM,NTIM,10,NA,indivProfile,feng.yang
+NTIM,NOM_DAY,8,NA,indivProfile,feng.yang
+NTIM,TIME,1,NA,indivProfile,feng.yang
+DVOR,DVOR,10,NA,indivProfile,feng.yang
+DVOR,CONC,1,NA,indivProfile,feng.yang
+DVOR,CONCN,1,NA,indivProfile,feng.yang
+DVOR,CONCNI,1,NA,indivProfile,feng.yang
+DVOR,IPRED,1,NA,indivProfile,feng.yang
+DVOR,PRED,1,NA,indivProfile,feng.yang
+DVOR,DV,1,NA,indivProfile,feng.yang
+DVOR,RESULT,1,NA,indivProfile,feng.yang
+DVOR,Mean,1,NA,indivProfile,feng.yang
+DVOR,RESC_RAW,1,NA,indivProfile,feng.yang
+DVOR,RESC,1,NA,indivProfile,feng.yang
+WGTBL,WGTBL,10,Baseline weight (kg),indivProfile,feng.yang
+WGTBL,WGT,1,Baseline weight (kg),indivProfile,feng.yang
+WGTBL,WT,1,Baseline weight (kg),indivProfile,feng.yang
+WGTBL,WEIGHTBL,1,Baseline weight (kg),indivProfile,feng.yang
+WGTBL,WEIGHT,1,Baseline weight (kg),indivProfile,feng.yang
+HGTBL,HGTBL,10,Baseline Height (m),indivProfile,feng.yang
+HGTBL,HGT,1,NA,indivProfile,feng.yang
+HGTBL,HT,1,NA,indivProfile,feng.yang
+AGE,AGE,10,Age (years),indivProfile,feng.yang
+BMIBL,BMIBL,10,BMI (),indivProfile,feng.yang
+BMIBL,BMI,1,NA,indivProfile,feng.yang
+BMIBL,BLBMI,1,NA,indivProfile,feng.yang
+BSABL,BSABL,10,NA,indivProfile,feng.yang
+BSABL,BSA,1,NA,indivProfile,feng.yang
+BSABL,BLBSA,1,NA,indivProfile,feng.yang
+SEX,SEX,10,NA,indivProfile,feng.yang
+SEX,GENDER,1,NA,indivProfile,feng.yang
+ETHNIC,ETHNIC,10,NA,indivProfile,feng.yang
+RACE,RACE,10,NA,indivProfile,feng.yang
+COUNTRY,COUNTRY,10,NA,indivProfile,feng.yang
+SITEID,SITEID,10,NA,indivProfile,feng.yang
+VISIT,VISIT,10,NA,indivProfile,feng.yang
+TIMEPT,TIMEPT,10,NA,indivProfile,feng.yang
+EXDUR,EXDUR,10,NA,indivProfile,feng.yang
+EXTRT,EXTRT,10,NA,indivProfile,feng.yang
+EXROUTE,EXROUTE,10,NA,indivProfile,feng.yang
+EXROUTE,ROUTE,10,NA,indivProfile,feng.yang
+EXDOSE,EXDOSE,10,NA,indivProfile,feng.yang
+EXDOSE,DOSE,10,NA,indivProfile,feng.yang
+EXDOSU,EXDOSU,10,NA,indivProfile,feng.yang
+EXDOSU,DOSU,10,NA,indivProfile,feng.yang
+EXSTDTC,EXSTDTC,10,NA,indivProfile,feng.yang
+EXENDTC,EXENDTC,10,NA,indivProfile,feng.yang
+TRTSTDTM,TRTSTDTM,10,NA,indivProfile,feng.yang
+TRTSTDTM,TRTSDTM,10,NA,indivProfile,feng.yang
+TRTENDTM,TRTENDTM,10,NA,indivProfile,feng.yang
+TRTENDTM,TRTEDTM,10,NA,indivProfile,feng.yang
+SAMDTTM,SAMDTTM,10,NA,indivProfile,feng.yang
+SOP,SOP,10,NA,indivProfile,feng.yang
+STDUNIT,STDUNIT,10,NA,indivProfile,feng.yang
+BLQ,BLQ,10,NA,indivProfile,feng.yang
+LLOQ,LLOQ,10,NA,indivProfile,feng.yang

@@ -75,7 +75,12 @@ ggplot_figure <- reactive({
     figure  <- figure  + labs(y = values$ylabel)
   }
   
-  #
+  # jpg or svg
+  if (!is.null(values$file_type)) {   
+    attr(figure, "file_type") = as.numeric(values$file_type)
+  }
+  
+  
   # width and height (pptx)
   if (!is.null(values$pptx_width)) {   
     attr(figure, "pptx_width") = as.numeric(values$pptx_width)
