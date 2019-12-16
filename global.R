@@ -24,17 +24,115 @@ list.of.packages = sort((.packages()))
  
   
 #if ("MASS" %in% list.of.packages) {base::detach(package:MASS) } 
- 
-p_load(tidyverse,           # ggplot2, dplyr, etc.
-       haven,               # read .sas7bat files easier
-       officer,             # export R tables & figures to Word and PowerPoint
+
+
+library(pacman)   
+p_load(knitr,
+       bookdown, 
+       rmarkdown, 
+       
+       officer,   # export R tables & figures to Word and PowerPoint
+       pander,
+       rvg,          # output files as vector graphics w/ officer in ppt
+       
+       
+
+       
+       
+       
+       # Shiny, Rmarkdown
+       #-------------------- 
+       shiny,
+       shinyAce,
+       shinyjs,
+       shinydashboard,
+       rhandsontable,
+       DT, 
+       formatR,
+       #plotly,
+       
+       
+       # load data
+       #------------------- 
+       readxl,
+       readr,        
+       haven,  #  read .sas7bat files easier
+       xlsx,
+       xlsxjars,
+       
+       
+       # data manipulation
+       #------------------- 
+       dplyr,    # not include plyr, 
+       tidyr,
+       tidyverse,     # ggplot2, dplyr, etc.
+       lazyeval, 
+       
+       dmutate,
+       #xtable,
+       #data.table,
+       reshape2,   # not reshape
+       #datasets,
+       pryr,   # Partial function application allows you to modify a function by pre-filling some of the arguments. 
+       
+       
+       #------------------------------------------------------------
+       # plots
+       #------------------------------------------------------------
+       Cairo,   # to solve X11 server problem
+       grid,
+       ggplot2,     # gplots,
+       gridExtra,
+       #ggpm67isc,         # add_formula_pvalue
+       VennDiagram,
+       #party,  # tree structure of the model development
+       
+       visNetwork,
+       
+       #------------------------------------------------------------
+       # Pk specific package
+       #------------------------------------------------------------
+       mrgsolve, 
+       PKPDmisc,         #
+       xpose4,
+       xpose, # ggplot based
+       #vpc,
+       
+       #------------------------------------------------------------
+       # stats
+       #------------------------------------------------------------
+       #minqa,
+       #methods, 
        survival,            # survival analysis package
        survminer,           # ggsurvplot() -- nicer Kaplan-Meier plots
+       
+       #------------------------------------------------------------
+       # utilities
+       #------------------------------------------------------------
+       
+       # devtools, 
+       scales, 
        flextable,           # nicer looking tables with rich customisation
+       qwraps2, 
+       
        lubridate,           # work with dates/time data
-       rvg)                 # output files as vector graphics w/ officer in ppt
-
-
+       stringr,
+       stringdist,   # for fuzzy match
+       Hmisc,     
+       gdata,     # trim
+       RColorBrewer,
+       chron,     # as_time
+       #MASS,   # MUST BE FIST BEFORE dplyr
+       Rcpp,
+       xtable, #pretty tables
+       #packrat,
+       #testthat,
+       
+       #if (MASS %in% list.of.packages, {base::detach(package:MASS, } 
+       #stargazer, #pretty tables
+       
+       
+)
 
 # Reporting
 #-------------- 
